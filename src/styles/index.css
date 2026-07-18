@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-darkBg text-white font-sans;
+    background-image: radial-gradient(circle at 50% 0%, #161616 0%, #0a0a0a 100%);
+  }
+
+  /* Custom Premium Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #0A0A0A;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #2A2A2A;
+    border-radius: 4px;
+    border: 2px solid #0A0A0A;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #FFC107;
+  }
+}
+
+@layer components {
+  /* Premium Glassmorphic Cards */
+  .glass-card {
+    background: rgba(24, 24, 24, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-card-hover {
+    @apply transition-all duration-300 ease-out hover:border-primary/30 hover:shadow-yellow-glow;
+  }
+
+  .glass-navbar {
+    background: rgba(11, 11, 11, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Yellow Glow Button */
+  .btn-glow-yellow {
+    @apply relative overflow-hidden bg-primary text-black font-semibold px-6 py-2.5 rounded-lg
+           transition-all duration-300 shadow-yellow-glow hover:shadow-yellow-glow-lg 
+           hover:bg-primary-dark active:scale-95;
+  }
+
+  /* Accent Blue Glow Button */
+  .btn-glow-blue {
+    @apply relative overflow-hidden bg-accentBlue text-black font-semibold px-6 py-2.5 rounded-lg
+           transition-all duration-300 shadow-blue-glow hover:shadow-[0_0_25px_rgba(0,194,255,0.5)] 
+           hover:bg-opacity-90 active:scale-95;
+  }
+
+  /* Transparent Yellow Border Button */
+  .btn-outline-yellow {
+    @apply bg-transparent text-primary border border-primary/50 font-semibold px-6 py-2.5 rounded-lg
+           transition-all duration-300 hover:bg-primary/10 hover:border-primary active:scale-95;
+  }
+
+  /* Custom Glow for Card Badges */
+  .badge-glow {
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.2);
+  }
+}
+
+/* Custom classes for micro-animations */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-6px);
+  @apply shadow-yellow-glow;
+}
+
+/* Hide default input controls for cleaner UI */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Swiper custom overrides to match the Yellow theme */
+.swiper-pagination-bullet-active {
+  background: #FFC107 !important;
+}
+.swiper-button-next,
+.swiper-button-prev {
+  color: #FFC107 !important;
+}
