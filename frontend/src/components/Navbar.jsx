@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import NexCartLogo from './NexCartLogo';
@@ -6,12 +6,12 @@ import ThemeToggle from './ThemeToggle';
 import { CATEGORIES } from '../constants/dummyData';
 import { 
   FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, 
-  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiSliders, FiLogOut, FiCheckCircle
+  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid
 } from 'react-icons/fi';
 
 const Navbar = () => {
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser, theme 
+    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser 
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -49,18 +49,20 @@ const Navbar = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass-navbar transition-all duration-400">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-5 lg:px-8">
-        <div className="flex items-center justify-between h-[80px] gap-3 lg:gap-5">
+    <header className="fixed top-0 left-0 right-0 z-50 glass-navbar transition-all duration-300">
+      
+      {/* Primary Main Navbar Header */}
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 border-b border-gray-200/50 dark:border-white/5">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-4 sm:gap-6">
           
-          {/* 1. Mobile Menu Toggle & NexCart Logo (Left) */}
+          {/* Left: Mobile Toggle & Brand Logo */}
           <div className="flex items-center gap-3 flex-shrink-0">
             <button 
-              className="lg:hidden p-2 rounded-xl text-gray-400 hover:text-primary hover:bg-white/5 transition-all"
+              className="lg:hidden p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-all"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle navigation menu"
             >
-              {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+              {isMobileMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
             </button>
             
             <Link to="/" className="flex items-center hover:opacity-95 transition-opacity py-1">
@@ -68,165 +70,124 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* 2. Delivery Location Selector (Desktop) */}
-          <div className="hidden xl:flex items-center gap-2 text-xs cursor-pointer px-3 py-1.5 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10 transition-all flex-shrink-0">
-            <FiMapPin className="text-primary text-base flex-shrink-0 animate-bounce" style={{ animationDuration: '3s' }} />
-            <div className="text-left">
-              <p className="text-[10px] text-gray-400 dark:text-gray-400 uppercase tracking-wider font-semibold">Deliver to</p>
-              <p className="font-bold text-gray-900 dark:text-white truncate max-w-[110px]">Hyderabad 500081</p>
-            </div>
-          </div>
-
-          {/* 3. Category Dropdown Button (Desktop) */}
-          <div className="relative hidden xl:block flex-shrink-0">
-            <button
-              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-              className="flex items-center gap-2 text-xs font-semibold px-3.5 py-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-primary/50 text-gray-800 dark:text-gray-200 transition-all"
-            >
-              <span>{selectedCategory === 'All' ? 'All Categories' : selectedCategory}</span>
-              <FiChevronDown className={`text-xs transition-transform ${isCategoryOpen ? 'rotate-180 text-primary' : ''}`} />
-            </button>
-
-            {isCategoryOpen && (
-              <div className="absolute top-full left-0 mt-2 w-52 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl z-50">
-                <button
-                  onClick={() => { setSelectedCategory('All'); setIsCategoryOpen(false); }}
-                  className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
-                >
-                  <span>All Categories</span>
-                  {selectedCategory === 'All' && <FiCheckCircle className="text-primary" />}
-                </button>
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setSelectedCategory(cat.name); setIsCategoryOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
-                  >
-                    <span>{cat.name}</span>
-                    {selectedCategory === cat.name && <FiCheckCircle className="text-primary" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 4. Rounded Search Bar (Center / Desktop & Tablet) */}
+          {/* Center: Wide & Prominent Search Bar (Desktop & Tablet) */}
           <form 
             onSubmit={handleSearch} 
-            className="hidden md:flex flex-grow max-w-md lg:max-w-lg h-11 bg-gray-100 dark:bg-white/[0.06] rounded-full border border-gray-300 dark:border-white/10 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-hidden transition-all shadow-inner"
+            className="hidden md:flex flex-1 max-w-2xl h-11 bg-gray-100/80 dark:bg-white/[0.06] rounded-full border border-gray-200 dark:border-white/10 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-hidden transition-all shadow-inner items-center px-1.5"
           >
-            <input 
-              type="text" 
-              placeholder="Search AI recommendations, gadgets, luxury items..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-grow bg-transparent text-xs sm:text-sm px-5 focus:outline-none text-gray-900 dark:text-white placeholder-gray-500"
-            />
-            <button 
-              type="submit" 
-              className="px-5 bg-gradient-to-r from-primary to-amber-400 text-black hover:brightness-110 transition-all flex items-center justify-center font-bold"
-              aria-label="Search"
-            >
-              <FiSearch className="text-lg stroke-[2.5]" />
-            </button>
-          </form>
-
-          {/* 5. Quick Category Links (Desktop Wide) */}
-          <div className="hidden 2xl:flex items-center gap-4 text-xs font-semibold text-gray-600 dark:text-gray-300 flex-shrink-0">
-            <Link to="/products?cat=electronics" className="hover:text-primary transition-colors">Electronics</Link>
-            <Link to="/products?cat=fashion" className="hover:text-primary transition-colors">Fashion</Link>
-            <Link to="/products?cat=ai-gadgets" className="hover:text-primary transition-colors flex items-center gap-1 text-primary">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
-              <span>AI Tech</span>
-            </Link>
-          </div>
-
-          {/* Right Navigation Actions Container */}
-          <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0">
-            
-            {/* 6. Language & Currency Selector */}
-            <div className="relative hidden lg:block">
+            {/* Inline Category Dropdown Selector */}
+            <div className="relative flex-shrink-0">
               <button
-                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                className="flex items-center gap-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-primary px-2.5 py-1.5 rounded-full hover:bg-white/5 transition-all"
+                type="button"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:border-primary/50 transition-all"
               >
-                <FiGlobe className="text-sm text-accentBlue" />
-                <span>{selectedLang}</span>
-                <FiChevronDown className="text-[10px]" />
+                <span>{selectedCategory === 'All' ? 'All' : selectedCategory}</span>
+                <FiChevronDown className={`text-xs transition-transform ${isCategoryOpen ? 'rotate-180 text-primary' : ''}`} />
               </button>
 
-              {isLanguageOpen && (
-                <div className="absolute right-0 top-full mt-2 w-36 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-xl shadow-xl z-50 text-xs">
-                  {['EN / USD', 'IN / INR', 'EU / EUR', 'UK / GBP'].map(lang => (
+              {isCategoryOpen && (
+                <div className="absolute top-full left-0 mt-2 w-52 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl z-50">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedCategory('All'); setIsCategoryOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
+                  >
+                    <span>All Categories</span>
+                    {selectedCategory === 'All' && <FiCheckCircle className="text-primary" />}
+                  </button>
+                  {CATEGORIES.map(cat => (
                     <button
-                      key={lang}
-                      onClick={() => { setSelectedLang(lang); setIsLanguageOpen(false); }}
-                      className="w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 transition-colors"
+                      key={cat.id}
+                      type="button"
+                      onClick={() => { setSelectedCategory(cat.name); setIsCategoryOpen(false); }}
+                      className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
                     >
-                      {lang}
+                      <span>{cat.name}</span>
+                      {selectedCategory === cat.name && <FiCheckCircle className="text-primary" />}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* 7. Become Seller Button */}
+            <input 
+              type="text" 
+              placeholder="Search AI recommendations, electronics, fashion..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-grow bg-transparent text-xs sm:text-sm px-3 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
+            />
+            
+            <button 
+              type="submit" 
+              className="w-9 h-9 bg-gradient-to-r from-primary to-amber-400 text-black hover:brightness-110 rounded-full transition-all flex items-center justify-center font-bold flex-shrink-0 shadow-sm"
+              aria-label="Search"
+            >
+              <FiSearch className="text-base stroke-[2.5]" />
+            </button>
+          </form>
+
+          {/* Right: Actions (Seller CTA, Theme, Wishlist, Cart, Notifications, Profile) */}
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
+            
+            {/* Become Seller Button */}
             <Link
               to="/seller/dashboard"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary hover:border-primary text-xs font-bold transition-all shadow-sm active:scale-95"
+              className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary hover:border-primary text-xs font-bold transition-all shadow-sm active:scale-95"
             >
               <FiBriefcase className="text-sm" />
               <span>Become Seller</span>
             </Link>
 
-            {/* 8. 🌞 Animated Theme Toggle (EXACTLY Positioned Between "Become Seller" and Wishlist) */}
+            {/* Clean Theme Toggle */}
             <ThemeToggle />
 
-            {/* 9. Wishlist Icon (❤️) */}
+            {/* Wishlist Icon */}
             <Link
               to="/wishlist"
-              className="relative p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-red-500 hover:bg-red-500/10 transition-all group"
+              className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-red-500 hover:bg-red-500/10 transition-all group"
               aria-label="Wishlist"
               title="Wishlist"
             >
-              <FiHeart className="text-xl group-hover:scale-110 transition-transform" />
+              <FiHeart className="text-lg sm:text-xl group-hover:scale-110 transition-transform" />
               {wishlistCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                <span className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-pulse">
                   {wishlistCount}
                 </span>
               )}
             </Link>
 
-            {/* 10. Cart Icon (🛒) */}
+            {/* Cart Icon */}
             <Link
               to="/cart"
-              className="relative p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group"
+              className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group"
               aria-label="Shopping Cart"
               title="Shopping Cart"
             >
-              <FiShoppingCart className="text-xl group-hover:scale-110 transition-transform" />
+              <FiShoppingCart className="text-lg sm:text-xl group-hover:scale-110 transition-transform" />
               {cartCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-gradient-to-r from-primary to-amber-400 text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow">
+                <span className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-gradient-to-r from-primary to-amber-400 text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow">
                   {cartCount}
                 </span>
               )}
             </Link>
 
-            {/* 11. Notifications Icon (🔔) */}
+            {/* Notifications Icon */}
             <div className="relative">
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="relative p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-accentBlue hover:bg-accentBlue/10 transition-all group"
+                className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-accentBlue hover:bg-accentBlue/10 transition-all group"
                 aria-label="Notifications"
                 title="Notifications"
               >
-                <FiBell className="text-xl group-hover:scale-110 transition-transform" />
+                <FiBell className="text-lg sm:text-xl group-hover:scale-110 transition-transform" />
                 {unreadNotifications > 0 && (
-                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-accentBlue rounded-full animate-ping" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accentBlue rounded-full animate-ping" />
                 )}
               </button>
 
-              {/* Notifications Popover Drawer */}
+              {/* Notifications Popover */}
               {isNotificationsOpen && (
                 <div className="absolute right-0 top-full mt-3 w-80 sm:w-96 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left">
                   <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3 mb-3">
@@ -271,24 +232,24 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* 12. User Profile Avatar (👤) */}
+            {/* User Profile Avatar */}
             <div className="relative">
               {user ? (
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-2 p-1 rounded-full border-2 border-primary/60 hover:border-primary transition-all group focus:outline-none"
+                  className="flex items-center gap-2 p-0.5 rounded-full border-2 border-primary/60 hover:border-primary transition-all group focus:outline-none"
                   aria-label="User profile"
                 >
                   <img
                     src={user.avatar}
                     alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover group-hover:scale-105 transition-transform"
+                    className="w-7 sm:w-8 h-7 sm:h-8 rounded-full object-cover group-hover:scale-105 transition-transform"
                   />
                 </button>
               ) : (
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-black font-extrabold text-xs shadow-yellow-glow hover:shadow-yellow-glow-lg transition-all"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary text-black font-extrabold text-xs shadow-yellow-glow hover:shadow-yellow-glow-lg transition-all"
                 >
                   <FiUser className="text-sm" />
                   <span>Login</span>
@@ -368,6 +329,62 @@ const Navbar = () => {
         </div>
       </div>
 
+      {/* Secondary Utility Navigation Strip (Desktop & Tablet) */}
+      <div className="hidden md:block bg-gray-50/90 dark:bg-black/40 border-b border-gray-200/40 dark:border-white/5 py-2 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+          
+          {/* Left: Location & Categories quick trigger */}
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer">
+              <FiMapPin className="text-primary text-sm flex-shrink-0 animate-bounce" style={{ animationDuration: '3s' }} />
+              <span>Deliver to <strong className="text-gray-900 dark:text-white font-bold">Hyderabad 500081</strong></span>
+            </div>
+
+            <div className="h-3 w-px bg-gray-300 dark:bg-white/10" />
+
+            <div className="flex items-center gap-4 font-semibold">
+              <Link to="/products?cat=electronics" className="hover:text-primary transition-colors">Electronics</Link>
+              <Link to="/products?cat=fashion" className="hover:text-primary transition-colors">Fashion</Link>
+              <Link to="/products?cat=ai-gadgets" className="hover:text-primary transition-colors flex items-center gap-1 text-primary">
+                <FiZap className="text-xs animate-pulse" />
+                <span>AI Tech</span>
+              </Link>
+              <Link to="/products" className="hover:text-primary transition-colors flex items-center gap-1">
+                <FiGrid className="text-xs" />
+                <span>Browse All</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Right: Language / Currency selector */}
+          <div className="relative">
+            <button
+              onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+              className="flex items-center gap-1.5 font-medium hover:text-primary transition-colors"
+            >
+              <FiGlobe className="text-xs text-accentBlue" />
+              <span>{selectedLang}</span>
+              <FiChevronDown className="text-[10px]" />
+            </button>
+
+            {isLanguageOpen && (
+              <div className="absolute right-0 top-full mt-2 w-36 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-xl shadow-xl z-50 text-xs">
+                {['EN / USD', 'IN / INR', 'EU / EUR', 'UK / GBP'].map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => { setSelectedLang(lang); setIsLanguageOpen(false); }}
+                    className="w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 transition-colors"
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white dark:bg-[#070B12] border-b border-gray-200 dark:border-white/10 px-4 py-4 space-y-4 animate-slide-down shadow-2xl">
@@ -384,6 +401,12 @@ const Navbar = () => {
               <FiSearch />
             </button>
           </form>
+
+          {/* Location mobile */}
+          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5">
+            <FiMapPin className="text-primary" />
+            <span>Deliver to <strong className="text-gray-900 dark:text-white font-bold">Hyderabad 500081</strong></span>
+          </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
             <Link to="/products" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
@@ -402,6 +425,7 @@ const Navbar = () => {
           </div>
         </div>
       )}
+
     </header>
   );
 };
