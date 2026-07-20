@@ -1,27 +1,30 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import logo from '../assets/logo.jpg';
+import NexCartLogo from './NexCartLogo';
+import ThemeToggle from './ThemeToggle';
 import { CATEGORIES } from '../constants/dummyData';
 import { 
   FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, 
-  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiSliders, FiLogOut 
+  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiSliders, FiLogOut, FiCheckCircle
 } from 'react-icons/fi';
 
 const Navbar = () => {
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser 
+    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser, theme 
   } = useContext(AppContext);
   
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   
-  // Popovers
+  // Popover state toggles
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState('EN / USD');
 
   // Stats
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -46,233 +49,314 @@ const Navbar = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass-navbar shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
-        <div className="flex items-center justify-between h-20 gap-4">
+    <header className="fixed top-0 left-0 right-0 z-50 glass-navbar transition-all duration-400">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-5 lg:px-8">
+        <div className="flex items-center justify-between h-[80px] gap-3 lg:gap-5">
           
-          {/* Mobile Hamburguer & Brand Logo */}
-          <div className="flex items-center gap-3">
+          {/* 1. Mobile Menu Toggle & NexCart Logo (Left) */}
+          <div className="flex items-center gap-3 flex-shrink-0">
             <button 
-              className="lg:hidden text-white hover:text-primary transition-all"
+              className="lg:hidden p-2 rounded-xl text-gray-400 hover:text-primary hover:bg-white/5 transition-all"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle navigation menu"
             >
               {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
             </button>
             
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-              <img src={logo} alt="NexCart" className="h-10 w-10 object-cover rounded-lg border border-primary/20" />
-              <span className="text-2xl font-bold tracking-wider text-primary">NEX<span className="text-white">CART</span></span>
+            <Link to="/" className="flex items-center hover:opacity-95 transition-opacity py-1">
+              <NexCartLogo size="md" />
             </Link>
           </div>
 
-          {/* Location Delivery Selector (Desktop) */}
-          <div className="hidden lg:flex items-center gap-2 text-xs cursor-pointer hover:text-primary transition-all max-w-[150px]">
-            <FiMapPin className="text-primary text-base flex-shrink-0" />
-            <div className="truncate">
-              <p className="text-[10px] text-gray-400">Deliver to</p>
-              <p className="font-semibold text-white truncate">Mumbai 400001</p>
+          {/* 2. Delivery Location Selector (Desktop) */}
+          <div className="hidden xl:flex items-center gap-2 text-xs cursor-pointer px-3 py-1.5 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10 transition-all flex-shrink-0">
+            <FiMapPin className="text-primary text-base flex-shrink-0 animate-bounce" style={{ animationDuration: '3s' }} />
+            <div className="text-left">
+              <p className="text-[10px] text-gray-400 dark:text-gray-400 uppercase tracking-wider font-semibold">Deliver to</p>
+              <p className="font-bold text-gray-900 dark:text-white truncate max-w-[110px]">Hyderabad 500081</p>
             </div>
           </div>
 
-          {/* Search Form Bar */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-grow max-w-xl h-11 bg-secondaryBg rounded-lg border border-white/10 focus-within:border-primary/50 overflow-hidden transition-all">
-            <div className="relative flex items-center border-r border-white/10 bg-black/20">
-              <select 
-                value={selectedCategory} 
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="bg-transparent text-xs text-gray-300 px-3 pr-8 focus:outline-none appearance-none cursor-pointer h-full"
-              >
-                <option value="All" className="bg-cardBg text-white">All categories</option>
+          {/* 3. Category Dropdown Button (Desktop) */}
+          <div className="relative hidden xl:block flex-shrink-0">
+            <button
+              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+              className="flex items-center gap-2 text-xs font-semibold px-3.5 py-2.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-primary/50 text-gray-800 dark:text-gray-200 transition-all"
+            >
+              <span>{selectedCategory === 'All' ? 'All Categories' : selectedCategory}</span>
+              <FiChevronDown className={`text-xs transition-transform ${isCategoryOpen ? 'rotate-180 text-primary' : ''}`} />
+            </button>
+
+            {isCategoryOpen && (
+              <div className="absolute top-full left-0 mt-2 w-52 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl z-50">
+                <button
+                  onClick={() => { setSelectedCategory('All'); setIsCategoryOpen(false); }}
+                  className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
+                >
+                  <span>All Categories</span>
+                  {selectedCategory === 'All' && <FiCheckCircle className="text-primary" />}
+                </button>
                 {CATEGORIES.map(cat => (
-                  <option key={cat.id} value={cat.id} className="bg-cardBg text-white">{cat.name}</option>
+                  <button
+                    key={cat.id}
+                    onClick={() => { setSelectedCategory(cat.name); setIsCategoryOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
+                  >
+                    <span>{cat.name}</span>
+                    {selectedCategory === cat.name && <FiCheckCircle className="text-primary" />}
+                  </button>
                 ))}
-              </select>
-              <FiChevronDown className="absolute right-2 text-gray-400 pointer-events-none text-xs" />
-            </div>
-            
+              </div>
+            )}
+          </div>
+
+          {/* 4. Rounded Search Bar (Center / Desktop & Tablet) */}
+          <form 
+            onSubmit={handleSearch} 
+            className="hidden md:flex flex-grow max-w-md lg:max-w-lg h-11 bg-gray-100 dark:bg-white/[0.06] rounded-full border border-gray-300 dark:border-white/10 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-hidden transition-all shadow-inner"
+          >
             <input 
               type="text" 
-              placeholder="Search premium electronics, shoes, laptops..." 
+              placeholder="Search AI recommendations, gadgets, luxury items..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-grow bg-transparent text-sm px-4 focus:outline-none text-white placeholder-gray-500"
+              className="flex-grow bg-transparent text-xs sm:text-sm px-5 focus:outline-none text-gray-900 dark:text-white placeholder-gray-500"
             />
-            
-            <button type="submit" className="bg-primary text-black px-5 hover:bg-primary-dark transition-all flex items-center justify-center">
-              <FiSearch size={18} />
+            <button 
+              type="submit" 
+              className="px-5 bg-gradient-to-r from-primary to-amber-400 text-black hover:brightness-110 transition-all flex items-center justify-center font-bold"
+              aria-label="Search"
+            >
+              <FiSearch className="text-lg stroke-[2.5]" />
             </button>
           </form>
 
-          {/* Nav Icons Right Area */}
-          <div className="flex items-center gap-4 lg:gap-6">
-            
-            {/* Mega Menu Toggle Link */}
-            <Link 
-              to="/categories"
-              onMouseEnter={() => setIsMegaMenuOpen(true)}
-              className="hidden lg:flex items-center gap-1 text-sm font-semibold hover:text-primary transition-all py-2"
-            >
-              <span>Categories</span>
-              <FiChevronDown className={`transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
+          {/* 5. Quick Category Links (Desktop Wide) */}
+          <div className="hidden 2xl:flex items-center gap-4 text-xs font-semibold text-gray-600 dark:text-gray-300 flex-shrink-0">
+            <Link to="/products?cat=electronics" className="hover:text-primary transition-colors">Electronics</Link>
+            <Link to="/products?cat=fashion" className="hover:text-primary transition-colors">Fashion</Link>
+            <Link to="/products?cat=ai-gadgets" className="hover:text-primary transition-colors flex items-center gap-1 text-primary">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+              <span>AI Tech</span>
             </Link>
+          </div>
 
-            {/* Language dropdown Selector (Desktop) */}
-            <div className="hidden lg:flex items-center gap-1 text-xs text-gray-300 hover:text-white cursor-pointer py-2">
-              <FiGlobe className="text-primary text-sm" />
-              <span className="font-medium">EN</span>
+          {/* Right Navigation Actions Container */}
+          <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0">
+            
+            {/* 6. Language & Currency Selector */}
+            <div className="relative hidden lg:block">
+              <button
+                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                className="flex items-center gap-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-primary px-2.5 py-1.5 rounded-full hover:bg-white/5 transition-all"
+              >
+                <FiGlobe className="text-sm text-accentBlue" />
+                <span>{selectedLang}</span>
+                <FiChevronDown className="text-[10px]" />
+              </button>
+
+              {isLanguageOpen && (
+                <div className="absolute right-0 top-full mt-2 w-36 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-xl shadow-xl z-50 text-xs">
+                  {['EN / USD', 'IN / INR', 'EU / EUR', 'UK / GBP'].map(lang => (
+                    <button
+                      key={lang}
+                      onClick={() => { setSelectedLang(lang); setIsLanguageOpen(false); }}
+                      className="w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 transition-colors"
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Seller Quick Navigation */}
-            <Link 
-              to={user?.role === 'seller' ? '/seller/dashboard' : '/seller/dashboard'} 
-              onClick={() => {
-                if (user?.role !== 'seller') switchRole('seller');
-              }}
-              className="hidden xl:flex items-center gap-1.5 text-xs bg-white/5 border border-white/10 hover:border-primary/30 px-3 py-1.5 rounded-lg transition-all"
+            {/* 7. Become Seller Button */}
+            <Link
+              to="/seller/dashboard"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary hover:border-primary text-xs font-bold transition-all shadow-sm active:scale-95"
             >
-              <FiBriefcase className="text-primary" />
-              <span className="font-medium">Become Seller</span>
+              <FiBriefcase className="text-sm" />
+              <span>Become Seller</span>
             </Link>
 
-            {/* Wishlist Link */}
-            <Link to="/wishlist" className="relative hover:text-primary transition-all py-2">
-              <FiHeart size={22} />
+            {/* 8. 🌞 Animated Theme Toggle (EXACTLY Positioned Between "Become Seller" and Wishlist) */}
+            <ThemeToggle />
+
+            {/* 9. Wishlist Icon (❤️) */}
+            <Link
+              to="/wishlist"
+              className="relative p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-red-500 hover:bg-red-500/10 transition-all group"
+              aria-label="Wishlist"
+              title="Wishlist"
+            >
+              <FiHeart className="text-xl group-hover:scale-110 transition-transform" />
               {wishlistCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-primary text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center badge-glow">
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-lg animate-pulse">
                   {wishlistCount}
                 </span>
               )}
             </Link>
 
-            {/* Cart Link */}
-            <Link to="/cart" className="relative hover:text-primary transition-all py-2 flex items-center gap-1">
-              <FiShoppingCart size={22} />
+            {/* 10. Cart Icon (🛒) */}
+            <Link
+              to="/cart"
+              className="relative p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group"
+              aria-label="Shopping Cart"
+              title="Shopping Cart"
+            >
+              <FiShoppingCart className="text-xl group-hover:scale-110 transition-transform" />
               {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-primary text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center badge-glow">
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-gradient-to-r from-primary to-amber-400 text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow">
                   {cartCount}
                 </span>
               )}
             </Link>
 
-            {/* Notifications Popover */}
+            {/* 11. Notifications Icon (🔔) */}
             <div className="relative">
-              <button 
-                onClick={() => {
-                  setIsNotificationsOpen(!isNotificationsOpen);
-                  setIsProfileOpen(false);
-                }}
-                className="relative hover:text-primary transition-all py-2"
+              <button
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="relative p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-accentBlue hover:bg-accentBlue/10 transition-all group"
+                aria-label="Notifications"
+                title="Notifications"
               >
-                <FiBell size={22} />
+                <FiBell className="text-xl group-hover:scale-110 transition-transform" />
                 {unreadNotifications > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-accentBlue text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                    {unreadNotifications}
-                  </span>
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-accentBlue rounded-full animate-ping" />
                 )}
               </button>
 
-              {/* Notification Drawer */}
+              {/* Notifications Popover Drawer */}
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-3 w-80 glass-card rounded-xl border border-white/10 p-4 shadow-2xl z-50">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
-                    <span className="font-bold text-sm">Notifications ({notifications.length})</span>
-                    <button 
-                      onClick={clearNotifications}
-                      className="text-xs text-primary hover:underline"
-                    >
-                      Clear all
-                    </button>
+                <div className="absolute right-0 top-full mt-3 w-80 sm:w-96 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left">
+                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3 mb-3">
+                    <h3 className="text-sm font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                      <FiBell className="text-accentBlue" />
+                      <span>Notifications</span>
+                    </h3>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearNotifications}
+                        className="text-[11px] text-primary hover:underline font-semibold"
+                      >
+                        Clear All
+                      </button>
+                    )}
                   </div>
-                  
-                  {notifications.length === 0 ? (
-                    <p className="text-xs text-gray-500 text-center py-4">No new updates.</p>
-                  ) : (
-                    <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                      {notifications.map((n) => (
-                        <div 
-                          key={n.id} 
+
+                  <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                    {notifications.length === 0 ? (
+                      <p className="text-xs text-gray-500 py-6 text-center">No new notifications</p>
+                    ) : (
+                      notifications.map(n => (
+                        <div
+                          key={n.id}
                           onClick={() => markNotificationRead(n.id)}
-                          className={`p-2.5 rounded-lg text-xs cursor-pointer transition-all hover:bg-white/5 ${n.read ? 'opacity-60' : 'border-l-2 border-primary pl-2'}`}
+                          className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                            n.read
+                              ? 'bg-gray-50 dark:bg-white/[0.02] border-transparent text-gray-500'
+                              : 'bg-primary/5 dark:bg-primary/10 border-primary/30 text-gray-900 dark:text-white font-medium'
+                          }`}
                         >
-                          <p className="font-semibold text-white">{n.title}</p>
-                          <p className="text-gray-400 mt-0.5">{n.message}</p>
-                          <span className="text-[10px] text-gray-500 block mt-1">{n.time}</span>
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-primary">{n.title}</span>
+                            <span className="text-[10px] text-gray-400">{n.time}</span>
+                          </div>
+                          <p className="text-[11px] leading-relaxed text-gray-600 dark:text-gray-300">{n.message}</p>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* User Profile / Auth Settings Dropdown */}
+            {/* 12. User Profile Avatar (👤) */}
             <div className="relative">
               {user ? (
-                <button 
-                  onClick={() => {
-                    setIsProfileOpen(!isProfileOpen);
-                    setIsNotificationsOpen(false);
-                  }}
-                  className="flex items-center gap-1.5 hover:text-primary transition-all"
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 p-1 rounded-full border-2 border-primary/60 hover:border-primary transition-all group focus:outline-none"
+                  aria-label="User profile"
                 >
-                  <img 
-                    src={user.avatar} 
-                    alt="User" 
-                    className="w-8 h-8 rounded-full object-cover border border-primary/30"
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full object-cover group-hover:scale-105 transition-transform"
                   />
-                  <FiChevronDown className="hidden sm:block text-xs text-gray-400" />
                 </button>
               ) : (
-                <Link to="/login" className="btn-glow-yellow !px-4 !py-2 text-xs flex items-center gap-1.5">
-                  <FiUser />
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-black font-extrabold text-xs shadow-yellow-glow hover:shadow-yellow-glow-lg transition-all"
+                >
+                  <FiUser className="text-sm" />
                   <span>Login</span>
                 </Link>
               )}
 
-              {/* Profile drop list */}
+              {/* User Profile Popover */}
               {isProfileOpen && user && (
-                <div className="absolute right-0 mt-3 w-56 glass-card rounded-xl border border-white/10 p-3 shadow-2xl z-50">
-                  <div className="px-3 py-2 border-b border-white/5 mb-2">
-                    <p className="font-bold text-sm text-white truncate">{user.name}</p>
-                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                    <span className="inline-block mt-1 text-[9px] uppercase tracking-wider font-extrabold bg-primary/10 border border-primary/20 text-primary px-1.5 py-0.5 rounded">
-                      Role: {user.role}
-                    </span>
+                <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left">
+                  <div className="flex items-center gap-3 border-b border-gray-200 dark:border-white/10 pb-3 mb-3">
+                    <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-primary" />
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.name}</h4>
+                      <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-primary/20 text-primary">
+                        {user.role} Account
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="flex flex-col gap-1 text-sm">
-                    <Link to="/profile" onClick={() => setIsProfileOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/5 flex items-center gap-2.5">
-                      <FiUser size={16} className="text-primary" />
-                      <span>My Profile</span>
-                    </Link>
-                    <Link to="/orders" onClick={() => setIsProfileOpen(false)} className="px-3 py-2 rounded-lg hover:bg-white/5 flex items-center gap-2.5">
-                      <FiShoppingCart size={16} className="text-primary" />
-                      <span>My Orders</span>
-                    </Link>
-
-                    {/* Quick Demo Switcher */}
-                    <div className="border-t border-white/5 my-2 pt-2">
-                      <p className="text-[10px] uppercase font-bold text-gray-500 px-3 mb-1">Developer Role Switch</p>
-                      <button onClick={() => switchRole('customer')} className={`w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 ${user.role === 'customer' ? 'text-primary bg-primary/10' : 'text-gray-400 hover:bg-white/5'}`}>
-                        Customer Shop
-                      </button>
-                      <button onClick={() => switchRole('seller')} className={`w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 ${user.role === 'seller' ? 'text-primary bg-primary/10' : 'text-gray-400 hover:bg-white/5'}`}>
-                        Seller Dashboard
-                      </button>
-                      <button onClick={() => switchRole('admin')} className={`w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 ${user.role === 'admin' ? 'text-accentBlue bg-accentBlue/10' : 'text-gray-400 hover:bg-white/5'}`}>
-                        Admin Control
-                      </button>
+                  {/* Switch Role Quick Tester */}
+                  <div className="mb-3 space-y-1">
+                    <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-semibold">Switch View Mode</p>
+                    <div className="grid grid-cols-3 gap-1 text-[10px] font-bold uppercase">
+                      {['customer', 'seller', 'admin'].map(r => (
+                        <button
+                          key={r}
+                          onClick={() => switchRole(r)}
+                          className={`py-1 rounded border transition-all ${
+                            user.role === r 
+                              ? 'bg-primary text-black border-primary font-black'
+                              : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:text-primary'
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
                     </div>
+                  </div>
 
-                    <button 
-                      onClick={() => {
-                        logoutUser();
-                        setIsProfileOpen(false);
-                      }}
-                      className="px-3 py-2 rounded-lg hover:bg-red-500/10 text-red-400 mt-1 flex items-center gap-2.5 w-full text-left"
+                  <div className="space-y-1 text-xs border-t border-gray-200 dark:border-white/10 pt-2">
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="block px-3 py-2 rounded-lg hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-colors"
                     >
-                      <FiLogOut size={16} />
-                      <span>Sign Out</span>
+                      My Profile
+                    </Link>
+                    <Link
+                      to="/orders"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="block px-3 py-2 rounded-lg hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-colors"
+                    >
+                      My Orders
+                    </Link>
+                    <Link
+                      to="/addresses"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="block px-3 py-2 rounded-lg hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-colors"
+                    >
+                      Saved Addresses
+                    </Link>
+                    <button
+                      onClick={() => { logoutUser(); setIsProfileOpen(false); }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 font-bold transition-colors flex items-center justify-between"
+                    >
+                      <span>Logout</span>
+                      <FiLogOut />
                     </button>
                   </div>
                 </div>
@@ -280,107 +364,41 @@ const Navbar = () => {
             </div>
 
           </div>
+
         </div>
       </div>
 
-      {/* Mega Category Menu Hover Dropdown */}
-      {isMegaMenuOpen && (
-        <div 
-          className="absolute left-0 right-0 top-20 bg-secondaryBg border-b border-white/10 shadow-2xl z-40 p-8 hidden lg:block"
-          onMouseLeave={() => setIsMegaMenuOpen(false)}
-        >
-          <div className="max-w-7xl mx-auto grid grid-cols-5 gap-6">
-            <div className="col-span-1 border-r border-white/5 pr-6">
-              <h3 className="text-primary font-bold text-base mb-3">Trending Deals</h3>
-              <p className="text-xs text-gray-400 leading-relaxed mb-4">Explore high-end electronics, sports kits, and the latest premium arrivals.</p>
-              <Link to="/products" className="btn-glow-yellow !py-1.5 text-xs text-center block">View All Items</Link>
-            </div>
-            
-            <div className="col-span-4 grid grid-cols-4 gap-6">
-              {CATEGORIES.slice(0, 8).map((cat) => (
-                <div key={cat.id} className="group">
-                  <Link 
-                    to={`/category/${cat.id}`}
-                    onClick={() => setIsMegaMenuOpen(false)}
-                    className="flex items-center gap-3 cursor-pointer group-hover:text-primary transition-all mb-2"
-                  >
-                    <img src={cat.image} alt={cat.name} className="w-12 h-8 rounded object-cover border border-white/10" />
-                    <div>
-                      <h4 className="text-xs font-bold text-white group-hover:text-primary">{cat.name}</h4>
-                      <span className="text-[10px] text-gray-400">{cat.count} listings</span>
-                    </div>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Mobile Drawer Overlay */}
+      {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 top-20 bg-darkBg/95 backdrop-blur-md z-40 lg:hidden p-6 flex flex-col justify-between overflow-y-auto">
-          <div className="space-y-6">
-            {/* Mobile Search Bar */}
-            <form onSubmit={handleSearch} className="flex h-11 bg-secondaryBg rounded-lg border border-white/10 overflow-hidden">
-              <input 
-                type="text" 
-                placeholder="Search catalog..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-grow bg-transparent text-sm px-4 focus:outline-none text-white placeholder-gray-500"
-              />
-              <button type="submit" className="bg-primary text-black px-4 flex items-center justify-center">
-                <FiSearch size={16} />
-              </button>
-            </form>
+        <div className="lg:hidden bg-white dark:bg-[#070B12] border-b border-gray-200 dark:border-white/10 px-4 py-4 space-y-4 animate-slide-down shadow-2xl">
+          {/* Mobile Search */}
+          <form onSubmit={handleSearch} className="flex h-10 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden border border-gray-300 dark:border-white/10">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-grow bg-transparent text-xs px-4 text-gray-900 dark:text-white focus:outline-none"
+            />
+            <button type="submit" className="px-4 bg-primary text-black font-bold">
+              <FiSearch />
+            </button>
+          </form>
 
-            {/* Mobile Nav Links */}
-            <div>
-              <h3 className="text-primary font-bold text-xs uppercase tracking-wider mb-3">Shop Categories</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {CATEGORIES.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    to={`/category/${cat.id}`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-3 bg-white/5 rounded-xl border border-white/5 hover:border-primary/40 flex flex-col gap-1 transition-all text-xs"
-                  >
-                    <span className="font-semibold">{cat.name}</span>
-                    <span className="text-[10px] text-gray-400">{cat.count} Items</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions at footer of mobile drawer */}
-          <div className="pt-6 border-t border-white/5 space-y-3">
-            <Link 
-              to="/seller/dashboard"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                if (user?.role !== 'seller') switchRole('seller');
-              }}
-              className="w-full btn-outline-yellow text-xs text-center py-2.5 block"
-            >
-              Become a Seller
+          <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
+            <Link to="/products" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
+              All Products
             </Link>
-            {user ? (
-              <button 
-                onClick={() => {
-                  logoutUser();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full bg-red-500/10 text-red-400 rounded-lg text-xs py-2.5"
-              >
-                Sign Out
-              </button>
-            ) : (
-              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full btn-glow-yellow text-xs text-center py-2.5 block">
-                Sign In
-              </Link>
-            )}
+            <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
+              Categories
+            </Link>
+            <Link to="/seller/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-primary/10 border border-primary/30 text-primary font-bold">
+              Become Seller
+            </Link>
+            <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200 flex items-center justify-between">
+              <span>Wishlist</span>
+              <span className="text-primary font-extrabold">{wishlistCount}</span>
+            </Link>
           </div>
         </div>
       )}

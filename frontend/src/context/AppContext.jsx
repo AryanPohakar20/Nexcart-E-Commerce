@@ -4,6 +4,37 @@ import { PRODUCTS, COUPONS } from '../constants/dummyData';
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  // Theme State (Dark mode default, saved in Local Storage)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('nexcart-theme') || 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('nexcart-theme', theme);
+    const root = document.documentElement;
+    const body = document.body;
+
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      body.classList.add('dark');
+      body.classList.remove('light');
+      body.style.backgroundColor = '#070B12';
+      body.style.color = '#FFFFFF';
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+      body.classList.remove('dark');
+      body.classList.add('light');
+      body.style.backgroundColor = '#F8F9FB';
+      body.style.color = '#111111';
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   // Authentication State (Seeded with a mock premium user profile)
   const [user, setUser] = useState({
     name: 'Aravind Swamy',
@@ -199,6 +230,9 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider
       value={{
+        theme,
+        setTheme,
+        toggleTheme,
         user,
         setUser,
         cart,

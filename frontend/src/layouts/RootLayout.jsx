@@ -17,9 +17,45 @@ const ScrollToTop = () => {
 
 const RootLayout = () => {
   const { toasts } = useContext(AppContext);
+  const location = useLocation();
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+
+  if (isAuthPage) {
+    return (
+      <div className="min-h-screen bg-[#070B12] text-white selection:bg-primary selection:text-black">
+        <ScrollToTop />
+        <main className="min-h-screen w-full flex flex-col justify-between">
+          <Outlet />
+        </main>
+
+        {/* Toast Alert System Stack */}
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-md w-full pointer-events-none">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`pointer-events-auto flex items-center justify-between p-4 rounded-xl border glass-card shadow-2xl animate-slide-up transition-all ${
+                toast.type === 'error'
+                  ? 'border-red-500/30 text-red-400'
+                  : toast.type === 'info'
+                  ? 'border-accentBlue/30 text-accentBlue'
+                  : 'border-primary/30 text-primary'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {toast.type === 'error' && <FiAlertCircle className="text-xl flex-shrink-0" />}
+                {toast.type === 'info' && <FiInfo className="text-xl flex-shrink-0" />}
+                {toast.type === 'success' && <FiCheckCircle className="text-xl flex-shrink-0" />}
+                <span className="text-sm font-medium text-white">{toast.message}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-darkBg text-white selection:bg-primary selection:text-black">
+    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-black transition-colors duration-400">
       {/* Scroll manager */}
       <ScrollToTop />
       
