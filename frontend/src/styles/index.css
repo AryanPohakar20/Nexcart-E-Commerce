@@ -3,9 +3,21 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-darkBg text-white font-sans;
-    background-image: radial-gradient(circle at 50% 0%, #161616 0%, #0a0a0a 100%);
+  /* Smooth theme transitions across the whole page */
+  *, *::before, *::after {
+    transition: background-color 400ms ease, border-color 400ms ease, color 400ms ease, box-shadow 400ms ease;
+  }
+
+  html.dark body, body.dark {
+    background-color: #070B12;
+    background-image: radial-gradient(circle at 50% 0%, #161616 0%, #070B12 100%);
+    color: #FFFFFF;
+  }
+
+  html.light body, body.light {
+    background-color: #F8F9FB;
+    background-image: radial-gradient(circle at 50% 0%, #FFFFFF 0%, #F8F9FB 100%);
+    color: #111111;
   }
 
   /* Custom Premium Scrollbar */
@@ -17,11 +29,18 @@
   ::-webkit-scrollbar-track {
     background: #0A0A0A;
   }
+  .light ::-webkit-scrollbar-track {
+    background: #F8F9FB;
+  }
   
   ::-webkit-scrollbar-thumb {
     background: #2A2A2A;
     border-radius: 4px;
     border: 2px solid #0A0A0A;
+  }
+  .light ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border: 2px solid #F8F9FB;
   }
   
   ::-webkit-scrollbar-thumb:hover {
@@ -30,23 +49,49 @@
 }
 
 @layer components {
-  /* Premium Glassmorphic Cards */
-  .glass-card {
+  /* Premium Glassmorphic Cards (Dark Mode) */
+  .dark .glass-card {
     background: rgba(24, 24, 24, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+  }
+
+  /* Light Theme Cards (Light Mode) */
+  .light .glass-card, html:not(.dark) .glass-card {
+    background: #FFFFFF !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid #E8E8E8 !important;
+    color: #111111 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   }
 
   .glass-card-hover {
-    @apply transition-all duration-300 ease-out hover:border-primary/30 hover:shadow-yellow-glow;
+    @apply transition-all duration-300 ease-out hover:border-primary/50 hover:shadow-yellow-glow;
+  }
+
+  /* Glass Navbar Theme Variations */
+  .dark .glass-navbar {
+    background: rgba(7, 11, 18, 0.88) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #FFFFFF !important;
+  }
+
+  .light .glass-navbar, html:not(.dark) .glass-navbar {
+    background: rgba(255, 255, 255, 0.94) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid #E8E8E8 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    color: #111111 !important;
   }
 
   .glass-navbar {
-    background: rgba(11, 11, 11, 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background-color 400ms ease, border-color 400ms ease, box-shadow 400ms ease;
   }
 
   /* Yellow Glow Button */
@@ -73,6 +118,80 @@
   .badge-glow {
     box-shadow: 0 0 10px rgba(255, 193, 7, 0.2);
   }
+}
+
+/* ================= FULL WEBSITE LIGHT MODE GLOBAL OVERRIDES ================= */
+
+/* Light Theme Backgrounds & Surfaces */
+.light .bg-darkBg,
+.light .bg-secondaryBg,
+.light .bg-cardBg,
+.light .bg-\[\#0A0A0A\],
+.light .bg-\[\#121212\],
+.light .bg-\[\#202020\],
+.light .bg-\[\#070B12\],
+.light .bg-\[\#0b101d\],
+.light .bg-\[\#0c111d\] {
+  background-color: #F8F9FB !important;
+}
+
+.light .bg-black\/40,
+.light .bg-black\/50,
+.light .bg-black\/60,
+.light .bg-white\/5,
+.light .bg-white\/10,
+.light .bg-white\/\[0\.03\],
+.light .bg-white\/\[0\.04\],
+.light .bg-white\/\[0\.06\] {
+  background-color: #FFFFFF !important;
+}
+
+/* Light Theme Text Colors */
+.light .text-white:not(.text-black-force):not(.btn-glow-yellow):not(.btn-glow-blue) {
+  color: #111111 !important;
+}
+
+.light .text-gray-300,
+.light .text-gray-400,
+.light .text-gray-500,
+.light .text-\[\#AAB4C5\] {
+  color: #666666 !important;
+}
+
+/* Light Theme Borders */
+.light .border-white\/5,
+.light .border-white\/10,
+.light .border-white\/15,
+.light .border-white\/20 {
+  border-color: #E8E8E8 !important;
+}
+
+/* Light Theme Footers */
+.light footer {
+  background-color: #FFFFFF !important;
+  color: #666666 !important;
+  border-color: #E8E8E8 !important;
+}
+
+.light footer a {
+  color: #444444 !important;
+}
+
+.light footer a:hover {
+  color: #FFC107 !important;
+}
+
+/* Light Theme Inputs */
+.light input:not([type="checkbox"]),
+.light select,
+.light textarea {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #111111 !important;
+}
+
+.light input::placeholder {
+  color: #94A3B8 !important;
 }
 
 /* Custom classes for micro-animations */
