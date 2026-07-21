@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { CATEGORIES, BRANDS, PRODUCTS, COUPONS, TESTIMONIALS } from '../constants/dummyData';
 import { FiChevronLeft, FiChevronRight, FiClock, FiStar, FiPercent, FiCopy, FiCheck, FiArrowRight } from 'react-icons/fi';
@@ -75,49 +76,87 @@ const Home = () => {
       
       {/* 1. Hero Slider Module */}
       <section className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-white/5 shadow-2xl bg-black/40">
-        {heroSlides.map((slide, index) => (
-          <div 
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 flex items-center ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-          >
-            {/* Background Image overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0B0B0B] via-[#0B0B0B]/80 to-transparent z-10" />
-            <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
-            
-            {/* Slide Content */}
-            <div className="relative z-20 max-w-lg px-8 md:px-16 space-y-4 md:space-y-6 text-left">
-              <span className="inline-block bg-primary/20 border border-primary/40 text-primary text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded">
-                {slide.badge}
-              </span>
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold uppercase tracking-widest text-accentBlue leading-none">{slide.subtitle}</h3>
-                <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">{slide.title}</h1>
-              </div>
-              <p className="text-xs md:text-sm text-gray-400 leading-relaxed font-medium">{slide.desc}</p>
-              <button 
-                onClick={() => navigate(slide.actionUrl)}
-                className="btn-glow-yellow text-xs font-bold px-6 py-3 flex items-center gap-1.5"
+        <AnimatePresence mode="wait">
+          {heroSlides.map((slide, index) => (
+            index === currentSlide && (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, scale: 1.02 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.6, ease: 'easeInOut' }}
+                className="absolute inset-0 flex items-center"
               >
-                <span>Shop This Deal</span>
-                <FiArrowRight />
-              </button>
-            </div>
-          </div>
-        ))}
+                {/* Background Image overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0B0B0B] via-[#0B0B0B]/80 to-transparent z-10" />
+                <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                
+                {/* Slide Content */}
+                <div className="relative z-20 max-w-lg px-8 md:px-16 space-y-4 md:space-y-6 text-left">
+                  <motion.span 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                    className="inline-block bg-primary/20 border border-primary/40 text-primary text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded"
+                  >
+                    {slide.badge}
+                  </motion.span>
+
+                  <motion.div 
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="space-y-2"
+                  >
+                    <h3 className="text-sm font-semibold uppercase tracking-widest text-accentBlue leading-none">{slide.subtitle}</h3>
+                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">{slide.title}</h1>
+                  </motion.div>
+
+                  <motion.p 
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    className="text-xs md:text-sm text-gray-400 leading-relaxed font-medium"
+                  >
+                    {slide.desc}
+                  </motion.p>
+
+                  <motion.button 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4, delay: 0.4 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate(slide.actionUrl)}
+                    className="btn-glow-yellow text-xs font-bold px-6 py-3 flex items-center gap-1.5"
+                  >
+                    <span>Shop This Deal</span>
+                    <FiArrowRight />
+                  </motion.button>
+                </div>
+              </motion.div>
+            )
+          ))}
+        </AnimatePresence>
         
         {/* Carousel controls */}
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
           className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/60 border border-white/10 text-white hover:text-primary rounded-full hover:bg-black/80 transition-all cursor-pointer"
         >
           <FiChevronLeft size={20} />
-        </button>
-        <button 
+        </motion.button>
+
+        <motion.button 
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
           className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/60 border border-white/10 text-white hover:text-primary rounded-full hover:bg-black/80 transition-all cursor-pointer"
         >
           <FiChevronRight size={20} />
-        </button>
+        </motion.button>
 
         {/* Carousel Indicators */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
@@ -125,7 +164,7 @@ const Home = () => {
             <button 
               key={idx}
               onClick={() => setCurrentSlide(idx)}
-              className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentSlide ? 'bg-primary w-8' : 'bg-white/30 hover:bg-white/50'}`}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${idx === currentSlide ? 'bg-primary w-8' : 'bg-white/30 hover:bg-white/50'}`}
             />
           ))}
         </div>
@@ -138,24 +177,32 @@ const Home = () => {
             <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">Featured Categories</h2>
             <p className="text-xs text-gray-500 mt-1">Discover items curated across major domains.</p>
           </div>
-          <Link to="/products" className="text-xs text-primary font-bold hover:underline flex items-center gap-1">
+          <Link to="/products" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
             <span>Explore All</span>
             <FiArrowRight />
           </Link>
         </div>
 
         <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-thin">
-          {CATEGORIES.map((cat) => (
-            <Link 
-              key={cat.id} 
-              to={`/category/${cat.id}`}
-              className="flex-shrink-0 flex flex-col items-center gap-3 group"
+          {CATEGORIES.map((cat, i) => (
+            <motion.div
+              key={cat.id}
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: i * 0.05 }}
+              whileHover={{ y: -4 }}
             >
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white/5 group-hover:border-primary/50 group-hover:shadow-yellow-glow transition-all duration-300">
-                <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              </div>
-              <span className="text-xs font-semibold text-gray-400 group-hover:text-white transition-all text-center">{cat.name}</span>
-            </Link>
+              <Link 
+                to={`/category/${cat.id}`}
+                className="flex-shrink-0 flex flex-col items-center gap-3 group"
+              >
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white/5 group-hover:border-primary/60 group-hover:shadow-yellow-glow transition-all duration-300">
+                  <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                </div>
+                <span className="text-xs font-semibold text-gray-400 group-hover:text-white transition-all text-center">{cat.name}</span>
+              </Link>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -164,7 +211,13 @@ const Home = () => {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Flash Sale Countdown Panel */}
-        <div className="lg:col-span-1 bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-3xl p-6 md:p-8 flex flex-col justify-between h-[360px]">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="lg:col-span-1 bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-3xl p-6 md:p-8 flex flex-col justify-between h-[360px]"
+        >
           <div className="space-y-4">
             <span className="bg-primary/20 border border-primary/40 text-primary text-[10px] font-extrabold px-2.5 py-1 rounded tracking-wider uppercase">Flash Sale</span>
             <h3 className="text-2xl font-black text-white">Deals of the Day</h3>
@@ -172,7 +225,7 @@ const Home = () => {
             
             {/* Clock Timer */}
             <div className="flex items-center gap-3 pt-2">
-              <FiClock className="text-primary text-xl" />
+              <FiClock className="text-primary text-xl animate-spin" style={{ animationDuration: '10s' }} />
               <div className="flex gap-1.5 text-center font-mono">
                 <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
                   {String(timeLeft.hours).padStart(2, '0')}
@@ -189,13 +242,15 @@ const Home = () => {
             </div>
           </div>
 
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => navigate('/products')}
             className="w-full btn-glow-yellow text-xs font-bold py-3 text-center"
           >
             Show All Flash Deals
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
         {/* Best deals preview grid */}
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -214,17 +269,19 @@ const Home = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {COUPONS.map((cp) => (
-            <div 
-              key={cp.code} 
+            <motion.div 
+              key={cp.code}
+              whileHover={{ y: -5, boxShadow: '0 0 25px rgba(255, 193, 7, 0.25)', borderColor: 'rgba(255, 193, 7, 0.4)' }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => copyCoupon(cp.code)}
-              className="bg-cardBg border border-white/5 hover:border-primary/30 p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all hover:shadow-yellow-glow duration-300 relative overflow-hidden"
+              className="bg-cardBg border border-white/5 p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 relative overflow-hidden group"
             >
               <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-darkBg" />
               <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-darkBg" />
               
               <div className="pl-4 space-y-1.5">
                 <span className="text-[10px] text-accentBlue font-bold uppercase tracking-wider">Coupon Code</span>
-                <h4 className="text-lg font-black text-white tracking-widest">{cp.code}</h4>
+                <h4 className="text-lg font-black text-white tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
                 <p className="text-[10px] text-gray-400">{cp.description}</p>
               </div>
 
@@ -234,7 +291,7 @@ const Home = () => {
                   {copiedCoupon === cp.code ? 'Copied' : 'Copy'}
                 </span>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -262,13 +319,15 @@ const Home = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 pt-4">
           {BRANDS.map((br) => (
-            <div 
+            <motion.div 
               key={br.id}
+              whileHover={{ y: -5, borderColor: 'rgba(255, 193, 7, 0.4)' }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => navigate(`/products?brand=${br.name}`)}
-              className="bg-cardBg border border-white/5 hover:border-primary/30 p-6 rounded-2xl flex items-center justify-center h-24 hover-lift cursor-pointer transition-all"
+              className="bg-cardBg border border-white/5 p-6 rounded-2xl flex items-center justify-center h-24 cursor-pointer transition-all duration-300 group"
             >
-              <img src={br.logoUrl} alt={br.name} className="max-h-10 max-w-full object-contain filter invert opacity-60 hover:opacity-100 transition-opacity" />
-            </div>
+              <img src={br.logoUrl} alt={br.name} className="max-h-10 max-w-full object-contain filter invert opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
+            </motion.div>
           ))}
         </div>
       </section>
@@ -281,8 +340,16 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((t) => (
-            <div key={t.id} className="bg-cardBg border border-white/5 p-6 rounded-2xl space-y-4">
+          {TESTIMONIALS.map((t, idx) => (
+            <motion.div 
+              key={t.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: idx * 0.1 }}
+              whileHover={{ y: -4 }}
+              className="bg-cardBg border border-white/5 hover:border-primary/30 p-6 rounded-2xl space-y-4 transition-all duration-300"
+            >
               <div className="flex items-center gap-3">
                 <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover border border-primary/20" />
                 <div>
@@ -300,7 +367,7 @@ const Home = () => {
               <p className="text-xs text-gray-400 leading-relaxed font-medium italic">
                 "{t.comment}"
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
