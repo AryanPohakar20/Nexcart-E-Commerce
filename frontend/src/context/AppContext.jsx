@@ -26,8 +26,8 @@ export const AppProvider = ({ children }) => {
       root.classList.add('light');
       body.classList.remove('dark');
       body.classList.add('light');
-      body.style.backgroundColor = '#F8F9FB';
-      body.style.color = '#111111';
+      body.style.backgroundColor = '#F8FAFC';
+      body.style.color = '#111827';
     }
   }, [theme]);
 
