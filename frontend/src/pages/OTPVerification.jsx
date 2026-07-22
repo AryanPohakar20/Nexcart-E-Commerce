@@ -1,15 +1,17 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+import authService from '../services/authService';
 import { FiUnlock, FiKey } from 'react-icons/fi';
 
 const OTPVerification = () => {
-  const { loginUser } = useContext(AppContext);
+  const { showToast } = useContext(AppContext);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email') || 'user@nexcart.com';
+  const purpose = searchParams.get('purpose') || 'emailVerification';
 
-  const [otp, setOtp] = useState(['', '', '', '']);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
 
   const handleChange = (element, index) => {
     if (isNaN(element.value)) return false;
@@ -21,12 +23,23 @@ const OTPVerification = () => {
     }
   };
 
-  const handleVerify = (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
     const otpCode = otp.join('');
-    if (otpCode.length === 4) {
-      loginUser(email, '123456', 'customer');
-      navigate('/');
+    if (otpCode.length === 6) {
+      try {
+        await authService.verifyOtp(email, otpCode, purpose);
+        showToast('Verification successful!', 'success');
+        if (purpose === 'passwordReset') {
+          navigate(`/reset-password?email=${encodeURIComponent(email)}&otp=${otpCode}`);
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        showToast(error.message || 'Invalid OTP', 'error');
+      }
+    } else {
+      showToast('Please enter all 6 digits', 'error');
     }
   };
 
@@ -42,7 +55,7 @@ const OTPVerification = () => {
 
         <div className="space-y-4">
           <p className="text-xs text-gray-400 leading-relaxed font-medium text-center">
-            We have sent a 4-digit code to <strong className="text-white">{email}</strong>. Enter it below to authorize.
+            We have sent a 6-digit code to <strong className="text-white">{email}</strong>. Enter it below to authorize.
           </p>
 
           <form onSubmit={handleVerify} className="space-y-6">
@@ -75,7 +88,7 @@ const OTPVerification = () => {
           <span>Didn't receive OTP? </span>
           <button 
             type="button"
-            onClick={() => setOtp(['', '', '', ''])} 
+            onClick={() => setOtp(['', '', '', '', '', ''])} 
             className="text-primary hover:underline font-bold"
           >
             Resend SMS

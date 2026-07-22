@@ -3,29 +3,36 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { FiLock, FiChevronRight, FiKey } from 'react-icons/fi';
 
+import authService from '../services/authService';
+
 const ResetPassword = () => {
-  const { loginUser, showToast } = useContext(AppContext);
+  const { showToast } = useContext(AppContext);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email') || 'user@nexcart.com';
+  const otp = searchParams.get('otp') || '';
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       showToast('Passwords do not match!', 'error');
       return;
     }
-    if (password.length < 6) {
-      showToast('Password must be at least 6 characters long', 'error');
+    if (password.length < 8) {
+      showToast('Password must be at least 8 characters long', 'error');
       return;
     }
     
-    showToast('Password Reset successfully!');
-    loginUser(email, password, 'customer');
-    navigate('/');
+    try {
+      await authService.resetPassword(email, otp, password);
+      showToast('Password reset successfully! Please log in.', 'success');
+      navigate('/login');
+    } catch (error) {
+      showToast(error.message || 'Failed to reset password', 'error');
+    }
   };
 
   return (

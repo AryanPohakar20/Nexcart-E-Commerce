@@ -340,7 +340,7 @@ const Navbar = () => {
                             key={r}
                             onClick={() => switchRole(r)}
                             className={`py-1 rounded border transition-all ${
-                              user.role === r 
+                              (user.role || '').toLowerCase() === r 
                                 ? 'bg-primary text-black border-primary font-black'
                                 : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:text-primary'
                             }`}

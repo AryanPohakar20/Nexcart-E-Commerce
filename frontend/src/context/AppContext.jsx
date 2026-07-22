@@ -35,17 +35,6 @@ export const AppProvider = ({ children }) => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Authentication State (Seeded with a mock premium user profile)
-  const [user, setUser] = useState({
-    name: 'Aravind Swamy',
-    email: 'aravind@nexcart.com',
-    role: 'customer', // customer, seller, admin
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80',
-    phone: '+91 98765 43210',
-    bio: 'Tech enthusiast and premium Shopper',
-    joined: 'Jan 2026'
-  });
-
   // Shopping States
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
@@ -207,34 +196,12 @@ export const AppProvider = ({ children }) => {
     setNotifications([]);
   };
 
-  // Login & Session Manager
-  const loginUser = (email, password, role = 'customer') => {
-    setUser({
-      name: role === 'customer' ? 'Aravind Swamy' : role === 'seller' ? 'Alpha Sellers Inc' : 'Super Admin',
-      email: email,
-      role: role,
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80',
-      phone: '+91 99999 88888',
-      bio: `Logged in as NexCart ${role}`,
-      joined: 'Jul 2026'
-    });
-    showToast(`Logged in successfully as ${role}!`);
-  };
-
-  const logoutUser = () => {
-    setUser(null);
-    clearCart();
-    showToast('Logged out successfully', 'info');
-  };
-
   return (
     <AppContext.Provider
       value={{
         theme,
         setTheme,
         toggleTheme,
-        user,
-        setUser,
         cart,
         setCart,
         wishlist,
@@ -258,9 +225,7 @@ export const AppProvider = ({ children }) => {
         applyCouponCode,
         removeCouponCode,
         markNotificationRead,
-        clearNotifications,
-        loginUser,
-        logoutUser
+        clearNotifications
       }}
     >
       {children}

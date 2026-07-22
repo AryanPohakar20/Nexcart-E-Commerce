@@ -2,6 +2,7 @@ import React, { useState, useContext, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
+import authService from '../services/authService';
 import NexCartLogo from '../components/NexCartLogo';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -280,16 +281,30 @@ const Register = () => {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      const nameParts = formData.fullName.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || ' ';
+
+      await authService.register(
+        firstName,
+        lastName,
+        formData.email,
+        formData.password,
+        formData.phone
+      );
+
       setIsSubmitting(false);
       setIsSuccess(true);
       showToast('Account created successfully! Redirecting...', 'success');
 
       setTimeout(() => {
-        loginUser(formData.email, formData.password, role);
-        navigate(`/otp-verification?email=${encodeURIComponent(formData.email)}`);
+        navigate(`/otp-verification?email=${encodeURIComponent(formData.email)}&purpose=emailVerification`);
       }, 800);
-    }, 1000);
+    } catch (error) {
+      setIsSubmitting(false);
+      showToast(error.message || 'Registration failed', 'error');
+    }
   };
 
   const handleSocialSignup = (provider) => {

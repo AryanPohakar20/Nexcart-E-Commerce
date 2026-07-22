@@ -43,6 +43,8 @@ import PrivacyPolicy from '../pages/PrivacyPolicy';
 import Terms from '../pages/Terms';
 import NotFound from '../pages/NotFound';
 
+import ProtectedRoute from './ProtectedRoute';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -56,14 +58,14 @@ const AppRoutes = () => {
         <Route path="search" element={<Search />} />
         <Route path="wishlist" element={<Wishlist />} />
         <Route path="cart" element={<Cart />} />
-        <Route path="checkout" element={<Checkout />} />
-        <Route path="order-success/:id" element={<OrderSuccess />} />
-        <Route path="orders" element={<Orders />} />
-        <Route path="order-details/:id" element={<OrderDetails />} />
-        <Route path="track-order/:id" element={<TrackOrder />} />
-        <Route path="profile" element={<UserProfile />} />
-        <Route path="addresses" element={<Addresses />} />
-        <Route path="notifications" element={<Notifications />} />
+        <Route path="checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+        <Route path="order-success/:id" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
+        <Route path="orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+        <Route path="order-details/:id" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
+        <Route path="track-order/:id" element={<ProtectedRoute><TrackOrder /></ProtectedRoute>} />
+        <Route path="profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+        <Route path="addresses" element={<ProtectedRoute><Addresses /></ProtectedRoute>} />
+        <Route path="notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
         <Route path="faq" element={<FAQ />} />
@@ -82,7 +84,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* 2. Seller Layout Routes */}
-      <Route path="/seller" element={<SellerLayout />}>
+      <Route path="/seller" element={<ProtectedRoute allowedRoles={['seller']}><SellerLayout /></ProtectedRoute>}>
         <Route path="dashboard" element={<SellerDashboard />} />
         <Route path="products" element={<SellerDashboard />} />
         <Route path="orders" element={<SellerDashboard />} />
@@ -93,7 +95,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* 3. Admin Layout Routes */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout /></ProtectedRoute>}>
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<AdminDashboard />} />
         <Route path="products" element={<AdminDashboard />} />

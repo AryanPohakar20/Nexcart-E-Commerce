@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
+import { AuthContext } from '../context/AuthContext';
 import NexCartLogo from '../components/NexCartLogo';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -21,7 +22,8 @@ import {
 } from 'react-icons/fi';
 
 const Login = () => {
-  const { loginUser, showToast, theme } = useContext(AppContext);
+  const { showToast, theme } = useContext(AppContext);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Form states
@@ -94,31 +96,51 @@ const Login = () => {
     }
 
     setIsSubmitting(true);
+    setErrors({});
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSuccess(true);
+    try {
+      const result = await login(email, password);
       
-      loginUser(email, password, role);
-
-      setTimeout(() => {
-        if (role === 'seller') navigate('/seller/dashboard');
-        else if (role === 'admin') navigate('/admin/dashboard');
-        else navigate('/');
-      }, 800);
-    }, 1000);
+      if (result.success) {
+        setIsSuccess(true);
+        showToast('Login successful!');
+        
+        setTimeout(() => {
+          const userRole = (result.user?.role || '').toLowerCase();
+          if (userRole === 'seller' || userRole === 'marketplaceseller') navigate('/seller/dashboard');
+          else if (userRole === 'admin') navigate('/admin/dashboard');
+          else navigate('/');
+        }, 800);
+      } else {
+        setIsSubmitting(false);
+        setErrors({ ...result.errors, email: result.message || 'Login failed' });
+        showToast(result.message || 'Invalid credentials', 'error');
+      }
+    } catch (error) {
+      setIsSubmitting(false);
+      showToast('Something went wrong. Please try again.', 'error');
+    }
   };
 
   const handleSocialLogin = (provider) => {
     setIsSubmitting(true);
     showToast(`Connecting to ${provider}...`);
-    setTimeout(() => {
+    setTimeout(async () => {
+      // For now, simulated social login using the same endpoint logic or fallback
+      const mockEmail = `user@${provider.toLowerCase()}.com`;
+      const result = await login(mockEmail, 'social123');
+      
       setIsSubmitting(false);
-      loginUser(`user@${provider.toLowerCase()}.com`, 'social123', role);
-      showToast(`Authenticated via ${provider}!`);
-      if (role === 'seller') navigate('/seller/dashboard');
-      else if (role === 'admin') navigate('/admin/dashboard');
-      else navigate('/');
+      
+      if (result.success) {
+        showToast(`Authenticated via ${provider}!`);
+        const userRole = (result.user?.role || '').toLowerCase();
+        if (userRole === 'seller' || userRole === 'marketplaceseller') navigate('/seller/dashboard');
+        else if (userRole === 'admin') navigate('/admin/dashboard');
+        else navigate('/');
+      } else {
+        showToast(`Authentication via ${provider} failed.`, 'error');
+      }
     }, 900);
   };
 

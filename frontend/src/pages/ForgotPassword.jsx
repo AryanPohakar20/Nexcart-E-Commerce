@@ -3,17 +3,23 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { FiMail, FiChevronRight } from 'react-icons/fi';
 
+import authService from '../services/authService';
+
 const ForgotPassword = () => {
   const { showToast } = useContext(AppContext);
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (email) {
-      showToast('Reset verification link sent to your mailbox!', 'info');
-      // Redirect to Reset screen (for demo)
-      navigate(`/reset-password?email=${encodeURIComponent(email)}`);
+      try {
+        await authService.forgotPassword(email);
+        showToast('Reset verification code sent to your mailbox!', 'info');
+        navigate(`/otp-verification?email=${encodeURIComponent(email)}&purpose=passwordReset`);
+      } catch (error) {
+        showToast(error.message || 'Failed to send reset code', 'error');
+      }
     }
   };
 
