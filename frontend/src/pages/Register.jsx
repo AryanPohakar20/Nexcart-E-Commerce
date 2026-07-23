@@ -645,7 +645,7 @@ const Register = () => {
                     aria-invalid={!!errors.fullName}
                     className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3 pl-10 pr-9 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:placeholder-gray-600 transition-all duration-300 focus:outline-none ${
                       errors.fullName && touched.fullName
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
                         : 'border-gray-200 dark:border-white/10 hover:border-primary/50 hover:shadow-yellow-glow focus:border-accentBlue focus:ring-1 focus:ring-accentBlue focus:shadow-blue-glow'
                     }`}
                   />
@@ -694,7 +694,7 @@ const Register = () => {
                     aria-invalid={!!errors.username}
                     className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3 pl-10 pr-9 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:placeholder-gray-600 transition-all duration-300 focus:outline-none ${
                       errors.username && touched.username
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
                         : 'border-gray-200 dark:border-white/10 hover:border-primary/50 hover:shadow-yellow-glow focus:border-accentBlue focus:ring-1 focus:ring-accentBlue focus:shadow-blue-glow'
                     }`}
                   />
@@ -743,7 +743,7 @@ const Register = () => {
                     aria-invalid={!!errors.email}
                     className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3 pl-10 pr-9 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:placeholder-gray-600 transition-all duration-300 focus:outline-none ${
                       errors.email && touched.email
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
                         : 'border-gray-200 dark:border-white/10 hover:border-primary/50 hover:shadow-yellow-glow focus:border-accentBlue focus:ring-1 focus:ring-accentBlue focus:shadow-blue-glow'
                     }`}
                   />
@@ -792,7 +792,7 @@ const Register = () => {
                     aria-invalid={!!errors.phone}
                     className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3 pl-10 pr-9 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:placeholder-gray-600 transition-all duration-300 focus:outline-none ${
                       errors.phone && touched.phone
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
                         : 'border-gray-200 dark:border-white/10 hover:border-primary/50 hover:shadow-yellow-glow focus:border-accentBlue focus:ring-1 focus:ring-accentBlue focus:shadow-blue-glow'
                     }`}
                   />
@@ -841,7 +841,7 @@ const Register = () => {
                     aria-invalid={!!errors.password}
                     className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3 pl-10 pr-10 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:placeholder-gray-600 transition-all duration-300 focus:outline-none ${
                       errors.password && touched.password
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
                         : 'border-gray-200 dark:border-white/10 hover:border-primary/50 hover:shadow-yellow-glow focus:border-accentBlue focus:ring-1 focus:ring-accentBlue focus:shadow-blue-glow'
                     }`}
                   />
@@ -952,7 +952,7 @@ const Register = () => {
                     aria-invalid={!!errors.confirmPassword}
                     className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3 pl-10 pr-10 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:placeholder-gray-600 transition-all duration-300 focus:outline-none ${
                       errors.confirmPassword && touched.confirmPassword
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
                         : 'border-gray-200 dark:border-white/10 hover:border-primary/50 hover:shadow-yellow-glow focus:border-accentBlue focus:ring-1 focus:ring-accentBlue focus:shadow-blue-glow'
                     }`}
                   />
@@ -1092,7 +1092,7 @@ const Register = () => {
                   onClick={handleRipple}
                   type="submit"
                   disabled={isSubmitting || isSuccess}
-                  className={`relative overflow-hidden w-full py-3.5 px-6 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-yellow-glow hover:shadow-yellow-glow-lg active:scale-[0.98] mt-2 ${
+                  className={`relative overflow-hidden w-full py-3.5 px-6 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-yellow-glow hover:shadow-yellow-glow-lg active:scale-[0.98] mt-2 btn-premium-interactive ${
                     isSuccess
                       ? 'bg-emerald-400 text-black shadow-emerald-500/50'
                       : 'bg-gradient-to-r from-primary via-amber-400 to-amber-500 text-black hover:brightness-110'

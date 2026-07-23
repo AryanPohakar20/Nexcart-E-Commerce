@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { FiHeart, FiShoppingCart, FiTrash2, FiChevronRight } from 'react-icons/fi';
 
@@ -45,60 +46,67 @@ const Wishlist = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {wishlist.map((prod) => (
-            <div 
-              key={prod.id} 
-              className="bg-cardBg border border-white/5 rounded-2xl p-4 flex flex-col justify-between hover-lift transition-all h-[360px]"
-            >
-              <div className="space-y-3">
-                {/* Product Photo */}
-                <div 
-                  onClick={() => navigate(`/product/${prod.id}`)}
-                  className="h-40 rounded-xl overflow-hidden bg-black/20 cursor-pointer"
-                >
-                  <img src={prod.image} alt={prod.title} className="w-full h-full object-cover" />
-                </div>
-                
-                {/* Info details */}
-                <div className="space-y-1">
-                  <span className="text-[10px] text-primary uppercase font-bold tracking-widest leading-none">{prod.brand}</span>
-                  <h3 
+        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <AnimatePresence mode="popLayout">
+            {wishlist.map((prod) => (
+              <motion.div 
+                key={prod.id} 
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-cardBg border border-white/5 rounded-2xl p-4 flex flex-col justify-between hover-lift transition-all h-[360px]"
+              >
+                <div className="space-y-3">
+                  {/* Product Photo */}
+                  <div 
                     onClick={() => navigate(`/product/${prod.id}`)}
-                    className="text-xs font-semibold text-white truncate hover:text-primary transition-all cursor-pointer"
+                    className="h-40 rounded-xl overflow-hidden bg-black/20 cursor-pointer"
                   >
-                    {prod.title}
-                  </h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-extrabold text-white">₹{prod.price.toLocaleString('en-IN')}</span>
-                    {prod.mrp > prod.price && (
-                      <span className="text-[10px] text-gray-500 line-through">₹{prod.mrp.toLocaleString('en-IN')}</span>
-                    )}
+                    <img src={prod.image} alt={prod.title} className="w-full h-full object-cover" />
+                  </div>
+                  
+                  {/* Info details */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-primary uppercase font-bold tracking-widest leading-none">{prod.brand}</span>
+                    <h3 
+                      onClick={() => navigate(`/product/${prod.id}`)}
+                      className="text-xs font-semibold text-white truncate hover:text-primary transition-all cursor-pointer"
+                    >
+                      {prod.title}
+                    </h3>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-sm font-extrabold text-white">₹{prod.price.toLocaleString('en-IN')}</span>
+                      {prod.mrp > prod.price && (
+                        <span className="text-[10px] text-gray-500 line-through">₹{prod.mrp.toLocaleString('en-IN')}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Action triggers */}
-              <div className="grid grid-cols-5 gap-2 pt-4 border-t border-white/5">
-                <button 
-                  onClick={() => handleAddToCart(prod)}
-                  disabled={prod.stock <= 0}
-                  className="col-span-4 btn-glow-yellow !py-2 text-[10px] text-black font-semibold rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-40"
-                >
-                  <FiShoppingCart size={11} />
-                  <span>Add Cart</span>
-                </button>
-                <button 
-                  onClick={() => toggleWishlist(prod)}
-                  className="col-span-1 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 hover:bg-red-500/20 active:scale-95 transition-all flex items-center justify-center"
-                  title="Remove from Wishlist"
-                >
-                  <FiTrash2 size={13} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                {/* Action triggers */}
+                <div className="grid grid-cols-5 gap-2 pt-4 border-t border-white/5">
+                  <button 
+                    onClick={() => handleAddToCart(prod)}
+                    disabled={prod.stock <= 0}
+                    className="col-span-4 btn-glow-yellow !py-2 text-[10px] text-black font-semibold rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-40 btn-premium-interactive"
+                  >
+                    <FiShoppingCart size={11} />
+                    <span>Add Cart</span>
+                  </button>
+                  <button 
+                    onClick={() => toggleWishlist(prod)}
+                    className="col-span-1 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 hover:bg-red-500/20 active:scale-95 transition-all flex items-center justify-center"
+                    title="Remove from Wishlist"
+                  >
+                    <FiTrash2 size={13} />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
     </div>
   );

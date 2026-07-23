@@ -3,12 +3,48 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { CATEGORIES, BRANDS, PRODUCTS, COUPONS, TESTIMONIALS } from '../constants/dummyData';
-import { FiChevronLeft, FiChevronRight, FiClock, FiStar, FiPercent, FiCopy, FiCheck, FiArrowRight } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiClock, FiStar, FiPercent, FiCopy, FiCheck, FiArrowRight, FiShoppingCart, FiHeart } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
 
 const Home = () => {
   const { addToCart, showToast } = useContext(AppContext);
   const navigate = useNavigate();
+
+  // Mouse position for Hero parallax
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setMousePos({ x: x * 20, y: y * 20 });
+  };
+  const handleMouseLeave = () => {
+    setMousePos({ x: 0, y: 0 });
+  };
+
+  // Text Reveal stagger variants
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1, 
+      transition: { 
+        staggerChildren: 0.12, 
+        delayChildren: 0.1 
+      } 
+    }
+  };
+
+  const staggerItem = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { 
+        duration: 0.5, 
+        ease: [0.16, 1, 0.3, 1] 
+      } 
+    }
+  };
   
   // Hero Slider State
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -75,14 +111,85 @@ const Home = () => {
     <div className="space-y-16">
       
       {/* 1. Hero Slider Module */}
-      <section className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-white/5 shadow-2xl bg-black/40">
+      <section 
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-white/5 shadow-2xl bg-black/40"
+      >
+        {/* Floating background gradient colors */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <motion.div 
+            animate={{ 
+              x: [0, 40, -40, 0], 
+              y: [0, -30, 30, 0],
+              scale: [1, 1.15, 0.9, 1]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-10 left-10 w-72 h-72 rounded-full bg-primary/10 blur-[80px]"
+          />
+          <motion.div 
+            animate={{ 
+              x: [0, -50, 50, 0], 
+              y: [0, 40, -40, 0],
+              scale: [1, 0.9, 1.1, 1]
+            }}
+            transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-accentBlue/10 blur-[90px]"
+          />
+          {/* Slowly moving light beam */}
+          <motion.div 
+            animate={{ 
+              x: ['-100%', '200%'],
+              opacity: [0.1, 0.3, 0.1]
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute inset-0 w-2/3 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"
+          />
+          {/* Glowing particles */}
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1.5 h-1.5 rounded-full bg-primary/40 shadow-yellow-glow"
+              style={{
+                left: `${15 + i * 14}%`,
+                top: `${20 + (i * 19) % 60}%`
+              }}
+              animate={{
+                y: [0, -25, 0],
+                opacity: [0.2, 0.8, 0.2],
+                scale: [1, 1.3, 1]
+              }}
+              transition={{
+                duration: 4 + (i % 3),
+                repeat: Infinity,
+                delay: i * 0.3
+              }}
+            />
+          ))}
+          {/* Floating shopping icons */}
+          <motion.div 
+            animate={{ y: [0, -12, 0], rotate: [0, 10, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-12 right-24 text-white/10 hidden md:block"
+          >
+            <FiShoppingCart size={40} />
+          </motion.div>
+          <motion.div 
+            animate={{ y: [0, 10, 0], rotate: [0, -8, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+            className="absolute bottom-16 left-32 text-white/10 hidden md:block"
+          >
+            <FiHeart size={36} />
+          </motion.div>
+        </div>
+
         <AnimatePresence mode="wait">
           {heroSlides.map((slide, index) => (
             index === currentSlide && (
               <motion.div 
                 key={index}
                 initial={{ opacity: 0, scale: 1.02 }}
-                animate={{ opacity: 1, scale: 1 }}
+                animate={{ opacity: 1, scale: 1, x: mousePos.x * 0.3, y: mousePos.y * 0.3 }}
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.6, ease: 'easeInOut' }}
                 className="absolute inset-0 flex items-center"
@@ -92,20 +199,22 @@ const Home = () => {
                 <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
                 
                 {/* Slide Content */}
-                <div className="relative z-20 max-w-lg px-8 md:px-16 space-y-4 md:space-y-6 text-left">
+                <motion.div 
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="relative z-20 max-w-lg px-8 md:px-16 space-y-4 md:space-y-6 text-left"
+                  style={{ x: mousePos.x * 0.1, y: mousePos.y * 0.1 }}
+                >
                   <motion.span 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
+                    variants={staggerItem}
                     className="inline-block bg-primary/20 border border-primary/40 text-primary text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded"
                   >
                     {slide.badge}
                   </motion.span>
 
                   <motion.div 
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
+                    variants={staggerItem}
                     className="space-y-2"
                   >
                     <h3 className="text-sm font-semibold uppercase tracking-widest text-accentBlue leading-none">{slide.subtitle}</h3>
@@ -113,27 +222,23 @@ const Home = () => {
                   </motion.div>
 
                   <motion.p 
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
+                    variants={staggerItem}
                     className="text-xs md:text-sm text-gray-400 leading-relaxed font-medium"
                   >
                     {slide.desc}
                   </motion.p>
 
                   <motion.button 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4, delay: 0.4 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    variants={staggerItem}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => navigate(slide.actionUrl)}
-                    className="btn-glow-yellow text-xs font-bold px-6 py-3 flex items-center gap-1.5"
+                    className="btn-glow-yellow text-xs font-bold px-6 py-3 flex items-center gap-1.5 btn-premium-interactive"
                   >
                     <span>Shop This Deal</span>
                     <FiArrowRight />
                   </motion.button>
-                </div>
+                </motion.div>
               </motion.div>
             )
           ))}

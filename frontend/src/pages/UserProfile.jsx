@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { FiUser, FiMail, FiPhone, FiCalendar, FiEdit2, FiCheck } from 'react-icons/fi';
 
@@ -35,9 +36,11 @@ const UserProfile = () => {
         
         {/* Left Column: Avatar & Summary Box */}
         <div className="lg:col-span-1 bg-cardBg border border-white/5 p-6 rounded-3xl flex flex-col items-center text-center space-y-4 h-fit">
-          <img 
+          <motion.img 
             src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80'} 
             alt="Avatar" 
+            animate={{ scale: [1, 1.04, 1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             className="w-24 h-24 rounded-full object-cover border-2 border-primary/40 shadow-yellow-glow"
           />
           <div>
@@ -142,7 +145,7 @@ const UserProfile = () => {
             {isEditing && (
               <button 
                 type="submit"
-                className="btn-glow-yellow !py-2.5 text-xs text-black font-bold flex items-center gap-1.5"
+                className="btn-glow-yellow !py-2.5 text-xs text-black font-bold flex items-center gap-1.5 btn-premium-interactive"
               >
                 <FiCheck />
                 <span>Save Changes</span>

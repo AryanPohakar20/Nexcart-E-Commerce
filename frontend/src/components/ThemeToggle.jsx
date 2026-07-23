@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { FiSun, FiMoon } from 'react-icons/fi';
 
@@ -35,11 +35,22 @@ const ThemeToggle = ({ className = '' }) => {
             : 'bg-white text-amber-500 translate-x-0 border border-slate-200'
         }`}
       >
-        {isDark ? (
-          <FiMoon className="text-xs font-bold" />
-        ) : (
-          <FiSun className="text-xs font-bold animate-spin-slow" />
-        )}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={isDark ? 'dark' : 'light'}
+            initial={{ rotate: -90, scale: 0.6, opacity: 0 }}
+            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+            exit={{ rotate: 90, scale: 0.6, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center justify-center w-full h-full"
+          >
+            {isDark ? (
+              <FiMoon className="text-xs font-bold" />
+            ) : (
+              <FiSun className="text-xs font-bold animate-spin-slow" />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </motion.div>
     </button>
   );

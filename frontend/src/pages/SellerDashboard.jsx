@@ -1,7 +1,40 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { SELLER_STATS, CATEGORIES } from '../constants/dummyData';
 import { FiDollarSign, FiShoppingBag, FiUsers, FiArchive, FiPlus, FiCheck, FiPackage, FiBarChart2 } from 'react-icons/fi';
+
+const CountUp = ({ to, duration = 1.2, formatter = (val) => val }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = to;
+    if (start === end) return;
+
+    const totalMiliseconds = duration * 1000;
+    const intervalTime = 30; // ms
+    const totalSteps = Math.round(totalMiliseconds / intervalTime);
+    const increment = (end - start) / totalSteps;
+
+    let currentStep = 0;
+    const timer = setInterval(() => {
+      currentStep++;
+      setCount((prev) => {
+        const nextVal = Math.round(start + increment * currentStep);
+        if (currentStep >= totalSteps) {
+          clearInterval(timer);
+          return end;
+        }
+        return nextVal;
+      });
+    }, intervalTime);
+
+    return () => clearInterval(timer);
+  }, [to, duration]);
+
+  return <span>{formatter(count)}</span>;
+};
 
 const SellerDashboard = () => {
   const { showToast } = useContext(AppContext);
@@ -77,7 +110,9 @@ const SellerDashboard = () => {
                 <span>Revenue</span>
                 <FiDollarSign className="text-primary text-base" />
               </div>
-              <p className="text-2xl font-black text-white">₹{(SELLER_STATS.revenue).toLocaleString('en-IN')}</p>
+              <p className="text-2xl font-black text-white">
+                <CountUp to={SELLER_STATS.revenue} formatter={(val) => "₹" + val.toLocaleString('en-IN')} />
+              </p>
               <span className="text-[10px] text-green-400 font-bold">+18.4% this month</span>
             </div>
 
@@ -86,7 +121,9 @@ const SellerDashboard = () => {
                 <span>Total Orders</span>
                 <FiShoppingBag className="text-primary text-base" />
               </div>
-              <p className="text-2xl font-black text-white">{SELLER_STATS.ordersCount}</p>
+              <p className="text-2xl font-black text-white">
+                <CountUp to={SELLER_STATS.ordersCount} />
+              </p>
               <span className="text-[10px] text-green-400 font-bold">+12 new today</span>
             </div>
 
@@ -95,7 +132,9 @@ const SellerDashboard = () => {
                 <span>Customers</span>
                 <FiUsers className="text-primary text-base" />
               </div>
-              <p className="text-2xl font-black text-white">{SELLER_STATS.customersCount}</p>
+              <p className="text-2xl font-black text-white">
+                <CountUp to={SELLER_STATS.customersCount} />
+              </p>
               <span className="text-[10px] text-primary font-bold">98 premium buyers</span>
             </div>
 
@@ -104,7 +143,9 @@ const SellerDashboard = () => {
                 <span>Inventory</span>
                 <FiArchive className="text-primary text-base" />
               </div>
-              <p className="text-2xl font-black text-white">{SELLER_STATS.inventoryCount}</p>
+              <p className="text-2xl font-black text-white">
+                <CountUp to={SELLER_STATS.inventoryCount} />
+              </p>
               <span className="text-[10px] text-yellow-500 font-bold">14 low stock items</span>
             </div>
           </div>
@@ -126,8 +167,10 @@ const SellerDashboard = () => {
                       ₹{Math.round(item.sales / 1000)}K
                     </div>
                     {/* Dynamic height based on sale figures */}
-                    <div 
-                      style={{ height: `${(item.sales / 420000) * 100}%` }}
+                    <motion.div 
+                      initial={{ height: 0 }}
+                      animate={{ height: `${(item.sales / 420000) * 100}%` }}
+                      transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
                       className="w-full bg-primary/20 group-hover:bg-primary border border-primary/20 group-hover:border-primary rounded-t-lg transition-all cursor-pointer min-h-[10px]"
                     />
                     <span className="text-[10px] font-bold text-gray-400 pb-2">{item.month}</span>

@@ -28,6 +28,7 @@ const ProductCard = ({ product }) => {
   return (
     <>
       {/* Product Display Card */}
+      {/* Product Display Card */}
       <motion.div 
         onClick={handleCardClick}
         initial={{ opacity: 0, y: 16 }}
@@ -45,7 +46,7 @@ const ProductCard = ({ product }) => {
           <img 
             src={product.image} 
             alt={product.title} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
           />
 
           {/* Discount Badge */}
@@ -56,7 +57,7 @@ const ProductCard = ({ product }) => {
           )}
 
           {/* Action Floating Buttons */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300 z-20">
             <motion.button 
               whileHover={{ scale: 1.15, rotate: 6 }}
               whileTap={{ scale: 0.9 }}
@@ -109,7 +110,7 @@ const ProductCard = ({ product }) => {
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
               <span>{product.brand}</span>
-              <span className={hasStock ? 'text-green-500' : 'text-red-500'}>
+              <span className={hasStock ? 'text-green-500 animate-pulse' : 'text-red-500'}>
                 {hasStock ? 'In Stock' : 'Sold Out'}
               </span>
             </div>
@@ -131,17 +132,17 @@ const ProductCard = ({ product }) => {
           {/* Pricing area */}
           <div className="pt-2 border-t border-white/5 space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-extrabold text-white">₹{product.price.toLocaleString('en-IN')}</span>
+              <span className="text-lg font-extrabold text-white group-hover:text-primary transition-colors duration-300">₹{product.price.toLocaleString('en-IN')}</span>
               {product.mrp > product.price && (
                 <span className="text-xs text-gray-500 line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
               )}
             </div>
 
-            {/* Bottom Call To Action */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Bottom Call To Action - Slide Up on Hover */}
+            <div className="grid grid-cols-2 gap-2 transform translate-y-1 group-hover:translate-y-0 transition-transform duration-350">
               <motion.button 
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={(e) => { e.stopPropagation(); if (hasStock) addToCart(product, 1); }}
                 disabled={!hasStock}
                 className="card-action-btn py-2 border border-white/10 hover:border-primary/40 rounded-lg text-xs font-semibold text-gray-300 hover:text-primary transition-all flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -151,11 +152,11 @@ const ProductCard = ({ product }) => {
               </motion.button>
               
               <motion.button 
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={(e) => { e.stopPropagation(); handleBuyNow(); }}
                 disabled={!hasStock}
-                className="card-action-btn btn-glow-yellow !py-2 text-xs text-black font-semibold rounded-lg flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                className="card-action-btn btn-glow-yellow !py-2 text-xs text-black font-semibold rounded-lg flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none btn-premium-interactive"
               >
                 <span>Buy Now</span>
               </motion.button>
@@ -175,10 +176,10 @@ const ProductCard = ({ product }) => {
             className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
               className="glass-card max-w-2xl w-full rounded-2xl border border-white/10 overflow-hidden relative"
             >
               
@@ -223,7 +224,7 @@ const ProductCard = ({ product }) => {
                         whileTap={{ scale: 0.95 }}
                         onClick={() => { handleBuyNow(); setIsQuickViewOpen(false); }}
                         disabled={!hasStock}
-                        className="btn-glow-yellow !py-2.5 text-xs text-black font-bold"
+                        className="btn-glow-yellow !py-2.5 text-xs text-black font-bold btn-premium-interactive"
                       >
                         Buy Now
                       </motion.button>

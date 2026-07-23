@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { FiTrash2, FiShoppingBag, FiTag, FiX, FiChevronRight } from 'react-icons/fi';
 import { COUPONS } from '../constants/dummyData';
@@ -86,65 +87,98 @@ const Cart = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Cart items List */}
-          <div className="lg:col-span-2 space-y-4">
-            {cart.map((item) => (
-              <div 
-                key={item.product.id} 
-                className="bg-cardBg border border-white/5 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
-              >
-                {/* Product Thumbnail & Details */}
-                <div className="flex items-center gap-4 w-full sm:w-auto">
-                  <img src={item.product.image} alt={item.product.title} className="w-20 h-20 rounded-xl object-cover bg-black/20 flex-shrink-0" />
-                  <div className="text-left space-y-1">
-                    <span className="text-[9px] text-primary uppercase font-extrabold tracking-widest">{item.product.brand}</span>
-                    <h3 
-                      onClick={() => navigate(`/product/${item.product.id}`)}
-                      className="text-xs font-bold text-white line-clamp-1 hover:text-primary transition-all cursor-pointer"
-                    >
-                      {item.product.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 font-bold">₹{item.product.price.toLocaleString('en-IN')}</p>
-                  </div>
-                </div>
-
-                {/* Quantity adjustments & Subtotal */}
-                <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
-                  
-                  {/* Quantity Box */}
-                  <div className="flex items-center bg-white/5 border border-white/10 rounded-lg overflow-hidden">
-                    <button 
-                      onClick={() => updateCartQty(item.product.id, item.quantity - 1)}
-                      className="px-2.5 py-1 hover:bg-white/10 text-white font-bold transition-all text-xs"
-                    >
-                      -
-                    </button>
-                    <span className="px-3 py-1 text-xs font-bold text-white text-center min-w-[28px]">{item.quantity}</span>
-                    <button 
-                      onClick={() => updateCartQty(item.product.id, item.quantity + 1)}
-                      className="px-2.5 py-1 hover:bg-white/10 text-white font-bold transition-all text-xs"
-                    >
-                      +
-                    </button>
+          <motion.div layout className="lg:col-span-2 space-y-4">
+            <AnimatePresence mode="popLayout">
+              {cart.map((item) => (
+                <motion.div 
+                  key={item.product.id} 
+                  layout
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: 30 }}
+                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                  className="bg-cardBg border border-white/5 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
+                >
+                  {/* Product Thumbnail & Details */}
+                  <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <img src={item.product.image} alt={item.product.title} className="w-20 h-20 rounded-xl object-cover bg-black/20 flex-shrink-0" />
+                    <div className="text-left space-y-1">
+                      <span className="text-[9px] text-primary uppercase font-extrabold tracking-widest">{item.product.brand}</span>
+                      <h3 
+                        onClick={() => navigate(`/product/${item.product.id}`)}
+                        className="text-xs font-bold text-white line-clamp-1 hover:text-primary transition-all cursor-pointer"
+                      >
+                        {item.product.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 font-bold">₹{item.product.price.toLocaleString('en-IN')}</p>
+                    </div>
                   </div>
 
-                  {/* Subtotal */}
-                  <div className="text-right min-w-[80px]">
-                    <p className="text-xs font-extrabold text-white">₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</p>
+                  {/* Quantity adjustments & Subtotal */}
+                  <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
+                    
+                    {/* Quantity Box */}
+                    <div className="flex items-center bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+                      <motion.button 
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.85 }}
+                        onClick={() => updateCartQty(item.product.id, item.quantity - 1)}
+                        className="px-2.5 py-1 hover:bg-white/10 text-white font-bold transition-all text-xs"
+                      >
+                        -
+                      </motion.button>
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.span 
+                          key={item.quantity}
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 0.2 }}
+                          className="px-3 py-1 text-xs font-bold text-white text-center min-w-[28px] inline-block"
+                        >
+                          {item.quantity}
+                        </motion.span>
+                      </AnimatePresence>
+                      <motion.button 
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.85 }}
+                        onClick={() => updateCartQty(item.product.id, item.quantity + 1)}
+                        className="px-2.5 py-1 hover:bg-white/10 text-white font-bold transition-all text-xs"
+                      >
+                        +
+                      </motion.button>
+                    </div>
+
+                    {/* Subtotal */}
+                    <div className="text-right min-w-[80px]">
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.p 
+                          key={item.quantity}
+                          initial={{ opacity: 0.8 }}
+                          animate={{ opacity: 1, scale: [1, 1.05, 1] }}
+                          transition={{ duration: 0.25 }}
+                          className="text-xs font-extrabold text-white"
+                        >
+                          ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
+                        </motion.p>
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Remove CTA */}
+                    <motion.button 
+                      whileHover={{ scale: 1.08, rotate: 5 }}
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => removeFromCart(item.product.id)}
+                      className="p-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg transition-all"
+                    >
+                      <FiTrash2 size={13} />
+                    </motion.button>
+
                   </div>
 
-                  {/* Remove CTA */}
-                  <button 
-                    onClick={() => removeFromCart(item.product.id)}
-                    className="p-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg transition-all"
-                  >
-                    <FiTrash2 size={13} />
-                  </button>
-
-                </div>
-
-              </div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
 
           {/* Right Column: Checkout Pricing Summary sidebar */}
           <div className="lg:col-span-1 space-y-6">
@@ -175,7 +209,7 @@ const Cart = () => {
                     onChange={(e) => setCouponInput(e.target.value)}
                     className="flex-grow bg-black/40 border border-white/10 rounded-lg p-2 px-3 text-xs focus:outline-none focus:border-primary/50 text-white placeholder-gray-500"
                   />
-                  <button type="submit" className="btn-glow-yellow !px-4 !py-2 text-xs">
+                  <button type="submit" className="btn-glow-yellow !px-4 !py-2 text-xs btn-premium-interactive">
                     Apply
                   </button>
                 </form>
@@ -227,13 +261,23 @@ const Cart = () => {
                 )}
                 <div className="flex justify-between py-3 text-sm font-bold text-white">
                   <span>Grand Total</span>
-                  <span className="text-primary text-base">₹{grandTotal.toLocaleString('en-IN')}</span>
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.span 
+                      key={grandTotal}
+                      initial={{ opacity: 0.8, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: [1, 1.05, 1] }}
+                      transition={{ duration: 0.3 }}
+                      className="text-primary text-base font-black shadow-yellow-glow"
+                    >
+                      ₹{grandTotal.toLocaleString('en-IN')}
+                    </motion.span>
+                  </AnimatePresence>
                 </div>
               </div>
 
               <button 
                 onClick={handleCheckout}
-                className="w-full btn-glow-yellow text-xs font-bold py-3 text-center"
+                className="w-full btn-glow-yellow text-xs font-bold py-3 text-center btn-premium-interactive"
               >
                 Secure Checkout
               </button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
 import Navbar from '../components/Navbar';
@@ -21,6 +21,29 @@ const RootLayout = () => {
   const location = useLocation();
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
+  // State for simulated navigation progress bar
+  const [navProgress, setNavProgress] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  useEffect(() => {
+    setIsNavigating(true);
+    setNavProgress(15);
+    const t1 = setTimeout(() => setNavProgress(55), 100);
+    const t2 = setTimeout(() => setNavProgress(85), 250);
+    const t3 = setTimeout(() => {
+      setNavProgress(100);
+      setTimeout(() => {
+        setIsNavigating(false);
+      }, 150);
+    }, 450);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [location.pathname]);
+
   // Scroll Progress Bar calculation
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -34,7 +57,7 @@ const RootLayout = () => {
 
   if (isAuthPage) {
     return (
-      <div className="min-h-screen bg-[#070B12] text-white selection:bg-primary selection:text-black relative overflow-x-hidden">
+      <div className="min-h-screen bg-[#070B12] text-white selection:bg-primary selection:text-black relative overflow-x-hidden mesh-gradient-bg">
         <ScrollToTop />
         
         {/* Top Scroll Progress Bar */}
@@ -43,21 +66,34 @@ const RootLayout = () => {
           style={{ scaleX }}
         />
 
+        {/* Simulated navigation progress bar */}
+        <AnimatePresence>
+          {isNavigating && (
+            <motion.div
+              initial={{ width: '0%', opacity: 1 }}
+              animate={{ width: `${navProgress}%` }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed top-0 left-0 h-1 bg-gradient-to-r from-primary via-amber-400 to-accentBlue z-[101]"
+            />
+          )}
+        </AnimatePresence>
+
         <main className="min-h-screen w-full flex flex-col justify-between">
           <Outlet />
         </main>
 
-        {/* Toast Alert System Stack */}
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-md w-full pointer-events-none">
+        {/* Toast Alert System Stack (Top-Right) */}
+        <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
           <AnimatePresence>
             {toasts.map((toast) => (
               <motion.div
                 key={toast.id}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                className={`pointer-events-auto flex items-center justify-between p-4 rounded-xl border glass-card shadow-2xl transition-all ${
+                initial={{ opacity: 0, x: 50, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 50, scale: 0.95 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                className={`pointer-events-auto flex flex-col p-4 rounded-xl border glass-card shadow-2xl transition-all relative overflow-hidden ${
                   toast.type === 'error'
                     ? 'border-red-500/30 text-red-400'
                     : toast.type === 'info'
@@ -71,6 +107,14 @@ const RootLayout = () => {
                   {toast.type === 'success' && <FiCheckCircle className="text-xl flex-shrink-0" />}
                   <span className="text-sm font-medium text-white">{toast.message}</span>
                 </div>
+                <motion.div 
+                  initial={{ width: '100%' }}
+                  animate={{ width: '0%' }}
+                  transition={{ duration: 3.0, ease: 'linear' }}
+                  className={`absolute bottom-0 left-0 h-[2px] ${
+                    toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-accentBlue' : 'bg-primary'
+                  }`}
+                />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -80,7 +124,7 @@ const RootLayout = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-black transition-colors duration-400 relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-black transition-colors duration-400 relative overflow-x-hidden mesh-gradient-bg">
       {/* Scroll manager */}
       <ScrollToTop />
       
@@ -89,6 +133,19 @@ const RootLayout = () => {
         className="fixed top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-primary via-amber-400 to-accentBlue origin-left z-[100]"
         style={{ scaleX }}
       />
+
+      {/* Simulated navigation progress bar */}
+      <AnimatePresence>
+        {isNavigating && (
+          <motion.div
+            initial={{ width: '0%', opacity: 1 }}
+            animate={{ width: `${navProgress}%` }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-primary via-amber-400 to-accentBlue z-[101]"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Global Background Ambient Glow Orbs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-30 dark:opacity-40">
@@ -129,10 +186,10 @@ const RootLayout = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -14 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -16, filter: 'blur(8px)' }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
           >
             <Outlet />
           </motion.div>
@@ -142,17 +199,17 @@ const RootLayout = () => {
       {/* Footer */}
       <Footer />
 
-      {/* Toast Alert System Stack */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-md w-full pointer-events-none">
+      {/* Toast Alert System Stack (Top-Right) */}
+      <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
         <AnimatePresence>
           {toasts.map((toast) => (
             <motion.div
               key={toast.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-              className={`pointer-events-auto flex items-center justify-between p-4 rounded-xl border glass-card shadow-2xl transition-all ${
+              initial={{ opacity: 0, x: 50, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 50, scale: 0.95 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className={`pointer-events-auto flex flex-col p-4 rounded-xl border glass-card shadow-2xl transition-all relative overflow-hidden ${
                 toast.type === 'error'
                   ? 'border-red-500/30 text-red-400'
                   : toast.type === 'info'
@@ -166,6 +223,14 @@ const RootLayout = () => {
                 {toast.type === 'success' && <FiCheckCircle className="text-xl flex-shrink-0" />}
                 <span className="text-sm font-medium text-white">{toast.message}</span>
               </div>
+              <motion.div 
+                initial={{ width: '100%' }}
+                animate={{ width: '0%' }}
+                transition={{ duration: 3.0, ease: 'linear' }}
+                className={`absolute bottom-0 left-0 h-[2px] ${
+                  toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-accentBlue' : 'bg-primary'
+                }`}
+              />
             </motion.div>
           ))}
         </AnimatePresence>
