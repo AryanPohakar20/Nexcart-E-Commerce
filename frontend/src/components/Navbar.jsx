@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
@@ -27,6 +27,22 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState('EN / USD');
 
+  // Premium UI scroll & focus states
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 15) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Stats
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const wishlistCount = wishlist.length;
@@ -54,12 +70,16 @@ const Navbar = () => {
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed top-0 left-0 right-0 z-50 glass-navbar transition-all duration-300"
+      className={`fixed top-0 left-0 right-0 z-50 glass-navbar transition-all duration-500 ${
+        isScrolled ? 'backdrop-blur-2xl shadow-xl' : 'backdrop-blur-md shadow-sm'
+      }`}
     >
       
       {/* Primary Main Navbar Header */}
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 border-b border-gray-200/50 dark:border-white/5">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-4 sm:gap-6">
+        <div className={`flex items-center justify-between transition-all duration-500 gap-4 sm:gap-6 ${
+          isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
+        }`}>
           
           {/* Left: Mobile Toggle & Floating Brand Logo */}
           <div className="flex items-center gap-3 flex-shrink-0">
@@ -84,73 +104,112 @@ const Navbar = () => {
           </div>
 
           {/* Center: Wide & Prominent Search Bar (Desktop & Tablet) */}
-          <form 
-            onSubmit={handleSearch} 
-            className="hidden md:flex flex-1 max-w-2xl h-11 bg-gray-100/80 dark:bg-white/[0.06] rounded-full border border-gray-200 dark:border-white/10 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-hidden transition-all shadow-inner items-center px-1.5 group/search"
-          >
-            {/* Inline Category Dropdown Selector */}
-            <div className="relative flex-shrink-0">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:border-primary/50 transition-all"
-              >
-                <span>{selectedCategory === 'All' ? 'All' : selectedCategory}</span>
-                <FiChevronDown className={`text-xs transition-transform duration-300 ${isCategoryOpen ? 'rotate-180 text-primary' : ''}`} />
-              </motion.button>
+          <div className="hidden md:block flex-1 max-w-2xl relative">
+            <motion.form 
+              animate={{ maxWidth: isSearchFocused ? '800px' : '640px' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              onSubmit={handleSearch} 
+              className="flex h-11 bg-gray-100/80 dark:bg-white/[0.06] rounded-full border border-gray-200 dark:border-white/10 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-visible transition-all shadow-inner items-center px-1.5 group/search w-full"
+            >
+              {/* Inline Category Dropdown Selector */}
+              <div className="relative flex-shrink-0">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:border-primary/50 transition-all"
+                >
+                  <span>{selectedCategory === 'All' ? 'All' : selectedCategory}</span>
+                  <FiChevronDown className={`text-xs transition-transform duration-300 ${isCategoryOpen ? 'rotate-180 text-primary' : ''}`} />
+                </motion.button>
 
-              <AnimatePresence>
-                {isCategoryOpen && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 mt-2 w-52 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl z-50"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedCategory('All'); setIsCategoryOpen(false); }}
-                      className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
+                <AnimatePresence>
+                  {isCategoryOpen && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 mt-2 w-52 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl z-50"
                     >
-                      <span>All Categories</span>
-                      {selectedCategory === 'All' && <FiCheckCircle className="text-primary" />}
-                    </button>
-                    {CATEGORIES.map(cat => (
                       <button
-                        key={cat.id}
                         type="button"
-                        onClick={() => { setSelectedCategory(cat.name); setIsCategoryOpen(false); }}
+                        onClick={() => { setSelectedCategory('All'); setIsCategoryOpen(false); }}
                         className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
                       >
-                        <span>{cat.name}</span>
-                        {selectedCategory === cat.name && <FiCheckCircle className="text-primary" />}
+                        <span>All Categories</span>
+                        {selectedCategory === 'All' && <FiCheckCircle className="text-primary" />}
+                      </button>
+                      {CATEGORIES.map(cat => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => { setSelectedCategory(cat.name); setIsCategoryOpen(false); }}
+                          className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
+                        >
+                          <span>{cat.name}</span>
+                          {selectedCategory === cat.name && <FiCheckCircle className="text-primary" />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <input 
+                type="text" 
+                placeholder="Search AI recommendations, electronics, fashion..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                className="flex-grow bg-transparent text-xs sm:text-sm px-3 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
+              />
+              
+              <motion.button 
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                type="submit" 
+                className="w-9 h-9 bg-gradient-to-r from-primary to-amber-400 text-black hover:brightness-110 rounded-full transition-all flex items-center justify-center font-bold flex-shrink-0 shadow-sm"
+                aria-label="Search"
+              >
+                <FiSearch className="text-base stroke-[2.5] group-focus-within/search:rotate-12 transition-transform duration-300" />
+              </motion.button>
+            </motion.form>
+
+            {/* Premium Sliding Suggestions / Recent Searches Dropdown */}
+            <AnimatePresence>
+              {isSearchFocused && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left space-y-3"
+                >
+                  <div className="flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                    <span>Recent Searches</span>
+                    <span className="cursor-pointer hover:text-primary transition-colors">Clear</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {['Smart Watch', 'Sony WH-1000XM5', 'Running Shoes', 'iPhone 15', 'MacBook Pro'].map(keyword => (
+                      <button
+                        key={keyword}
+                        type="button"
+                        onMouseDown={() => {
+                          setSearchQuery(keyword);
+                          navigate(`/search?q=${encodeURIComponent(keyword)}&cat=${selectedCategory}`);
+                        }}
+                        className="bg-gray-100 dark:bg-white/10 hover:bg-primary/20 hover:text-primary text-xs px-3 py-1.5 rounded-full transition-colors text-gray-700 dark:text-gray-200 font-medium"
+                      >
+                        {keyword}
                       </button>
                     ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <input 
-              type="text" 
-              placeholder="Search AI recommendations, electronics, fashion..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-grow bg-transparent text-xs sm:text-sm px-3 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
-            />
-            
-            <motion.button 
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.92 }}
-              type="submit" 
-              className="w-9 h-9 bg-gradient-to-r from-primary to-amber-400 text-black hover:brightness-110 rounded-full transition-all flex items-center justify-center font-bold flex-shrink-0 shadow-sm"
-              aria-label="Search"
-            >
-              <FiSearch className="text-base stroke-[2.5] group-focus-within/search:rotate-12 transition-transform duration-300" />
-            </motion.button>
-          </form>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Right: Actions (Seller CTA, Theme, Wishlist, Cart, Notifications, Profile) */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
@@ -170,7 +229,13 @@ const Navbar = () => {
             <ThemeToggle />
 
             {/* Wishlist Icon */}
-            <motion.div whileHover={{ scale: 1.1, rotate: 6 }} whileTap={{ scale: 0.9 }}>
+            <motion.div 
+              key={`wish-${wishlistCount}`}
+              animate={{ scale: [1, 1.25, 1], rotate: wishlistCount > 0 ? [0, 8, -8, 0] : 0 }}
+              transition={{ duration: 0.4 }}
+              whileHover={{ scale: 1.1, rotate: 6 }} 
+              whileTap={{ scale: 0.9 }}
+            >
               <Link
                 to="/wishlist"
                 className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-red-500 hover:bg-red-500/10 transition-all group block"
@@ -191,7 +256,13 @@ const Navbar = () => {
             </motion.div>
 
             {/* Cart Icon */}
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            <motion.div 
+              key={`cart-${cartCount}`}
+              animate={{ scale: [1, 1.25, 1], y: cartCount > 0 ? [0, -6, 0] : 0 }}
+              transition={{ duration: 0.4 }}
+              whileHover={{ scale: 1.1 }} 
+              whileTap={{ scale: 0.9 }}
+            >
               <Link
                 to="/cart"
                 className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group block"
@@ -201,7 +272,6 @@ const Navbar = () => {
                 <FiShoppingCart className="text-lg sm:text-xl transition-transform" />
                 {cartCount > 0 && (
                   <motion.span 
-                    key={cartCount}
                     initial={{ scale: 0 }}
                     animate={{ scale: [0.8, 1.25, 1] }}
                     transition={{ duration: 0.3 }}
@@ -216,6 +286,9 @@ const Navbar = () => {
             {/* Notifications Icon */}
             <div className="relative">
               <motion.button
+                key={`notif-${unreadNotifications}`}
+                animate={{ rotate: unreadNotifications > 0 ? [0, 15, -15, 10, -10, 0] : 0 }}
+                transition={{ duration: 0.6 }}
                 whileHover={{ scale: 1.1, rotate: 12 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}

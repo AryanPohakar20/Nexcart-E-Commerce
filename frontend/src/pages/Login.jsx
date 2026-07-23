@@ -395,7 +395,7 @@ const Login = () => {
                     aria-invalid={!!errors.email}
                     className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3.5 pl-11 pr-4 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 focus:outline-none ${
                       errors.email && touched.email
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
                         : 'border-gray-200 dark:border-white/10 hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-yellow-glow'
                     }`}
                   />
@@ -444,7 +444,7 @@ const Login = () => {
                     aria-invalid={!!errors.password}
                     className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3.5 pl-11 pr-11 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 focus:outline-none ${
                       errors.password && touched.password
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
                         : 'border-gray-200 dark:border-white/10 hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-yellow-glow'
                     }`}
                   />
@@ -505,7 +505,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || isSuccess}
-                className={`w-full py-3.5 px-6 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-yellow-glow hover:shadow-yellow-glow-lg active:scale-[0.98] ${
+                className={`w-full py-3.5 px-6 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-yellow-glow hover:shadow-yellow-glow-lg active:scale-[0.98] btn-premium-interactive ${
                   isSuccess
                     ? 'bg-emerald-400 text-black shadow-emerald-500/50'
                     : 'bg-gradient-to-r from-primary via-amber-400 to-amber-500 text-black hover:brightness-110'

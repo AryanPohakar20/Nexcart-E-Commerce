@@ -1,5 +1,6 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { FiMapPin, FiCreditCard, FiDollarSign, FiPlus, FiChevronRight, FiCheck } from 'react-icons/fi';
 
@@ -108,6 +109,42 @@ const Checkout = () => {
         <p className="text-xs text-gray-500 mt-1">Select shipping details and enter your payment information.</p>
       </div>
 
+      {/* Step Progress Tracker */}
+      <div className="max-w-xl mx-auto flex items-center justify-between pb-6 pt-2">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-primary text-black font-black flex items-center justify-center text-xs shadow-yellow-glow">1</div>
+          <span className="text-xs font-bold text-white">Shipping</span>
+        </div>
+        <div className="flex-1 h-[2px] bg-white/10 mx-4 relative overflow-hidden">
+          <motion.div 
+            initial={{ width: '0%' }}
+            animate={{ width: selectedAddrId ? '100%' : '0%' }}
+            transition={{ duration: 0.5 }}
+            className="absolute top-0 left-0 h-full bg-primary"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-7 h-7 rounded-full font-black flex items-center justify-center text-xs transition-all ${
+            selectedAddrId ? 'bg-primary text-black shadow-yellow-glow' : 'bg-white/10 text-gray-500'
+          }`}>2</div>
+          <span className={`text-xs font-bold ${selectedAddrId ? 'text-white' : 'text-gray-500'}`}>Payment</span>
+        </div>
+        <div className="flex-1 h-[2px] bg-white/10 mx-4 relative overflow-hidden">
+          <motion.div 
+            initial={{ width: '0%' }}
+            animate={{ width: selectedAddrId && paymentMethod ? '100%' : '0%' }}
+            transition={{ duration: 0.5 }}
+            className="absolute top-0 left-0 h-full bg-primary"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-7 h-7 rounded-full font-black flex items-center justify-center text-xs transition-all ${
+            selectedAddrId && paymentMethod ? 'bg-primary text-black shadow-yellow-glow' : 'bg-white/10 text-gray-500'
+          }`}>3</div>
+          <span className={`text-xs font-bold ${selectedAddrId && paymentMethod ? 'text-white' : 'text-gray-500'}`}>Review</span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Columns: Delivery & Payment Details */}
@@ -132,8 +169,10 @@ const Checkout = () => {
             {/* List addresses */}
             <div className="flex flex-col gap-3">
               {addresses.map((addr) => (
-                <div 
+                <motion.div 
                   key={addr.id}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                   onClick={() => setSelectedAddrId(addr.id)}
                   className={`border rounded-2xl p-4 text-left cursor-pointer transition-all ${
                     selectedAddrId === addr.id 
@@ -147,84 +186,93 @@ const Checkout = () => {
                   </div>
                   <p className="text-xs text-gray-400 leading-relaxed font-medium">{addr.street}, {addr.city}, {addr.state} - {addr.pin}</p>
                   <p className="text-[10px] text-gray-500 font-bold mt-1">Phone: {addr.phone}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
 
             {/* Add Address Form panel */}
-            {isAddAddrOpen && (
-              <form onSubmit={handleAddAddress} className="p-4 bg-black/30 border border-white/10 rounded-2xl grid grid-cols-2 gap-3 text-xs">
-                <div className="col-span-2">
-                  <label className="block text-gray-500 mb-1 font-bold">Full Name</label>
-                  <input 
-                    type="text" 
-                    value={newAddr.name}
-                    onChange={(e) => setNewAddr(p => ({ ...p, name: e.target.value }))}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
-                    placeholder="Arjun Verma"
-                    required
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-gray-500 mb-1 font-bold">Street Address</label>
-                  <input 
-                    type="text" 
-                    value={newAddr.street}
-                    onChange={(e) => setNewAddr(p => ({ ...p, street: e.target.value }))}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
-                    placeholder="Apt 203, Sky Villa"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-500 mb-1 font-bold">City</label>
-                  <input 
-                    type="text" 
-                    value={newAddr.city}
-                    onChange={(e) => setNewAddr(p => ({ ...p, city: e.target.value }))}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
-                    placeholder="Mumbai"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-500 mb-1 font-bold">State</label>
-                  <input 
-                    type="text" 
-                    value={newAddr.state}
-                    onChange={(e) => setNewAddr(p => ({ ...p, state: e.target.value }))}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
-                    placeholder="Maharashtra"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-500 mb-1 font-bold">PIN Code</label>
-                  <input 
-                    type="text" 
-                    value={newAddr.pin}
-                    onChange={(e) => setNewAddr(p => ({ ...p, pin: e.target.value }))}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
-                    placeholder="400001"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-500 mb-1 font-bold">Contact Number</label>
-                  <input 
-                    type="text" 
-                    value={newAddr.phone}
-                    onChange={(e) => setNewAddr(p => ({ ...p, phone: e.target.value }))}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
-                    placeholder="9988776655"
-                    required
-                  />
-                </div>
-                <button type="submit" className="col-span-2 btn-glow-yellow !py-2.5 text-xs text-black">
-                  Save Address
-                </button>
-              </form>
-            )}
+            <AnimatePresence>
+              {isAddAddrOpen && (
+                <motion.form 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  onSubmit={handleAddAddress} 
+                  className="p-4 bg-black/30 border border-white/10 rounded-2xl grid grid-cols-2 gap-3 text-xs overflow-hidden"
+                >
+                  <div className="col-span-2">
+                    <label className="block text-gray-500 mb-1 font-bold">Full Name</label>
+                    <input 
+                      type="text" 
+                      value={newAddr.name}
+                      onChange={(e) => setNewAddr(p => ({ ...p, name: e.target.value }))}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      placeholder="Arjun Verma"
+                      required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-gray-500 mb-1 font-bold">Street Address</label>
+                    <input 
+                      type="text" 
+                      value={newAddr.street}
+                      onChange={(e) => setNewAddr(p => ({ ...p, street: e.target.value }))}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      placeholder="Apt 203, Sky Villa"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-500 mb-1 font-bold">City</label>
+                    <input 
+                      type="text" 
+                      value={newAddr.city}
+                      onChange={(e) => setNewAddr(p => ({ ...p, city: e.target.value }))}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      placeholder="Mumbai"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-500 mb-1 font-bold">State</label>
+                    <input 
+                      type="text" 
+                      value={newAddr.state}
+                      onChange={(e) => setNewAddr(p => ({ ...p, state: e.target.value }))}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      placeholder="Maharashtra"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-500 mb-1 font-bold">PIN Code</label>
+                    <input 
+                      type="text" 
+                      value={newAddr.pin}
+                      onChange={(e) => setNewAddr(p => ({ ...p, pin: e.target.value }))}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      placeholder="400001"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-500 mb-1 font-bold">Contact Number</label>
+                    <input 
+                      type="text" 
+                      value={newAddr.phone}
+                      onChange={(e) => setNewAddr(p => ({ ...p, phone: e.target.value }))}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      placeholder="9988776655"
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="col-span-2 btn-glow-yellow !py-2.5 text-xs text-black btn-premium-interactive">
+                    Save Address
+                  </button>
+                </motion.form>
+              )}
+            </AnimatePresence>
 
           </div>
 
@@ -241,8 +289,10 @@ const Checkout = () => {
                 { id: 'Card', name: 'Debit/Credit Card', icon: FiCreditCard },
                 { id: 'COD', name: 'Cash on Delivery', icon: FiDollarSign }
               ].map(pay => (
-                <button
+                <motion.button
                   key={pay.id}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => setPaymentMethod(pay.id)}
                   type="button"
                   className={`flex flex-col items-center justify-center p-4 border rounded-2xl gap-2 transition-all ${
@@ -253,66 +303,86 @@ const Checkout = () => {
                 >
                   <pay.icon size={20} />
                   <span className="text-[10px] font-bold uppercase tracking-wider">{pay.name}</span>
-                </button>
+                </motion.button>
               ))}
             </div>
 
             {/* Conditional input sections */}
             <div className="pt-2 text-left">
-              {paymentMethod === 'UPI' && (
-                <div className="space-y-2">
-                  <label className="block text-xs text-gray-500 font-bold">UPI ID</label>
-                  <input 
-                    type="text" 
-                    placeholder="username@okhdfcbank" 
-                    value={upiId}
-                    onChange={(e) => setUpiId(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
-                  />
-                  <p className="text-[10px] text-gray-500">Pay securely with GPay, PhonePe, or BHIM.</p>
-                </div>
-              )}
-
-              {paymentMethod === 'Card' && (
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="col-span-2">
-                    <label className="block text-gray-500 mb-1 font-bold">Card Number</label>
+              <AnimatePresence mode="wait">
+                {paymentMethod === 'UPI' && (
+                  <motion.div 
+                    key="upi"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-2"
+                  >
+                    <label className="block text-xs text-gray-500 font-bold">UPI ID</label>
                     <input 
                       type="text" 
-                      placeholder="4321 8765 2341 0987" 
-                      value={cardDetails.number}
-                      onChange={(e) => setCardDetails(p => ({ ...p, number: e.target.value }))}
+                      placeholder="username@okhdfcbank" 
+                      value={upiId}
+                      onChange={(e) => setUpiId(e.target.value)}
                       className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
                     />
-                  </div>
-                  <div>
-                    <label className="block text-gray-500 mb-1 font-bold">Expiry Date</label>
-                    <input 
-                      type="text" 
-                      placeholder="MM/YY" 
-                      value={cardDetails.expiry}
-                      onChange={(e) => setCardDetails(p => ({ ...p, expiry: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-500 mb-1 font-bold">CVV Code</label>
-                    <input 
-                      type="password" 
-                      placeholder="***" 
-                      value={cardDetails.cvv}
-                      onChange={(e) => setCardDetails(p => ({ ...p, cvv: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
-                    />
-                  </div>
-                </div>
-              )}
+                    <p className="text-[10px] text-gray-500">Pay securely with GPay, PhonePe, or BHIM.</p>
+                  </motion.div>
+                )}
 
-              {paymentMethod === 'COD' && (
-                <p className="text-xs text-gray-400 bg-white/5 border border-white/5 p-4 rounded-xl leading-relaxed">
-                  <strong>Cash on Delivery (COD):</strong> An extra handling fee of ₹50 may apply. Please ensure exact cash is available during parcel arrival.
-                </p>
-              )}
+                {paymentMethod === 'Card' && (
+                  <motion.div 
+                    key="card"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="grid grid-cols-2 gap-3 text-xs"
+                  >
+                    <div className="col-span-2">
+                      <label className="block text-gray-500 mb-1 font-bold">Card Number</label>
+                      <input 
+                        type="text" 
+                        placeholder="4321 8765 2341 0987" 
+                        value={cardDetails.number}
+                        onChange={(e) => setCardDetails(p => ({ ...p, number: e.target.value }))}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-500 mb-1 font-bold">Expiry Date</label>
+                      <input 
+                        type="text" 
+                        placeholder="MM/YY" 
+                        value={cardDetails.expiry}
+                        onChange={(e) => setCardDetails(p => ({ ...p, expiry: e.target.value }))}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-500 mb-1 font-bold">CVV Code</label>
+                      <input 
+                        type="password" 
+                        placeholder="***" 
+                        value={cardDetails.cvv}
+                        onChange={(e) => setCardDetails(p => ({ ...p, cvv: e.target.value }))}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {paymentMethod === 'COD' && (
+                  <motion.p 
+                    key="cod"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="text-xs text-gray-400 bg-white/5 border border-white/5 p-4 rounded-xl leading-relaxed"
+                  >
+                    <strong>Cash on Delivery (COD):</strong> An extra handling fee of ₹50 may apply. Please ensure exact cash is available during parcel arrival.
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
 
           </div>
@@ -365,9 +435,9 @@ const Checkout = () => {
               </div>
             </div>
 
-            <button 
+             <button 
               onClick={handlePlaceOrder}
-              className="w-full btn-glow-yellow text-xs font-bold py-3 text-center"
+              className="w-full btn-glow-yellow text-xs font-bold py-3 text-center btn-premium-interactive"
             >
               Place Order & Pay
             </button>
