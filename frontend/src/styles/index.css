@@ -428,3 +428,97 @@ input[type="number"] {
 .swiper-button-prev {
   color: #FFC107 !important;
 }
+
+/* Premium Animations & Micro-interactions CSS utilities */
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-150%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+.shimmer-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-150%) skewX(-15deg);
+}
+.shimmer-sweep:hover::after {
+  animation: shimmer-sweep 1.2s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.animate-shake {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes draw-timeline-line {
+  0% { height: 0%; }
+  100% { height: 100%; }
+}
+.animate-draw-line {
+  animation: draw-timeline-line 2.5s ease-out forwards;
+}
+
+@keyframes slow-bg-mesh {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.mesh-gradient-bg {
+  background: linear-gradient(-45deg, #070b12, #0b101d, #0d1527, #070b12);
+  background-size: 300% 300%;
+  animation: slow-bg-mesh 18s ease infinite;
+}
+
+/* Floating labels css inputs framework */
+.floating-label-group {
+  position: relative;
+}
+.floating-label-group input:placeholder-shown ~ label {
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+}
+.floating-label-group input:focus ~ label,
+.floating-label-group input:not(:placeholder-shown) ~ label {
+  top: -4px;
+  font-size: 0.75rem;
+  color: #FFC107;
+}
+
+/* Premium Buttons enhancements */
+.btn-premium-interactive {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.btn-premium-interactive:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 18px rgba(255, 193, 7, 0.4), 0 0 25px rgba(0, 200, 255, 0.25);
+}
+.btn-premium-interactive:active {
+  transform: scale(0.96);
+}
+
+/* 3D image scale and shadow helper */
+.img-premium-zoom {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+}
+.img-premium-zoom:hover {
+  transform: scale(1.06);
+}
+

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { PRODUCTS } from '../constants/dummyData';
 import { FiStar, FiHeart, FiActivity, FiShoppingCart, FiTruck, FiShield, FiRefreshCw, FiChevronDown } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
 
 const ProductDetails = () => {
-  const { id } = useParams();
+  const id = useParams().id;
   const navigate = useNavigate();
   const { addToCart, wishlist, toggleWishlist, toggleCompare, comparedProducts, showToast } = useContext(AppContext);
 
@@ -32,6 +33,34 @@ const ProductDetails = () => {
   // Localized Reviews addition state (Mock adding reviews)
   const [reviewsList, setReviewsList] = useState(product.reviews || []);
   const [newReview, setNewReview] = useState({ user: '', rating: 5, comment: '' });
+
+  // 3D image tilt & magnifier states
+  const [imgRotate, setImgRotate] = useState({ x: 0, y: 0 });
+  const [zoomStyle, setZoomStyle] = useState({ transformOrigin: 'center', scale: 1 });
+
+  const handleImgMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    
+    // Rotate calculations (3D Tilt)
+    const rotateX = (y - 0.5) * -12; // tilt max 12 degrees
+    const rotateY = (x - 0.5) * 12;
+    setImgRotate({ x: rotateX, y: rotateY });
+
+    // Magnifier origin calculation
+    const originX = x * 100;
+    const originY = y * 100;
+    setZoomStyle({
+      transformOrigin: `${originX}% ${originY}%`,
+      scale: 1.55
+    });
+  };
+
+  const handleImgMouseLeave = () => {
+    setImgRotate({ x: 0, y: 0 });
+    setZoomStyle({ transformOrigin: 'center', scale: 1 });
+  };
 
   useEffect(() => {
     setReviewsList(product.reviews || []);
@@ -82,13 +111,22 @@ const ProductDetails = () => {
         
         {/* Left Column: Image Gallery Viewer */}
         <div className="space-y-4">
-          <div className="bg-black/30 rounded-2xl overflow-hidden border border-white/5 h-[350px] md:h-[450px]">
-            <img 
+          <motion.div 
+            onMouseMove={handleImgMouseMove}
+            onMouseLeave={handleImgMouseLeave}
+            animate={{ rotateX: imgRotate.x, rotateY: imgRotate.y }}
+            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            className="bg-black/30 rounded-2xl overflow-hidden border border-white/5 h-[350px] md:h-[450px] cursor-zoom-in relative"
+            style={{ perspective: 1000 }}
+          >
+            <motion.img 
               src={selectedImage} 
               alt={product.title} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover select-none"
+              style={{ ...zoomStyle }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             />
-          </div>
+          </motion.div>
 
           {/* Thumbnails list */}
           <div className="flex gap-3">
@@ -279,103 +317,119 @@ const ProductDetails = () => {
         </div>
 
         {/* Tab content panel */}
-        <div>
-          {activeTab === 'specs' && (
-            <div className="max-w-2xl divide-y divide-white/5">
-              {product.specs?.map((spec) => (
-                <div key={spec.key} className="grid grid-cols-3 py-3 text-xs">
-                  <span className="font-bold text-gray-500 col-span-1">{spec.key}</span>
-                  <span className="text-gray-300 col-span-2 font-medium">{spec.val}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'shipping' && (
-            <div className="text-xs text-gray-400 space-y-3 leading-relaxed">
-              <p><strong className="text-white">Delivery Estimate:</strong> Standard shipping delivers within 3 business days. Elite member express delivery available within 24 hours.</p>
-              <p><strong className="text-white">Return Policy:</strong> Returns are accepted within 7 days of delivery. Product packaging must remain intact with original security seal.</p>
-              <p><strong className="text-white">Transit Damage:</strong> In case of damage during transition, report to custom helpline within 2 hours of delivery for immediate refunds.</p>
-            </div>
-          )}
-
-          {activeTab === 'reviews' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
-              {/* Reviews listing */}
-              <div className="lg:col-span-2 space-y-4 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
-                {reviewsList.length === 0 ? (
-                  <p className="text-xs text-gray-500 py-4">No reviews recorded yet for this item. Be the first to review!</p>
-                ) : (
-                  reviewsList.map((rev) => (
-                    <div key={rev.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-white">{rev.user}</span>
-                        <span className="text-gray-500">{rev.date}</span>
-                      </div>
-                      <div className="flex text-primary text-xs">
-                        {[...Array(rev.rating)].map((_, i) => (
-                          <FiStar key={i} className="fill-current" />
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-400 leading-relaxed font-medium">{rev.comment}</p>
+        <div className="min-h-[220px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
+              {activeTab === 'specs' && (
+                <div className="max-w-2xl divide-y divide-white/5">
+                  {product.specs?.map((spec) => (
+                    <div key={spec.key} className="grid grid-cols-3 py-3 text-xs">
+                      <span className="font-bold text-gray-500 col-span-1">{spec.key}</span>
+                      <span className="text-gray-300 col-span-2 font-medium">{spec.val}</span>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
 
-              {/* Review submit form */}
-              <div className="bg-black/30 border border-white/5 p-5 rounded-2xl space-y-4 self-start">
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider">Leave a Review</h4>
-                <form onSubmit={handleAddReview} className="space-y-3 text-xs">
-                  <div>
-                    <label className="block text-gray-500 mb-1 font-bold">Your Name</label>
-                    <input 
-                      type="text" 
-                      placeholder="Alex Johnson" 
-                      value={newReview.user}
-                      onChange={(e) => setNewReview(prev => ({ ...prev, user: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-500 mb-1 font-bold">Rating Score</label>
-                    <select
-                      value={newReview.rating}
-                      onChange={(e) => setNewReview(prev => ({ ...prev, rating: Number(e.target.value) }))}
-                      className="w-full bg-cardBg border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50 cursor-pointer"
-                    >
-                      <option value="5">5 Stars (Excellent)</option>
-                      <option value="4">4 Stars (Good)</option>
-                      <option value="3">3 Stars (Average)</option>
-                      <option value="2">2 Stars (Poor)</option>
-                      <option value="1">1 Star (Very Bad)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-gray-500 mb-1 font-bold">Review Comment</label>
-                    <textarea 
-                      rows="3"
-                      placeholder="Type details about shipping packaging, quality, usability..." 
-                      value={newReview.comment}
-                      onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50 resize-none"
-                      required
-                    />
+              {activeTab === 'shipping' && (
+                <div className="text-xs text-gray-400 space-y-3 leading-relaxed">
+                  <p><strong className="text-white">Delivery Estimate:</strong> Standard shipping delivers within 3 business days. Elite member express delivery available within 24 hours.</p>
+                  <p><strong className="text-white">Return Policy:</strong> Returns are accepted within 7 days of delivery. Product packaging must remain intact with original security seal.</p>
+                  <p><strong className="text-white">Transit Damage:</strong> In case of damage during transition, report to custom helpline within 2 hours of delivery for immediate refunds.</p>
+                </div>
+              )}
+
+              {activeTab === 'reviews' && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  
+                  {/* Reviews listing */}
+                  <div className="lg:col-span-2 space-y-4 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
+                    {reviewsList.length === 0 ? (
+                      <p className="text-xs text-gray-500 py-4">No reviews recorded yet for this item. Be the first to review!</p>
+                    ) : (
+                      reviewsList.map((rev, idx) => (
+                        <motion.div 
+                          key={rev.id} 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: idx * 0.05 }}
+                          className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2"
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-white">{rev.user}</span>
+                            <span className="text-gray-500">{rev.date}</span>
+                          </div>
+                          <div className="flex text-primary text-xs">
+                            {[...Array(rev.rating)].map((_, i) => (
+                              <FiStar key={i} className="fill-current" />
+                            ))}
+                          </div>
+                          <p className="text-xs text-gray-400 leading-relaxed font-medium">{rev.comment}</p>
+                        </motion.div>
+                      ))
+                    )}
                   </div>
 
-                  <button 
-                    type="submit" 
-                    className="w-full btn-glow-yellow !py-2.5 text-xs text-black"
-                  >
-                    Submit Review
-                  </button>
-                </form>
-              </div>
+                  {/* Review submit form */}
+                  <div className="bg-black/30 border border-white/5 p-5 rounded-2xl space-y-4 self-start">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Leave a Review</h4>
+                    <form onSubmit={handleAddReview} className="space-y-3 text-xs">
+                      <div>
+                        <label className="block text-gray-500 mb-1 font-bold">Your Name</label>
+                        <input 
+                          type="text" 
+                          placeholder="Alex Johnson" 
+                          value={newReview.user}
+                          onChange={(e) => setNewReview(prev => ({ ...prev, user: e.target.value }))}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-gray-500 mb-1 font-bold">Rating Score</label>
+                        <select
+                          value={newReview.rating}
+                          onChange={(e) => setNewReview(prev => ({ ...prev, rating: Number(e.target.value) }))}
+                          className="w-full bg-cardBg border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50 cursor-pointer"
+                        >
+                          <option value="5">5 Stars (Excellent)</option>
+                          <option value="4">4 Stars (Good)</option>
+                          <option value="3">3 Stars (Average)</option>
+                          <option value="2">2 Stars (Poor)</option>
+                          <option value="1">1 Star (Very Bad)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-gray-500 mb-1 font-bold">Review Comment</label>
+                        <textarea 
+                          rows="3"
+                          placeholder="Type details about shipping packaging, quality, usability..." 
+                          value={newReview.comment}
+                          onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50 resize-none"
+                          required
+                        />
+                      </div>
 
-            </div>
-          )}
+                      <button 
+                        type="submit" 
+                        className="w-full btn-glow-yellow !py-2.5 text-xs text-black btn-premium-interactive"
+                      >
+                        Submit Review
+                      </button>
+                    </form>
+                  </div>
+
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </section>
 
