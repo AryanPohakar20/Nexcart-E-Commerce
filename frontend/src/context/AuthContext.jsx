@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
+import sellerAuthService from '../services/sellerAuthService';
 
 export const AuthContext = createContext();
 
@@ -54,6 +55,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const sellerLogin = async (email, password) => {
+    try {
+      const response = await sellerAuthService.login(email, password);
+      if (response.success && response.data) {
+        const { user, accessToken, refreshToken } = response.data;
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+        setUser(user);
+        setIsAuthenticated(true);
+        return { success: true, user };
+      }
+      return { success: false, message: response.message || 'Seller Login failed' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'An error occurred during seller login',
+        errors: error.errors
+      };
+    }
+  };
+
   const logout = async () => {
     await authService.logout();
     setUser(null);
@@ -61,7 +85,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, sellerLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

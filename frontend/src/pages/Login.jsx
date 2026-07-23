@@ -23,7 +23,7 @@ import {
 
 const Login = () => {
   const { showToast, theme } = useContext(AppContext);
-  const { login } = useContext(AuthContext);
+  const { login, sellerLogin } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Form states
@@ -38,6 +38,7 @@ const Login = () => {
   const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showBecomeSeller, setShowBecomeSeller] = useState(false);
 
   // Floating Particles data
   const particles = Array.from({ length: 16 });
@@ -99,10 +100,13 @@ const Login = () => {
     setErrors({});
 
     try {
-      const result = await login(email, password);
+      const result = role === 'seller'
+        ? await sellerLogin(email, password)
+        : await login(email, password);
       
       if (result.success) {
         setIsSuccess(true);
+        setShowBecomeSeller(false);
         showToast('Login successful!');
         
         setTimeout(() => {
@@ -113,7 +117,11 @@ const Login = () => {
         }, 800);
       } else {
         setIsSubmitting(false);
-        setErrors({ ...result.errors, email: result.message || 'Login failed' });
+        if (result.message && result.message.includes('not registered as a Marketplace Seller')) {
+          setShowBecomeSeller(true);
+        } else {
+          setErrors({ ...result.errors, email: result.message || 'Login failed' });
+        }
         showToast(result.message || 'Invalid credentials', 'error');
       }
     } catch (error) {
@@ -376,6 +384,29 @@ const Login = () => {
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               
+              {/* Become Seller Prompt */}
+              <AnimatePresence>
+                {showBecomeSeller && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-center mb-6"
+                  >
+                    <p className="text-sm text-gray-800 dark:text-gray-200 font-medium mb-3">
+                      You are not registered as a Marketplace Seller.
+                    </p>
+                    <Link
+                      to="/seller/become-seller"
+                      className="btn-glow-yellow py-2 px-6 text-xs text-black font-extrabold rounded-lg inline-flex items-center justify-center gap-1.5"
+                    >
+                      Become Seller
+                      <FiArrowRight />
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Email Input Field */}
               <div className="space-y-1.5 text-left">
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">

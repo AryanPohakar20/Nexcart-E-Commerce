@@ -282,9 +282,9 @@ const Register = () => {
     setIsSubmitting(true);
 
     try {
-      const nameParts = formData.fullName.trim().split(' ');
+      const nameParts = formData.fullName.trim().split(/\s+/);
       const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(' ') || ' ';
+      const lastName = nameParts.slice(1).join(' ').trim() || nameParts[0];
 
       await authService.register(
         firstName,
@@ -303,7 +303,10 @@ const Register = () => {
       }, 800);
     } catch (error) {
       setIsSubmitting(false);
-      showToast(error.message || 'Registration failed', 'error');
+      const errMsg = (Array.isArray(error.errors) && error.errors.length > 0)
+        ? error.errors.map((e) => e.message).join(' | ')
+        : (error.message || 'Registration failed');
+      showToast(errMsg, 'error');
     }
   };
 

@@ -49,7 +49,7 @@ export const registerValidator = [
     .matches(/[0-9]/).withMessage('Password must contain at least one number.'),
 
   body('phone')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .matches(/^\+?[\d\s\-]{7,15}$/).withMessage('Please enter a valid phone number.'),
 ];
@@ -90,7 +90,7 @@ export const verifyOtpValidator = [
     .isNumeric().withMessage('OTP must contain only digits.'),
 
   body('purpose')
-    .optional()
+    .optional({ checkFalsy: true })
     .isIn(['emailVerification', 'passwordReset'])
     .withMessage('Purpose must be emailVerification or passwordReset.'),
 ];
