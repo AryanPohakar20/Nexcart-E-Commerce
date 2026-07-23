@@ -35,6 +35,11 @@ import OTPVerification from '../pages/OTPVerification';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 
+// Seller Onboarding imports
+import BecomeSeller from '../pages/seller/BecomeSeller';
+import SellerOnboarding from '../pages/seller/SellerOnboarding';
+import VerificationStatus from '../pages/seller/VerificationStatus';
+
 // Info content imports
 import About from '../pages/About';
 import Contact from '../pages/Contact';
@@ -48,6 +53,11 @@ import ProtectedRoute from './ProtectedRoute';
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Standalone Seller Onboarding Routes */}
+      <Route path="/seller/become-seller" element={<BecomeSeller />} />
+      <Route path="/seller/onboarding" element={<SellerOnboarding />} />
+      <Route path="/seller/verification-status" element={<ProtectedRoute><VerificationStatus /></ProtectedRoute>} />
+
       {/* 1. Customer Storefront Layout Routes */}
       <Route path="/" element={<RootLayout />}>
         <Route index element={<Home />} />
@@ -84,7 +94,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* 2. Seller Layout Routes */}
-      <Route path="/seller" element={<ProtectedRoute allowedRoles={['seller']}><SellerLayout /></ProtectedRoute>}>
+      <Route path="/seller" element={<ProtectedRoute allowedRoles={['seller', 'marketplaceseller']}><SellerLayout /></ProtectedRoute>}>
         <Route path="dashboard" element={<SellerDashboard />} />
         <Route path="products" element={<SellerDashboard />} />
         <Route path="orders" element={<SellerDashboard />} />
