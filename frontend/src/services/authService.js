@@ -1,7 +1,7 @@
 import axiosInstance from '../api/axios';
 
 const authService = {
-  register: async (firstName, lastName, email, password, phone) => {
+  register: async (firstName, lastName, email, password, phone, username) => {
     try {
       const response = await axiosInstance.post('/auth/register', {
         firstName,
@@ -9,6 +9,7 @@ const authService = {
         email,
         password,
         phone,
+        username,
       });
       return response.data;
     } catch (error) {

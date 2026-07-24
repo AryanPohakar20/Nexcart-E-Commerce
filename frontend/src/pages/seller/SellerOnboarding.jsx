@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../../context/AppContext';
+import { AuthContext } from '../../context/AuthContext';
 import sellerAuthService from '../../services/sellerAuthService';
 import NexCartLogo from '../../components/NexCartLogo';
 
@@ -21,6 +22,7 @@ const steps = [
 
 const SellerOnboarding = () => {
   const { showToast } = useContext(AppContext);
+  const { sellerRegister, sellerLogin } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -37,7 +39,7 @@ const SellerOnboarding = () => {
         const username = updatedData.username || (updatedData.email ? updatedData.email.split('@')[0] : `seller_${Date.now()}`);
         
         try {
-          await sellerAuthService.register(
+          const res = await sellerRegister(
             updatedData.firstName,
             updatedData.lastName,
             updatedData.email,
@@ -45,13 +47,23 @@ const SellerOnboarding = () => {
             updatedData.phone,
             username
           );
-          await sellerAuthService.login(updatedData.email, updatedData.password);
+          
+          if (!res.success) {
+            // Attempt login if user/email already exists
+            const loginRes = await sellerLogin(updatedData.email, updatedData.password);
+            if (!loginRes.success) {
+              throw new Error(res.message || loginRes.message || 'Registration failed');
+            }
+          }
         } catch (apiError) {
-          console.warn('Backend seller registration failed or server unreachable, attempting login or continuing onboarding:', apiError);
+          console.warn('Backend seller registration error, attempting seller login fallback:', apiError);
           try {
-            await sellerAuthService.login(updatedData.email, updatedData.password);
+            const loginRes = await sellerLogin(updatedData.email, updatedData.password);
+            if (!loginRes.success) {
+              throw apiError;
+            }
           } catch (loginErr) {
-            console.warn('Backend seller login failed:', loginErr);
+            throw apiError;
           }
         }
         

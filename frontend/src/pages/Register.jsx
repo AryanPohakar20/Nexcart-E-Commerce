@@ -291,7 +291,8 @@ const Register = () => {
         lastName,
         formData.email,
         formData.password,
-        formData.phone
+        formData.phone,
+        formData.username
       );
 
       setIsSubmitting(false);
