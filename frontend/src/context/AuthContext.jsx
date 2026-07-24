@@ -84,8 +84,31 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  const sellerRegister = async (firstName, lastName, email, password, phone, username) => {
+    try {
+      const response = await sellerAuthService.register(firstName, lastName, email, password, phone, username);
+      if (response.success && response.data) {
+        const { user, accessToken, refreshToken } = response.data;
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+        setUser(user);
+        setIsAuthenticated(true);
+        return { success: true, user };
+      }
+      return { success: false, message: response.message || 'Seller Registration failed' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'An error occurred during seller registration',
+        errors: error.errors
+      };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, sellerLogin, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, sellerLogin, sellerRegister, logout }}>
       {children}
     </AuthContext.Provider>
   );
