@@ -1,158 +1,114 @@
-// src/models/User.js
-// Mongoose User schema — the central entity for the entire Nexcart platform.
-// Includes pre-save password hashing, instance methods for token generation
-// and password comparison, and a toJSON transform that strips sensitive fields.
-
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { ROLES, ALL_ROLES } from '../constants/roles.js';
-import { STATUS, ALL_STATUSES } from '../constants/status.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/generateTokens.js';
+import jwt from 'jsonwebtoken';
 
-const BCRYPT_ROUNDS = 12;
+const aadhaarImageSchema = new mongoose.Schema({
+  public_id: { type: String, required: true },
+  url: { type: String, required: true },
+}, { _id: false });
 
-const UserSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
       required: [true, 'First name is required'],
       trim: true,
-      minlength: [2, 'First name must be at least 2 characters'],
-      maxlength: [50, 'First name cannot exceed 50 characters'],
     },
-
     lastName: {
       type: String,
       required: [true, 'Last name is required'],
       trim: true,
-      minlength: [2, 'Last name must be at least 2 characters'],
-      maxlength: [50, 'Last name cannot exceed 50 characters'],
     },
-
+    username: {
+      type: String,
+      required: [true, 'Username is required'],
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
     email: {
       type: String,
-      required: [true, 'Email address is required'],
+      required: [true, 'Email is required'],
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email address'],
+      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please add a valid email'],
     },
-
+    phone: {
+      type: String,
+      required: [true, 'Phone number is required'],
+      trim: true,
+    },
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [8, 'Password must be at least 8 characters'],
-      select: false, // Never returned in queries by default
+      minlength: 6,
+      select: false,
     },
-
-    phone: {
-      type: String,
-      trim: true,
-      match: [/^\+?[\d\s\-]{7,15}$/, 'Please provide a valid phone number'],
-      default: null,
-    },
-
-    profileImage: {
-      type: String,
-      default: null,
-    },
-
     role: {
       type: String,
-      enum: {
-        values: ALL_ROLES,
-        message: `Role must be one of: ${ALL_ROLES.join(', ')}`,
-      },
-      default: ROLES.CUSTOMER,
+      enum: ['customer', 'seller', 'admin'],
+      default: 'customer',
     },
-
-    status: {
-      type: String,
-      enum: {
-        values: ALL_STATUSES,
-        message: `Status must be one of: ${ALL_STATUSES.join(', ')}`,
-      },
-      default: STATUS.ACTIVE,
+    aadhaar: {
+      number: { type: String, default: null },
+      frontImage: { type: aadhaarImageSchema, default: null },
+      backImage: { type: aadhaarImageSchema, default: null },
     },
-
     isVerified: {
       type: Boolean,
       default: false,
     },
-
-    // Stored hashed refresh token for server-side invalidation
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
     refreshToken: {
       type: String,
       select: false,
       default: null,
     },
-
-    // OTP for password reset / email verification
     otp: {
-      code: { type: String, select: false, default: null },      // bcrypt-hashed
+      code: { type: String, select: false, default: null },
       expiresAt: { type: Date, select: false, default: null },
     },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt automatically
-    versionKey: false,
+    timestamps: true,
   }
 );
 
-// ─── Indexes ──────────────────────────────────────────────────────────────────
-UserSchema.index({ role: 1 });
-
-// ─── Pre-save Hook: Hash Password ─────────────────────────────────────────────
-// Only re-hash when the password field has actually been modified.
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, BCRYPT_ROUNDS);
-  next();
+// Encrypt password before saving
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
-// ─── Instance Methods ─────────────────────────────────────────────────────────
-
-/**
- * Compare a plain-text password against the stored bcrypt hash.
- * The `password` field uses `select: false`, so it must be explicitly
- * selected when fetching the user: User.findOne({...}).select('+password')
- */
-UserSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+// Compare password
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
-/**
- * Generate a short-lived JWT access token for this user.
- */
-UserSchema.methods.generateAccessToken = function () {
-  return generateAccessToken(this._id.toString(), this.role);
+// Generate JWT
+userSchema.methods.generateJWT = function () {
+  return jwt.sign(
+    { id: this._id, role: this.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '30d' }
+  );
 };
 
-/**
- * Generate a long-lived JWT refresh token for this user.
- */
-UserSchema.methods.generateRefreshToken = function () {
-  return generateRefreshToken(this._id.toString());
-};
-
-// ─── toJSON Transform: Strip Sensitive Fields ─────────────────────────────────
-// Removes password, refreshToken, and otp from any JSON serialization.
-// This means req.user or returned user objects are always safe to send.
-UserSchema.set('toJSON', {
-  transform: (_doc, ret) => {
+// toJSON Transform: Strip Sensitive Fields
+userSchema.set('toJSON', {
+  transform: (doc, ret) => {
     delete ret.password;
-    delete ret.refreshToken;
-    delete ret.otp;
     delete ret.__v;
     return ret;
   },
 });
 
-// ─── Virtual: fullName ────────────────────────────────────────────────────────
-UserSchema.virtual('fullName').get(function () {
-  return `${this.firstName} ${this.lastName}`;
-});
-
-const User = mongoose.model('User', UserSchema);
-
+const User = mongoose.model('User', userSchema);
 export default User;

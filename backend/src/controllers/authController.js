@@ -1,137 +1,127 @@
-// src/controllers/authController.js
-// Thin HTTP layer for authentication.
-// Delegates all business logic to authService.
-// Only responsible for: reading req, calling service, formatting response.
-
+import { asyncHandler } from '../utils/asyncHandler.js';
 import * as authService from '../services/authService.js';
-import { successResponse } from '../utils/ApiResponse.js';
-import asyncHandler from '../utils/asyncHandler.js';
-import { handleValidation } from '../validators/authValidators.js';
 
-// ─── POST /api/auth/register ──────────────────────────────────────────────────
-export const register = asyncHandler(async (req, res) => {
-  if (handleValidation(req, res)) return;
+export const registerSeller = asyncHandler(async (req, res) => {
+  const { user, token } = await authService.registerSellerService(req.body);
 
-  const { firstName, lastName, email, password, phone } = req.body;
-
-  const user = await authService.registerUser({ firstName, lastName, email, password, phone });
-
-  return successResponse(
-    res,
-    'Registration successful! Please check your email for a 6-digit verification code.',
-    { userId: user._id, email: user.email },
-    201
-  );
-});
-
-// ─── POST /api/auth/login ─────────────────────────────────────────────────────
-export const login = asyncHandler(async (req, res) => {
-  if (handleValidation(req, res)) return;
-
-  const { email, password } = req.body;
-
-  const { user, accessToken, refreshToken } = await authService.loginUser(email, password);
-
-  // Set refresh token in httpOnly cookie for enhanced security
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
-  });
-
-  return successResponse(res, 'Login successful.', {
-    accessToken,
-    refreshToken, // Also returned in body for clients that use localStorage
+  res.status(201).json({
+    success: true,
+    message: 'Seller registered successfully',
+    token,
     user,
+    data: {
+      accessToken: token,
+      refreshToken: token,
+      user,
+    },
   });
 });
 
-// ─── POST /api/auth/logout ────────────────────────────────────────────────────
-// Protected route — requires authenticateUser middleware
-export const logout = asyncHandler(async (req, res) => {
-  await authService.logoutUser(req.user._id.toString());
+export const loginSeller = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const { user, token } = await authService.loginSellerService(email, password);
 
-  // Clear the refresh token cookie
-  res.clearCookie('refreshToken', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  });
-
-  return successResponse(res, 'Logged out successfully.');
-});
-
-// ─── POST /api/auth/refresh ───────────────────────────────────────────────────
-export const refreshToken = asyncHandler(async (req, res) => {
-  // Accept token from request body or from cookie
-  const token = req.body.refreshToken || req.cookies?.refreshToken;
-
-  const { accessToken, refreshToken: newRefreshToken } = await authService.refreshAccessToken(token);
-
-  // Rotate cookie
-  res.cookie('refreshToken', newRefreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  return successResponse(res, 'Token refreshed.', {
-    accessToken,
-    refreshToken: newRefreshToken,
+  res.status(200).json({
+    success: true,
+    message: 'Login successful',
+    token,
+    user,
+    data: {
+      accessToken: token,
+      refreshToken: token,
+      user,
+    },
   });
 });
 
-// ─── GET /api/auth/me ─────────────────────────────────────────────────────────
-// Protected route — requires authenticateUser middleware
-export const getMe = asyncHandler(async (req, res) => {
-  const user = await authService.getCurrentUser(req.user._id.toString());
-  return successResponse(res, 'User profile retrieved.', { user });
+export const getCurrentSeller = asyncHandler(async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Seller details fetched successfully',
+    user: req.user,
+    data: {
+      user: req.user,
+    },
+  });
 });
 
-// ─── POST /api/auth/forgot-password ──────────────────────────────────────────
+export const logoutSeller = asyncHandler(async (req, res) => {
+  res.clearCookie('token');
+
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully',
+  });
+});
+
+export const registerUser = asyncHandler(async (req, res) => {
+  const { user, token } = await authService.registerUserService(req.body);
+
+  res.status(201).json({
+    success: true,
+    message: 'User registered successfully',
+    token,
+    user,
+    data: {
+      accessToken: token,
+      refreshToken: token,
+      user,
+    },
+  });
+});
+
+export const loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const { user, token } = await authService.loginUserService(email, password);
+
+  res.status(200).json({
+    success: true,
+    message: 'Login successful',
+    token,
+    user,
+    data: {
+      accessToken: token,
+      refreshToken: token,
+      user,
+    },
+  });
+});
+
+export const getCurrentUser = asyncHandler(async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'User details fetched successfully',
+    user: req.user,
+    data: {
+      user: req.user,
+    },
+  });
+});
+
 export const forgotPassword = asyncHandler(async (req, res) => {
-  if (handleValidation(req, res)) return;
-
   const { email } = req.body;
   await authService.forgotPassword(email);
-
-  // Always return success to prevent user enumeration
-  return successResponse(
-    res,
-    'If an account with that email exists, a 6-digit reset code has been sent.'
-  );
-});
-
-// ─── POST /api/auth/verify-otp ───────────────────────────────────────────────
-export const verifyOtp = asyncHandler(async (req, res) => {
-  if (handleValidation(req, res)) return;
-
-  const { email, otp, purpose = 'passwordReset' } = req.body;
-
-  const result = await authService.verifyOtp(email, otp, purpose);
-
-  return successResponse(res, 'OTP verified successfully.', result);
-});
-
-// ─── POST /api/auth/reset-password ───────────────────────────────────────────
-export const resetPassword = asyncHandler(async (req, res) => {
-  if (handleValidation(req, res)) return;
-
-  const { email, otp, newPassword } = req.body;
-
-  await authService.resetPassword(email, otp, newPassword);
-
-  // Clear session cookies after password reset
-  res.clearCookie('refreshToken', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+  res.status(200).json({
+    success: true,
+    message: 'If an account exists, a 6-digit OTP has been sent.',
   });
+});
 
-  return successResponse(
-    res,
-    'Password reset successful. Please log in with your new password.'
-  );
+export const verifyOtp = asyncHandler(async (req, res) => {
+  const { email, otp, purpose } = req.body;
+  const result = await authService.verifyOtp(email, otp, purpose);
+  res.status(200).json({
+    success: true,
+    message: 'OTP verified successfully.',
+    data: result,
+  });
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  await authService.resetPassword(email, otp, newPassword);
+  res.status(200).json({
+    success: true,
+    message: 'Password reset successful. Please log in with your new password.',
+  });
 });

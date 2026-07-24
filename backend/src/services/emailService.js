@@ -12,16 +12,39 @@ import logger from '../utils/logger.js';
  * In development/test environments, logs to console if email is unconfigured.
  */
 const createTransporter = () => {
-  if (!process.env.EMAIL || !process.env.EMAIL_PASSWORD) {
-    logger.warn('EmailService: EMAIL/EMAIL_PASSWORD not set — emails will be logged to console only.');
+  const email = process.env.EMAIL;
+  const password = process.env.EMAIL_PASSWORD;
+
+  if (
+    !email ||
+    !password ||
+    email === 'your_email@gmail.com' ||
+    email === 'your_gmail@gmail.com' ||
+    password === 'your_app_password' ||
+    password === 'your_gmail_app_password'
+  ) {
+    logger.warn('EmailService: EMAIL/EMAIL_PASSWORD not set or are placeholder values — emails will be logged to console only.');
     return null;
+  }
+
+  // If custom SMTP host is set, use general SMTP configuration
+  if (process.env.SMTP_HOST) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587', 10),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: email,
+        pass: password,
+      },
+    });
   }
 
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASSWORD,
+      user: email,
+      pass: password,
     },
   });
 };

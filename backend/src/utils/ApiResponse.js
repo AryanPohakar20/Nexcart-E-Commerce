@@ -1,14 +1,12 @@
-// src/utils/ApiResponse.js
-// Centralized response helpers — all API responses use these functions
-// to ensure a consistent JSON shape across the entire application.
+export class ApiResponse {
+  constructor(statusCode, data, message = 'Success') {
+    this.statusCode = statusCode;
+    this.data = data;
+    this.message = message;
+    this.success = statusCode < 400;
+  }
+}
 
-/**
- * Send a successful response.
- * @param {import('express').Response} res
- * @param {string} message
- * @param {*} data       - Optional payload (object, array, etc.)
- * @param {number} statusCode - HTTP status (default 200)
- */
 export const successResponse = (res, message = 'Success', data = null, statusCode = 200) => {
   const payload = {
     success: true,
@@ -22,13 +20,6 @@ export const successResponse = (res, message = 'Success', data = null, statusCod
   return res.status(statusCode).json(payload);
 };
 
-/**
- * Send an error response.
- * @param {import('express').Response} res
- * @param {string} message
- * @param {Array}  errors    - Optional array of field-level errors
- * @param {number} statusCode - HTTP status (default 400)
- */
 export const errorResponse = (res, message = 'Something went wrong', errors = [], statusCode = 400) => {
   const payload = {
     success: false,
