@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authRoutes from './authRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
 import categoryRoutes from './categoryRoutes.js';
+import subcategoryRoutes from './subcategoryRoutes.js';
 
 // Import controllers and middlewares directly to map legacy/frontend routes
 import {
@@ -26,6 +27,7 @@ const router = Router();
 
 // ─── Phase 3 Marketplace Routes ──────────────────────────────────────────────
 router.use('/categories', categoryRoutes);
+router.use('/subcategories', subcategoryRoutes);
 
 // ─── Phase 1B Standard Spec Routes ───────────────────────────────────────────
 router.use('/seller/auth', authRoutes);

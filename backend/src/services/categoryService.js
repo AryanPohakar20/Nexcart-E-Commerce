@@ -2,7 +2,7 @@
 // Service implementation for Category module.
 
 import * as categoryRepository from '../repositories/categoryRepository.js';
-import { Apierror } from '../utils/ApiError.js';
+import { ApiError } from '../utils/ApiError.js';
 import Category from '../models/Category.js';
 
 const slugify = (text) => {
@@ -24,7 +24,7 @@ const escapeRegex = (string) => {
 export const createCategory = async (data) => {
   const { name } = data;
   if (!name) {
-    throw new Apierror(400, 'Category name is required');
+    throw new ApiError(400, 'Category name is required');
   }
 
   // Check if name is already taken (case-insensitive check)
