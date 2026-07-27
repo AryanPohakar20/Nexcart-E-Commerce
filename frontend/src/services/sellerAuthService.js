@@ -3,7 +3,7 @@ import axiosInstance from '../api/axios';
 const sellerAuthService = {
   register: async (firstName, lastName, email, password, phone, username) => {
     try {
-      const response = await axiosInstance.post('/seller/register', {
+      const response = await axiosInstance.post('/seller/auth/register', {
         firstName,
         lastName,
         email,
@@ -19,7 +19,7 @@ const sellerAuthService = {
 
   login: async (email, password) => {
     try {
-      const response = await axiosInstance.post('/seller/login', {
+      const response = await axiosInstance.post('/seller/auth/login', {
         email,
         password,
       });
@@ -29,6 +29,24 @@ const sellerAuthService = {
           localStorage.setItem('refreshToken', response.data.data.refreshToken);
         }
       }
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  createSellerEntry: async () => {
+    try {
+      const response = await axiosInstance.post('/seller/create');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  saveStep1: async (data) => {
+    try {
+      const response = await axiosInstance.put('/seller/onboarding/step-1', data);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -46,7 +64,7 @@ const sellerAuthService = {
 
   updateProfile: async (data) => {
     try {
-      const response = await axiosInstance.patch('/seller/profile', data);
+      const response = await axiosInstance.put('/seller/onboarding/step-2', data);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -55,7 +73,16 @@ const sellerAuthService = {
 
   uploadIdentity: async (data) => {
     try {
-      const response = await axiosInstance.post('/seller/upload-document', data);
+      const formData = new FormData();
+      formData.append('idType', data.idType);
+      if (data.frontImage) formData.append('frontImage', data.frontImage);
+      if (data.backImage) formData.append('backImage', data.backImage);
+
+      const response = await axiosInstance.put('/seller/onboarding/step-3', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -64,7 +91,7 @@ const sellerAuthService = {
 
   submitPayment: async (data) => {
     try {
-      const response = await axiosInstance.post('/seller/payment-details', data);
+      const response = await axiosInstance.put('/seller/onboarding/step-4', data);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -73,7 +100,7 @@ const sellerAuthService = {
 
   agreeTerms: async () => {
     try {
-      const response = await axiosInstance.post('/seller/agree-terms');
+      const response = await axiosInstance.put('/seller/onboarding/step-5');
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

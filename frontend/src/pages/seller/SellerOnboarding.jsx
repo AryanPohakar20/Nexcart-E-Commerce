@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../../context/AppContext';
@@ -22,12 +22,35 @@ const steps = [
 
 const SellerOnboarding = () => {
   const { showToast } = useContext(AppContext);
-  const { sellerRegister, sellerLogin } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sellerData, setSellerData] = useState({});
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await sellerAuthService.getProfile();
+        if (res.success && res.data && res.data.seller) {
+          const seller = res.data.seller;
+          const previousData = {
+            ...seller.accountInfo,
+            ...seller.profile,
+          };
+          setSellerData(previousData);
+          
+          if (seller.onboardingStep) {
+            const nextStep = seller.onboardingStep + 1;
+            setCurrentStep(nextStep > 5 ? 5 : nextStep);
+          }
+        }
+      } catch (error) {
+        console.log("No existing seller profile found, starting fresh.");
+      }
+    };
+    fetchStatus();
+  }, []);
 
   const handleNext = async (data) => {
     try {
@@ -36,35 +59,39 @@ const SellerOnboarding = () => {
 
       if (currentStep === 1) {
         setIsSubmitting(true);
-        const username = updatedData.username || (updatedData.email ? updatedData.email.split('@')[0] : `seller_${Date.now()}`);
         
         try {
-          const res = await sellerRegister(
-            updatedData.firstName,
-            updatedData.lastName,
-            updatedData.email,
-            updatedData.password,
-            updatedData.phone,
-            username
+          await sellerAuthService.register(
+            data.firstName,
+            data.lastName,
+            data.email,
+            data.password,
+            data.phone,
+            data.username || (data.firstName + data.lastName).toLowerCase()
           );
           
-          if (!res.success) {
-            // Attempt login if user/email already exists
-            const loginRes = await sellerLogin(updatedData.email, updatedData.password);
-            if (!loginRes.success) {
-              throw new Error(res.message || loginRes.message || 'Registration failed');
-            }
-          }
-        } catch (apiError) {
-          console.warn('Backend seller registration error, attempting seller login fallback:', apiError);
+          await sellerAuthService.login(data.email, data.password);
+
           try {
-            const loginRes = await sellerLogin(updatedData.email, updatedData.password);
-            if (!loginRes.success) {
-              throw apiError;
+            await sellerAuthService.createSellerEntry();
+          } catch (e) {
+            // Ignore if seller already exists to prevent duplicates
+            if (e?.statusCode !== 409 && e?.message !== 'Seller profile already exists.') {
+              throw e;
             }
-          } catch (loginErr) {
-            throw apiError;
           }
+
+          const step1Payload = {
+            displayName: `${data.firstName} ${data.lastName}`,
+            businessType: '',
+            phone: data.phone,
+            email: data.email
+          };
+          
+          await sellerAuthService.saveStep1(step1Payload);
+        } catch (onboardingErr) {
+          console.warn('Step 1 onboarding save error:', onboardingErr);
+          throw onboardingErr;
         }
         
         setIsSubmitting(false);
@@ -72,27 +99,48 @@ const SellerOnboarding = () => {
       } else if (currentStep === 2) {
         setIsSubmitting(true);
         try {
-          await sellerAuthService.updateProfile(data);
+          const step2Payload = {
+            shopName: data.displayName || '',
+            description: data.bio || '',
+            address: data.address?.pickupAddress || '',
+            city: data.address?.city || '',
+            state: data.address?.state || '',
+            pincode: data.address?.pincode || '',
+          };
+          await sellerAuthService.updateProfile(step2Payload);
         } catch (apiError) {
           console.warn('Update seller profile API failed:', apiError);
+          throw apiError;
         }
         setIsSubmitting(false);
         setCurrentStep(3);
       } else if (currentStep === 3) {
         setIsSubmitting(true);
         try {
-          await sellerAuthService.uploadIdentity({ idType: data.idType, frontImage: 'uploaded_path', backImage: 'uploaded_path' });
+          await sellerAuthService.uploadIdentity({ 
+            idType: data.idType, 
+            frontImage: data.frontImage, 
+            backImage: data.backImage 
+          });
         } catch (apiError) {
           console.warn('Upload identity API failed:', apiError);
+          throw apiError;
         }
         setIsSubmitting(false);
         setCurrentStep(4);
       } else if (currentStep === 4) {
         setIsSubmitting(true);
         try {
-          await sellerAuthService.submitPayment(data);
+          const step4Payload = {
+            accountHolder: data.bank?.accountHolder || '',
+            accountNumber: data.bank?.accountNumber || '',
+            ifsc: data.bank?.ifsc || '',
+            upiId: data.upiId || ''
+          };
+          await sellerAuthService.submitPayment(step4Payload);
         } catch (apiError) {
           console.warn('Submit payment API failed:', apiError);
+          throw apiError;
         }
         setIsSubmitting(false);
         setCurrentStep(5);
@@ -102,6 +150,7 @@ const SellerOnboarding = () => {
           await sellerAuthService.agreeTerms();
         } catch (apiError) {
           console.warn('Agree terms API failed:', apiError);
+          throw apiError;
         }
         setIsSubmitting(false);
         showToast('Registration complete! Verification pending.', 'success');

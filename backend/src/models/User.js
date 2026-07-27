@@ -2,11 +2,6 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const aadhaarImageSchema = new mongoose.Schema({
-  public_id: { type: String, required: true },
-  url: { type: String, required: true },
-}, { _id: false });
-
 const userSchema = new mongoose.Schema(
   {
     firstName: {
@@ -47,14 +42,10 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['customer', 'seller', 'admin'],
+      enum: ['customer', 'seller', 'marketplace_seller', 'admin'],
       default: 'customer',
     },
-    aadhaar: {
-      number: { type: String, default: null },
-      frontImage: { type: aadhaarImageSchema, default: null },
-      backImage: { type: aadhaarImageSchema, default: null },
-    },
+
     isVerified: {
       type: Boolean,
       default: false,

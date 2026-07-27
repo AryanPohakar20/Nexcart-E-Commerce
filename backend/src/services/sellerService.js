@@ -1,136 +1,163 @@
 // src/services/sellerService.js
 
-import * as userRepo from '../repositories/userRepository.js';
 import * as sellerRepo from '../repositories/sellerRepository.js';
-import { ROLES } from '../constants/roles.js';
-import { SELLER_STATUS } from '../constants/sellerStatus.js';
-import { AppError } from './authService.js';
-import { sendOtpEmail } from './emailService.js';
-import { generateOtp, hashOtp, getOtpExpiry } from '../helpers/otpHelper.js';
+import { SELLER_STATUS, VERIFICATION_STATUS } from '../constants/sellerStatus.js';
+import { ApiError } from '../utils/ApiError.js';
+import { uploadAadhaarImage } from './cloudinaryService.js';
 import logger from '../utils/logger.js';
 
-export const registerSeller = async ({ firstName, lastName, email, password, phone, username }) => {
-  let user = await userRepo.findByEmail(email);
-  let profile;
+// ─── Helper: ensure Seller document exists ───────────────────────────────────
 
-  if (user) {
-    profile = await sellerRepo.findProfileByUserId(user._id);
-    if (!profile) {
-      profile = await sellerRepo.createSellerProfile({
-        user: user._id,
-        status: SELLER_STATUS.DRAFT,
-      });
-      await sellerRepo.createStatistics(profile._id);
-      await sellerRepo.createSettings(profile._id);
-    }
-  } else {
-    user = await userRepo.createUser({
-      firstName,
-      lastName,
-      email,
-      password,
-      phone: phone || null,
-      role: ROLES.CUSTOMER, 
-    });
-
-    profile = await sellerRepo.createSellerProfile({
-      user: user._id,
-      status: SELLER_STATUS.DRAFT,
-    });
-
-    await sellerRepo.createStatistics(profile._id);
-    await sellerRepo.createSettings(profile._id);
-  }
-
-  // Send Email OTP
-  const otp = generateOtp();
-  const hashedOtp = await hashOtp(otp);
-  const expiresAt = getOtpExpiry();
-
-  await userRepo.saveOtp(user._id, hashedOtp, expiresAt);
-
-  try {
-    await sendOtpEmail(email, otp, 'Seller Email Verification');
-  } catch (err) {
-    logger.error(`Registration OTP email failed for ${email}: ${err.message}`);
-  }
-
-  logger.info(`New Seller Draft created: ${email} (${user._id})`);
-  return { user, profile };
+const requireSeller = async (userId) => {
+  const seller = await sellerRepo.findByUserId(userId);
+  if (!seller) throw new ApiError(404, 'Seller record not found. Please create your seller account first.');
+  return seller;
 };
 
-export const saveProfile = async (userId, data) => {
-  let profile = await sellerRepo.findProfileByUserId(userId);
-  if (!profile) {
-    throw new AppError('Seller profile not found.', 404);
-  }
+// ─── POST /api/seller/create ─────────────────────────────────────────────────
 
-  profile = await sellerRepo.updateSellerProfile(userId, {
-    ...data,
-    status: SELLER_STATUS.PROFILE_COMPLETED,
+export const createSellerEntry = async (userId) => {
+  // Idempotent: return existing document if one already exists
+  const existing = await sellerRepo.findByUserId(userId);
+  if (existing) return existing;
+
+  const seller = await sellerRepo.createSeller({
+    userId,
+    sellerStatus: SELLER_STATUS.DRAFT,
+    verificationStatus: VERIFICATION_STATUS.NOT_STARTED,
+    onboardingStep: 0,
   });
 
-  return profile;
+  logger.info(`Seller document created for userId: ${userId}`);
+  return seller;
 };
 
-export const submitIdentity = async (userId, data) => {
-  const profile = await sellerRepo.findProfileByUserId(userId);
-  if (!profile) throw new AppError('Seller profile not found.', 404);
+// ─── GET /api/seller/profile ──────────────────────────────────────────────────
 
-  const docs = await sellerRepo.saveVerificationDocuments(profile._id, data);
-  await sellerRepo.updateSellerProfile(userId, { status: SELLER_STATUS.IDENTITY_SUBMITTED });
-
-  return docs;
+export const getSellerProfile = async (userId) => {
+  return requireSeller(userId);
 };
 
-export const submitPayment = async (userId, data) => {
-  const profile = await sellerRepo.findProfileByUserId(userId);
-  if (!profile) throw new AppError('Seller profile not found.', 404);
+// ─── PUT /api/seller/onboarding/step-1 ───────────────────────────────────────
+// accountInfo: { displayName, businessType, phone, email }
 
-  const payment = await sellerRepo.savePaymentDetails(profile._id, data);
-  // Status transitions to VERIFICATION_PENDING after this
-  await sellerRepo.updateSellerProfile(userId, { status: SELLER_STATUS.VERIFICATION_PENDING });
+export const saveStep1 = async (userId, data) => {
+  const { displayName, businessType, phone, email } = data;
 
-  return payment;
+  const seller = await sellerRepo.updateByUserId(userId, {
+    'accountInfo.displayName': displayName,
+    'accountInfo.businessType': businessType,
+    'accountInfo.phone': phone,
+    'accountInfo.email': email,
+    onboardingStep: 1,
+  });
+
+  if (!seller) throw new ApiError(404, 'Seller record not found.');
+  logger.info(`Step 1 saved for userId: ${userId}`);
+  return seller;
 };
 
-export const getFullProfile = async (userId) => {
-  const profile = await sellerRepo.findProfileByUserId(userId);
-  if (!profile) throw new AppError('Seller profile not found.', 404);
+// ─── PUT /api/seller/onboarding/step-2 ───────────────────────────────────────
+// profile: { shopName, description, address, city, state, pincode }
 
-  const docs = await sellerRepo.getVerificationDocuments(profile._id);
-  const payment = await sellerRepo.getPaymentDetails(profile._id);
-  const stats = await sellerRepo.getStatistics(profile._id);
-  const settings = await sellerRepo.getSettings(profile._id);
+export const saveStep2 = async (userId, data) => {
+  const { shopName, description, address, city, state, pincode } = data;
 
-  // Calculate mock trust score
-  let trustScore = 0;
-  if (profile.status !== SELLER_STATUS.DRAFT) trustScore += 20;
-  if (profile.status === SELLER_STATUS.EMAIL_VERIFIED || profile.status === SELLER_STATUS.MOBILE_VERIFIED) trustScore += 20;
-  if (profile.status === SELLER_STATUS.IDENTITY_SUBMITTED) trustScore += 20;
-  if (profile.status === SELLER_STATUS.VERIFICATION_PENDING) trustScore += 20;
-  if (profile.status === SELLER_STATUS.MARKETPLACE_SELLER) trustScore += 20;
+  const seller = await sellerRepo.updateByUserId(userId, {
+    'profile.shopName': shopName,
+    'profile.description': description,
+    'profile.address': address,
+    'profile.city': city,
+    'profile.state': state,
+    'profile.pincode': pincode,
+    onboardingStep: 2,
+  });
 
-  profile.trustScore = trustScore;
-  await profile.save();
+  if (!seller) throw new ApiError(404, 'Seller record not found.');
+  logger.info(`Step 2 saved for userId: ${userId}`);
+  return seller;
+};
 
-  return {
-    profile,
-    documents: docs,
-    payment,
-    statistics: stats,
-    settings,
+// ─── PUT /api/seller/onboarding/step-3 ───────────────────────────────────────
+// identity: Aadhaar front+back images (Cloudinary), pan, gst
+// files are already Buffer objects passed from controller
+
+export const saveStep3 = async (userId, data, frontFileBuffer, backFileBuffer) => {
+  const { aadhaarNumber, pan, gst } = data;
+
+  // Upload front image (required)
+  const frontUpload = await uploadAadhaarImage(frontFileBuffer, 'nexcart/identity');
+
+  // Upload back image (optional)
+  let backUpload = null;
+  if (backFileBuffer) {
+    backUpload = await uploadAadhaarImage(backFileBuffer, 'nexcart/identity');
+  }
+
+  const updates = {
+    'identity.aadhaar.number': aadhaarNumber || '',
+    'identity.aadhaar.frontImage.public_id': frontUpload.public_id,
+    'identity.aadhaar.frontImage.url': frontUpload.secure_url,
+    'identity.pan': pan || '',
+    'identity.gst': gst || '',
+    verificationStatus: VERIFICATION_STATUS.IN_PROGRESS,
+    onboardingStep: 3,
   };
+
+  if (backUpload) {
+    updates['identity.aadhaar.backImage.public_id'] = backUpload.public_id;
+    updates['identity.aadhaar.backImage.url'] = backUpload.secure_url;
+  }
+
+  const seller = await sellerRepo.updateByUserId(userId, updates);
+  if (!seller) throw new ApiError(404, 'Seller record not found.');
+  logger.info(`Step 3 (identity) saved for userId: ${userId}`);
+  return seller;
 };
 
-export const agreeToTerms = async (userId) => {
-  const profile = await sellerRepo.updateSellerProfile(userId, { status: SELLER_STATUS.VERIFICATION_PENDING });
-  return profile;
+// ─── PUT /api/seller/onboarding/step-4 ───────────────────────────────────────
+// payment: { accountHolder, accountNumber, ifsc, upiId }
+
+export const saveStep4 = async (userId, data) => {
+  const { accountHolder, accountNumber, ifsc, upiId } = data;
+
+  const seller = await sellerRepo.updateByUserId(userId, {
+    'payment.accountHolder': accountHolder || '',
+    'payment.accountNumber': accountNumber || '',
+    'payment.ifsc': ifsc || '',
+    'payment.upiId': upiId || '',
+    onboardingStep: 4,
+  });
+
+  if (!seller) throw new ApiError(404, 'Seller record not found.');
+  logger.info(`Step 4 (payment) saved for userId: ${userId}`);
+  return seller;
 };
 
-// Simulated admin approval
-export const approveSeller = async (userId) => {
-  const profile = await sellerRepo.updateSellerProfile(userId, { status: SELLER_STATUS.MARKETPLACE_SELLER });
-  await userRepo.updateUser(userId, { role: ROLES.MARKETPLACE_SELLER });
-  return profile;
+// ─── PUT /api/seller/onboarding/step-5 ───────────────────────────────────────
+// agreement: accept terms and submit for review
+
+export const saveStep5 = async (userId) => {
+  const seller = await sellerRepo.updateByUserId(userId, {
+    'agreement.accepted': true,
+    'agreement.acceptedAt': new Date(),
+    sellerStatus: SELLER_STATUS.PENDING,
+    onboardingStep: 5,
+  });
+
+  if (!seller) throw new ApiError(404, 'Seller record not found.');
+  logger.info(`Step 5 (agreement) accepted for userId: ${userId}`);
+  return seller;
+};
+
+// ─── GET /api/seller/status ───────────────────────────────────────────────────
+
+export const getSellerStatus = async (userId) => {
+  const seller = await requireSeller(userId);
+  return {
+    sellerId: seller.sellerId,
+    sellerStatus: seller.sellerStatus,
+    verificationStatus: seller.verificationStatus,
+    onboardingStep: seller.onboardingStep,
+  };
 };

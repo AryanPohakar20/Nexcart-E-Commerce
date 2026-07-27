@@ -1,66 +1,33 @@
 // src/repositories/sellerRepository.js
+// Data-access layer for the Seller entity.
+// All direct Mongoose calls live here. Services call this — never query the model directly.
 
-import SellerProfile from '../models/SellerProfile.js';
-import VerificationDocument from '../models/VerificationDocument.js';
-import PaymentDetail from '../models/PaymentDetail.js';
-import SellerStatistic from '../models/SellerStatistic.js';
-import SellerSetting from '../models/SellerSetting.js';
+import Seller from '../models/Seller.js';
 
-export const createSellerProfile = async (data) => {
-  const profile = new SellerProfile(data);
-  return profile.save();
+/**
+ * Create a new Seller document linked to a User.
+ * @param {Object} data - { userId, ...any initial fields }
+ */
+export const createSeller = async (data) => {
+  const seller = new Seller(data);
+  return seller.save();
 };
 
-export const findProfileByUserId = async (userId) => {
-  return SellerProfile.findOne({ user: userId }).populate('user', 'firstName lastName email phone isVerified role');
+/**
+ * Find a Seller document by the owner's User._id.
+ */
+export const findByUserId = async (userId) => {
+  return Seller.findOne({ userId }).populate('userId', 'firstName lastName email phone isVerified role');
 };
 
-export const updateSellerProfile = async (userId, updates) => {
-  return SellerProfile.findOneAndUpdate({ user: userId }, updates, { new: true, runValidators: true });
-};
-
-// Verification Documents
-export const saveVerificationDocuments = async (profileId, data) => {
-  return VerificationDocument.findOneAndUpdate(
-    { sellerProfile: profileId },
-    { ...data },
-    { new: true, upsert: true, runValidators: true }
+/**
+ * Update a Seller document by the owner's User._id.
+ * Returns the updated document.
+ */
+export const updateByUserId = async (userId, updates) => {
+  return Seller.findOneAndUpdate(
+    { userId },
+    { $set: updates },
+    { new: true, runValidators: true }
   );
-};
-
-export const getVerificationDocuments = async (profileId) => {
-  return VerificationDocument.findOne({ sellerProfile: profileId });
-};
-
-// Payment Details
-export const savePaymentDetails = async (profileId, data) => {
-  return PaymentDetail.findOneAndUpdate(
-    { sellerProfile: profileId },
-    { ...data },
-    { new: true, upsert: true, runValidators: true }
-  );
-};
-
-export const getPaymentDetails = async (profileId) => {
-  return PaymentDetail.findOne({ sellerProfile: profileId });
-};
-
-// Statistics
-export const createStatistics = async (profileId) => {
-  const stats = new SellerStatistic({ sellerProfile: profileId });
-  return stats.save();
-};
-
-export const getStatistics = async (profileId) => {
-  return SellerStatistic.findOne({ sellerProfile: profileId });
-};
-
-// Settings
-export const createSettings = async (profileId) => {
-  const settings = new SellerSetting({ sellerProfile: profileId });
-  return settings.save();
-};
-
-export const getSettings = async (profileId) => {
-  return SellerSetting.findOne({ sellerProfile: profileId });
 };
