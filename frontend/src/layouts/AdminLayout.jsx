@@ -4,7 +4,7 @@ import { AppContext } from '../context/AppContext';
 import logo from '../assets/logo.jpg';
 import { 
   FiSliders, FiUsers, FiBox, FiTrendingUp, FiFolder, 
-  FiBookmark, FiFileText, FiSettings, FiArrowLeft, FiLogOut, FiMenu, FiX 
+  FiBookmark, FiFileText, FiSettings, FiArrowLeft, FiLogOut, FiMenu, FiX, FiStar 
 } from 'react-icons/fi';
 
 const AdminLayout = () => {
@@ -24,6 +24,7 @@ const AdminLayout = () => {
     { name: 'Orders', path: '/admin/orders', icon: FiTrendingUp },
     { name: 'Categories', path: '/admin/categories', icon: FiFolder },
     { name: 'Brands', path: '/admin/brands', icon: FiBookmark },
+    { name: 'Review Moderation', path: '/admin/reviews', icon: FiStar },
     { name: 'Reports', path: '/admin/reports', icon: FiFileText },
     { name: 'Settings', path: '/admin/settings', icon: FiSettings },
   ];

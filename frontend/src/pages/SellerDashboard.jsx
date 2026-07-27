@@ -45,7 +45,7 @@ const CountUp = ({ to, duration = 1.0, formatter = (val) => val }) => {
 };
 
 const SellerDashboard = () => {
-  const { showToast, user } = useContext(AppContext);
+  const { showToast, user, reviews, addSellerReply } = useContext(AppContext);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -208,23 +208,12 @@ const SellerDashboard = () => {
     showToast('Withdrawal Processed Successfully!');
   };
 
-  // 6. Review Panel State
-  const [reviews, setReviews] = useState([
-    { id: 'rv-1', customer: 'Amit Patel', rating: 5, comment: 'Brand new, sealed product. Instant packaging was top tier!', product: 'Apple iPhone 15 Pro Max', date: '2026-07-26', reply: '' },
-    { id: 'rv-2', customer: 'Priya Sharma', rating: 4, comment: 'Great sound, slightly warm on earcups over 4 hours usage.', product: 'Sony WH-1000XM5 Headphones', date: '2026-07-24', reply: 'Thank you Priya, glad you liked the ANC features!' }
-  ]);
   const [replyInputs, setReplyInputs] = useState({});
 
   const handlePostReply = (id) => {
     const text = replyInputs[id];
     if (!text?.trim()) return;
-    setReviews(prev => prev.map(rv => {
-      if (rv.id === id) {
-        showToast('Review reply published!');
-        return { ...rv, reply: text };
-      }
-      return rv;
-    }));
+    addSellerReply(id, text);
     setReplyInputs(prev => ({ ...prev, [id]: '' }));
   };
 
@@ -1176,15 +1165,15 @@ const SellerDashboard = () => {
                 <div key={rv.id} className="glass-card border border-white/10 p-5 rounded-2xl bg-[#0E1420]/40 text-left space-y-3">
                   <div className="flex justify-between items-start">
                     <div className="space-y-0.5 text-xs">
-                      <p className="font-bold text-white">{rv.customer}</p>
-                      <p className="text-[10px] text-gray-500">Purchased: {rv.product} • {rv.date}</p>
+                      <p className="font-bold text-white">{rv.customerName}</p>
+                      <p className="text-[10px] text-gray-500">Purchased: {rv.productTitle || 'Premium Item'} • {rv.date}</p>
                     </div>
                     <div className="flex items-center gap-1 text-xs text-primary font-bold">
                       <FiStar className="fill-current" /> {rv.rating}
                     </div>
                   </div>
                   
-                  <p className="text-xs text-gray-300 italic">"{rv.comment}"</p>
+                  <p className="text-xs text-gray-300 italic">"{rv.description}"</p>
 
                   {/* Merchant Reply Section */}
                   {rv.reply ? (
@@ -1339,6 +1328,65 @@ const SellerDashboard = () => {
                 <div className="space-y-0.5">
                   <p className="font-bold text-white">Identity Verified</p>
                   <p className="text-[10px] text-gray-400">GSTIN Company files approved by NexCart Admin.</p>
+                </div>
+              </div>
+
+              {/* Trust Score Animated Circle Indicator */}
+              <div className="bg-black/20 p-5 rounded-2xl border border-white/5 space-y-4 text-center">
+                <p className="text-[10px] text-gray-500 uppercase font-extrabold tracking-wider">Merchant Trust Score</p>
+                <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90">
+                    <circle cx="56" cy="56" r="48" fill="transparent" stroke="#1f2937" strokeWidth="8" />
+                    <motion.circle 
+                      cx="56" 
+                      cy="56" 
+                      r="48" 
+                      fill="transparent" 
+                      stroke="#FFC107" 
+                      strokeWidth="8" 
+                      strokeDasharray="301.6" 
+                      initial={{ strokeDashoffset: 301.6 }}
+                      animate={{ strokeDashoffset: 301.6 - (301.6 * 96) / 100 }}
+                      transition={{ duration: 1.2, ease: 'easeOut' }}
+                    />
+                  </svg>
+                  <div className="absolute flex flex-col items-center">
+                    <span className="text-sm font-black text-white">96%</span>
+                    <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-wider">Excellent</span>
+                  </div>
+                </div>
+                <p className="text-[9px] text-gray-400 leading-relaxed font-semibold">Based on 98.6% delivery completions, verified GST credentials, and positive buyer reviews.</p>
+              </div>
+
+              {/* Response rate analytics card */}
+              <div className="bg-black/20 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                <div className="text-left space-y-0.5">
+                  <p className="font-bold text-white text-[11px]">Replies within 2 hours</p>
+                  <p className="text-[10px] text-gray-500">98% customer response rate</p>
+                </div>
+                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#00c8ff] animate-pulse" />
+              </div>
+
+              {/* Store Badges with subtle hover scaling */}
+              <div className="space-y-2">
+                <p className="text-[10px] text-gray-500 uppercase font-bold text-left">Merchant Badges</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'Verified Seller', color: 'text-green-400 bg-green-400/5 border-green-500/20' },
+                    { label: 'Top Rated', color: 'text-primary bg-primary/5 border-primary/20' },
+                    { label: 'Fast Shipper', color: 'text-cyan-400 bg-cyan-400/5 border-cyan-400/20' },
+                    { label: 'Premium Store', color: 'text-purple-400 bg-purple-400/5 border-purple-400/20' },
+                    { label: 'Best Seller', color: 'text-amber-500 bg-amber-500/5 border-amber-500/20' },
+                    { label: '10K+ Orders', color: 'text-emerald-400 bg-emerald-400/5 border-emerald-400/20' }
+                  ].map(b => (
+                    <motion.div 
+                      key={b.label}
+                      whileHover={{ scale: 1.05 }}
+                      className={`p-2 rounded-xl text-center border text-[9px] font-bold ${b.color}`}
+                    >
+                      {b.label}
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </div>
