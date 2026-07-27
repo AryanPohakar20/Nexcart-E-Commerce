@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import logo from '../assets/logo.jpg';
 import { 
@@ -11,6 +12,7 @@ const AdminLayout = () => {
   const { user, logoutUser } = useContext(AppContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logoutUser();
@@ -60,14 +62,25 @@ const AdminLayout = () => {
                   to={item.path}
                   onClick={() => setIsSidebarOpen(false)}
                   className={({ isActive }) => `
-                    flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all text-sm
+                    relative flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm
                     ${isActive 
-                      ? 'bg-accentBlue text-black shadow-[0_0_15px_rgba(0,194,255,0.3)]' 
+                      ? 'text-black z-10' 
                       : 'text-gray-400 hover:text-white hover:bg-white/5'}
                   `}
                 >
-                  <Icon size={18} />
-                  <span>{item.name}</span>
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <motion.div
+                          layoutId="admin-active-bg"
+                          className="absolute inset-0 bg-accentBlue rounded-xl -z-10 shadow-[0_0_15px_rgba(0,194,255,0.3)]"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <Icon size={18} />
+                      <span>{item.name}</span>
+                    </>
+                  )}
                 </NavLink>
               );
             })}
@@ -117,9 +130,19 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        {/* Dynamic content page */}
-        <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full overflow-y-auto">
-          <Outlet />
+        {/* Dynamic content page with transitions */}
+        <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full overflow-y-auto relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 15, scale: 0.98, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -15, scale: 0.98, filter: 'blur(8px)' }}
+              transition={{ duration: 0.35, ease: 'easeInOut' }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 

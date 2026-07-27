@@ -16,14 +16,140 @@ const ScrollToTop = () => {
   return null;
 };
 
+const ToastItem = ({ toast, removeToast }) => {
+  const [timeLeft, setTimeLeft] = useState(3500);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (isHovered) return;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 100) {
+          clearInterval(interval);
+          removeToast(toast.id);
+          return 0;
+        }
+        return prev - 100;
+      });
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isHovered, toast.id, removeToast]);
+
+  return (
+    <motion.div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      initial={{ opacity: 0, x: 50, scale: 0.95 }}
+      animate={{ 
+        opacity: 1, 
+        x: 0, 
+        scale: 1,
+        x: toast.type === 'error' ? [-4, 4, -4, 4, 0] : 0
+      }}
+      exit={{ opacity: 0, x: 50, scale: 0.95 }}
+      transition={{ 
+        type: 'spring',
+        stiffness: 300,
+        damping: 24,
+        x: { duration: toast.type === 'error' ? 0.4 : 0.3 }
+      }}
+      className={`pointer-events-auto flex flex-col p-4 rounded-xl border glass-card shadow-2xl transition-all relative overflow-hidden ${
+        toast.type === 'error'
+          ? 'border-red-500/30 text-red-400 shadow-red-500/5'
+          : toast.type === 'info'
+          ? 'border-accentBlue/30 text-accentBlue shadow-blue-500/5'
+          : 'border-primary/30 text-primary shadow-yellow-500/5'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        {toast.type === 'error' && (
+          <div className="relative flex items-center justify-center w-6 h-6">
+            <motion.div 
+              animate={{ scale: [1, 1.25, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 bg-red-500/25 rounded-full blur-xs"
+            />
+            <FiAlertCircle className="text-red-500 text-xl z-10" />
+          </div>
+        )}
+        {toast.type === 'info' && (
+          <div className="relative flex items-center justify-center w-6 h-6">
+            <FiInfo className="text-accentBlue text-xl" />
+          </div>
+        )}
+        {toast.type === 'success' && (
+          <div className="relative flex items-center justify-center w-6 h-6">
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: [0, 1.2, 1] }}
+              transition={{ duration: 0.35 }}
+              className="absolute inset-0 bg-green-500/20 rounded-full"
+            />
+            <svg className="w-3.5 h-3.5 text-green-400 z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+              <motion.polyline 
+                points="20 6 9 17 4 12" 
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.4, delay: 0.08 }}
+              />
+            </svg>
+          </div>
+        )}
+        <span className="text-sm font-medium text-white">{toast.message}</span>
+      </div>
+      <motion.div 
+        animate={{ width: `${(timeLeft / 3500) * 100}%` }}
+        transition={{ duration: 0.1, ease: 'linear' }}
+        className={`absolute bottom-0 left-0 h-[2px] ${
+          toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-accentBlue' : 'bg-primary'
+        }`}
+      />
+    </motion.div>
+  );
+};
+
 const RootLayout = () => {
-  const { toasts } = useContext(AppContext);
+  const { toasts, removeToast } = useContext(AppContext);
   const location = useLocation();
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   // State for simulated navigation progress bar
   const [navProgress, setNavProgress] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
+
+  // Mouse-interactive ambient light coordinates tracking
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Fly-to-Cart animation layer logic
+  const [flyingItems, setFlyingItems] = useState([]);
+
+  useEffect(() => {
+    const handleFlyToCart = (e) => {
+      const { startX, startY, image } = e.detail;
+      const id = Date.now() + Math.random();
+      
+      const cartIconEl = document.querySelector('[title="Shopping Cart"]');
+      const rect = cartIconEl ? cartIconEl.getBoundingClientRect() : { left: window.innerWidth - 120, top: 30 };
+      const destX = rect.left + rect.width / 2;
+      const destY = rect.top + rect.height / 2;
+
+      setFlyingItems(prev => [...prev, { id, startX, startY, destX, destY, image }]);
+      
+      setTimeout(() => {
+        setFlyingItems(prev => prev.filter(item => item.id !== id));
+      }, 700);
+    };
+
+    window.addEventListener('fly-to-cart', handleFlyToCart);
+    return () => window.removeEventListener('fly-to-cart', handleFlyToCart);
+  }, []);
 
   useEffect(() => {
     setIsNavigating(true);
@@ -87,35 +213,7 @@ const RootLayout = () => {
         <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
           <AnimatePresence>
             {toasts.map((toast) => (
-              <motion.div
-                key={toast.id}
-                initial={{ opacity: 0, x: 50, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 50, scale: 0.95 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className={`pointer-events-auto flex flex-col p-4 rounded-xl border glass-card shadow-2xl transition-all relative overflow-hidden ${
-                  toast.type === 'error'
-                    ? 'border-red-500/30 text-red-400'
-                    : toast.type === 'info'
-                    ? 'border-accentBlue/30 text-accentBlue'
-                    : 'border-primary/30 text-primary'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {toast.type === 'error' && <FiAlertCircle className="text-xl flex-shrink-0" />}
-                  {toast.type === 'info' && <FiInfo className="text-xl flex-shrink-0" />}
-                  {toast.type === 'success' && <FiCheckCircle className="text-xl flex-shrink-0" />}
-                  <span className="text-sm font-medium text-white">{toast.message}</span>
-                </div>
-                <motion.div 
-                  initial={{ width: '100%' }}
-                  animate={{ width: '0%' }}
-                  transition={{ duration: 3.0, ease: 'linear' }}
-                  className={`absolute bottom-0 left-0 h-[2px] ${
-                    toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-accentBlue' : 'bg-primary'
-                  }`}
-                />
-              </motion.div>
+              <ToastItem key={toast.id} toast={toast} removeToast={removeToast} />
             ))}
           </AnimatePresence>
         </div>
@@ -178,6 +276,43 @@ const RootLayout = () => {
         ))}
       </div>
       
+      {/* Floating Fly-to-Cart clones */}
+      <AnimatePresence>
+        {flyingItems.map((item) => (
+          <motion.div
+            key={item.id}
+            initial={{ 
+              position: 'fixed',
+              left: item.startX - 20,
+              top: item.startY - 20,
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              boxShadow: '0 0 15px rgba(255, 193, 7, 0.45)',
+              border: '2px solid #FFC107',
+              zIndex: 9999,
+              scale: 1,
+              opacity: 1
+            }}
+            animate={{
+              left: item.destX - 12,
+              top: item.destY - 12,
+              width: 24,
+              height: 24,
+              scale: 0.25,
+              opacity: 0.3,
+              rotate: 360
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className="pointer-events-none"
+          >
+            <img src={item.image} alt="" className="w-full h-full object-cover" />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+      
       {/* Sticky Header */}
       <Navbar />
 
@@ -186,9 +321,9 @@ const RootLayout = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -16, filter: 'blur(8px)' }}
+            initial={{ opacity: 0, y: 20, scale: 0.97, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -20, scale: 0.97, filter: 'blur(10px)' }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
           >
             <Outlet />
@@ -203,35 +338,7 @@ const RootLayout = () => {
       <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
         <AnimatePresence>
           {toasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, x: 50, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 50, scale: 0.95 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className={`pointer-events-auto flex flex-col p-4 rounded-xl border glass-card shadow-2xl transition-all relative overflow-hidden ${
-                toast.type === 'error'
-                  ? 'border-red-500/30 text-red-400'
-                  : toast.type === 'info'
-                  ? 'border-accentBlue/30 text-accentBlue'
-                  : 'border-primary/30 text-primary'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {toast.type === 'error' && <FiAlertCircle className="text-xl flex-shrink-0" />}
-                {toast.type === 'info' && <FiInfo className="text-xl flex-shrink-0" />}
-                {toast.type === 'success' && <FiCheckCircle className="text-xl flex-shrink-0" />}
-                <span className="text-sm font-medium text-white">{toast.message}</span>
-              </div>
-              <motion.div 
-                initial={{ width: '100%' }}
-                animate={{ width: '0%' }}
-                transition={{ duration: 3.0, ease: 'linear' }}
-                className={`absolute bottom-0 left-0 h-[2px] ${
-                  toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-accentBlue' : 'bg-primary'
-                }`}
-              />
-            </motion.div>
+            <ToastItem key={toast.id} toast={toast} removeToast={removeToast} />
           ))}
         </AnimatePresence>
       </div>

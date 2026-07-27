@@ -25,9 +25,22 @@ const ProductCard = ({ product }) => {
     }
   };
 
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    if (hasStock) {
+      addToCart(product, 1);
+      window.dispatchEvent(new CustomEvent('fly-to-cart', {
+        detail: {
+          startX: e.clientX,
+          startY: e.clientY,
+          image: product.image
+        }
+      }));
+    }
+  };
+
   return (
     <>
-      {/* Product Display Card */}
       {/* Product Display Card */}
       <motion.div 
         onClick={handleCardClick}
@@ -35,7 +48,7 @@ const ProductCard = ({ product }) => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        whileHover={{ y: -6, boxShadow: '0 20px 40px rgba(0,0,0,0.4), 0 0 25px rgba(255,193,7,0.25)' }}
+        whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 40px rgba(0,0,0,0.45), 0 0 25px rgba(255,193,7,0.3)' }}
         className="group relative bg-cardBg rounded-2xl overflow-hidden border border-white/5 hover:border-primary/40 cursor-pointer flex flex-col justify-between h-[450px] transition-all duration-300"
       >
         {/* Shimmer Light Reflection Line */}
@@ -64,12 +77,19 @@ const ProductCard = ({ product }) => {
               onClick={(e) => { e.stopPropagation(); toggleWishlist(product); }}
               className={`card-action-btn p-2 rounded-full border shadow-md transition-all ${
                 isWishlisted 
-                  ? 'bg-primary border-primary text-black' 
+                  ? 'bg-primary border-primary text-black shadow-[0_0_15px_rgba(255,193,7,0.45)]' 
                   : 'bg-black/60 border-white/10 text-white hover:text-primary hover:bg-black/80'
               }`}
               title="Add to Wishlist"
             >
-              <FiHeart className={isWishlisted ? 'fill-current' : ''} size={15} />
+              <motion.div
+                key={isWishlisted ? 'wishlisted' : 'not-wishlisted'}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: [0.8, 1.3, 1] }}
+                transition={{ duration: 0.3 }}
+              >
+                <FiHeart className={isWishlisted ? 'fill-current' : ''} size={15} />
+              </motion.div>
             </motion.button>
             
             <motion.button 
@@ -119,9 +139,9 @@ const ProductCard = ({ product }) => {
               {product.title}
             </h3>
 
-            {/* Ratings stars */}
+            {/* Ratings stars - Hover Glow */}
             <div className="flex items-center gap-1.5 pt-1">
-              <div className="flex items-center text-primary text-xs">
+              <div className="flex items-center text-primary text-xs transition-all duration-300 group-hover:drop-shadow-[0_0_6px_rgba(255,193,7,0.85)]">
                 <FiStar className="fill-current" />
                 <span className="font-bold text-xs ml-0.5">{product.rating}</span>
               </div>
@@ -131,19 +151,19 @@ const ProductCard = ({ product }) => {
 
           {/* Pricing area */}
           <div className="pt-2 border-t border-white/5 space-y-3">
-            <div className="flex items-baseline gap-2">
-              <span className="text-lg font-extrabold text-white group-hover:text-primary transition-colors duration-300">₹{product.price.toLocaleString('en-IN')}</span>
+            <div className="flex items-baseline gap-2 overflow-hidden">
+              <span className="text-lg font-extrabold text-white group-hover:text-primary transition-all duration-300 group-hover:scale-105 origin-left inline-block">₹{product.price.toLocaleString('en-IN')}</span>
               {product.mrp > product.price && (
                 <span className="text-xs text-gray-500 line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
               )}
             </div>
 
             {/* Bottom Call To Action - Slide Up on Hover */}
-            <div className="grid grid-cols-2 gap-2 transform translate-y-1 group-hover:translate-y-0 transition-transform duration-350">
+            <div className="grid grid-cols-2 gap-2 transform translate-y-1.5 group-hover:translate-y-0 transition-transform duration-350">
               <motion.button 
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
-                onClick={(e) => { e.stopPropagation(); if (hasStock) addToCart(product, 1); }}
+                onClick={handleAddToCart}
                 disabled={!hasStock}
                 className="card-action-btn py-2 border border-white/10 hover:border-primary/40 rounded-lg text-xs font-semibold text-gray-300 hover:text-primary transition-all flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -173,13 +193,13 @@ const ProductCard = ({ product }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+              initial={{ scale: 0.95, opacity: 0, y: 20, filter: 'blur(10px)' }}
+              animate={{ scale: 1, opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ scale: 0.95, opacity: 0, y: 20, filter: 'blur(10px)' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
               className="glass-card max-w-2xl w-full rounded-2xl border border-white/10 overflow-hidden relative"
             >
               
@@ -213,7 +233,15 @@ const ProductCard = ({ product }) => {
                       <motion.button 
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => { addToCart(product, 1); setIsQuickViewOpen(false); }}
+                        onClick={(e) => { 
+                          if (hasStock) {
+                            addToCart(product, 1); 
+                            window.dispatchEvent(new CustomEvent('fly-to-cart', {
+                              detail: { startX: e.clientX, startY: e.clientY, image: product.image }
+                            }));
+                          }
+                          setIsQuickViewOpen(false); 
+                        }}
                         disabled={!hasStock}
                         className="py-2.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-white hover:border-primary/50 hover:text-primary transition-all disabled:opacity-40"
                       >

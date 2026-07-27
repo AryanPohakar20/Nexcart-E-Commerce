@@ -137,21 +137,60 @@ const Cart = () => {
       </div>
 
       {cart.length === 0 ? (
-        <div className="glass-card rounded-3xl p-16 text-center max-w-md mx-auto space-y-6 border border-white/5 shadow-2xl bg-[#0c111d]/40 backdrop-blur-xl">
-          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary border border-primary/20 animate-pulse">
-            <FiShoppingBag size={42} />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="glass-card rounded-3xl p-16 text-center max-w-md mx-auto space-y-6 border border-white/5 shadow-2xl bg-[#0c111d]/40 backdrop-blur-xl relative overflow-hidden"
+        >
+          {/* Drifting Background Particles */}
+          <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none z-0">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1.5 h-1.5 rounded-full bg-primary/20"
+                style={{
+                  left: `${15 + i * 15}%`,
+                  top: `${20 + (i * 17) % 60}%`
+                }}
+                animate={{
+                  y: [0, -30, 0],
+                  x: [0, i % 2 === 0 ? 8 : -8, 0],
+                  opacity: [0.1, 0.45, 0.1]
+                }}
+                transition={{
+                  duration: 4 + i,
+                  repeat: Infinity,
+                  ease: 'easeInOut'
+                }}
+              />
+            ))}
           </div>
-          <div className="space-y-2">
+
+          <motion.div 
+            animate={{ y: [0, -6, 0], scale: [1, 1.03, 1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary border border-primary/20 relative z-10"
+          >
+            <motion.div 
+              animate={{ scale: [1, 1.25, 1], opacity: [0.15, 0.35, 0.15] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute inset-0 bg-primary/20 rounded-full blur-md"
+            />
+            <FiShoppingBag size={42} className="text-primary drop-shadow-[0_0_8px_rgba(255,193,7,0.3)] animate-pulse" />
+          </motion.div>
+
+          <div className="space-y-2 relative z-10">
             <h2 className="text-xl font-bold text-white">Your Cart is Empty</h2>
             <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Your cart is waiting for you to fill it with premium electronics, gear, or fashion.</p>
           </div>
           <button 
             onClick={() => navigate('/products')}
-            className="w-full btn-glow-yellow text-xs font-bold py-3.5 rounded-xl uppercase tracking-wider"
+            className="w-full btn-glow-yellow text-xs font-bold py-3.5 rounded-xl uppercase tracking-wider relative z-10 font-bold font-semibold text-black bg-primary"
           >
             Explore Catalog
           </button>
-        </div>
+        </motion.div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {/* Left Column: Cart items List (70%) */}

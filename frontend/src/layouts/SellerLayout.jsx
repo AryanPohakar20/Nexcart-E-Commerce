@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import logo from '../assets/logo.jpg';
 import { 
@@ -13,6 +13,7 @@ const SellerLayout = () => {
   const { user, showToast } = useContext(AppContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Simple local mock logout wrapper since AppContext might not export logoutUser directly
   const handleLogout = () => {
@@ -39,12 +40,102 @@ const SellerLayout = () => {
 
   return (
     <div className="min-h-screen bg-darkBg text-white flex">
-      {/* Sidebar Navigation */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-secondaryBg border-r border-white/5 p-5 flex flex-col justify-between
-        transition-transform duration-300 md:translate-x-0 md:static md:h-screen md:sticky md:top-0
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      {/* 1. Mobile Sidebar Navigation Drawer */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <>
+            {/* Mobile backdrop */}
+            <motion.div 
+              initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+              animate={{ opacity: 1, backdropFilter: 'blur(4px)' }}
+              exit={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 bg-black/60 z-30 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+            {/* Sidebar drawer */}
+            <motion.aside 
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+              className="fixed inset-y-0 left-0 z-40 w-64 bg-secondaryBg border-r border-white/5 p-5 flex flex-col justify-between h-screen md:hidden"
+            >
+              <div className="space-y-6 overflow-y-auto max-h-[80vh] no-scrollbar">
+                {/* Logo */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
+                    <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover border border-primary/20" />
+                    <span className="text-lg font-black tracking-wider text-primary">NEX<span className="text-white">CART</span></span>
+                    <span className="bg-primary/10 border border-primary/20 text-primary text-[8px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">Vendor</span>
+                  </div>
+                  <button className="text-white hover:text-primary" onClick={() => setIsSidebarOpen(false)}>
+                    <FiX size={20} />
+                  </button>
+                </div>
+
+                {/* Nav Links */}
+                <nav className="flex flex-col gap-1.5">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <NavLink
+                        key={item.name}
+                        to={item.path}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className={({ isActive }) => `
+                          relative flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-xs group
+                          ${isActive 
+                            ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(0,200,255,0.06)]' 
+                            : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'}
+                        `}
+                      >
+                        {({ isActive }) => (
+                          <>
+                            {isActive && (
+                              <motion.span 
+                                layoutId="active-indicator-mobile"
+                                className="absolute left-0 w-1 h-5 bg-primary rounded-r-full"
+                                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                              />
+                            )}
+                            <Icon size={16} />
+                            <span>{item.name}</span>
+                            {isActive && (
+                              <span className="absolute right-3.5 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#00c8ff] animate-pulse" />
+                            )}
+                          </>
+                        )}
+                      </NavLink>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-1.5 pt-4 border-t border-white/5">
+                <button 
+                  onClick={() => navigate('/')}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  <FiArrowLeft size={16} />
+                  <span>Customer Shop</span>
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-xs text-red-400 hover:bg-red-500/10 transition-all"
+                >
+                  <FiLogOut size={16} />
+                  <span>Logout Account</span>
+                </button>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* 2. Desktop Sidebar Navigation */}
+      <aside className="hidden md:flex flex-col justify-between w-64 bg-secondaryBg border-r border-white/5 p-5 h-screen sticky top-0">
         <div className="space-y-6 overflow-y-auto max-h-[80vh] no-scrollbar">
           {/* Logo */}
           <div className="flex items-center justify-between">
@@ -53,9 +144,6 @@ const SellerLayout = () => {
               <span className="text-lg font-black tracking-wider text-primary">NEX<span className="text-white">CART</span></span>
               <span className="bg-primary/10 border border-primary/20 text-primary text-[8px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">Vendor</span>
             </div>
-            <button className="md:hidden text-white hover:text-primary" onClick={() => setIsSidebarOpen(false)}>
-              <FiX size={20} />
-            </button>
           </div>
 
           {/* Nav Links */}
@@ -66,7 +154,6 @@ const SellerLayout = () => {
                 <NavLink
                   key={item.name}
                   to={item.path}
-                  onClick={() => setIsSidebarOpen(false)}
                   className={({ isActive }) => `
                     relative flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-xs group
                     ${isActive 
@@ -76,19 +163,15 @@ const SellerLayout = () => {
                 >
                   {({ isActive }) => (
                     <>
-                      {/* Left animated yellow bar */}
                       {isActive && (
                         <motion.span 
-                          layoutId="active-indicator"
+                          layoutId="active-indicator-desktop"
                           className="absolute left-0 w-1 h-5 bg-primary rounded-r-full"
                           transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                         />
                       )}
-                      
                       <Icon size={16} />
                       <span>{item.name}</span>
-
-                      {/* Right glowing blue dot */}
                       {isActive && (
                         <span className="absolute right-3.5 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#00c8ff] animate-pulse" />
                       )}
@@ -144,19 +227,21 @@ const SellerLayout = () => {
           </div>
         </header>
 
-        {/* Dynamic Outlet */}
-        <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full overflow-x-hidden">
-          <Outlet />
+        {/* Dynamic Outlet with page transition */}
+        <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full overflow-x-hidden relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 15, scale: 0.98, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -15, scale: 0.98, filter: 'blur(8px)' }}
+              transition={{ duration: 0.35, ease: 'easeInOut' }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
-
-      {/* Mobile backdrop */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 };

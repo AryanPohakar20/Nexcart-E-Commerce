@@ -8,7 +8,8 @@
     scroll-behavior: smooth;
   }
 
-  *, *::before, *::after {
+  /* Smooth global transitions for specific theme-affected elements */
+  body, header, footer, aside, nav, a, button, input, select, textarea, .glass-card {
     transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease, box-shadow 300ms ease;
   }
 
@@ -520,5 +521,140 @@ input[type="number"] {
 }
 .img-premium-zoom:hover {
   transform: scale(1.06);
+}
+
+/* ================= PREMIUM MOTION INTERACTION UTILITIES ================= */
+
+/* Mouse-responsive interactive light glow */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    800px circle at var(--mouse-x, 50vw) var(--mouse-y, 50vh),
+    rgba(255, 193, 7, 0.04),
+    transparent 80%
+  );
+  opacity: 0.8;
+  transition: opacity 0.5s ease;
+}
+.dark body::before {
+  background: radial-gradient(
+    800px circle at var(--mouse-x, 50vw) var(--mouse-y, 50vh),
+    rgba(255, 193, 7, 0.03),
+    rgba(0, 200, 255, 0.015) 40%,
+    transparent 80%
+  );
+}
+
+/* Premium Buttons global behavior */
+button:not(:disabled),
+.btn-glow-yellow:not(:disabled),
+.btn-glow-blue:not(:disabled),
+.btn-outline-yellow:not(:disabled) {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background-color 0.3s ease;
+}
+button:hover:not(:disabled),
+.btn-glow-yellow:hover:not(:disabled),
+.btn-glow-blue:hover:not(:disabled),
+.btn-outline-yellow:hover:not(:disabled) {
+  transform: scale(1.03) translateY(-4px);
+  box-shadow: 0 8px 24px rgba(255, 193, 7, 0.25), 0 0 12px rgba(255, 193, 7, 0.2);
+}
+button:active:not(:disabled),
+.btn-glow-yellow:active:not(:disabled),
+.btn-glow-blue:active:not(:disabled),
+.btn-outline-yellow:active:not(:disabled) {
+  transform: scale(0.97) translateY(0);
+}
+
+/* Premium Inputs Focus behavior */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  transition: border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), caret-color 0.3s ease;
+}
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  border-color: #FFC107 !important;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.15), 0 4px 12px rgba(255, 193, 7, 0.1) !important;
+  transform: translateY(-1px);
+  caret-color: #FFC107;
+}
+
+/* Checkboxes, Radio Buttons, and Switches */
+input[type="checkbox"],
+input[type="radio"] {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+  transform: scale(1.18);
+}
+input[type="checkbox"]:active,
+input[type="radio"]:active {
+  transform: scale(0.9);
+}
+
+/* Premium Table Rows fade in & hover border */
+tbody tr {
+  animation: tableRowFadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: background-color 0.3s ease, border-left-color 0.3s ease;
+  border-left: 3px solid transparent;
+}
+@keyframes tableRowFadeInUp {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+tbody tr:nth-child(1) { animation-delay: 0.04s; }
+tbody tr:nth-child(2) { animation-delay: 0.08s; }
+tbody tr:nth-child(3) { animation-delay: 0.12s; }
+tbody tr:nth-child(4) { animation-delay: 0.16s; }
+tbody tr:nth-child(5) { animation-delay: 0.20s; }
+
+tbody tr:hover {
+  background-color: rgba(255, 193, 7, 0.04) !important;
+  border-left-color: #FFC107 !important;
+}
+
+/* Shimmer Loader & Skeleton styles */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: loadingShimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+.light .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 25%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: loadingShimmer 1.5s infinite linear;
+}
+@keyframes loadingShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Premium Card Hover Effects */
+.glass-card-hover {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.glass-card-hover:hover {
+  transform: translateY(-8px) scale(1.02) !important;
+  border-color: rgba(255, 193, 7, 0.4) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25), 0 0 20px rgba(255, 193, 7, 0.12) !important;
 }
 

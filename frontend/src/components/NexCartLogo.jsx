@@ -25,16 +25,17 @@ const NexCartLogo = ({ size = 'md', animated = true, showText = true, className 
           animate={{ 
             opacity: 1, 
             scale: [1, 1.03, 1],
+            y: [0, -4, 0],
             boxShadow: theme === 'dark' 
               ? ['0 0 15px rgba(255,193,7,0.2)', '0 0 25px rgba(255,193,7,0.45)', '0 0 15px rgba(255,193,7,0.2)']
               : ['0 4px 10px rgba(0,0,0,0.05)', '0 6px 15px rgba(0,0,0,0.1)', '0 4px 10px rgba(0,0,0,0.05)']
           }}
+          whileHover={{ rotate: 5, scale: 1.08 }}
           exit={{ opacity: 0.8, scale: 0.98 }}
           transition={{ 
-            duration: 3.5, 
-            repeat: Infinity, 
-            repeatType: 'reverse', 
-            ease: 'easeInOut' 
+            default: { duration: 3.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' },
+            scale: { type: 'spring', stiffness: 300, damping: 15 },
+            rotate: { type: 'spring', stiffness: 300, damping: 15 }
           }}
           className={`flex items-center justify-center ${currentSize.height} py-0.5 relative group rounded-xl`}
         >

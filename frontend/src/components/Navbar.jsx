@@ -30,6 +30,7 @@ const Navbar = () => {
   // Premium UI scroll & focus states
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,6 +51,8 @@ const Navbar = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    setIsSearching(true);
+    setTimeout(() => setIsSearching(false), 700);
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}&cat=${selectedCategory}`);
     } else {
@@ -94,8 +97,13 @@ const Navbar = () => {
             
             <Link to="/" className="flex items-center hover:opacity-95 transition-opacity py-1">
               <motion.div
-                animate={{ y: [0, -3, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1, y: [0, -3, 0] }}
+                transition={{ 
+                  scale: { type: 'spring', stiffness: 200, damping: 15 },
+                  opacity: { duration: 0.3 },
+                  y: { duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.4 } 
+                }}
                 whileHover={{ scale: 1.05 }}
               >
                 <NexCartLogo size="md" />
@@ -106,10 +114,10 @@ const Navbar = () => {
           {/* Center: Wide & Prominent Search Bar (Desktop & Tablet) */}
           <div className="hidden md:block flex-1 max-w-2xl relative">
             <motion.form 
-              animate={{ maxWidth: isSearchFocused ? '800px' : '640px' }}
+              animate={{ maxWidth: isSearchFocused ? '800px' : '640px', boxShadow: isSearchFocused ? '0 0 20px rgba(255, 193, 7, 0.18)' : 'none' }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               onSubmit={handleSearch} 
-              className="flex h-11 bg-gray-100/80 dark:bg-white/[0.06] rounded-full border border-gray-200 dark:border-white/10 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-visible transition-all shadow-inner items-center px-1.5 group/search w-full"
+              className="flex h-11 bg-gray-100/80 dark:bg-white/[0.06] rounded-full border border-gray-200 dark:border-white/10 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-visible transition-all items-center px-1.5 group/search w-full"
             >
               {/* Inline Category Dropdown Selector */}
               <div className="relative flex-shrink-0">
@@ -173,7 +181,12 @@ const Navbar = () => {
                 className="w-9 h-9 bg-gradient-to-r from-primary to-amber-400 text-black hover:brightness-110 rounded-full transition-all flex items-center justify-center font-bold flex-shrink-0 shadow-sm"
                 aria-label="Search"
               >
-                <FiSearch className="text-base stroke-[2.5] group-focus-within/search:rotate-12 transition-transform duration-300" />
+                <motion.div
+                  animate={isSearching ? { rotate: 360 } : { rotate: isSearchFocused ? 15 : 0 }}
+                  transition={{ duration: isSearching ? 0.6 : 0.3 }}
+                >
+                  <FiSearch className="text-base stroke-[2.5]" />
+                </motion.div>
               </motion.button>
             </motion.form>
 
@@ -477,18 +490,40 @@ const Navbar = () => {
 
             <div className="h-3 w-px bg-gray-300 dark:bg-white/10" />
 
-            <div className="flex items-center gap-4 font-semibold">
-              <Link to="/products?cat=electronics" className="hover:text-primary transition-colors link-underline">Electronics</Link>
-              <Link to="/products?cat=fashion" className="hover:text-primary transition-colors link-underline">Fashion</Link>
-              <Link to="/products?cat=ai-gadgets" className="hover:text-primary transition-colors flex items-center gap-1 text-primary link-underline">
-                <FiZap className="text-xs animate-pulse" />
-                <span>AI Tech</span>
-              </Link>
-              <Link to="/products" className="hover:text-primary transition-colors flex items-center gap-1 link-underline">
-                <FiGrid className="text-xs" />
-                <span>Browse All</span>
-              </Link>
-            </div>
+            <motion.div 
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                    delayChildren: 0.2
+                  }
+                }
+              }}
+              className="flex items-center gap-4 font-semibold"
+            >
+              <motion.span variants={{ hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 } }}>
+                <Link to="/products?cat=electronics" className="hover:text-primary transition-colors link-underline">Electronics</Link>
+              </motion.span>
+              <motion.span variants={{ hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 } }}>
+                <Link to="/products?cat=fashion" className="hover:text-primary transition-colors link-underline">Fashion</Link>
+              </motion.span>
+              <motion.span variants={{ hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 } }}>
+                <Link to="/products?cat=ai-gadgets" className="hover:text-primary transition-colors flex items-center gap-1 text-primary link-underline">
+                  <FiZap className="text-xs animate-pulse" />
+                  <span>AI Tech</span>
+                </Link>
+              </motion.span>
+              <motion.span variants={{ hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 } }}>
+                <Link to="/products" className="hover:text-primary transition-colors flex items-center gap-1 link-underline">
+                  <FiGrid className="text-xs" />
+                  <span>Browse All</span>
+                </Link>
+              </motion.span>
+            </motion.div>
           </div>
 
           {/* Right: Language / Currency selector */}

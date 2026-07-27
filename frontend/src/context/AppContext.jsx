@@ -79,11 +79,12 @@ export const AppProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   const showToast = (message, type = 'success') => {
-    const id = Date.now();
+    const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3500);
+  };
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
   // Helper variables for login transition checking
@@ -525,6 +526,7 @@ export const AppProvider = ({ children }) => {
         notifications,
         toasts,
         showToast,
+        removeToast,
         addToCart,
         removeFromCart,
         updateCartQty,
