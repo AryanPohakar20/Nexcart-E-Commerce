@@ -102,6 +102,10 @@ const AppRoutes = () => {
         <Route path="inventory" element={<SellerDashboard />} />
         <Route path="settings" element={<SellerDashboard />} />
         <Route path="profile" element={<SellerDashboard />} />
+        <Route path="messages" element={<SellerDashboard />} />
+        <Route path="reviews" element={<SellerDashboard />} />
+        <Route path="coupons" element={<SellerDashboard />} />
+        <Route path="payouts" element={<SellerDashboard />} />
       </Route>
 
       {/* 3. Admin Layout Routes */}
