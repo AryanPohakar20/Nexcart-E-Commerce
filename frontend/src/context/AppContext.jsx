@@ -1,9 +1,12 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { PRODUCTS, COUPONS } from '../constants/dummyData';
+import { AuthContext } from './AuthContext';
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  const { user } = useContext(AuthContext);
+
   // Theme State (Dark mode default, saved in Local Storage)
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('nexcart-theme') || 'dark';
@@ -36,8 +39,15 @@ export const AppProvider = ({ children }) => {
   };
 
   // Shopping States
-  const [cart, setCart] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
+  const [cart, setCart] = useState(() => {
+    return JSON.parse(localStorage.getItem('nexcart-guest-cart') || '[]');
+  });
+  const [wishlist, setWishlist] = useState(() => {
+    return JSON.parse(localStorage.getItem('nexcart-guest-wishlist') || '[]');
+  });
+  const [saveForLater, setSaveForLater] = useState(() => {
+    return JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]');
+  });
   const [comparedProducts, setComparedProducts] = useState([]);
   const [addresses, setAddresses] = useState([
     { id: 'addr-1', name: 'Aravind Swamy', street: 'Penthouse B, Skyview Heights, Hitec City', city: 'Hyderabad', state: 'Telangana', pin: '500081', phone: '9876543210', isDefault: true },
@@ -76,15 +86,112 @@ export const AppProvider = ({ children }) => {
     }, 3500);
   };
 
+  // Helper variables for login transition checking
+  const [prevUser, setPrevUser] = useState(null);
+
+  // Sync state between guest storage and user storage, and execute Guest Cart Merging on Login
+  useEffect(() => {
+    if (user) {
+      if (!prevUser) {
+        // Just logged in! Merge guest cart into user cart
+        const guestCart = JSON.parse(localStorage.getItem('nexcart-guest-cart') || '[]');
+        const guestWishlist = JSON.parse(localStorage.getItem('nexcart-guest-wishlist') || '[]');
+        const guestSaveLater = JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]');
+
+        const userId = user.id || user._id;
+        const userCart = JSON.parse(localStorage.getItem(`nexcart-cart-${userId}`) || '[]');
+        const userWishlist = JSON.parse(localStorage.getItem(`nexcart-wishlist-${userId}`) || '[]');
+        const userSaveLater = JSON.parse(localStorage.getItem(`nexcart-save-later-${userId}`) || '[]');
+
+        let mergedCart = [...userCart];
+        let mergedAny = false;
+
+        if (guestCart.length > 0) {
+          guestCart.forEach((guestItem) => {
+            const existing = mergedCart.find((item) => item.product.id === guestItem.product.id);
+            if (existing) {
+              existing.quantity = Math.min(existing.quantity + guestItem.quantity, guestItem.product.stock || 10);
+            } else {
+              mergedCart.push(guestItem);
+            }
+          });
+          localStorage.removeItem('nexcart-guest-cart');
+          mergedAny = true;
+        }
+
+        let mergedWish = [...userWishlist];
+        if (guestWishlist.length > 0) {
+          guestWishlist.forEach((guestItem) => {
+            if (!mergedWish.some((item) => item.id === guestItem.id)) {
+              mergedWish.push(guestItem);
+            }
+          });
+          localStorage.removeItem('nexcart-guest-wishlist');
+        }
+
+        let mergedSave = [...userSaveLater];
+        if (guestSaveLater.length > 0) {
+          guestSaveLater.forEach((guestItem) => {
+            if (!mergedSave.some((item) => item.product.id === guestItem.product.id)) {
+              mergedSave.push(guestItem);
+            }
+          });
+          localStorage.removeItem('nexcart-guest-save-later');
+        }
+
+        setCart(mergedCart);
+        setWishlist(mergedWish);
+        setSaveForLater(mergedSave);
+
+        if (mergedAny) {
+          showToast("Your guest cart has been merged.", "success");
+        }
+      } else {
+        // Normal user state sync
+        const userId = user.id || user._id;
+        localStorage.setItem(`nexcart-cart-${userId}`, JSON.stringify(cart));
+        localStorage.setItem(`nexcart-wishlist-${userId}`, JSON.stringify(wishlist));
+        localStorage.setItem(`nexcart-save-later-${userId}`, JSON.stringify(saveForLater));
+      }
+    } else {
+      // Guest state sync, or loaded guest data after logout
+      if (prevUser) {
+        // User logged out, clear states to guest defaults
+        const guestCart = JSON.parse(localStorage.getItem('nexcart-guest-cart') || '[]');
+        const guestWishlist = JSON.parse(localStorage.getItem('nexcart-guest-wishlist') || '[]');
+        const guestSaveLater = JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]');
+        setCart(guestCart);
+        setWishlist(guestWishlist);
+        setSaveForLater(guestSaveLater);
+      } else {
+        // Save current changes to guest local storage
+        localStorage.setItem('nexcart-guest-cart', JSON.stringify(cart));
+        localStorage.setItem('nexcart-guest-wishlist', JSON.stringify(wishlist));
+        localStorage.setItem('nexcart-guest-save-later', JSON.stringify(saveForLater));
+      }
+    }
+    setPrevUser(user);
+  }, [cart, wishlist, saveForLater, user]);
+
   // Cart Functions
   const addToCart = (product, quantity = 1) => {
+    if (product.stock <= 0) {
+      showToast(`${product.title} is out of stock!`, 'error');
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
+        const nextQty = existing.quantity + quantity;
+        const maxStock = product.stock || 10;
+        if (nextQty > maxStock) {
+          showToast(`Cannot add more. Only ${maxStock} items in stock!`, 'error');
+          return prev;
+        }
         showToast(`Increased quantity of ${product.brand} ${product.title.split(' ')[1]} in Cart`);
         return prev.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: nextQty }
             : item
         );
       }
@@ -99,6 +206,15 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateCartQty = (productId, quantity) => {
+    const item = cart.find((i) => i.product.id === productId);
+    if (!item) return;
+
+    const maxStock = item.product.stock || 10;
+    if (quantity > maxStock) {
+      showToast(`Only ${maxStock} items left in stock!`, 'error');
+      return;
+    }
+
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
@@ -127,6 +243,35 @@ export const AppProvider = ({ children }) => {
         return [...prev, product];
       }
     });
+  };
+
+  // Save For Later Functions
+  const moveToSaveLater = (product) => {
+    // Remove from cart
+    setCart((prev) => prev.filter((item) => item.product.id !== product.id));
+    // Add to Save For Later if not already there
+    setSaveForLater((prev) => {
+      const exists = prev.some((item) => item.product.id === product.id);
+      if (exists) return prev;
+      return [...prev, { product }];
+    });
+    showToast(`Saved ${product.brand} ${product.title.split(' ')[1]} for later`, 'info');
+  };
+
+  const moveToCartFromSaveLater = (product) => {
+    if (product.stock <= 0) {
+      showToast(`${product.title} is out of stock!`, 'error');
+      return;
+    }
+    // Remove from Save For Later
+    setSaveForLater((prev) => prev.filter((item) => item.product.id !== product.id));
+    // Add to Cart
+    addToCart(product, 1);
+  };
+
+  const removeFromSaveLater = (productId) => {
+    setSaveForLater((prev) => prev.filter((item) => item.product.id !== productId));
+    showToast('Removed from Save For Later list', 'info');
   };
 
   // Compare System
@@ -205,6 +350,7 @@ export const AppProvider = ({ children }) => {
         cart,
         setCart,
         wishlist,
+        saveForLater,
         comparedProducts,
         addresses,
         orders,
@@ -218,6 +364,9 @@ export const AppProvider = ({ children }) => {
         updateCartQty,
         clearCart,
         toggleWishlist,
+        moveToSaveLater,
+        moveToCartFromSaveLater,
+        removeFromSaveLater,
         toggleCompare,
         clearComparison,
         addAddress,
