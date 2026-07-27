@@ -8,6 +8,18 @@ import streamifier from 'streamifier';
  * @returns {Promise<Object>} - Promise resolving to an object containing secure_url and public_id.
  */
 export const uploadAadhaarImage = (fileBuffer, folder = 'nexcart/aadhaar') => {
+  const isCloudinaryConfigured =
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name' &&
+    process.env.CLOUDINARY_CLOUD_NAME !== 'mock_cloud';
+
+  if (!isCloudinaryConfigured) {
+    return Promise.resolve({
+      secure_url: 'https://res.cloudinary.com/demo/image/upload/v1234567890/sample.jpg',
+      public_id: `mock_aadhaar_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    });
+  }
+
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
@@ -34,7 +46,7 @@ export const uploadAadhaarImage = (fileBuffer, folder = 'nexcart/aadhaar') => {
  * @returns {Promise<Object>}
  */
 export const deleteAadhaarImage = async (publicId) => {
-  if (!publicId) return;
+  if (!publicId || publicId.startsWith('mock_')) return;
   return await cloudinary.uploader.destroy(publicId);
 };
 

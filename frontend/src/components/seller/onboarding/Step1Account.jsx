@@ -14,15 +14,36 @@ const Step1Account = ({ onNext, isSubmitting }) => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [validationError, setValidationError] = useState('');
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setValidationError('');
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Password match check
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setValidationError('Passwords do not match.');
       return;
     }
+
+    // Password length check
+    if (formData.password.length < 6) {
+      setValidationError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    // Mobile number regex check
+    const phoneRegex = /^\+?[\d\s\-]{7,15}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setValidationError('Please enter a valid phone number.');
+      return;
+    }
+
+    setValidationError('');
     onNext(formData);
   };
 
@@ -34,6 +55,11 @@ const Step1Account = ({ onNext, isSubmitting }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {validationError && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold p-3 rounded-xl text-center">
+            {validationError}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">First Name</label>

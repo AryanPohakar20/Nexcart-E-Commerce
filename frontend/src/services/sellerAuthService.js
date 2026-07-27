@@ -53,9 +53,13 @@ const sellerAuthService = {
     }
   },
 
-  uploadIdentity: async (data) => {
+  uploadIdentity: async (formData) => {
     try {
-      const response = await axiosInstance.post('/seller/upload-document', data);
+      const response = await axiosInstance.post('/seller/upload-document', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

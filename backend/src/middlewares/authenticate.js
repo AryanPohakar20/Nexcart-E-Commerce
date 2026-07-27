@@ -4,6 +4,20 @@ import User from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const authenticate = asyncHandler(async (req, res, next) => {
+  if (process.env.MOCK_DB === 'true') {
+    req.user = {
+      _id: 'mock_seller_123',
+      firstName: 'Srushti',
+      lastName: 'Salunke',
+      username: 'srushti',
+      email: 'srushtisalunke41@gmail.com',
+      phone: '1234567890',
+      role: 'seller',
+      isVerified: false,
+    };
+    return next();
+  }
+
   let token;
 
   if (

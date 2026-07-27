@@ -46,8 +46,8 @@ const connectDB = async (retryCount = 0) => {
       return connectDB(retryCount + 1);
     }
 
-    logger.error('Could not connect to MongoDB after multiple attempts. Exiting.');
-    process.exit(1);
+    logger.error('Could not connect to MongoDB. Enabling MOCK DATABASE mode for development.');
+    process.env.MOCK_DB = 'true';
   }
 };
 

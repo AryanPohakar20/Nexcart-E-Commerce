@@ -81,7 +81,15 @@ const SellerOnboarding = () => {
       } else if (currentStep === 3) {
         setIsSubmitting(true);
         try {
-          await sellerAuthService.uploadIdentity({ idType: data.idType, frontImage: 'uploaded_path', backImage: 'uploaded_path' });
+          const formData = new FormData();
+          formData.append('idType', data.idType);
+          if (data.frontImage) {
+            formData.append('frontImage', data.frontImage);
+          }
+          if (data.backImage) {
+            formData.append('backImage', data.backImage);
+          }
+          await sellerAuthService.uploadIdentity(formData);
         } catch (apiError) {
           console.warn('Upload identity API failed:', apiError);
         }

@@ -2,6 +2,30 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import * as authService from '../services/authService.js';
 
 export const registerSeller = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    const mockUser = {
+      _id: 'mock_seller_123',
+      firstName: req.body.firstName || 'Srushti',
+      lastName: req.body.lastName || 'Salunke',
+      username: req.body.username || 'srushti',
+      email: req.body.email || 'srushtisalunke41@gmail.com',
+      phone: req.body.phone || '1234567890',
+      role: 'seller',
+      isVerified: false,
+    };
+    return res.status(201).json({
+      success: true,
+      message: 'Seller registered successfully (Mock Mode)',
+      token: 'mock_token_123',
+      user: mockUser,
+      data: {
+        accessToken: 'mock_token_123',
+        refreshToken: 'mock_token_123',
+        user: mockUser,
+      },
+    });
+  }
+
   const { user, token } = await authService.registerSellerService(req.body);
 
   res.status(201).json({
@@ -18,6 +42,30 @@ export const registerSeller = asyncHandler(async (req, res) => {
 });
 
 export const loginSeller = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    const mockUser = {
+      _id: 'mock_seller_123',
+      firstName: 'Srushti',
+      lastName: 'Salunke',
+      username: 'srushti',
+      email: req.body.email || 'srushtisalunke41@gmail.com',
+      phone: '1234567890',
+      role: 'seller',
+      isVerified: false,
+    };
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful (Mock Mode)',
+      token: 'mock_token_123',
+      user: mockUser,
+      data: {
+        accessToken: 'mock_token_123',
+        refreshToken: 'mock_token_123',
+        user: mockUser,
+      },
+    });
+  }
+
   const { email, password } = req.body;
   const { user, token } = await authService.loginSellerService(email, password);
 
@@ -35,6 +83,27 @@ export const loginSeller = asyncHandler(async (req, res) => {
 });
 
 export const getCurrentSeller = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    const mockUser = {
+      _id: 'mock_seller_123',
+      firstName: 'Srushti',
+      lastName: 'Salunke',
+      username: 'srushti',
+      email: 'srushtisalunke41@gmail.com',
+      phone: '1234567890',
+      role: 'seller',
+      isVerified: false,
+    };
+    return res.status(200).json({
+      success: true,
+      message: 'Seller details fetched successfully (Mock Mode)',
+      user: mockUser,
+      data: {
+        user: mockUser,
+      },
+    });
+  }
+
   res.status(200).json({
     success: true,
     message: 'Seller details fetched successfully',

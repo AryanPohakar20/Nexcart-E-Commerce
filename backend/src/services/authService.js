@@ -14,8 +14,42 @@ export const registerSellerService = async (userData) => {
   const { firstName, lastName, username, email, phone, password } = userData;
 
   // Check for duplicate email
-  const emailExists = await User.findOne({ email });
-  if (emailExists) {
+  let user = await User.findOne({ email });
+  if (user) {
+    if (user.role === 'customer') {
+      // Promote customer to seller
+      user.role = 'seller';
+      if (firstName) user.firstName = firstName;
+      if (lastName) user.lastName = lastName;
+      if (phone) user.phone = phone;
+      if (password) user.password = password; // triggers pre-save hash hook
+      
+      if (username) {
+        const usernameExists = await User.findOne({ username });
+        if (usernameExists && usernameExists._id.toString() !== user._id.toString()) {
+          throw new ApiError(400, 'Username is already taken');
+        }
+        user.username = username;
+      }
+
+      const otp = generateOtp();
+      const hashedOtp = await hashOtp(otp);
+      const expiresAt = getOtpExpiry();
+
+      user.otp = { code: hashedOtp, expiresAt };
+      await user.save();
+
+      try {
+        await sendOtpEmail(email, otp, 'Seller Email Verification');
+        logger.info(`Seller Verification OTP sent to: ${email}`);
+      } catch (err) {
+        logger.error(`Failed to send seller verification OTP to ${email}: ${err.message}`);
+      }
+
+      const token = user.generateJWT();
+      return { user, token };
+    }
+
     throw new ApiError(400, 'User with this email already exists');
   }
 
@@ -26,7 +60,7 @@ export const registerSellerService = async (userData) => {
   }
 
   // Create new user with role 'seller'
-  const user = await User.create({
+  user = await User.create({
     firstName,
     lastName,
     username,

@@ -4,9 +4,6 @@ const REQUIRED_VARS = [
   'JWT_SECRET',
   'JWT_EXPIRES_IN',
   'CLIENT_URL',
-  'CLOUDINARY_CLOUD_NAME',
-  'CLOUDINARY_API_KEY',
-  'CLOUDINARY_API_SECRET',
 ];
 
 const validateEnv = () => {
@@ -23,6 +20,16 @@ const validateEnv = () => {
   if (!process.env.EMAIL || !process.env.EMAIL_PASSWORD) {
     console.warn(
       '\n⚠️ EMAIL / EMAIL_PASSWORD not set in .env — transactional emails will log to console in dev mode.\n'
+    );
+  }
+
+  if (
+    !process.env.CLOUDINARY_CLOUD_NAME ||
+    !process.env.CLOUDINARY_API_KEY ||
+    !process.env.CLOUDINARY_API_SECRET
+  ) {
+    console.warn(
+      '\n⚠️ CLOUDINARY credentials not fully set in .env — document uploads will return mock URLs in dev mode.\n'
     );
   }
 };
