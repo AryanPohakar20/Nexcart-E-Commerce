@@ -1,5 +1,7 @@
-export const  param($m) $m.Groups[2].Value.ToUpper() rofileUtils = () => {
+// profileUtils.js - Starter utilities for Profile Management (Phase 2A)
+
+export const profileUtils = () => {
   return null;
 };
 
-export default  param($m) $m.Groups[2].Value.ToUpper() rofileUtils;
+export default profileUtils;

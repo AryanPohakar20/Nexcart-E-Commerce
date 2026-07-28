@@ -1,27 +1,41 @@
 import React, { useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
+import { AuthContext } from '../context/AuthContext';
 import { FiUser, FiMail, FiPhone, FiCalendar, FiEdit2, FiCheck } from 'react-icons/fi';
 
 const UserProfile = () => {
-  const { user, setUser, showToast } = useContext(AppContext);
+  const { showToast } = useContext(AppContext);
+  const { user, updateUser } = useContext(AuthContext);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSavedAlert, setIsSavedAlert] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.name || user?.username || 'User'),
     phone: user?.phone || '',
     bio: user?.bio || '',
-    avatar: user?.avatar || ''
+    avatar: user?.avatar || user?.profilePicture || ''
   });
 
   const handleSave = (e) => {
     e.preventDefault();
     if (formData.name.trim()) {
-      setUser(prev => ({
-        ...prev,
-        ...formData
-      }));
+      if (updateUser) {
+        updateUser({
+          firstName: formData.name.split(' ')[0],
+          lastName: formData.name.split(' ').slice(1).join(' '),
+          name: formData.name,
+          phone: formData.phone,
+          bio: formData.bio,
+          avatar: formData.avatar
+        });
+      }
       setIsEditing(false);
-      showToast('Profile Updated Successfully!');
+      setIsSavedAlert(true);
+      showToast('Profile changes saved successfully!', 'success');
+
+      setTimeout(() => {
+        setIsSavedAlert(false);
+      }, 4000);
     }
   };
 
@@ -68,12 +82,31 @@ const UserProfile = () => {
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider">Account Details</h3>
             <button 
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                setIsEditing(!isEditing);
+                setIsSavedAlert(false);
+              }}
               className="text-xs text-primary font-bold hover:underline flex items-center gap-1.5"
             >
               {isEditing ? <span>Cancel</span> : <><FiEdit2 /> <span>Edit Profile</span></>}
             </button>
           </div>
+
+          <AnimatePresence>
+            {isSavedAlert && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2.5 shadow-md"
+              >
+                <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                  <FiCheck className="text-emerald-400 text-xs" />
+                </div>
+                <span>Profile changes saved successfully!</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <form onSubmit={handleSave} className="space-y-4 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -13,7 +13,14 @@ const authService = {
       });
       return response.data;
     } catch (error) {
-      throw error.response?.data || error;
+      const backendMessage = error.response?.data?.message || error.response?.data?.error || error.message;
+      const detailedError = new Error(backendMessage || 'Network error while registering. Please try again.');
+      detailedError.status = error.response?.status;
+      detailedError.errors = error.response?.data?.errors;
+      if (!error.response) {
+        console.error('Registration API Network/Connection Failure:', error);
+      }
+      throw detailedError;
     }
   },
 

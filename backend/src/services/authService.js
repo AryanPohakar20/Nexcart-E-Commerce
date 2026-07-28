@@ -13,14 +13,17 @@ import logger from '../utils/logger.js';
 export const registerSellerService = async (userData) => {
   const { firstName, lastName, username, email, phone, password } = userData;
 
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
+  const normalizedUsername = username ? username.toLowerCase().trim() : '';
+
   // Check for duplicate email
-  const emailExists = await User.findOne({ email });
+  const emailExists = await User.findOne({ email: normalizedEmail });
   if (emailExists) {
     throw new ApiError(400, 'User with this email already exists');
   }
 
   // Check for duplicate username
-  const usernameExists = await User.findOne({ username });
+  const usernameExists = await User.findOne({ username: normalizedUsername });
   if (usernameExists) {
     throw new ApiError(400, 'Username is already taken');
   }
@@ -29,8 +32,8 @@ export const registerSellerService = async (userData) => {
   const user = await User.create({
     firstName,
     lastName,
-    username,
-    email,
+    username: normalizedUsername,
+    email: normalizedEmail,
     phone,
     password,
     role: 'seller',
@@ -58,7 +61,8 @@ export const registerSellerService = async (userData) => {
 
 export const loginSellerService = async (email, password) => {
   // Find seller and include password for comparison
-  const user = await User.findOne({ email }).select('+password');
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
+  const user = await User.findOne({ email: normalizedEmail }).select('+password');
   
   if (!user || user.role !== 'seller') {
     throw new ApiError(401, 'Invalid credentials or user is not a seller');
@@ -84,14 +88,16 @@ export const loginSellerService = async (email, password) => {
 export const registerUserService = async (userData) => {
   const { firstName, lastName, username, email, phone, password, role = 'customer' } = userData;
 
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
+  const finalUsername = (username ? username.toLowerCase().trim() : '') || normalizedEmail.split('@')[0] + Math.floor(Math.random() * 1000);
+
   // Check for duplicate email
-  const emailExists = await User.findOne({ email });
+  const emailExists = await User.findOne({ email: normalizedEmail });
   if (emailExists) {
     throw new ApiError(400, 'User with this email already exists');
   }
 
   // Check for duplicate username
-  const finalUsername = username || email.split('@')[0] + Math.floor(Math.random() * 1000);
   const usernameExists = await User.findOne({ username: finalUsername });
   if (usernameExists) {
     throw new ApiError(400, 'Username is already taken');
@@ -102,7 +108,7 @@ export const registerUserService = async (userData) => {
     firstName,
     lastName,
     username: finalUsername,
-    email,
+    email: normalizedEmail,
     phone,
     password,
     role,

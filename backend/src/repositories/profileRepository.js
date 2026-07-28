@@ -1,5 +1,7 @@
-export const  param($m) $m.Groups[2].Value.ToUpper() rofileRepository = async () => {
+// profileRepository.js - Starter repository for Profile Management (Phase 2A)
+
+export const profileRepository = async () => {
   return null;
 };
 
-export default  param($m) $m.Groups[2].Value.ToUpper() rofileRepository;
+export default profileRepository;

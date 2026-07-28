@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+import profileRoutes from './profileRoutes.js';
 
 // Import controllers and middlewares directly to map legacy/frontend routes
 import {
@@ -59,6 +60,9 @@ router.post('/auth/logout', logoutSeller);
 router.post('/auth/forgot-password', forgotPassword);
 router.post('/auth/verify-otp', verifyOtp);
 router.post('/auth/reset-password', resetPassword);
+
+// Customer Profile Routes
+router.use('/profile', profileRoutes);
 
 // Step 4 & 5 Mock Endpoints for onboarding completion
 router.post('/seller/payment-details', authenticate, authorize('seller'), (req, res) => {

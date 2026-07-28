@@ -1,5 +1,7 @@
-export const  param($m) $m.Groups[2].Value.ToUpper() ddressRepository = async () => {
+// addressRepository.js - Starter repository for Address Management (Phase 2A)
+
+export const addressRepository = async () => {
   return null;
 };
 
-export default  param($m) $m.Groups[2].Value.ToUpper() ddressRepository;
+export default addressRepository;

@@ -1,5 +1,10 @@
-export const validate param($m) $m.Groups[2].Value.ToUpper() ddress = () => {
-  return null;
+// addressValidator.js - Starter validator for Address Management (Phase 2A)
+
+export const validateAddress = (req, res, next) => {
+  // Starter placeholder - to be implemented in future phases
+  if (next) next();
 };
 
-export default validate param($m) $m.Groups[2].Value.ToUpper() ddress;
+export default {
+  validateAddress,
+};

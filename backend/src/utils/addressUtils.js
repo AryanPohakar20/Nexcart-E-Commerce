@@ -1,5 +1,7 @@
-export const  param($m) $m.Groups[2].Value.ToUpper() ddressUtils = () => {
+// addressUtils.js - Starter utilities for Address Management (Phase 2A)
+
+export const addressUtils = () => {
   return null;
 };
 
-export default  param($m) $m.Groups[2].Value.ToUpper() ddressUtils;
+export default addressUtils;

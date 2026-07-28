@@ -1,8 +1,8 @@
+// addressRoutes.js - Starter router for Address Management (Phase 2A)
 import { Router } from 'express';
 
-export const  param($m) $m.Groups[2].Value.ToUpper() ddressRoutes = () => {
-  const router = Router();
-  return router;
-};
+const router = Router();
 
-export default  param($m) $m.Groups[2].Value.ToUpper() ddressRoutes;
+// Routes will be mounted here in future phases
+
+export default router;

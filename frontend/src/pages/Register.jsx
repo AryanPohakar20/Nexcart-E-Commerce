@@ -305,7 +305,7 @@ const Register = () => {
     } catch (error) {
       setIsSubmitting(false);
       const errMsg = (Array.isArray(error.errors) && error.errors.length > 0)
-        ? error.errors.map((e) => e.message).join(' | ')
+        ? error.errors.map((e) => (typeof e === 'string' ? e : e.message || e.msg)).filter(Boolean).join(' | ')
         : (error.message || 'Registration failed');
       showToast(errMsg, 'error');
     }

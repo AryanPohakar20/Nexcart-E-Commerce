@@ -12,9 +12,25 @@ const app = express();
 
 app.use(helmet());
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:5175',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || '*',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   })
 );
@@ -24,6 +40,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Backend is healthy',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // API Routes
 app.use('/api', apiRouter);

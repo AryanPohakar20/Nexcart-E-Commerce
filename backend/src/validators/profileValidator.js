@@ -1,5 +1,10 @@
-export const validate param($m) $m.Groups[2].Value.ToUpper() rofile = () => {
-  return null;
+// profileValidator.js - Starter validator for Profile Management (Phase 2A)
+
+export const validateProfile = (req, res, next) => {
+  // Starter placeholder - to be implemented in future phases
+  if (next) next();
 };
 
-export default validate param($m) $m.Groups[2].Value.ToUpper() rofile;
+export default {
+  validateProfile,
+};

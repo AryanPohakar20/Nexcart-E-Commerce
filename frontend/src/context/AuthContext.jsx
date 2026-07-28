@@ -107,8 +107,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (updatedData) => {
+    setUser((prev) => (prev ? { ...prev, ...updatedData } : updatedData));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, sellerLogin, sellerRegister, logout }}>
+    <AuthContext.Provider value={{ user, setUser, updateUser, isAuthenticated, loading, login, sellerLogin, sellerRegister, logout }}>
       {children}
     </AuthContext.Provider>
   );

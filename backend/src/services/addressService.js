@@ -1,5 +1,7 @@
-export const  param($m) $m.Groups[2].Value.ToUpper() ddressService = async () => {
+// addressService.js - Starter service for Address Management (Phase 2A)
+
+export const addressService = async () => {
   return null;
 };
 
-export default  param($m) $m.Groups[2].Value.ToUpper() ddressService;
+export default addressService;

@@ -19,12 +19,22 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Last name is required'],
       trim: true,
     },
+    fullName: {
+      type: String,
+      trim: true,
+      minlength: [2, 'Full name must be at least 2 characters'],
+      maxlength: [100, 'Full name cannot exceed 100 characters'],
+      default: null,
+    },
     username: {
       type: String,
       required: [true, 'Username is required'],
       unique: true,
       trim: true,
       lowercase: true,
+      minlength: [3, 'Username must be at least 3 characters'],
+      maxlength: [30, 'Username cannot exceed 30 characters'],
+      match: [/^[a-z0-9_]+$/, 'Username can only contain lowercase letters, numbers, and underscores'],
     },
     email: {
       type: String,
@@ -39,6 +49,62 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Phone number is required'],
       trim: true,
     },
+    mobile: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true,
+      match: [/^\+?[1-9]\d{1,14}$/, 'Please add a valid mobile number'],
+    },
+    profilePicture: {
+      type: String,
+      trim: true,
+      default: null,
+      validate: {
+        validator: (value) => value === null || /^(https?:\/\/|\/)/i.test(value),
+        message: 'Profile picture must be a valid URL or a local path',
+      },
+    },
+    avatar: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    dateOfBirth: {
+      type: Date,
+      default: null,
+      validate: {
+        validator: (value) => value === null || value <= new Date(),
+        message: 'Date of birth cannot be in the future',
+      },
+    },
+    dob: {
+      type: Date,
+      default: null,
+    },
+    gender: {
+      type: String,
+      enum: {
+        values: ['male', 'female', 'other', 'prefer_not_to_say'],
+        message: '{VALUE} is not supported',
+      },
+      default: 'prefer_not_to_say',
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [250, 'Bio cannot exceed 250 characters'],
+      default: '',
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'suspended'],
+      default: 'active',
+    },
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
     password: {
       type: String,
       required: [true, 'Password is required'],
@@ -49,6 +115,43 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['customer', 'seller', 'admin'],
       default: 'customer',
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    phoneVerified: {
+      type: Boolean,
+      default: false,
+    },
+    profileCompletion: {
+      type: Number,
+      min: [0, 'Profile completion cannot be less than 0'],
+      max: [100, 'Profile completion cannot exceed 100'],
+      default: 0,
+    },
+    profileCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    settings: {
+      notifications: {
+        email: { type: Boolean, default: true },
+        sms: { type: Boolean, default: false },
+        push: { type: Boolean, default: true },
+      },
+      privacy: {
+        profileVisibility: { type: String, enum: ['public', 'private'], default: 'public' },
+      },
+      language: {
+        type: String,
+        default: 'en',
+      },
+      theme: {
+        type: String,
+        enum: ['light', 'dark', 'system'],
+        default: 'system',
+      },
     },
     aadhaar: {
       number: { type: String, default: null },

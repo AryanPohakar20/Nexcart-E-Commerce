@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
+import { AuthContext } from '../context/AuthContext';
 import NexCartLogo from './NexCartLogo';
 import ThemeToggle from './ThemeToggle';
 import { CATEGORIES } from '../constants/dummyData';
@@ -12,8 +13,9 @@ import {
 
 const Navbar = () => {
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser 
+    cart, wishlist, notifications, markNotificationRead, clearNotifications 
   } = useContext(AppContext);
+  const { user, logout } = useContext(AuthContext);
   
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -366,8 +368,8 @@ const Navbar = () => {
                   aria-label="User profile"
                 >
                   <img
-                    src={user.avatar}
-                    alt={user.name}
+                    src={user.avatar || user.profilePicture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80'}
+                    alt={user.firstName || user.name || 'User Profile'}
                     className="w-7 sm:w-8 h-7 sm:h-8 rounded-full object-cover group-hover:scale-105 transition-transform"
                   />
                 </motion.button>
@@ -394,33 +396,19 @@ const Navbar = () => {
                     className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left"
                   >
                     <div className="flex items-center gap-3 border-b border-gray-200 dark:border-white/10 pb-3 mb-3">
-                      <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-primary" />
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.name}</h4>
+                      <img 
+                        src={user.avatar || user.profilePicture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80'} 
+                        alt={user.firstName || user.name || 'User'} 
+                        className="w-10 h-10 rounded-full object-cover border border-primary" 
+                      />
+                      <div className="overflow-hidden">
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                          {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user.name || user.username || 'User')}
+                        </h4>
                         <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
                         <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-primary/20 text-primary">
-                          {user.role} Account
+                          {user.role || 'customer'} Account
                         </span>
-                      </div>
-                    </div>
-
-                    {/* Switch Role Quick Tester */}
-                    <div className="mb-3 space-y-1">
-                      <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-semibold">Switch View Mode</p>
-                      <div className="grid grid-cols-3 gap-1 text-[10px] font-bold uppercase">
-                        {['customer', 'seller', 'admin'].map(r => (
-                          <button
-                            key={r}
-                            onClick={() => switchRole(r)}
-                            className={`py-1 rounded border transition-all ${
-                              (user.role || '').toLowerCase() === r 
-                                ? 'bg-primary text-black border-primary font-black'
-                                : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:text-primary'
-                            }`}
-                          >
-                            {r}
-                          </button>
-                        ))}
                       </div>
                     </div>
 
@@ -447,11 +435,11 @@ const Navbar = () => {
                         Saved Addresses
                       </Link>
                       <button
-                        onClick={() => { logoutUser(); setIsProfileOpen(false); }}
-                        className="w-full text-left px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 font-bold transition-colors flex items-center justify-between"
+                        onClick={() => { logout(); setIsProfileOpen(false); }}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-500/10 hover:text-red-500 text-gray-700 dark:text-gray-300 font-medium transition-colors flex items-center gap-2"
                       >
+                        <FiLogOut className="text-xs" />
                         <span>Logout</span>
-                        <FiLogOut />
                       </button>
                     </div>
                   </motion.div>

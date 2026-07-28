@@ -1,8 +1,11 @@
-import { Router } from 'express';
+import express from 'express';
+import { getProfile, updateProfile } from '../controllers/profileController.js';
+import { authenticate } from '../middlewares/authenticate.js';
+import { validateProfileUpdate } from '../validations/profileValidation.js';
 
-export const  param($m) $m.Groups[2].Value.ToUpper() rofileRoutes = () => {
-  const router = Router();
-  return router;
-};
+const router = express.Router();
 
-export default  param($m) $m.Groups[2].Value.ToUpper() rofileRoutes;
+router.get('/', authenticate, getProfile);
+router.patch('/', authenticate, validateProfileUpdate, updateProfile);
+
+export default router;
