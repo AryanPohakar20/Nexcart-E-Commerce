@@ -1,12 +1,13 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { AuthContext } from '../context/AuthContext';
-import { FiUser, FiMail, FiPhone, FiCalendar, FiEdit2, FiCheck } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiCalendar, FiEdit2, FiCheck, FiCamera, FiUploadCloud } from 'react-icons/fi';
 
 const UserProfile = () => {
   const { showToast } = useContext(AppContext);
   const { user, updateUser } = useContext(AuthContext);
+  const fileInputRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSavedAlert, setIsSavedAlert] = useState(false);
   const [formData, setFormData] = useState({
@@ -15,6 +16,33 @@ const UserProfile = () => {
     bio: user?.bio || '',
     avatar: user?.avatar || user?.profilePicture || ''
   });
+
+  const handleAvatarClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const imageUrl = reader.result;
+      setFormData((prev) => ({ ...prev, avatar: imageUrl }));
+      if (updateUser) {
+        updateUser({ avatar: imageUrl });
+      }
+      showToast('Profile photo updated successfully!', 'success');
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -39,31 +67,76 @@ const UserProfile = () => {
     }
   };
 
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const currentAvatar = formData.avatar || user?.avatar || user?.profilePicture;
+
   return (
     <div className="space-y-8 text-left">
+      {/* Hidden File Input for Image Upload */}
+      <input 
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+
       <div className="border-b border-white/5 pb-6">
-        <h1 className="text-2xl font-black text-white tracking-tight">My Profile Profile</h1>
-        <p className="text-xs text-gray-500 mt-1">Manage user information, contact data, and vendor memberships.</p>
+        <h1 className="text-2xl font-black text-white tracking-tight">My Profile</h1>
+        <p className="text-xs text-gray-500 mt-1">Manage your account information, profile picture, and contact details.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Column: Avatar & Summary Box */}
+        {/* Left Column: Avatar Upload & Summary Box */}
         <div className="lg:col-span-1 bg-cardBg border border-white/5 p-6 rounded-3xl flex flex-col items-center text-center space-y-4 h-fit">
-          <motion.img 
-            src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80'} 
-            alt="Avatar" 
-            animate={{ scale: [1, 1.04, 1] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-24 h-24 rounded-full object-cover border-2 border-primary/40 shadow-yellow-glow"
-          />
-          <div>
-            <h2 className="text-base font-bold text-white">{user?.name}</h2>
-            <span className="text-[9px] font-extrabold uppercase tracking-widest bg-primary/10 border border-primary/20 text-primary px-2.5 py-0.5 rounded-full inline-block mt-1">
-              Member Level: Elite
-            </span>
+          
+          {/* Avatar Upload Container */}
+          <div className="relative group cursor-pointer" onClick={handleAvatarClick} title="Click to upload profile photo">
+            {currentAvatar ? (
+              <motion.img 
+                src={currentAvatar} 
+                alt="Avatar" 
+                animate={{ scale: [1, 1.02, 1] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                className="w-28 h-28 rounded-full object-cover border-2 border-primary/50 shadow-yellow-glow"
+              />
+            ) : (
+              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-dashed border-primary/50 flex flex-col items-center justify-center text-primary font-black text-2xl shadow-yellow-glow">
+                <span>{getInitials(formData.name)}</span>
+                <span className="text-[9px] font-medium text-gray-400 mt-1 flex items-center gap-1">
+                  <FiUploadCloud /> Upload
+                </span>
+              </div>
+            )}
+
+            {/* Hover Camera Overlay Badge */}
+            <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white text-xs font-bold gap-1">
+              <FiCamera className="text-xl text-primary" />
+              <span className="text-[10px]">Change Photo</span>
+            </div>
           </div>
-          <p className="text-xs text-gray-400 leading-relaxed font-medium italic">"{user?.bio}"</p>
+
+          <div>
+            <h2 className="text-base font-bold text-white">{formData.name || user?.name || 'User'}</h2>
+            <button 
+              type="button" 
+              onClick={handleAvatarClick}
+              className="text-[10px] font-semibold text-primary hover:underline mt-1 flex items-center gap-1 mx-auto"
+            >
+              <FiCamera className="text-xs" />
+              <span>{currentAvatar ? 'Change Photo' : 'Upload Photo'}</span>
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed font-medium italic">
+            {formData.bio ? `"${formData.bio}"` : 'No bio added yet.'}
+          </p>
           
           <div className="w-full border-t border-white/5 pt-4 text-xs space-y-2 text-gray-400">
             <div className="flex justify-between">

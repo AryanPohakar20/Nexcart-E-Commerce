@@ -364,14 +364,20 @@ const Navbar = () => {
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-2 p-0.5 rounded-full border-2 border-primary/60 hover:border-primary transition-all group focus:outline-none"
+                  className="flex items-center justify-center gap-2 p-0.5 rounded-full border-2 border-primary/60 hover:border-primary transition-all group focus:outline-none"
                   aria-label="User profile"
                 >
-                  <img
-                    src={user.avatar || user.profilePicture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80'}
-                    alt={user.firstName || user.name || 'User Profile'}
-                    className="w-7 sm:w-8 h-7 sm:h-8 rounded-full object-cover group-hover:scale-105 transition-transform"
-                  />
+                  {(user.avatar || user.profilePicture) ? (
+                    <img
+                      src={user.avatar || user.profilePicture}
+                      alt={user.firstName || user.name || 'User Profile'}
+                      className="w-7 sm:w-8 h-7 sm:h-8 rounded-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-gradient-to-br from-primary/20 to-amber-500/20 text-primary font-black text-xs flex items-center justify-center">
+                      {(user.firstName ? user.firstName[0] : (user.username ? user.username[0] : 'U')).toUpperCase()}
+                    </div>
+                  )}
                 </motion.button>
               ) : (
                 <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
@@ -396,11 +402,17 @@ const Navbar = () => {
                     className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left"
                   >
                     <div className="flex items-center gap-3 border-b border-gray-200 dark:border-white/10 pb-3 mb-3">
-                      <img 
-                        src={user.avatar || user.profilePicture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80'} 
-                        alt={user.firstName || user.name || 'User'} 
-                        className="w-10 h-10 rounded-full object-cover border border-primary" 
-                      />
+                      {(user.avatar || user.profilePicture) ? (
+                        <img 
+                          src={user.avatar || user.profilePicture} 
+                          alt={user.firstName || user.name || 'User'} 
+                          className="w-10 h-10 rounded-full object-cover border border-primary" 
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-amber-500/20 border border-primary text-primary font-black text-sm flex items-center justify-center flex-shrink-0">
+                          {(user.firstName ? user.firstName[0] : (user.username ? user.username[0] : 'U')).toUpperCase()}
+                        </div>
+                      )}
                       <div className="overflow-hidden">
                         <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
                           {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user.name || user.username || 'User')}
