@@ -33,6 +33,20 @@ export const findByCategory = async (categoryId, subcategoryFilter = undefined) 
   return Attribute.find(query).populate(['category', 'subcategory']);
 };
 
+export const findActiveFilters = async (categoryId, subcategoryId = null) => {
+  const query = {
+    category: categoryId,
+    isActive: true,
+  };
+  if (subcategoryId) {
+    query.subcategory = { $in: [null, subcategoryId] };
+  } else {
+    query.subcategory = null;
+  }
+  return Attribute.find(query).populate(['category', 'subcategory']);
+};
+
+
 export const update = async (id, updates) => {
   return Attribute.findByIdAndUpdate(id, updates, { new: true, runValidators: true }).populate(['category', 'subcategory']);
 };

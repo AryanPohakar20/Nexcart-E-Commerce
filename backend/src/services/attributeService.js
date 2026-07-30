@@ -1,6 +1,7 @@
 // src/services/attributeService.js
 // Service implementation for Attribute module.
 
+import mongoose from 'mongoose';
 import * as attributeRepository from '../repositories/attributeRepository.js';
 import * as categoryRepository from '../repositories/categoryRepository.js';
 import * as subcategoryRepository from '../repositories/subcategoryRepository.js';
@@ -292,3 +293,72 @@ export const deleteAttribute = async (id) => {
   }
   return attributeRepository.deleteById(id);
 };
+
+export const generateFilters = async (categoryIdentifier, subcategoryIdentifier = null) => {
+  if (!categoryIdentifier) {
+    throw new ApiError(400, 'Category identifier is required');
+  }
+
+  // 1. Resolve Category (by ObjectId or Slug)
+  let category = null;
+  if (mongoose.isValidObjectId(categoryIdentifier)) {
+    category = await categoryRepository.findById(categoryIdentifier);
+  }
+  if (!category) {
+    category = await categoryRepository.findBySlug(categoryIdentifier);
+  }
+  if (!category) {
+    throw new ApiError(404, 'Category not found');
+  }
+
+  // 2. Resolve Subcategory if provided
+  let subcategory = null;
+  if (subcategoryIdentifier) {
+    if (mongoose.isValidObjectId(subcategoryIdentifier)) {
+      subcategory = await subcategoryRepository.findById(subcategoryIdentifier);
+    }
+    if (!subcategory) {
+      subcategory = await subcategoryRepository.findBySlug(subcategoryIdentifier);
+    }
+    if (!subcategory) {
+      throw new ApiError(404, 'Subcategory not found');
+    }
+
+    // 3. Verify subcategory belongs to the category
+    const subcatCategoryId = subcategory.category?._id || subcategory.category;
+    if (subcatCategoryId.toString() !== category._id.toString()) {
+      throw new ApiError(400, 'The specified subcategory does not belong to the category');
+    }
+  }
+
+  // 4. Retrieve matching active attributes
+  const attributes = await attributeRepository.findActiveFilters(
+    category._id,
+    subcategory ? subcategory._id : null
+  );
+
+  // 5. Structure and return dynamic filter metadata
+  return {
+    category: {
+      _id: category._id,
+      name: category.name,
+      slug: category.slug,
+    },
+    subcategory: subcategory
+      ? {
+          _id: subcategory._id,
+          name: subcategory.name,
+          slug: subcategory.slug,
+        }
+      : null,
+    filters: attributes.map((attr) => ({
+      name: attr.name,
+      slug: attr.slug,
+      type: attr.type,
+      options: attr.options,
+      isRequired: attr.isRequired,
+      defaultValue: attr.defaultValue,
+    })),
+  };
+};
+

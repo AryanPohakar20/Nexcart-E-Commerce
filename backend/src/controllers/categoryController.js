@@ -3,6 +3,7 @@
 
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as categoryService from '../services/categoryService.js';
+import * as attributeService from '../services/attributeService.js';
 import { successResponse } from '../utils/ApiResponse.js';
 
 export const createCategory = asyncHandler(async (req, res) => {
@@ -39,3 +40,11 @@ export const deleteCategory = asyncHandler(async (req, res) => {
   await categoryService.deleteCategory(req.params.id);
   return successResponse(res, 'Category deleted successfully');
 });
+
+export const getCategoryFilters = asyncHandler(async (req, res) => {
+  const { categoryIdentifier } = req.params;
+  const { subcategory } = req.query;
+  const data = await attributeService.generateFilters(categoryIdentifier, subcategory);
+  return successResponse(res, 'Available filters generated successfully', data);
+});
+

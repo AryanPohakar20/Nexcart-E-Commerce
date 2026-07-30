@@ -9,11 +9,13 @@ import {
   getAllCategories,
   updateCategory,
   deleteCategory,
+  getCategoryFilters,
 } from '../controllers/categoryController.js';
 import {
   validateCreateCategory,
   validateUpdateCategory,
   validateCategoryId,
+  validateGetCategoryFilters,
 } from '../validations/categoryValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
@@ -22,6 +24,7 @@ const router = express.Router();
 
 // Public routes
 router.get('/', getAllCategories);
+router.get('/:categoryIdentifier/filters', validateGetCategoryFilters, getCategoryFilters);
 router.get('/:id', validateCategoryId, getCategoryById);
 router.get('/slug/:slug', getCategoryBySlug);
 

@@ -1,7 +1,7 @@
 // src/validations/categoryValidation.js
 // Validation schemas for Category API.
 
-import { body, param, validationResult } from 'express-validator';
+import { body, param, query, validationResult } from 'express-validator';
 import { ApiError } from '../utils/ApiError.js';
 
 const checkValidationResult = (req, res, next) => {
@@ -95,3 +95,19 @@ export const validateCategoryId = [
     .withMessage('Invalid category ID format'),
   checkValidationResult,
 ];
+
+export const validateGetCategoryFilters = [
+  param('categoryIdentifier')
+    .notEmpty()
+    .withMessage('Category identifier is required')
+    .isString()
+    .withMessage('Category identifier must be a string')
+    .trim(),
+  query('subcategory')
+    .optional()
+    .isString()
+    .withMessage('Subcategory identifier must be a string')
+    .trim(),
+  checkValidationResult,
+];
+
