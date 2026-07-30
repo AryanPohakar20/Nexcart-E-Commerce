@@ -9,6 +9,7 @@ import Seller from '../models/Seller.js';
  * @param {Object} data - { userId, ...any initial fields }
  */
 export const createSeller = async (data) => {
+  console.log("Updating Seller Collection");
   const seller = new Seller(data);
   return seller.save();
 };
@@ -25,6 +26,7 @@ export const findByUserId = async (userId) => {
  * Returns the updated document.
  */
 export const updateByUserId = async (userId, updates) => {
+  console.log("Updating Seller Collection");
   return Seller.findOneAndUpdate(
     { userId },
     { $set: updates },

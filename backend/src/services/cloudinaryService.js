@@ -1,5 +1,6 @@
 import cloudinary from '../config/cloudinary.js';
 import streamifier from 'streamifier';
+import logger from '../utils/logger.js';
 
 /**
  * Upload an image buffer to Cloudinary using streamifier.
@@ -20,7 +21,15 @@ export const uploadAadhaarImage = (fileBuffer, folder = 'nexcart/aadhaar') => {
             public_id: result.public_id,
           });
         } else {
-          reject(error);
+          if (process.env.NODE_ENV !== 'production') {
+            logger.warn(`Cloudinary upload failed: ${error?.message || error}. Falling back to mock URL for local development.`);
+            resolve({
+              secure_url: 'https://res.cloudinary.com/demo/image/upload/v1570979139/sample.jpg',
+              public_id: `mock_aadhaar_${Date.now()}`,
+            });
+          } else {
+            reject(error);
+          }
         }
       }
     );
@@ -35,6 +44,10 @@ export const uploadAadhaarImage = (fileBuffer, folder = 'nexcart/aadhaar') => {
  */
 export const deleteAadhaarImage = async (publicId) => {
   if (!publicId) return;
+  if (publicId.startsWith('mock_')) {
+    logger.info(`Bypassing deletion for mock public_id: ${publicId}`);
+    return { result: 'ok' };
+  }
   return await cloudinary.uploader.destroy(publicId);
 };
 
@@ -51,3 +64,4 @@ export const replaceAadhaarImage = async (oldPublicId, newFileBuffer, folder = '
   }
   return await uploadAadhaarImage(newFileBuffer, folder);
 };
+

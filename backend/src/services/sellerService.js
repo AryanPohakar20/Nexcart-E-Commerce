@@ -44,6 +44,7 @@ export const getSellerProfile = async (userId) => {
 export const saveStep1 = async (userId, data) => {
   const { displayName, businessType, phone, email } = data;
 
+  console.log("Service: Updating Seller Collection");
   const seller = await sellerRepo.updateByUserId(userId, {
     'accountInfo.displayName': displayName,
     'accountInfo.businessType': businessType,
@@ -63,6 +64,7 @@ export const saveStep1 = async (userId, data) => {
 export const saveStep2 = async (userId, data) => {
   const { shopName, description, address, city, state, pincode } = data;
 
+  console.log("Service: Updating Seller Collection");
   const seller = await sellerRepo.updateByUserId(userId, {
     'profile.shopName': shopName,
     'profile.description': description,
@@ -109,6 +111,7 @@ export const saveStep3 = async (userId, data, frontFileBuffer, backFileBuffer) =
     updates['identity.aadhaar.backImage.url'] = backUpload.secure_url;
   }
 
+  console.log("Service: Updating Seller Collection");
   const seller = await sellerRepo.updateByUserId(userId, updates);
   if (!seller) throw new ApiError(404, 'Seller record not found.');
   logger.info(`Step 3 (identity) saved for userId: ${userId}`);
@@ -121,6 +124,7 @@ export const saveStep3 = async (userId, data, frontFileBuffer, backFileBuffer) =
 export const saveStep4 = async (userId, data) => {
   const { accountHolder, accountNumber, ifsc, upiId } = data;
 
+  console.log("Service: Updating Seller Collection");
   const seller = await sellerRepo.updateByUserId(userId, {
     'payment.accountHolder': accountHolder || '',
     'payment.accountNumber': accountNumber || '',
@@ -138,6 +142,7 @@ export const saveStep4 = async (userId, data) => {
 // agreement: accept terms and submit for review
 
 export const saveStep5 = async (userId) => {
+  console.log("Service: Updating Seller Collection");
   const seller = await sellerRepo.updateByUserId(userId, {
     'agreement.accepted': true,
     'agreement.acceptedAt': new Date(),

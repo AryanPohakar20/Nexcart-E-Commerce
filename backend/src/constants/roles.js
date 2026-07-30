@@ -3,10 +3,9 @@
 // Import this anywhere role strings are needed to avoid magic strings.
 
 export const ROLES = Object.freeze({
-  CUSTOMER: 'customer',
-  SELLER: 'seller',
-  MARKETPLACE_SELLER: 'marketplace_seller',
-  ADMIN: 'admin',
+  CUSTOMER: "customer",
+  SELLER: "seller",
+  ADMIN: "admin",
 });
 
 export const ALL_ROLES = Object.values(ROLES);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiUser, FiMail, FiPhone, FiLock, FiArrowRight, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiAtSign, FiMail, FiPhone, FiLock, FiArrowRight, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Step1Account = ({ onNext, isSubmitting }) => {
   const [formData, setFormData] = useState({
@@ -45,6 +45,14 @@ const Step1Account = ({ onNext, isSubmitting }) => {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Last Name</label>
             <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl py-3 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-gray-900 dark:text-white" />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Username</label>
+          <div className="relative">
+            <FiAtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input type="text" name="username" value={formData.username} onChange={handleChange} required className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-gray-900 dark:text-white" placeholder="e.g. john_doe" />
           </div>
         </div>
 

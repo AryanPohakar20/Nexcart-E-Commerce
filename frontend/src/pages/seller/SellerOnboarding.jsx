@@ -29,6 +29,9 @@ const SellerOnboarding = () => {
   const [sellerData, setSellerData] = useState({});
 
   useEffect(() => {
+    // Only attempt to resume an existing session — skip for unauthenticated visitors
+    if (!localStorage.getItem('accessToken')) return;
+
     const fetchStatus = async () => {
       try {
         const res = await sellerAuthService.getProfile();
@@ -39,14 +42,14 @@ const SellerOnboarding = () => {
             ...seller.profile,
           };
           setSellerData(previousData);
-          
+
           if (seller.onboardingStep) {
             const nextStep = seller.onboardingStep + 1;
             setCurrentStep(nextStep > 5 ? 5 : nextStep);
           }
         }
       } catch (error) {
-        console.log("No existing seller profile found, starting fresh.");
+        console.log('No existing seller profile found, starting fresh.');
       }
     };
     fetchStatus();

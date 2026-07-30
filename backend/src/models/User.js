@@ -69,6 +69,17 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Normalize role and generate username if missing before validation
+userSchema.pre('validate', function (next) {
+  if (this.role && typeof this.role === 'string') {
+    this.role = this.role.toLowerCase();
+  }
+  if ((!this.username || !this.username.trim()) && this.email) {
+    this.username = this.email.split('@')[0] + Math.floor(Math.random() * 1000);
+  }
+  next();
+});
+
 // Encrypt password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
