@@ -24,6 +24,11 @@ export const validateSearchQuery = [
     .isString()
     .withMessage('Category must be a string')
     .trim(),
+  query('subcategory')
+    .optional()
+    .isString()
+    .withMessage('Subcategory must be a string')
+    .trim(),
   query('brand')
     .optional()
     .isString()

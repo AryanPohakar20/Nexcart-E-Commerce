@@ -4,11 +4,40 @@
 import * as productRepository from '../repositories/productRepository.js';
 import Category from '../models/Category.js';
 import Brand from '../models/Brand.js';
+import Subcategory from '../models/Subcategory.js';
+import Attribute from '../models/Attribute.js';
 import { ApiError } from '../utils/ApiError.js';
 import mongoose from 'mongoose';
 
 const escapeRegex = (string) => {
   return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
+
+const getPossibleKeys = (name, slug) => {
+  const keys = new Set([name, slug, name.toLowerCase(), slug.toLowerCase()]);
+  
+  if (slug.includes('ram') || name.toLowerCase().includes('ram')) {
+    keys.add('RAM Memory Installed Size');
+    keys.add('RAM Memory');
+    keys.add('RAM');
+    keys.add('ram');
+  }
+  if (slug.includes('screen') || name.toLowerCase().includes('screen')) {
+    keys.add('Screen Size');
+    keys.add('Screen Size (Inches)');
+  }
+  if (slug.includes('graphics') || name.toLowerCase().includes('graphics') || slug.includes('gpu') || name.toLowerCase().includes('gpu')) {
+    keys.add('Graphics Card Description');
+    keys.add('Graphics Coprocessor');
+    keys.add('Graphics Card');
+    keys.add('GPU');
+  }
+  if (slug.includes('storage') || name.toLowerCase().includes('storage') || slug.includes('memory') || name.toLowerCase().includes('memory')) {
+    keys.add('Memory Storage Capacity');
+    keys.add('Storage Capacity');
+  }
+  
+  return Array.from(keys);
 };
 
 /**
@@ -29,10 +58,10 @@ export const searchProducts = async (filters) => {
   } = filters;
 
   const query = {};
+  let categoryDoc = null;
 
   // 1. Resolve Category Slug/Name/ID to ObjectId
   if (category) {
-    let categoryDoc = null;
     if (mongoose.isValidObjectId(category)) {
       categoryDoc = await Category.findById(category);
     }
@@ -48,6 +77,39 @@ export const searchProducts = async (filters) => {
       throw new ApiError(404, `Category '${category}' not found`);
     }
     query.category = categoryDoc._id;
+  }
+
+  // 1b. Resolve Subcategory Slug/Name/ID to ObjectId if provided
+  let subcategoryDoc = null;
+  const subcategory = filters.subcategory;
+  if (subcategory) {
+    if (mongoose.isValidObjectId(subcategory)) {
+      subcategoryDoc = await Subcategory.findById(subcategory);
+    }
+    if (!subcategoryDoc) {
+      subcategoryDoc = await Subcategory.findOne({
+        $or: [
+          { slug: subcategory.toLowerCase().trim() },
+          { name: { $regex: new RegExp(`^${escapeRegex(subcategory.trim())}$`, 'i') } },
+        ],
+      });
+    }
+    if (!subcategoryDoc) {
+      throw new ApiError(404, `Subcategory '${subcategory}' not found`);
+    }
+    query.subcategory = subcategoryDoc._id;
+
+    // Verify subcategory belongs to category (if category was also specified)
+    if (categoryDoc) {
+      const subcatCategoryId = subcategoryDoc.category?._id || subcategoryDoc.category;
+      if (subcatCategoryId.toString() !== categoryDoc._id.toString()) {
+        throw new ApiError(400, 'The specified subcategory does not belong to the category');
+      }
+    } else {
+      // Resolve categoryDoc from subcategory to support dynamic filtering when only subcategory is passed
+      const parentCatId = subcategoryDoc.category?._id || subcategoryDoc.category;
+      categoryDoc = await Category.findById(parentCatId);
+    }
   }
 
   // 2. Resolve Brand Slug/Name/ID to ObjectId
@@ -68,6 +130,50 @@ export const searchProducts = async (filters) => {
       throw new ApiError(404, `Brand '${brand}' not found`);
     }
     query.brand = brandDoc._id;
+  }
+
+  // 2b. Dynamic Product Attribute Filtering
+  if (categoryDoc) {
+    const attrQuery = {
+      category: categoryDoc._id,
+      isActive: true,
+    };
+    if (subcategoryDoc) {
+      attrQuery.subcategory = { $in: [null, subcategoryDoc._id] };
+    } else {
+      attrQuery.subcategory = null;
+    }
+
+    const activeAttributes = await Attribute.find(attrQuery);
+
+    const specQueries = [];
+    for (const attr of activeAttributes) {
+      const val = filters[attr.slug] || filters[attr.name] || 
+                  filters[attr.slug.toLowerCase()] || filters[attr.name.toLowerCase()];
+
+      if (val !== undefined && val !== '') {
+        const cleanVal = String(val).trim();
+        const escapedVal = escapeRegex(cleanVal);
+        const regexStr = escapedVal
+          .replace(/\s+/g, '')
+          .replace(/([0-9]+)([a-zA-Z]+)/g, '$1\\s*$2')
+          .replace(/([a-zA-Z]+)([0-9]+)/g, '$1\\s*$2');
+        const valRegex = new RegExp(`^${regexStr}$`, 'i');
+
+        const possibleKeys = getPossibleKeys(attr.name, attr.slug);
+        
+        const keyOrQueries = possibleKeys.map(k => ({
+          [`specifications.${k}`]: valRegex
+        }));
+
+        specQueries.push({ $or: keyOrQueries });
+      }
+    }
+
+    if (specQueries.length > 0) {
+      query.$and = query.$and || [];
+      query.$and.push(...specQueries);
+    }
   }
 
   // 3. Keyword Search (matches title, description, tags)
