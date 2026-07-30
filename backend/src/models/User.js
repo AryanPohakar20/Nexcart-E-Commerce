@@ -2,6 +2,23 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+const settingsSchema = new mongoose.Schema(
+  {
+    notifications: {
+      email: { type: Boolean, default: true },
+      sms: { type: Boolean, default: false },
+      push: { type: Boolean, default: true },
+    },
+    privacy: {
+      showEmail: { type: Boolean, default: false },
+      showPhone: { type: Boolean, default: false },
+    },
+    language: { type: String, default: 'en' },
+    theme: { type: String, enum: ['light', 'dark'], default: 'light' },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     firstName: {
@@ -46,6 +63,51 @@ const userSchema = new mongoose.Schema(
       default: 'customer',
     },
 
+    // ─── Profile Fields ────────────────────────────────────────────────────────
+    avatar: {
+      type: String,
+      default: null,
+    },
+    dob: {
+      type: Date,
+      default: null,
+    },
+    gender: {
+      type: String,
+      enum: ['Male', 'Female', 'Other'],
+      default: null,
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Bio cannot exceed 500 characters'],
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ['Active', 'Suspended', 'Deleted'],
+      default: 'Active',
+    },
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
+    profileCompletion: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    profileCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    settings: {
+      type: settingsSchema,
+      default: () => ({}),
+    },
+
+    // ─── Auth Fields ────────────────────────────────────────────────────────────
     isVerified: {
       type: Boolean,
       default: false,

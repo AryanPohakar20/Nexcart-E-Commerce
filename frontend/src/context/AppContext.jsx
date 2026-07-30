@@ -1,9 +1,49 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { PRODUCTS, COUPONS } from '../constants/dummyData';
+import profileService from '../services/profileService';
+import addressService from '../services/addressService';
+
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  // ─── User / Profile State ────────────────────────────────────────────────
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('nexcart-user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  // Persist user to localStorage whenever it changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('nexcart-user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('nexcart-user');
+    }
+  }, [user]);
+
+  // Refresh user from API on app load if a token exists
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token && !user) {
+      setProfileLoading(true);
+      profileService
+        .getProfile()
+        .then((res) => {
+          if (res?.data?.user) setUser(res.data.user);
+        })
+        .catch(() => {
+          // Token invalid or expired — axios interceptor handles redirect
+        })
+        .finally(() => setProfileLoading(false));
+    }
+  }, []);
+
   // Theme State (Dark mode default, saved in Local Storage)
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('nexcart-theme') || 'dark';
@@ -39,10 +79,8 @@ export const AppProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [comparedProducts, setComparedProducts] = useState([]);
-  const [addresses, setAddresses] = useState([
-    { id: 'addr-1', name: 'Aravind Swamy', street: 'Penthouse B, Skyview Heights, Hitec City', city: 'Hyderabad', state: 'Telangana', pin: '500081', phone: '9876543210', isDefault: true },
-    { id: 'addr-2', name: 'Aravind Swamy (Office)', street: '8th Floor, Nex Tower, Gachibowli', city: 'Hyderabad', state: 'Telangana', pin: '500032', phone: '9876543211', isDefault: false }
-  ]);
+  const [addresses, setAddresses] = useState([]);
+
   
   const [orders, setOrders] = useState([
     {
@@ -150,22 +188,72 @@ export const AppProvider = ({ children }) => {
     setComparedProducts([]);
   };
 
-  // Address Functions
-  const addAddress = (address) => {
-    const newAddr = { ...address, id: `addr-${Date.now()}` };
-    if (newAddr.isDefault) {
-      setAddresses((prev) =>
-        prev.map((addr) => ({ ...addr, isDefault: false })).concat(newAddr)
-      );
-    } else {
-      setAddresses((prev) => [...prev, newAddr]);
+  // ─── Address Functions (API-backed) ─────────────────────────────────────
+  const loadAddresses = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    try {
+      const res = await addressService.getAddresses();
+      if (res?.data?.addresses) setAddresses(res.data.addresses);
+    } catch (err) {
+      // silently fail — addresses will just be empty
     }
-    showToast('Shipping Address Saved');
   };
 
-  const deleteAddress = (id) => {
-    setAddresses((prev) => prev.filter((addr) => addr.id !== id));
-    showToast('Address Deleted', 'info');
+  // Load addresses when user is set
+  useEffect(() => {
+    if (user) loadAddresses();
+  }, [user?._id]);
+
+  const addAddress = async (addressData) => {
+    try {
+      const res = await addressService.createAddress(addressData);
+      if (res?.data?.address) {
+        setAddresses((prev) => [
+          ...prev.map((a) => addressData.isDefault ? { ...a, isDefault: false } : a),
+          res.data.address,
+        ]);
+        showToast('Shipping Address Saved');
+      }
+    } catch (err) {
+      showToast(err?.message || 'Failed to save address', 'error');
+    }
+  };
+
+  const deleteAddress = async (id) => {
+    try {
+      await addressService.deleteAddress(id);
+      setAddresses((prev) => prev.filter((addr) => addr._id !== id));
+      showToast('Address Deleted', 'info');
+    } catch (err) {
+      showToast(err?.message || 'Failed to delete address', 'error');
+    }
+  };
+
+  const setDefaultAddress = async (id) => {
+    try {
+      await addressService.setDefaultAddress(id);
+      setAddresses((prev) =>
+        prev.map((addr) => ({ ...addr, isDefault: addr._id === id }))
+      );
+      showToast('Default address updated');
+    } catch (err) {
+      showToast(err?.message || 'Failed to update default address', 'error');
+    }
+  };
+
+  const updateAddress = async (id, addressData) => {
+    try {
+      const res = await addressService.updateAddress(id, addressData);
+      if (res?.data?.address) {
+        setAddresses((prev) =>
+          prev.map((addr) => (addr._id === id ? res.data.address : addr))
+        );
+        showToast('Address updated successfully');
+      }
+    } catch (err) {
+      showToast(err?.message || 'Failed to update address', 'error');
+    }
   };
 
   // Coupons
@@ -199,33 +287,52 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider
       value={{
+        // User / Profile
+        user,
+        setUser,
+        profileLoading,
+        // Theme
         theme,
         setTheme,
         toggleTheme,
+        // Shopping
         cart,
         setCart,
         wishlist,
         comparedProducts,
+        // Addresses
         addresses,
+        setAddresses,
+        loadAddresses,
+        addAddress,
+        deleteAddress,
+        setDefaultAddress,
+        updateAddress,
+        // Orders
         orders,
         setOrders,
         appliedCoupon,
+        // Notifications
         notifications,
+        // Toast
         toasts,
         showToast,
+        // Cart functions
         addToCart,
         removeFromCart,
         updateCartQty,
         clearCart,
+        // Wishlist
         toggleWishlist,
+        // Compare
         toggleCompare,
         clearComparison,
-        addAddress,
-        deleteAddress,
+        // Coupons
         applyCouponCode,
         removeCouponCode,
+        // Notifications
         markNotificationRead,
-        clearNotifications
+        clearNotifications,
       }}
     >
       {children}

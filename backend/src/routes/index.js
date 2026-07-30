@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import sellerRoutes from './sellerRoutes.js';
+import profileRoutes from './profileRoutes.js';
+import addressRoutes from './addressRoutes.js';
 
 import {
   registerUser,
@@ -36,4 +38,9 @@ router.post('/auth/forgot-password', forgotPassword);
 router.post('/auth/verify-otp', verifyOtp);
 router.post('/auth/reset-password', resetPassword);
 
+// ─── Customer Profile & Address Routes ───────────────────────────────────────
+router.use('/profile', profileRoutes);
+router.use('/address', addressRoutes);
+
 export default router;
+

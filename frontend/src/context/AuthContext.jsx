@@ -41,6 +41,8 @@ export const AuthProvider = ({ children }) => {
         if (refreshToken) {
           localStorage.setItem('refreshToken', refreshToken);
         }
+        // Persist user for AppContext to pick up on mount
+        localStorage.setItem('nexcart-user', JSON.stringify(user));
         setUser(user);
         setIsAuthenticated(true);
         return { success: true, user };
@@ -64,6 +66,8 @@ export const AuthProvider = ({ children }) => {
         if (refreshToken) {
           localStorage.setItem('refreshToken', refreshToken);
         }
+        // Persist user for AppContext to pick up on mount
+        localStorage.setItem('nexcart-user', JSON.stringify(user));
         setUser(user);
         setIsAuthenticated(true);
         return { success: true, user };
@@ -80,6 +84,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     await authService.logout();
+    // Clear persisted user so AppContext also clears
+    localStorage.removeItem('nexcart-user');
     setUser(null);
     setIsAuthenticated(false);
   };
@@ -93,6 +99,8 @@ export const AuthProvider = ({ children }) => {
         if (refreshToken) {
           localStorage.setItem('refreshToken', refreshToken);
         }
+        // Persist user for AppContext to pick up on mount
+        localStorage.setItem('nexcart-user', JSON.stringify(user));
         setUser(user);
         setIsAuthenticated(true);
         return { success: true, user };
