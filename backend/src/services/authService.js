@@ -12,15 +12,20 @@ import logger from '../utils/logger.js';
 
 export const registerSellerService = async (userData) => {
   const { firstName, lastName, username, email, phone, password } = userData;
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
 
-  // Check for duplicate email
-  const emailExists = await User.findOne({ email });
+  // Check for duplicate seller email
+  const emailExists = await User.findOne({
+    email: normalizedEmail,
+    role: { $in: ['seller', 'marketplace_seller'] },
+  });
   if (emailExists) {
-    throw new ApiError(400, 'User with this email already exists');
+    throw new ApiError(400, 'Seller account with this email already exists');
   }
 
   // Check for duplicate username
-  const usernameExists = await User.findOne({ username });
+  const finalUsername = username || normalizedEmail.split('@')[0] + '_seller_' + Math.floor(Math.random() * 1000);
+  const usernameExists = await User.findOne({ username: finalUsername });
   if (usernameExists) {
     throw new ApiError(400, 'Username is already taken');
   }
@@ -29,8 +34,8 @@ export const registerSellerService = async (userData) => {
   const user = await User.create({
     firstName,
     lastName,
-    username,
-    email,
+    username: finalUsername,
+    email: normalizedEmail,
     phone,
     password,
     role: 'seller',
@@ -45,10 +50,10 @@ export const registerSellerService = async (userData) => {
   await user.save();
 
   try {
-    await sendOtpEmail(email, otp, 'Seller Email Verification');
-    logger.info(`Seller Verification OTP sent to: ${email}`);
+    await sendOtpEmail(normalizedEmail, otp, 'Seller Email Verification');
+    logger.info(`Seller Verification OTP sent to: ${normalizedEmail}`);
   } catch (err) {
-    logger.error(`Failed to send seller verification OTP to ${email}: ${err.message}`);
+    logger.error(`Failed to send seller verification OTP to ${normalizedEmail}: ${err.message}`);
   }
 
   const token = user.generateJWT();
@@ -57,15 +62,19 @@ export const registerSellerService = async (userData) => {
 };
 
 export const loginSellerService = async (email, password) => {
-  // Find seller and include password for comparison
-  const user = await User.findOne({ email }).select('+password');
-  
-  if (!user || user.role !== 'seller') {
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
+  // Find seller by email and seller role
+  const user = await User.findOne({
+    email: normalizedEmail,
+    role: { $in: ['seller', 'marketplace_seller'] },
+  }).select('+password');
+
+  if (!user) {
     throw new ApiError(401, 'Invalid credentials or user is not a seller');
   }
 
   const isMatch = await user.comparePassword(password);
-  
+
   if (!isMatch) {
     throw new ApiError(401, 'Invalid credentials');
   }
@@ -76,22 +85,23 @@ export const loginSellerService = async (email, password) => {
   }
 
   const token = user.generateJWT();
-  
+
   // Return user without password (handled by toJSON transform in schema)
   return { user, token };
 };
 
 export const registerUserService = async (userData) => {
   const { firstName, lastName, username, email, phone, password, role = 'customer' } = userData;
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
 
-  // Check for duplicate email
-  const emailExists = await User.findOne({ email });
+  // Check for duplicate user email for user/customer role
+  const emailExists = await User.findOne({ email: normalizedEmail, role: role || 'customer' });
   if (emailExists) {
     throw new ApiError(400, 'User with this email already exists');
   }
 
   // Check for duplicate username
-  const finalUsername = username || email.split('@')[0] + Math.floor(Math.random() * 1000);
+  const finalUsername = username || normalizedEmail.split('@')[0] + Math.floor(Math.random() * 1000);
   const usernameExists = await User.findOne({ username: finalUsername });
   if (usernameExists) {
     throw new ApiError(400, 'Username is already taken');
@@ -102,7 +112,7 @@ export const registerUserService = async (userData) => {
     firstName,
     lastName,
     username: finalUsername,
-    email,
+    email: normalizedEmail,
     phone,
     password,
     role,
@@ -117,10 +127,10 @@ export const registerUserService = async (userData) => {
   await user.save();
 
   try {
-    await sendOtpEmail(email, otp, 'Email Verification');
-    logger.info(`Verification OTP sent to: ${email}`);
+    await sendOtpEmail(normalizedEmail, otp, 'Email Verification');
+    logger.info(`Verification OTP sent to: ${normalizedEmail}`);
   } catch (err) {
-    logger.error(`Failed to send verification OTP to ${email}: ${err.message}`);
+    logger.error(`Failed to send verification OTP to ${normalizedEmail}: ${err.message}`);
   }
 
   const token = user.generateJWT();
@@ -129,14 +139,18 @@ export const registerUserService = async (userData) => {
 };
 
 export const loginUserService = async (email, password) => {
-  const user = await User.findOne({ email }).select('+password');
-  
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
+  const user = await User.findOne({
+    email: normalizedEmail,
+    role: { $in: ['customer', 'admin'] },
+  }).select('+password');
+
   if (!user) {
     throw new ApiError(401, 'Invalid credentials');
   }
 
   const isMatch = await user.comparePassword(password);
-  
+
   if (!isMatch) {
     throw new ApiError(401, 'Invalid credentials');
   }
@@ -147,44 +161,59 @@ export const loginUserService = async (email, password) => {
   }
 
   const token = user.generateJWT();
-  
+
   return { user, token };
 };
 
 // ─── Forgot Password ──────────────────────────────────────────────────────────
 
-export const forgotPassword = async (email) => {
-  const user = await User.findOne({ email });
+export const forgotPassword = async (email, role = null) => {
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
+  const query = { email: normalizedEmail };
+  if (role) {
+    query.role = Array.isArray(role) ? { $in: role } : role;
+  }
+  const users = await User.find(query);
 
-  if (!user) {
+  if (!users || users.length === 0) {
     logger.warn(`Forgot password attempted for non-existent email: ${email}`);
     return;
   }
 
-  if (user.isBlocked) {
-    return;
-  }
+  for (const user of users) {
+    if (user.isBlocked) continue;
 
-  const otp = generateOtp();
-  const hashedOtp = await hashOtp(otp);
-  const expiresAt = getOtpExpiry();
+    const otp = generateOtp();
+    const hashedOtp = await hashOtp(otp);
+    const expiresAt = getOtpExpiry();
 
-  user.otp = { code: hashedOtp, expiresAt };
-  await user.save();
+    user.otp = { code: hashedOtp, expiresAt };
+    await user.save();
 
-  try {
-    await sendOtpEmail(email, otp, 'Password Reset');
-    logger.info(`Password reset OTP sent to: ${email}`);
-  } catch (err) {
-    logger.error(`Failed to send password reset OTP to ${email}: ${err.message}`);
-    throw new ApiError(500, 'Could not send reset email. Please try again later.');
+    try {
+      await sendOtpEmail(normalizedEmail, otp, 'Password Reset');
+      logger.info(`Password reset OTP sent to: ${normalizedEmail}`);
+    } catch (err) {
+      logger.error(`Failed to send password reset OTP to ${normalizedEmail}: ${err.message}`);
+      throw new ApiError(500, 'Could not send reset email. Please try again later.');
+    }
   }
 };
 
 // ─── Verify OTP ───────────────────────────────────────────────────────────────
 
-export const verifyOtp = async (email, otpCode, purpose = 'passwordReset') => {
-  const user = await User.findOne({ email }).select('+otp.code +otp.expiresAt');
+export const verifyOtp = async (email, otpCode, purpose = 'passwordReset', role = null) => {
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
+  const query = { email: normalizedEmail };
+  if (role) {
+    query.role = Array.isArray(role) ? { $in: role } : role;
+  } else if (purpose === 'sellerVerification') {
+    query.role = { $in: ['seller', 'marketplace_seller'] };
+  } else if (purpose === 'emailVerification') {
+    query.role = { $in: ['customer', 'admin'] };
+  }
+
+  const user = await User.findOne(query).select('+otp.code +otp.expiresAt');
 
   if (!user) {
     throw new ApiError(404, 'No account found with this email.');
@@ -215,14 +244,20 @@ export const verifyOtp = async (email, otpCode, purpose = 'passwordReset') => {
     }
   }
 
-  logger.info(`OTP verified for ${email} (purpose: ${purpose})`);
+  logger.info(`OTP verified for ${normalizedEmail} (purpose: ${purpose})`);
   return { userId: user._id };
 };
 
 // ─── Reset Password ───────────────────────────────────────────────────────────
 
-export const resetPassword = async (email, otpCode, newPassword) => {
-  const user = await User.findOne({ email }).select('+otp.code +otp.expiresAt');
+export const resetPassword = async (email, otpCode, newPassword, role = null) => {
+  const normalizedEmail = email ? email.toLowerCase().trim() : '';
+  const query = { email: normalizedEmail };
+  if (role) {
+    query.role = Array.isArray(role) ? { $in: role } : role;
+  }
+
+  const user = await User.findOne(query).select('+otp.code +otp.expiresAt');
 
   if (!user) {
     throw new ApiError(404, 'No account found with this email.');
@@ -241,10 +276,10 @@ export const resetPassword = async (email, otpCode, newPassword) => {
     throw new ApiError(400, 'Invalid OTP.');
   }
 
-  const fullUser = await User.findOne({ email }).select('+password');
+  const fullUser = await User.findById(user._id).select('+password');
   fullUser.password = newPassword; // Pre-save hook will re-hash
   fullUser.otp = { code: null, expiresAt: null };
   await fullUser.save();
 
-  logger.info(`Password reset successful for: ${email}`);
+  logger.info(`Password reset successful for: ${normalizedEmail}`);
 };

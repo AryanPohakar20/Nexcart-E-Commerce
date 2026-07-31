@@ -7,6 +7,7 @@ import {
   registerUser,
   loginUser,
   getCurrentUser,
+  logoutUser,
   logoutSeller,
   registerSeller,
   loginSeller,
@@ -33,7 +34,7 @@ router.use('/seller', sellerRoutes);
 router.post('/auth/register', validateRegistration, registerUser);
 router.post('/auth/login', validateLogin, loginUser);
 router.get('/auth/me', authenticate, getCurrentUser);
-router.post('/auth/logout', logoutSeller);
+router.post('/auth/logout', logoutUser);
 router.post('/auth/forgot-password', forgotPassword);
 router.post('/auth/verify-otp', verifyOtp);
 router.post('/auth/reset-password', resetPassword);

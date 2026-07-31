@@ -41,7 +41,6 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, 'Email is required'],
-      unique: true,
       lowercase: true,
       trim: true,
       match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please add a valid email'],
@@ -130,6 +129,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Compound unique index: allows same email for customer and seller accounts
+userSchema.index({ email: 1, role: 1 }, { unique: true });
 
 // Normalize role and generate username if missing before validation
 userSchema.pre('validate', function (next) {

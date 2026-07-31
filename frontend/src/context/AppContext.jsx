@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import { PRODUCTS, COUPONS } from '../constants/dummyData';
 import profileService from '../services/profileService';
 import addressService from '../services/addressService';
-
+import authService from '../services/authService';
 
 export const AppContext = createContext();
 
@@ -17,6 +17,33 @@ export const AppProvider = ({ children }) => {
     }
   });
   const [profileLoading, setProfileLoading] = useState(false);
+
+  const logoutUser = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setUser(null);
+      setCart([]);
+      setWishlist([]);
+      localStorage.removeItem('nexcart-user');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      showToast('Logged out successfully', 'info');
+    }
+  };
+
+  const loginUser = (email, password, role) => {
+    const updatedUser = {
+      ...user,
+      email: email || user?.email,
+      role: role || user?.role || 'customer',
+      name: user?.firstName ? `${user.firstName} ${user.lastName}` : (user?.name || 'User Account'),
+    };
+    setUser(updatedUser);
+    localStorage.setItem('nexcart-user', JSON.stringify(updatedUser));
+  };
 
   // Persist user to localStorage whenever it changes
   useEffect(() => {
@@ -291,6 +318,8 @@ export const AppProvider = ({ children }) => {
         user,
         setUser,
         profileLoading,
+        logoutUser,
+        loginUser,
         // Theme
         theme,
         setTheme,

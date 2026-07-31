@@ -45,14 +45,18 @@ export const getCurrentSeller = asyncHandler(async (req, res) => {
   });
 });
 
-export const logoutSeller = asyncHandler(async (req, res) => {
+export const logoutUser = asyncHandler(async (req, res) => {
   res.clearCookie('token');
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
 
   res.status(200).json({
     success: true,
     message: 'Logged out successfully',
   });
 });
+
+export const logoutSeller = logoutUser;
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { user, token } = await authService.registerUserService(req.body);

@@ -35,6 +35,18 @@ const sellerAuthService = {
     }
   },
 
+  logout: async () => {
+    try {
+      await axiosInstance.post('/seller/auth/logout');
+    } catch (error) {
+      console.error('Seller logout error', error);
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('nexcart-user');
+    }
+  },
+
   createSellerEntry: async () => {
     try {
       const response = await axiosInstance.post('/seller/create');
