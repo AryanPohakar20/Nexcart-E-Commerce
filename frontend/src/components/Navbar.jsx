@@ -6,7 +6,7 @@ import NexCartLogo from './NexCartLogo';
 import ThemeToggle from './ThemeToggle';
 import { CATEGORIES } from '../constants/dummyData';
 import { 
-  FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, 
+  FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, FiMessageSquare,
   FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid
 } from 'react-icons/fi';
 
@@ -252,6 +252,24 @@ const Navbar = () => {
                     {wishlistCount}
                   </motion.span>
                 )}
+              </Link>
+            </motion.div>
+
+            {/* C2C Messages Icon */}
+            <motion.div 
+              whileHover={{ scale: 1.1 }} 
+              whileTap={{ scale: 0.9 }}
+            >
+              <Link
+                to="/messages"
+                className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-amber-500 hover:bg-amber-500/10 transition-all group block"
+                aria-label="C2C Marketplace Messages"
+                title="Messages"
+              >
+                <FiMessageSquare className="text-lg sm:text-xl transition-transform" />
+                <span className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-amber-500 text-black text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-pulse">
+                  3
+                </span>
               </Link>
             </motion.div>
 

@@ -23,6 +23,7 @@ import TrackOrder from '../pages/TrackOrder';
 import UserProfile from '../pages/UserProfile';
 import Addresses from '../pages/Addresses';
 import Notifications from '../pages/Notifications';
+import Messages from '../pages/Messages';
 
 // Dashboards imports
 import SellerDashboard from '../pages/SellerDashboard';
@@ -76,6 +77,7 @@ const AppRoutes = () => {
         <Route path="profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
         <Route path="addresses" element={<ProtectedRoute><Addresses /></ProtectedRoute>} />
         <Route path="notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+        <Route path="messages" element={<Messages />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
         <Route path="faq" element={<FAQ />} />

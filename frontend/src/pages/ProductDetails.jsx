@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { PRODUCTS } from '../constants/dummyData';
-import { FiStar, FiHeart, FiActivity, FiShoppingCart, FiTruck, FiShield, FiRefreshCw, FiChevronDown } from 'react-icons/fi';
+import { FiStar, FiHeart, FiActivity, FiShoppingCart, FiTruck, FiShield, FiRefreshCw, FiChevronDown, FiMessageSquare } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
 
 const ProductDetails = () => {
@@ -257,6 +257,14 @@ const ProductDetails = () => {
                 className="flex-1 btn-glow-yellow !py-3 text-sm text-black font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-40"
               >
                 <span>Buy Now</span>
+              </button>
+
+              <button
+                onClick={() => navigate(`/messages?productId=${product.id}&seller=${encodeURIComponent(product.seller || 'NexCart Seller')}`)}
+                className="flex-1 py-3 bg-amber-500/15 border border-amber-500/40 hover:bg-amber-500 hover:text-black rounded-xl text-sm font-bold text-amber-500 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm"
+              >
+                <FiMessageSquare className="text-base" />
+                <span>Chat with Seller</span>
               </button>
             </div>
 

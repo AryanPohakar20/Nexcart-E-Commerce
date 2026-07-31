@@ -124,6 +124,30 @@ export const logoutSeller = asyncHandler(async (req, res) => {
 });
 
 export const registerUser = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    const mockUser = {
+      _id: 'mock_user_123',
+      firstName: req.body.firstName || 'Demo',
+      lastName: req.body.lastName || 'User',
+      username: req.body.username || 'demouser',
+      email: req.body.email || 'user@example.com',
+      phone: req.body.phone || '1234567890',
+      role: req.body.role || 'customer',
+      isVerified: true,
+    };
+    return res.status(201).json({
+      success: true,
+      message: 'User registered successfully (Mock Mode)',
+      token: 'mock_token_123',
+      user: mockUser,
+      data: {
+        accessToken: 'mock_token_123',
+        refreshToken: 'mock_token_123',
+        user: mockUser,
+      },
+    });
+  }
+
   const { user, token } = await authService.registerUserService(req.body);
 
   res.status(201).json({
@@ -140,6 +164,30 @@ export const registerUser = asyncHandler(async (req, res) => {
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    const mockUser = {
+      _id: 'mock_user_123',
+      firstName: 'Demo',
+      lastName: 'User',
+      username: 'demouser',
+      email: req.body.email || 'user@example.com',
+      phone: '1234567890',
+      role: 'customer',
+      isVerified: true,
+    };
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful (Mock Mode)',
+      token: 'mock_token_123',
+      user: mockUser,
+      data: {
+        accessToken: 'mock_token_123',
+        refreshToken: 'mock_token_123',
+        user: mockUser,
+      },
+    });
+  }
+
   const { email, password } = req.body;
   const { user, token } = await authService.loginUserService(email, password);
 
@@ -157,6 +205,27 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    const mockUser = req.user || {
+      _id: 'mock_user_123',
+      firstName: 'Demo',
+      lastName: 'User',
+      username: 'demouser',
+      email: 'user@example.com',
+      phone: '1234567890',
+      role: 'customer',
+      isVerified: true,
+    };
+    return res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully (Mock Mode)',
+      user: mockUser,
+      data: {
+        user: mockUser,
+      },
+    });
+  }
+
   res.status(200).json({
     success: true,
     message: 'User details fetched successfully',
@@ -168,6 +237,13 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    return res.status(200).json({
+      success: true,
+      message: 'If an account exists, a 6-digit OTP has been sent. (Mock Mode: Use OTP 123456)',
+    });
+  }
+
   const { email } = req.body;
   await authService.forgotPassword(email);
   res.status(200).json({
@@ -177,6 +253,14 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 });
 
 export const verifyOtp = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    return res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully. (Mock Mode)',
+      data: { userId: 'mock_user_123' },
+    });
+  }
+
   const { email, otp, purpose } = req.body;
   const result = await authService.verifyOtp(email, otp, purpose);
   res.status(200).json({
@@ -187,6 +271,13 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset successful. Please log in with your new password. (Mock Mode)',
+    });
+  }
+
   const { email, otp, newPassword } = req.body;
   await authService.resetPassword(email, otp, newPassword);
   res.status(200).json({
