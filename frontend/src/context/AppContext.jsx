@@ -1,6 +1,8 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { PRODUCTS, COUPONS } from '../constants/dummyData';
 import { AuthContext } from './AuthContext';
+import cartService from '../services/cartService';
+import wishlistService from '../services/wishlistService';
 
 export const AppContext = createContext();
 
@@ -90,88 +92,149 @@ export const AppProvider = ({ children }) => {
   // Helper variables for login transition checking
   const [prevUser, setPrevUser] = useState(null);
 
+  // Helper mapper for backend cart structure to frontend state
+  const updateCartStateFromBackend = (cartData) => {
+    if (!cartData) return;
+    const formattedItems = (cartData.items || []).map(item => ({
+      product: {
+        id: item.productId?._id || item.productId,
+        title: item.productSnapshot?.title || 'Catalog Product',
+        image: item.productSnapshot?.image || '',
+        price: item.currentPrice,
+        stock: item.stock,
+        brand: item.productId?.brand || 'Brand',
+        category: item.productId?.category || 'Category'
+      },
+      quantity: item.quantity,
+      selectedColor: item.selectedColor,
+      selectedSize: item.selectedSize,
+      selectedVariant: item.selectedVariant,
+      priceAtAddition: item.priceAtAddition,
+      currentPrice: item.currentPrice,
+      subtotal: item.subtotal,
+      stock: item.stock,
+      isAvailable: item.isAvailable
+    }));
+
+    const formattedSaveLater = (cartData.saveForLater || []).map(item => ({
+      product: {
+        id: item.productId?._id || item.productId,
+        title: item.productSnapshot?.title || 'Catalog Product',
+        image: item.productSnapshot?.image || '',
+        price: item.currentPrice,
+        stock: item.stock,
+        brand: item.productId?.brand || 'Brand',
+        category: item.productId?.category || 'Category'
+      },
+      quantity: item.quantity,
+      selectedColor: item.selectedColor,
+      selectedSize: item.selectedSize,
+      selectedVariant: item.selectedVariant,
+      priceAtAddition: item.priceAtAddition,
+      currentPrice: item.currentPrice,
+      subtotal: item.subtotal,
+      stock: item.stock,
+      isAvailable: item.isAvailable
+    }));
+
+    setCart(formattedItems);
+    setSaveForLater(formattedSaveLater);
+    
+    if (cartData.couponApplied && cartData.couponApplied.code) {
+      setAppliedCoupon(cartData.couponApplied);
+    } else {
+      setAppliedCoupon(null);
+    }
+  };
+
+  const updateWishlistStateFromBackend = (wishlistData) => {
+    if (!wishlistData) return;
+    const formattedWish = wishlistData.map(item => ({
+      id: item.productId?._id || item.productId,
+      title: item.productId?.title || 'Catalog Product',
+      image: item.productId?.image || '',
+      price: item.productId?.price || 0,
+      mrp: item.productId?.mrp || 0,
+      stock: item.productId?.stock || 0,
+      brand: item.productId?.brand || 'Brand',
+      category: item.productId?.category || 'Category',
+      rating: item.productId?.rating || 0
+    }));
+    setWishlist(formattedWish);
+  };
+
   // Sync state between guest storage and user storage, and execute Guest Cart Merging on Login
   useEffect(() => {
-    if (user) {
-      if (!prevUser) {
-        // Just logged in! Merge guest cart into user cart
-        const guestCart = JSON.parse(localStorage.getItem('nexcart-guest-cart') || '[]');
-        const guestWishlist = JSON.parse(localStorage.getItem('nexcart-guest-wishlist') || '[]');
-        const guestSaveLater = JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]');
-
-        const userId = user.id || user._id;
-        const userCart = JSON.parse(localStorage.getItem(`nexcart-cart-${userId}`) || '[]');
-        const userWishlist = JSON.parse(localStorage.getItem(`nexcart-wishlist-${userId}`) || '[]');
-        const userSaveLater = JSON.parse(localStorage.getItem(`nexcart-save-later-${userId}`) || '[]');
-
-        let mergedCart = [...userCart];
-        let mergedAny = false;
-
-        if (guestCart.length > 0) {
-          guestCart.forEach((guestItem) => {
-            const existing = mergedCart.find((item) => item.product.id === guestItem.product.id);
-            if (existing) {
-              existing.quantity = Math.min(existing.quantity + guestItem.quantity, guestItem.product.stock || 10);
-            } else {
-              mergedCart.push(guestItem);
+    const syncWithBackend = async () => {
+      if (user) {
+        if (!prevUser) {
+          const guestCart = JSON.parse(localStorage.getItem('nexcart-guest-cart') || '[]');
+          
+          try {
+            if (guestCart.length > 0) {
+              const guestItemsFormatted = guestCart.map(item => ({
+                productId: item.product.id || item.product._id,
+                quantity: item.quantity,
+                selectedColor: item.selectedColor || '',
+                selectedSize: item.selectedSize || '',
+                selectedVariant: item.selectedVariant || ''
+              }));
+              
+              const mergeResult = await cartService.mergeCart(guestItemsFormatted);
+              if (mergeResult.success) {
+                showToast("Your guest cart has been merged.", "success");
+              }
+              localStorage.removeItem('nexcart-guest-cart');
+              localStorage.removeItem('nexcart-guest-wishlist');
+              localStorage.removeItem('nexcart-guest-save-later');
             }
-          });
-          localStorage.removeItem('nexcart-guest-cart');
-          mergedAny = true;
-        }
+            
+            // Load backend cart
+            const cartData = await cartService.getCart();
+            if (cartData.success) {
+              updateCartStateFromBackend(cartData.data.cart);
 
-        let mergedWish = [...userWishlist];
-        if (guestWishlist.length > 0) {
-          guestWishlist.forEach((guestItem) => {
-            if (!mergedWish.some((item) => item.id === guestItem.id)) {
-              mergedWish.push(guestItem);
+              // Show price drop notifications if any
+              if (cartData.data.summary?.priceChanges?.length > 0) {
+                cartData.data.summary.priceChanges.forEach(change => {
+                  const direction = change.newPrice < change.oldPrice ? 'dropped' : 'changed';
+                  showToast(`Price for ${change.title} has ${direction} to ₹${change.newPrice}!`, 'info');
+                });
+              }
             }
-          });
-          localStorage.removeItem('nexcart-guest-wishlist');
-        }
 
-        let mergedSave = [...userSaveLater];
-        if (guestSaveLater.length > 0) {
-          guestSaveLater.forEach((guestItem) => {
-            if (!mergedSave.some((item) => item.product.id === guestItem.product.id)) {
-              mergedSave.push(guestItem);
+            // Load backend wishlist
+            const wishData = await wishlistService.getWishlist();
+            if (wishData.success) {
+              updateWishlistStateFromBackend(wishData.data);
             }
-          });
-          localStorage.removeItem('nexcart-guest-save-later');
-        }
-
-        setCart(mergedCart);
-        setWishlist(mergedWish);
-        setSaveForLater(mergedSave);
-
-        if (mergedAny) {
-          showToast("Your guest cart has been merged.", "success");
+          } catch (error) {
+            console.error('Failed to sync/merge cart with backend', error);
+          }
         }
       } else {
-        // Normal user state sync
-        const userId = user.id || user._id;
-        localStorage.setItem(`nexcart-cart-${userId}`, JSON.stringify(cart));
-        localStorage.setItem(`nexcart-wishlist-${userId}`, JSON.stringify(wishlist));
-        localStorage.setItem(`nexcart-save-later-${userId}`, JSON.stringify(saveForLater));
+        if (prevUser) {
+          const guestCart = JSON.parse(localStorage.getItem('nexcart-guest-cart') || '[]');
+          const guestWishlist = JSON.parse(localStorage.getItem('nexcart-guest-wishlist') || '[]');
+          const guestSaveLater = JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]');
+          setCart(guestCart);
+          setWishlist(guestWishlist);
+          setSaveForLater(guestSaveLater);
+        }
       }
-    } else {
-      // Guest state sync, or loaded guest data after logout
-      if (prevUser) {
-        // User logged out, clear states to guest defaults
-        const guestCart = JSON.parse(localStorage.getItem('nexcart-guest-cart') || '[]');
-        const guestWishlist = JSON.parse(localStorage.getItem('nexcart-guest-wishlist') || '[]');
-        const guestSaveLater = JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]');
-        setCart(guestCart);
-        setWishlist(guestWishlist);
-        setSaveForLater(guestSaveLater);
-      } else {
-        // Save current changes to guest local storage
-        localStorage.setItem('nexcart-guest-cart', JSON.stringify(cart));
-        localStorage.setItem('nexcart-guest-wishlist', JSON.stringify(wishlist));
-        localStorage.setItem('nexcart-guest-save-later', JSON.stringify(saveForLater));
-      }
+      setPrevUser(user);
+    };
+
+    syncWithBackend();
+  }, [user, prevUser]);
+
+  // Guest local storage persistence effect
+  useEffect(() => {
+    if (!user) {
+      localStorage.setItem('nexcart-guest-cart', JSON.stringify(cart));
+      localStorage.setItem('nexcart-guest-wishlist', JSON.stringify(wishlist));
+      localStorage.setItem('nexcart-guest-save-later', JSON.stringify(saveForLater));
     }
-    setPrevUser(user);
   }, [cart, wishlist, saveForLater, user]);
 
   // Reviews and Trust state lists
@@ -341,38 +404,63 @@ export const AppProvider = ({ children }) => {
   };
 
   // Cart Functions
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = async (product, quantity = 1) => {
     if (product.stock <= 0) {
       showToast(`${product.title} is out of stock!`, 'error');
       return;
     }
-    setCart((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
-      if (existing) {
-        const nextQty = existing.quantity + quantity;
-        const maxStock = product.stock || 10;
-        if (nextQty > maxStock) {
-          showToast(`Cannot add more. Only ${maxStock} items in stock!`, 'error');
-          return prev;
+    
+    if (user) {
+      try {
+        const response = await cartService.addToCart(product.id, quantity, product.price);
+        if (response.success) {
+          updateCartStateFromBackend(response.data.cart);
+          showToast(`Added ${product.brand} ${product.title.split(' ')[1]} to Cart`);
+        } else {
+          showToast(response.message || 'Failed to add to cart', 'error');
         }
-        showToast(`Increased quantity of ${product.brand} ${product.title.split(' ')[1]} in Cart`);
-        return prev.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: nextQty }
-            : item
-        );
+      } catch (error) {
+        showToast(error.message || 'Failed to add to cart', 'error');
       }
-      showToast(`Added ${product.brand} ${product.title.split(' ')[1]} to Cart`);
-      return [...prev, { product, quantity }];
-    });
+    } else {
+      setCart((prev) => {
+        const existing = prev.find((item) => item.product.id === product.id);
+        if (existing) {
+          const nextQty = existing.quantity + quantity;
+          const maxStock = product.stock || 10;
+          if (nextQty > maxStock) {
+            showToast(`Cannot add more. Only ${maxStock} items in stock!`, 'error');
+            return prev;
+          }
+          showToast(`Increased quantity of ${product.brand} ${product.title.split(' ')[1]} in Cart`);
+          return prev.map((item) =>
+            item.product.id === product.id ? { ...item, quantity: nextQty } : item
+          );
+        }
+        showToast(`Added ${product.brand} ${product.title.split(' ')[1]} to Cart`);
+        return [...prev, { product, quantity }];
+      });
+    }
   };
 
-  const removeFromCart = (productId) => {
-    setCart((prev) => prev.filter((item) => item.product.id !== productId));
-    showToast('Removed item from Cart', 'info');
+  const removeFromCart = async (productId) => {
+    if (user) {
+      try {
+        const response = await cartService.removeCartItem(productId);
+        if (response.success) {
+          updateCartStateFromBackend(response.data.cart);
+          showToast('Removed item from Cart', 'info');
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to remove item', 'error');
+      }
+    } else {
+      setCart((prev) => prev.filter((item) => item.product.id !== productId));
+      showToast('Removed item from Cart', 'info');
+    }
   };
 
-  const updateCartQty = (productId, quantity) => {
+  const updateCartQty = async (productId, quantity) => {
     const item = cart.find((i) => i.product.id === productId);
     if (!item) return;
 
@@ -386,59 +474,135 @@ export const AppProvider = ({ children }) => {
       removeFromCart(productId);
       return;
     }
-    setCart((prev) =>
-      prev.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
-      )
-    );
+
+    if (user) {
+      try {
+        const response = await cartService.updateCartItem(productId, quantity);
+        if (response.success) {
+          updateCartStateFromBackend(response.data.cart);
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to update quantity', 'error');
+      }
+    } else {
+      setCart((prev) =>
+        prev.map((item) =>
+          item.product.id === productId ? { ...item, quantity } : item
+        )
+      );
+    }
   };
 
-  const clearCart = () => {
-    setCart([]);
-    setAppliedCoupon(null);
+  const clearCart = async () => {
+    if (user) {
+      try {
+        const response = await cartService.clearCart();
+        if (response.success) {
+          updateCartStateFromBackend(response.data.cart);
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to clear cart', 'error');
+      }
+    } else {
+      setCart([]);
+      setAppliedCoupon(null);
+    }
   };
 
   // Wishlist Functions
-  const toggleWishlist = (product) => {
-    setWishlist((prev) => {
-      const exists = prev.some((item) => item.id === product.id);
-      if (exists) {
-        showToast('Removed from Wishlist', 'info');
-        return prev.filter((item) => item.id !== product.id);
-      } else {
-        showToast('Added to Wishlist');
-        return [...prev, product];
+  const toggleWishlist = async (product) => {
+    if (user) {
+      const exists = wishlist.some((item) => item.id === product.id);
+      try {
+        if (exists) {
+          const response = await wishlistService.removeFromWishlist(product.id);
+          if (response.success) {
+            setWishlist((prev) => prev.filter((item) => item.id !== product.id));
+            showToast('Removed from Wishlist', 'info');
+          }
+        } else {
+          const response = await wishlistService.addToWishlist(product.id);
+          if (response.success) {
+            setWishlist((prev) => [...prev, product]);
+            showToast('Added to Wishlist');
+          }
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to update wishlist', 'error');
       }
-    });
+    } else {
+      setWishlist((prev) => {
+        const exists = prev.some((item) => item.id === product.id);
+        if (exists) {
+          showToast('Removed from Wishlist', 'info');
+          return prev.filter((item) => item.id !== product.id);
+        } else {
+          showToast('Added to Wishlist');
+          return [...prev, product];
+        }
+      });
+    }
   };
 
   // Save For Later Functions
-  const moveToSaveLater = (product) => {
-    // Remove from cart
-    setCart((prev) => prev.filter((item) => item.product.id !== product.id));
-    // Add to Save For Later if not already there
-    setSaveForLater((prev) => {
-      const exists = prev.some((item) => item.product.id === product.id);
-      if (exists) return prev;
-      return [...prev, { product }];
-    });
-    showToast(`Saved ${product.brand} ${product.title.split(' ')[1]} for later`, 'info');
+  const moveToSaveLater = async (product) => {
+    if (user) {
+      try {
+        const response = await cartService.saveForLater(product.id);
+        if (response.success) {
+          updateCartStateFromBackend(response.data.cart);
+          showToast(`Saved ${product.brand} ${product.title.split(' ')[1]} for later`, 'info');
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to save for later', 'error');
+      }
+    } else {
+      setCart((prev) => prev.filter((item) => item.product.id !== product.id));
+      setSaveForLater((prev) => {
+        const exists = prev.some((item) => item.product.id === product.id);
+        if (exists) return prev;
+        return [...prev, { product }];
+      });
+      showToast(`Saved ${product.brand} ${product.title.split(' ')[1]} for later`, 'info');
+    }
   };
 
-  const moveToCartFromSaveLater = (product) => {
+  const moveToCartFromSaveLater = async (product) => {
     if (product.stock <= 0) {
       showToast(`${product.title} is out of stock!`, 'error');
       return;
     }
-    // Remove from Save For Later
-    setSaveForLater((prev) => prev.filter((item) => item.product.id !== product.id));
-    // Add to Cart
-    addToCart(product, 1);
+    
+    if (user) {
+      try {
+        const response = await cartService.moveToCart(product.id);
+        if (response.success) {
+          updateCartStateFromBackend(response.data.cart);
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to move to cart', 'error');
+      }
+    } else {
+      setSaveForLater((prev) => prev.filter((item) => item.product.id !== product.id));
+      addToCart(product, 1);
+    }
   };
 
-  const removeFromSaveLater = (productId) => {
-    setSaveForLater((prev) => prev.filter((item) => item.product.id !== productId));
-    showToast('Removed from Save For Later list', 'info');
+  const removeFromSaveLater = async (productId) => {
+    if (user) {
+      try {
+        const response = await cartService.removeCartItem(productId);
+        if (response.success) {
+          updateCartStateFromBackend(response.data.cart);
+          showToast('Removed from Save For Later list', 'info');
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to remove saved item', 'error');
+      }
+    } else {
+      setSaveForLater((prev) => prev.filter((item) => item.product.id !== productId));
+      showToast('Removed from Save For Later list', 'info');
+    }
   };
 
   // Compare System
@@ -481,20 +645,46 @@ export const AppProvider = ({ children }) => {
   };
 
   // Coupons
-  const applyCouponCode = (code) => {
-    const coupon = COUPONS.find((c) => c.code.toUpperCase() === code.toUpperCase());
-    if (coupon) {
-      setAppliedCoupon(coupon);
-      showToast(`Coupon ${coupon.code} Applied Successfully!`);
-      return { success: true, message: 'Applied!' };
+  const applyCouponCode = async (code) => {
+    if (user) {
+      try {
+        const response = await cartService.applyCoupon(code);
+        if (response.success) {
+          updateCartStateFromBackend(response.data.cart);
+          showToast(`Coupon ${code.toUpperCase()} Applied Successfully!`);
+          return { success: true, message: 'Applied!' };
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to apply coupon', 'error');
+        return { success: false, message: error.message || 'Invalid code' };
+      }
+    } else {
+      const coupon = COUPONS.find((c) => c.code.toUpperCase() === code.toUpperCase());
+      if (coupon) {
+        setAppliedCoupon(coupon);
+        showToast(`Coupon ${coupon.code} Applied Successfully!`);
+        return { success: true, message: 'Applied!' };
+      }
+      showToast('Invalid Coupon Code', 'error');
+      return { success: false, message: 'Invalid code' };
     }
-    showToast('Invalid Coupon Code', 'error');
-    return { success: false, message: 'Invalid code' };
   };
 
-  const removeCouponCode = () => {
-    setAppliedCoupon(null);
-    showToast('Coupon Removed', 'info');
+  const removeCouponCode = async () => {
+    if (user) {
+      try {
+        const response = await cartService.removeCoupon();
+        if (response.success) {
+          updateCartStateFromBackend(response.data.cart);
+          showToast('Coupon Removed', 'info');
+        }
+      } catch (error) {
+        showToast(error.message || 'Failed to remove coupon', 'error');
+      }
+    } else {
+      setAppliedCoupon(null);
+      showToast('Coupon Removed', 'info');
+    }
   };
 
   // Notifications

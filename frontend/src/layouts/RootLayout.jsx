@@ -22,18 +22,15 @@ const ToastItem = ({ toast, removeToast }) => {
 
   useEffect(() => {
     if (isHovered) return;
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 100) {
-          clearInterval(interval);
-          removeToast(toast.id);
-          return 0;
-        }
-        return prev - 100;
-      });
+    if (timeLeft <= 0) {
+      removeToast(toast.id);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setTimeLeft((prev) => prev - 100);
     }, 100);
-    return () => clearInterval(interval);
-  }, [isHovered, toast.id, removeToast]);
+    return () => clearTimeout(timer);
+  }, [isHovered, timeLeft, toast.id, removeToast]);
 
   return (
     <motion.div
@@ -42,7 +39,6 @@ const ToastItem = ({ toast, removeToast }) => {
       initial={{ opacity: 0, x: 50, scale: 0.95 }}
       animate={{ 
         opacity: 1, 
-        x: 0, 
         scale: 1,
         x: toast.type === 'error' ? [-4, 4, -4, 4, 0] : 0
       }}
