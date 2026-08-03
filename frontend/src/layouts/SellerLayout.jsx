@@ -39,7 +39,7 @@ const SellerLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-darkBg text-white flex">
+    <div className="min-h-screen bg-white dark:bg-darkBg text-slate-900 dark:text-white flex transition-colors duration-500">
       {/* 1. Mobile Sidebar Navigation Drawer */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -59,17 +59,17 @@ const SellerLayout = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-              className="fixed inset-y-0 left-0 z-40 w-64 bg-secondaryBg border-r border-white/5 p-5 flex flex-col justify-between h-screen md:hidden"
+              className="fixed inset-y-0 left-0 z-40 w-64 bg-gray-50 dark:bg-secondaryBg border-r border-gray-200 dark:border-white/5 p-5 flex flex-col justify-between h-screen md:hidden transition-colors duration-500"
             >
               <div className="space-y-6 overflow-y-auto max-h-[80vh] no-scrollbar">
                 {/* Logo */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
                     <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover border border-primary/20" />
-                    <span className="text-lg font-black tracking-wider text-primary">NEX<span className="text-white">CART</span></span>
+                    <span className="text-lg font-black tracking-wider text-primary">NEX<span className="text-slate-900 dark:text-white transition-colors duration-500">CART</span></span>
                     <span className="bg-primary/10 border border-primary/20 text-primary text-[8px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">Vendor</span>
                   </div>
-                  <button className="text-white hover:text-primary" onClick={() => setIsSidebarOpen(false)}>
+                  <button className="text-slate-800 dark:text-white hover:text-primary transition-colors duration-500" onClick={() => setIsSidebarOpen(false)}>
                     <FiX size={20} />
                   </button>
                 </div>
@@ -87,7 +87,7 @@ const SellerLayout = () => {
                           relative flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-xs group
                           ${isActive 
                             ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(0,200,255,0.06)]' 
-                            : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'}
+                            : 'text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'}
                         `}
                       >
                         {({ isActive }) => (
@@ -135,13 +135,13 @@ const SellerLayout = () => {
       </AnimatePresence>
 
       {/* 2. Desktop Sidebar Navigation */}
-      <aside className="hidden md:flex flex-col justify-between w-64 bg-secondaryBg border-r border-white/5 p-5 h-screen sticky top-0">
+      <aside className="hidden md:flex flex-col justify-between w-64 bg-gray-50 dark:bg-secondaryBg border-r border-gray-200 dark:border-white/5 p-5 h-screen sticky top-0 transition-colors duration-500">
         <div className="space-y-6 overflow-y-auto max-h-[80vh] no-scrollbar">
           {/* Logo */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
               <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover border border-primary/20" />
-              <span className="text-lg font-black tracking-wider text-primary">NEX<span className="text-white">CART</span></span>
+              <span className="text-lg font-black tracking-wider text-primary">NEX<span className="text-slate-900 dark:text-white transition-colors duration-500">CART</span></span>
               <span className="bg-primary/10 border border-primary/20 text-primary text-[8px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">Vendor</span>
             </div>
           </div>
@@ -158,7 +158,7 @@ const SellerLayout = () => {
                     relative flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-xs group
                     ${isActive 
                       ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(0,200,255,0.06)]' 
-                      : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'}
+                      : 'text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-white/5 border border-transparent'}
                   `}
                 >
                   {({ isActive }) => (
@@ -184,10 +184,10 @@ const SellerLayout = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col gap-1.5 pt-4 border-t border-white/5">
+        <div className="flex flex-col gap-1.5 pt-4 border-t border-gray-200 dark:border-white/5">
           <button 
             onClick={() => navigate('/')}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-xs text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-white/5 transition-all"
           >
             <FiArrowLeft size={16} />
             <span>Customer Shop</span>
@@ -205,16 +205,16 @@ const SellerLayout = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Top Header */}
-        <header className="h-16 bg-secondaryBg/80 backdrop-blur-md border-b border-white/5 px-6 flex items-center justify-between sticky top-0 z-30">
+        <header className="h-16 bg-gray-50/80 dark:bg-secondaryBg/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 px-6 flex items-center justify-between sticky top-0 z-30 transition-colors duration-500">
           <div className="flex items-center gap-4">
-            <button className="md:hidden text-white hover:text-primary" onClick={() => setIsSidebarOpen(true)}>
+            <button className="md:hidden text-slate-700 dark:text-white hover:text-primary transition-colors duration-500" onClick={() => setIsSidebarOpen(true)}>
               <FiMenu size={20} />
             </button>
-            <h1 className="text-sm font-black uppercase tracking-wider text-gray-400 hidden md:block">Seller Management Studio</h1>
+            <h1 className="text-sm font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 hidden md:block transition-colors duration-500">Seller Management Studio</h1>
           </div>
 
           {/* User Profile Summary */}
-          <div className="flex items-center gap-3 bg-white/5 rounded-full px-4 py-1.5 border border-white/5">
+          <div className="flex items-center gap-3 bg-gray-100 dark:bg-white/5 rounded-full px-4 py-1.5 border border-gray-200 dark:border-white/5 transition-colors duration-500">
             <img 
               src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80'} 
               alt="Avatar" 

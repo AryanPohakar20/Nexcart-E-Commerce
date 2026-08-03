@@ -26,16 +26,16 @@ const Categories = () => {
           <Link 
             key={cat.id} 
             to={`/category/${cat.id}`}
-            className="group bg-cardBg border border-white/5 rounded-3xl overflow-hidden hover:border-primary/20 hover:shadow-yellow-glow duration-300 transition-all hover-lift flex flex-col justify-between h-56 relative"
+            className="group bg-white dark:bg-cardBg border border-gray-150 dark:border-white/5 rounded-3xl overflow-hidden hover:border-primary/20 hover:shadow-yellow-glow duration-300 transition-all hover-lift flex flex-col justify-between h-56 relative"
           >
             {/* Header image overlay */}
             <div className="h-36 overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-t from-[#202020] to-transparent z-10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-cardBg to-transparent z-10" />
               <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </div>
 
             {/* Category details info */}
-            <div className="p-5 relative z-20 flex justify-between items-center bg-[#202020]">
+            <div className="p-5 relative z-20 flex justify-between items-center bg-gray-50 dark:bg-cardBg">
               <div>
                 <h3 className="text-sm font-bold text-white group-hover:text-primary transition-all">{cat.name}</h3>
                 <span className="text-[10px] text-gray-500 font-semibold">{cat.count} listings operational</span>

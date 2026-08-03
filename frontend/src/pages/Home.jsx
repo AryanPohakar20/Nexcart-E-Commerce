@@ -114,7 +114,7 @@ const Home = () => {
       <section 
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-white/5 shadow-2xl bg-black/40"
+        className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-gray-200 dark:border-white/5 shadow-2xl bg-gray-50 dark:bg-black/40 transition-colors duration-500"
       >
         {/* Floating background gradient colors */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -170,14 +170,14 @@ const Home = () => {
           <motion.div 
             animate={{ y: [0, -12, 0], rotate: [0, 10, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute top-12 right-24 text-white/10 hidden md:block"
+            className="absolute top-12 right-24 text-gray-300 dark:text-white/10 hidden md:block transition-colors duration-500"
           >
             <FiShoppingCart size={40} />
           </motion.div>
           <motion.div 
             animate={{ y: [0, 10, 0], rotate: [0, -8, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-            className="absolute bottom-16 left-32 text-white/10 hidden md:block"
+            className="absolute bottom-16 left-32 text-gray-300 dark:text-white/10 hidden md:block transition-colors duration-500"
           >
             <FiHeart size={36} />
           </motion.div>
@@ -195,7 +195,7 @@ const Home = () => {
                 className="absolute inset-0 flex items-center"
               >
                 {/* Background Image overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0B0B0B] via-[#0B0B0B]/80 to-transparent z-10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#0B0B0B] dark:via-[#0B0B0B]/80 dark:to-transparent z-10 transition-all duration-500" />
                 <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
                 
                 {/* Slide Content */}
@@ -218,12 +218,12 @@ const Home = () => {
                     className="space-y-2"
                   >
                     <h3 className="text-sm font-semibold uppercase tracking-widest text-accentBlue leading-none">{slide.subtitle}</h3>
-                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">{slide.title}</h1>
+                    <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight transition-colors duration-500">{slide.title}</h1>
                   </motion.div>
 
                   <motion.p 
                     variants={staggerItem}
-                    className="text-xs md:text-sm text-gray-400 leading-relaxed font-medium"
+                    className="text-xs md:text-sm text-slate-700 dark:text-gray-400 leading-relaxed font-medium transition-colors duration-500"
                   >
                     {slide.desc}
                   </motion.p>
@@ -249,7 +249,7 @@ const Home = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/60 border border-white/10 text-white hover:text-primary rounded-full hover:bg-black/80 transition-all cursor-pointer"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/60 dark:bg-black/60 border border-gray-200 dark:border-white/10 text-slate-800 dark:text-white hover:text-primary rounded-full hover:bg-white/80 dark:hover:bg-black/80 transition-all cursor-pointer duration-500"
         >
           <FiChevronLeft size={20} />
         </motion.button>
@@ -258,7 +258,7 @@ const Home = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-black/60 border border-white/10 text-white hover:text-primary rounded-full hover:bg-black/80 transition-all cursor-pointer"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/60 dark:bg-black/60 border border-gray-200 dark:border-white/10 text-slate-800 dark:text-white hover:text-primary rounded-full hover:bg-white/80 dark:hover:bg-black/80 transition-all cursor-pointer duration-500"
         >
           <FiChevronRight size={20} />
         </motion.button>
