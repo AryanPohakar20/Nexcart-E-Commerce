@@ -658,3 +658,63 @@ tbody tr:hover {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25), 0 0 20px rgba(255, 193, 7, 0.12) !important;
 }
 
+/* ================= HIGH-END CUSTOM PREMIUM ANIMATIONS ================= */
+
+/* 1. Premium Product Card Hover Zoom */
+.premium-image-zoom {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.group:hover .premium-image-zoom {
+  transform: scale(1.06) !important;
+}
+
+/* 2. Cart Badge Pop Animation */
+@keyframes badgePopBounce {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.45); }
+  55% { transform: scale(0.85); }
+  75% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.animate-badge-pop {
+  animation: badgePopBounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* 3. Interactive Premium Buttons States */
+.btn-premium-interactive {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+.btn-premium-interactive:hover {
+  transform: scale(1.03) !important;
+}
+.btn-premium-interactive:active {
+  transform: scale(0.96) !important;
+}
+
+/* 4. Smooth Grid Entrance Stagger */
+@keyframes gridEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-grid-entrance {
+  opacity: 0;
+  animation: gridEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger delays */
+.stagger-delay-1 { animation-delay: 50ms; }
+.stagger-delay-2 { animation-delay: 100ms; }
+.stagger-delay-3 { animation-delay: 150ms; }
+.stagger-delay-4 { animation-delay: 200ms; }
+.stagger-delay-5 { animation-delay: 250ms; }
+.stagger-delay-6 { animation-delay: 300ms; }
+.stagger-delay-7 { animation-delay: 350ms; }
+.stagger-delay-8 { animation-delay: 400ms; }
+
+

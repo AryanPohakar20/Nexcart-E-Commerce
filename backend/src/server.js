@@ -19,6 +19,7 @@ try {
 
 import validateEnv from './config/env.js';
 import connectDB from './config/db.js';
+import { seedDatabase } from './config/seed.js';
 import app from './app.js';
 import logger from './utils/logger.js';
 
@@ -31,6 +32,7 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
+    await seedDatabase();
 
     const server = app.listen(PORT, () => {
       logger.info(`🚀 NexCart Backend running on http://localhost:${PORT}`);
