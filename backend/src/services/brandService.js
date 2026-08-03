@@ -130,3 +130,16 @@ export const deleteBrand = async (id) => {
   }
   return brandRepository.deleteById(id);
 };
+
+/**
+ * Fetch popular brands with limit.
+ */
+export const getPopularBrands = async (queryParams) => {
+  const { limit = 6 } = queryParams;
+  let parsedLimit = parseInt(limit, 10);
+  if (isNaN(parsedLimit) || parsedLimit <= 0) {
+    parsedLimit = 6;
+  }
+  const brands = await brandRepository.findPopularBrands(parsedLimit);
+  return { brands };
+};

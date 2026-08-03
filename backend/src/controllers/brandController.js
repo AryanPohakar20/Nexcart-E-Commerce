@@ -38,3 +38,12 @@ export const deleteBrand = asyncHandler(async (req, res) => {
   await brandService.deleteBrand(req.params.id);
   return successResponse(res, 'Brand deleted successfully');
 });
+
+/**
+ * Handle GET /api/brands/popular
+ * Returns a list of popular brands.
+ */
+export const getPopularBrands = asyncHandler(async (req, res) => {
+  const result = await brandService.getPopularBrands(req.query);
+  return successResponse(res, 'Popular brands fetched successfully', result);
+});

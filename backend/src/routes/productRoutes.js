@@ -5,6 +5,8 @@ import express from 'express';
 import {
   getFeaturedProducts,
   getTrendingProducts,
+  getNewestProducts,
+  getRecommendedProducts,
 } from '../controllers/productController.js';
 import { validateHomepageQuery } from '../validations/productValidation.js';
 
@@ -15,5 +17,11 @@ router.get('/featured', validateHomepageQuery, getFeaturedProducts);
 
 // GET /api/products/trending - Retrieve paginated trending products list
 router.get('/trending', validateHomepageQuery, getTrendingProducts);
+
+// GET /api/products/newest - Retrieve paginated newest products list
+router.get('/newest', validateHomepageQuery, getNewestProducts);
+
+// GET /api/products/recommended - Retrieve paginated recommended products list
+router.get('/recommended', validateHomepageQuery, getRecommendedProducts);
 
 export default router;

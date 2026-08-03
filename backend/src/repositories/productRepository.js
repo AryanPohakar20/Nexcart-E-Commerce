@@ -97,3 +97,43 @@ export const findTrending = async (limit = 10, skip = 0) => {
 export const countTrending = async () => {
   return Product.countDocuments({ isTrending: true });
 };
+
+/**
+ * Find newest products with pagination, sorted by creation time.
+ */
+export const findNewest = async (limit = 10, skip = 0) => {
+  return Product.find({})
+    .populate('category', 'name slug')
+    .populate('subcategory', 'name slug')
+    .populate('brand', 'name slug logo')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+};
+
+/**
+ * Count total products for newest endpoint.
+ */
+export const countNewest = async () => {
+  return Product.countDocuments({});
+};
+
+/**
+ * Find recommended products with pagination, sorted by rating, review count, and creation time.
+ */
+export const findRecommended = async (limit = 10, skip = 0) => {
+  return Product.find({})
+    .populate('category', 'name slug')
+    .populate('subcategory', 'name slug')
+    .populate('brand', 'name slug logo')
+    .sort({ rating: -1, reviewCount: -1, createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+};
+
+/**
+ * Count total products for recommended endpoint.
+ */
+export const countRecommended = async () => {
+  return Product.countDocuments({});
+};

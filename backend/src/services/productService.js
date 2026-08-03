@@ -359,3 +359,47 @@ export const getTrendingProducts = async (queryParams) => {
     },
   };
 };
+
+/**
+ * Fetch newest products with pagination.
+ */
+export const getNewestProducts = async (queryParams) => {
+  const { page = 1, limit = 10 } = queryParams;
+  const skip = (page - 1) * limit;
+
+  const products = await productRepository.findNewest(limit, skip);
+  const total = await productRepository.countNewest();
+  const pages = Math.ceil(total / limit);
+
+  return {
+    products,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages,
+    },
+  };
+};
+
+/**
+ * Fetch recommended products with pagination.
+ */
+export const getRecommendedProducts = async (queryParams) => {
+  const { page = 1, limit = 10 } = queryParams;
+  const skip = (page - 1) * limit;
+
+  const products = await productRepository.findRecommended(limit, skip);
+  const total = await productRepository.countRecommended();
+  const pages = Math.ceil(total / limit);
+
+  return {
+    products,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages,
+    },
+  };
+};

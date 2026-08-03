@@ -9,6 +9,7 @@ import {
   getAllBrands,
   updateBrand,
   deleteBrand,
+  getPopularBrands,
 } from '../controllers/brandController.js';
 import {
   validateCreateBrand,
@@ -22,6 +23,7 @@ const router = express.Router();
 
 // Public routes
 router.get('/', getAllBrands);
+router.get('/popular', getPopularBrands);
 router.get('/:id', validateBrandId, getBrandById);
 router.get('/slug/:slug', getBrandBySlug);
 

@@ -49,3 +49,21 @@ export const getTrendingProducts = asyncHandler(async (req, res) => {
   const result = await productService.getTrendingProducts(req.query);
   return successResponse(res, 'Trending products fetched successfully', result);
 });
+
+/**
+ * Handle GET /api/products/newest
+ * Returns a paginated list of newest products.
+ */
+export const getNewestProducts = asyncHandler(async (req, res) => {
+  const result = await productService.getNewestProducts(req.query);
+  return successResponse(res, 'Newest products fetched successfully', result);
+});
+
+/**
+ * Handle GET /api/products/recommended
+ * Returns a paginated list of recommended products.
+ */
+export const getRecommendedProducts = asyncHandler(async (req, res) => {
+  const result = await productService.getRecommendedProducts(req.query);
+  return successResponse(res, 'Recommended products fetched successfully', result);
+});
