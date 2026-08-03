@@ -36,7 +36,7 @@ const VerificationStatus = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#070B12] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
         <div className="flex flex-col gap-4 w-full max-w-sm px-6">
           <div className="h-12 w-12 rounded-full skeleton mx-auto" />
           <div className="h-6 w-3/4 skeleton mx-auto" />
@@ -55,11 +55,11 @@ const VerificationStatus = () => {
             <FiClock className="text-4xl" />
           </div>
           <h2 className="text-2xl font-bold mb-2">Verification Pending</h2>
-          <p className="text-gray-500 mb-8 max-w-md mx-auto">
+          <p className="text-muted-foreground mb-8 max-w-md mx-auto">
             Your profile and identity documents are currently under review. This usually takes 12-24 hours. We will notify you via email once approved.
           </p>
-          <div className="bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-4 inline-block">
-            <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Current Trust Score</span>
+          <div className="bg-muted border border-border rounded-xl p-4 inline-block">
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Current Trust Score</span>
             <div className="text-3xl font-black text-primary mt-1">{trustScore}/100</div>
           </div>
         </div>
@@ -73,7 +73,7 @@ const VerificationStatus = () => {
             <FiCheckCircle className="text-4xl" />
           </div>
           <h2 className="text-2xl font-bold mb-2">Verification Successful!</h2>
-          <p className="text-gray-500 mb-8 max-w-md mx-auto">
+          <p className="text-muted-foreground mb-8 max-w-md mx-auto">
             Congratulations! You are now an approved Marketplace Seller on NexCart. You can now start listing your products.
           </p>
           <button 
@@ -93,7 +93,7 @@ const VerificationStatus = () => {
             <FiAlertCircle className="text-4xl" />
           </div>
           <h2 className="text-2xl font-bold mb-2">Account {status}</h2>
-          <p className="text-gray-500 mb-8 max-w-md mx-auto">
+          <p className="text-muted-foreground mb-8 max-w-md mx-auto">
             Unfortunately, your seller account has been {status.toLowerCase()}. Please contact support for more information.
           </p>
         </div>
@@ -104,7 +104,7 @@ const VerificationStatus = () => {
     return (
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Registration Incomplete</h2>
-        <p className="text-gray-500 mb-8 max-w-md mx-auto">
+        <p className="text-muted-foreground mb-8 max-w-md mx-auto">
           Please complete your seller onboarding to become a Marketplace Seller.
         </p>
         <button 
@@ -118,8 +118,8 @@ const VerificationStatus = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#070B12] text-gray-900 dark:text-white flex flex-col relative overflow-hidden">
-      <nav className="flex justify-between items-center p-6 lg:px-12 relative z-10 border-b border-gray-200 dark:border-white/5 bg-white/50 dark:bg-[#0c111d]/50 backdrop-blur-xl">
+    <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
+      <nav className="flex justify-between items-center p-6 lg:px-12 relative z-10 border-b border-border bg-card/50 backdrop-blur-xl">
         <NexCartLogo />
         <div className="flex items-center gap-4">
           <span className="text-sm font-semibold">{user?.email}</span>
@@ -131,7 +131,7 @@ const VerificationStatus = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="glass-card p-10 rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl max-w-xl w-full"
+          className="glass-card p-10 rounded-3xl border border-border shadow-2xl max-w-xl w-full"
         >
           {renderStatusCard()}
         </motion.div>

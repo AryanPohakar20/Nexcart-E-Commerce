@@ -32,10 +32,10 @@ const AdminLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-darkBg text-slate-900 dark:text-white flex transition-colors duration-500">
+    <div className="min-h-screen bg-background text-foreground flex transition-colors duration-500">
       {/* Sidebar Panel */}
       <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-gray-50 dark:bg-[#141414] border-r border-gray-200 dark:border-white/5 p-6 flex flex-col justify-between
+        fixed inset-y-0 left-0 z-40 w-64 bg-card border-r border-border p-6 flex flex-col justify-between
         transition-all duration-500 md:translate-x-0 md:static
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
@@ -44,10 +44,10 @@ const AdminLayout = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
               <img src={logo} alt="Logo" className="w-8 h-8 rounded object-cover border border-accentBlue/20" />
-              <span className="text-xl font-bold tracking-wider text-primary">NEX<span className="text-slate-900 dark:text-white transition-colors duration-500">CART</span></span>
+              <span className="text-xl font-bold tracking-wider text-primary">NEX<span className="text-foreground">CART</span></span>
               <span className="bg-accentBlue/10 border border-accentBlue/20 text-accentBlue text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">Admin</span>
             </div>
-            <button className="md:hidden text-slate-800 dark:text-white hover:text-primary transition-colors duration-500" onClick={() => setIsSidebarOpen(false)}>
+            <button className="md:hidden text-foreground hover:text-primary transition-colors duration-500" onClick={() => setIsSidebarOpen(false)}>
               <FiX size={24} />
             </button>
           </div>
@@ -65,7 +65,7 @@ const AdminLayout = () => {
                     relative flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all text-sm
                     ${isActive 
                       ? 'text-black z-10 font-extrabold' 
-                      : 'text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-white/5'}
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'}
                   `}
                 >
                   {({ isActive }) => (
@@ -88,10 +88,10 @@ const AdminLayout = () => {
         </div>
 
         {/* Bottom Actions */}
-        <div className="flex flex-col gap-2 pt-6 border-t border-gray-200 dark:border-white/5">
+        <div className="flex flex-col gap-2 pt-6 border-t border-border">
           <button 
             onClick={() => navigate('/')}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-white/5 transition-all"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
           >
             <FiArrowLeft size={18} />
             <span>Storefront</span>
@@ -109,22 +109,22 @@ const AdminLayout = () => {
       {/* Content wrapper */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Admin Header */}
-        <header className="h-20 bg-gray-50/80 dark:bg-[#141414]/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 px-6 flex items-center justify-between sticky top-0 z-30 transition-colors duration-500">
+        <header className="h-20 bg-card/85 backdrop-blur-md border-b border-border px-6 flex items-center justify-between sticky top-0 z-30 transition-colors duration-500">
           <div className="flex items-center gap-4">
-            <button className="md:hidden text-slate-700 dark:text-white hover:text-primary transition-colors duration-500" onClick={() => setIsSidebarOpen(true)}>
+            <button className="md:hidden text-foreground hover:text-primary transition-colors duration-500" onClick={() => setIsSidebarOpen(true)}>
               <FiMenu size={24} />
             </button>
             <h1 className="text-xl font-bold hidden md:block">Master Administrator Hub</h1>
           </div>
-
-          <div className="flex items-center gap-3 bg-gray-100 dark:bg-white/5 rounded-full px-4 py-1.5 border border-gray-200 dark:border-white/5 transition-colors duration-500">
+ 
+          <div className="flex items-center gap-3 bg-muted rounded-full px-4 py-1.5 border border-border transition-colors duration-500">
             <img 
               src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80'} 
               alt="Avatar" 
               className="w-8 h-8 rounded-full object-cover border border-accentBlue/40"
             />
             <div className="hidden sm:block text-left">
-              <p className="text-xs font-semibold leading-tight text-white">{user?.name || 'Administrator'}</p>
+              <p className="text-xs font-semibold leading-tight text-foreground">{user?.name || 'Administrator'}</p>
               <p className="text-[10px] text-accentBlue leading-none uppercase tracking-wider font-bold">System Root</p>
             </div>
           </div>

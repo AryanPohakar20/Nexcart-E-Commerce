@@ -116,30 +116,30 @@ const Products = () => {
   return (
     <div className="space-y-8">
       {/* Search Header Banner */}
-      <div className="flex flex-col sm:flex-row items-baseline sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+      <div className="flex flex-col sm:flex-row items-baseline sm:items-center justify-between gap-4 border-b border-border pb-6">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">
+          <h1 className="text-2xl font-black text-foreground tracking-tight">
             {searchQ ? `Search Results for "${searchQ}"` : 'Browse Collections'}
           </h1>
-          <p className="text-xs text-gray-500 mt-1">Found {filteredProducts.length} premium products.</p>
+          <p className="text-xs text-muted-foreground mt-1">Found {filteredProducts.length} premium products.</p>
         </div>
 
         {/* Sort & Filter controls */}
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
           <button 
             onClick={() => setIsFilterMobileOpen(true)}
-            className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-xs font-semibold"
+            className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-muted border border-border rounded-lg text-xs font-semibold"
           >
             <FiSliders />
             <span>Filters</span>
           </button>
-
+ 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400 font-semibold hidden sm:inline">Sort:</span>
+            <span className="text-xs text-muted-foreground font-semibold hidden sm:inline">Sort:</span>
             <select
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value)}
-              className="bg-cardBg border border-white/10 rounded-lg text-xs font-bold text-white px-3 py-2 focus:outline-none focus:border-primary/40 cursor-pointer"
+              className="bg-card border border-border rounded-lg text-xs font-bold text-foreground px-3 py-2 focus:outline-none focus:border-primary/40 cursor-pointer"
             >
               <option value="featured">Featured Items</option>
               <option value="price-low-high">Price: Low to High</option>
@@ -157,8 +157,8 @@ const Products = () => {
         <aside className="hidden md:block space-y-6">
           
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/5 pb-4">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
               <FiSliders className="text-primary" />
               <span>Filters</span>
             </h3>
@@ -166,20 +166,20 @@ const Products = () => {
               Clear All
             </button>
           </div>
-
+ 
           {/* Categories Filter list */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-white tracking-wide">Category</h4>
+            <h4 className="text-xs font-bold text-foreground tracking-wide">Category</h4>
             <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2">
               {CATEGORIES.map((cat) => {
                 const checked = selectedCategories.includes(cat.id);
                 return (
-                  <label key={cat.id} className="flex items-center gap-2 text-xs text-gray-400 hover:text-white cursor-pointer select-none">
+                  <label key={cat.id} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none">
                     <input 
                       type="checkbox" 
                       checked={checked}
                       onChange={() => handleCategoryToggle(cat.id)}
-                      className="rounded border-white/10 text-primary focus:ring-primary/40 bg-transparent"
+                      className="rounded border-border text-primary focus:ring-primary/40 bg-transparent"
                     />
                     <span>{cat.name}</span>
                   </label>
@@ -187,20 +187,20 @@ const Products = () => {
               })}
             </div>
           </div>
-
+ 
           {/* Brands Filter List */}
-          <div className="space-y-3 pt-4 border-t border-white/5">
-            <h4 className="text-xs font-bold text-white tracking-wide">Brands</h4>
+          <div className="space-y-3 pt-4 border-t border-border">
+            <h4 className="text-xs font-bold text-foreground tracking-wide">Brands</h4>
             <div className="flex flex-col gap-2">
               {availableBrands.map((brand) => {
                 const checked = selectedBrands.includes(brand);
                 return (
-                  <label key={brand} className="flex items-center gap-2 text-xs text-gray-400 hover:text-white cursor-pointer select-none">
+                  <label key={brand} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none">
                     <input 
                       type="checkbox" 
                       checked={checked}
                       onChange={() => handleBrandToggle(brand)}
-                      className="rounded border-white/10 text-primary focus:ring-primary/40 bg-transparent"
+                      className="rounded border-border text-primary focus:ring-primary/40 bg-transparent"
                     />
                     <span>{brand}</span>
                   </label>
@@ -210,8 +210,8 @@ const Products = () => {
           </div>
 
           {/* Price Range Filter Slider */}
-          <div className="space-y-3 pt-4 border-t border-white/5">
-            <div className="flex items-center justify-between text-xs font-bold text-white">
+          <div className="space-y-3 pt-4 border-t border-border">
+            <div className="flex items-center justify-between text-xs font-bold text-foreground">
               <span>Max Price</span>
               <span>₹{priceRange.toLocaleString('en-IN')}</span>
             </div>
@@ -222,17 +222,17 @@ const Products = () => {
               step={5000}
               value={priceRange}
               onChange={(e) => setPriceRange(Number(e.target.value))}
-              className="w-full accent-primary bg-white/10 h-1 rounded-lg appearance-none cursor-pointer"
+              className="w-full accent-primary bg-muted h-1 rounded-lg appearance-none cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-gray-500 font-bold">
+            <div className="flex justify-between text-[10px] text-muted-foreground font-bold">
               <span>₹1K</span>
               <span>₹400K</span>
             </div>
           </div>
-
+ 
           {/* Ratings minimum selection */}
-          <div className="space-y-3 pt-4 border-t border-white/5">
-            <h4 className="text-xs font-bold text-white tracking-wide">Ratings</h4>
+          <div className="space-y-3 pt-4 border-t border-border">
+            <h4 className="text-xs font-bold text-foreground tracking-wide">Ratings</h4>
             <div className="flex flex-col gap-2">
               {[4, 3, 2].map((num) => (
                 <button 
@@ -241,7 +241,7 @@ const Products = () => {
                   className={`flex items-center gap-1.5 text-xs text-left px-2 py-1.5 rounded-lg border transition-all ${
                     minRating === num 
                       ? 'bg-primary/10 border-primary text-primary' 
-                      : 'bg-white/5 border-transparent text-gray-400 hover:text-white'
+                      : 'bg-muted border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <FiStar className="fill-current text-primary" />
@@ -250,15 +250,15 @@ const Products = () => {
               ))}
             </div>
           </div>
-
+ 
           {/* Availability Switch */}
-          <div className="pt-4 border-t border-white/5">
-            <label className="flex items-center gap-2 text-xs text-gray-400 hover:text-white cursor-pointer select-none">
+          <div className="pt-4 border-t border-border">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none">
               <input 
                 type="checkbox"
                 checked={hideOutOfStock}
                 onChange={() => setHideOutOfStock(!hideOutOfStock)}
-                className="rounded border-white/10 text-primary focus:ring-primary/40 bg-transparent"
+                className="rounded border-border text-primary focus:ring-primary/40 bg-transparent"
               />
               <span>In Stock Items Only</span>
             </label>
@@ -276,36 +276,36 @@ const Products = () => {
       {/* Mobile Drawer Slide panel */}
       {isFilterMobileOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-end">
-          <div className="max-w-xs w-full bg-secondaryBg h-full p-6 flex flex-col justify-between overflow-y-auto animate-slide-left">
+          <div className="max-w-xs w-full bg-card h-full p-6 flex flex-col justify-between overflow-y-auto animate-slide-left">
             <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <h3 className="text-sm font-bold">Filters</h3>
-                <button onClick={() => setIsFilterMobileOpen(false)} className="text-gray-400 hover:text-white">
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <h3 className="text-sm font-bold text-foreground">Filters</h3>
+                <button onClick={() => setIsFilterMobileOpen(false)} className="text-muted-foreground hover:text-foreground">
                   <FiX size={20} />
                 </button>
               </div>
-
+ 
               {/* Categories */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Category</h4>
                 <div className="flex flex-col gap-2">
                   {CATEGORIES.map(cat => (
-                    <label key={cat.id} className="flex items-center gap-2 text-xs text-gray-400 select-none">
+                    <label key={cat.id} className="flex items-center gap-2 text-xs text-muted-foreground select-none">
                       <input 
                         type="checkbox" 
                         checked={selectedCategories.includes(cat.id)}
                         onChange={() => handleCategoryToggle(cat.id)}
-                        className="rounded border-white/10 text-primary focus:ring-primary/40 bg-transparent"
+                        className="rounded border-border text-primary focus:ring-primary/40 bg-transparent"
                       />
                       <span>{cat.name}</span>
                     </label>
                   ))}
                 </div>
               </div>
-
+ 
               {/* Price */}
-              <div className="space-y-2 pt-4 border-t border-white/5">
-                <div className="flex items-center justify-between text-xs font-bold">
+              <div className="space-y-2 pt-4 border-t border-border">
+                <div className="flex items-center justify-between text-xs font-bold text-foreground">
                   <span>Price Range</span>
                   <span className="text-primary">₹{priceRange.toLocaleString('en-IN')}</span>
                 </div>
@@ -319,16 +319,16 @@ const Products = () => {
                   className="w-full accent-primary"
                 />
               </div>
-
+ 
               {/* Ratings */}
-              <div className="space-y-2 pt-4 border-t border-white/5">
+              <div className="space-y-2 pt-4 border-t border-border">
                 <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Ratings</h4>
                 <div className="flex gap-2">
                   {[4, 3].map(num => (
                     <button 
                       key={num}
                       onClick={() => setMinRating(minRating === num ? 0 : num)}
-                      className={`flex-grow py-1 px-3 border rounded-lg text-xs ${minRating === num ? 'border-primary text-primary bg-primary/10' : 'border-white/10 text-gray-400'}`}
+                      className={`flex-grow py-1 px-3 border rounded-lg text-xs ${minRating === num ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground'}`}
                     >
                       {num}★+
                     </button>
@@ -336,9 +336,9 @@ const Products = () => {
                 </div>
               </div>
             </div>
-
-            <div className="pt-6 border-t border-white/5 flex gap-2">
-              <button onClick={clearFilters} className="flex-1 py-2 bg-white/5 text-gray-400 rounded-lg text-xs font-bold">
+ 
+            <div className="pt-6 border-t border-border flex gap-2">
+              <button onClick={clearFilters} className="flex-1 py-2 bg-muted text-muted-foreground rounded-lg text-xs font-bold">
                 Reset
               </button>
               <button onClick={() => setIsFilterMobileOpen(false)} className="flex-1 btn-glow-yellow !py-2 text-xs text-black">

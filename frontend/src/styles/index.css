@@ -3,6 +3,36 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: #F8FAFC;
+    --foreground: #111827;
+    --card: #FFFFFF;
+    --card-foreground: #111827;
+    --border: #E5E7EB;
+    --muted: #F1F5F9;
+    --muted-foreground: #6B7280;
+    --primary: #FFC107;
+    --primary-foreground: #111827;
+    --secondary: #F1F5F9;
+    --secondary-foreground: #111827;
+    --shadow: rgba(0,0,0,0.08);
+  }
+
+  .dark {
+    --background: #070B12;
+    --foreground: #FFFFFF;
+    --card: #202020;
+    --card-foreground: #FFFFFF;
+    --border: rgba(255, 255, 255, 0.08);
+    --muted: #121212;
+    --muted-foreground: #AAB4C5;
+    --primary: #FFC107;
+    --primary-foreground: #0A0A0A;
+    --secondary: #121212;
+    --secondary-foreground: #FFFFFF;
+    --shadow: rgba(0,0,0,0.3);
+  }
+
   /* Smooth scrolling & global theme transitions across the whole page */
   html {
     scroll-behavior: smooth;
@@ -14,15 +44,15 @@
   }
 
   html.dark body, body.dark {
-    background-color: #070B12;
-    background-image: radial-gradient(circle at 50% 0%, #161616 0%, #070B12 100%);
-    color: #FFFFFF;
+    background-color: var(--background);
+    background-image: radial-gradient(circle at 50% 0%, #161616 0%, var(--background) 100%);
+    color: var(--foreground);
   }
 
   html.light body, body.light {
-    background-color: #F8FAFC !important;
+    background-color: var(--background) !important;
     background-image: none !important;
-    color: #111827 !important;
+    color: var(--foreground) !important;
   }
 
   /* Custom Premium Scrollbar */
@@ -721,4 +751,11 @@ tbody tr:hover {
 .stagger-delay-7 { animation-delay: 350ms; }
 .stagger-delay-8 { animation-delay: 400ms; }
 
-
+/* Logo visibility filters for Light and Dark themes */
+.theme-logo-filter {
+  filter: brightness(0) !important;
+  transition: filter 500ms ease;
+}
+.dark .theme-logo-filter {
+  filter: brightness(1) !important;
+}

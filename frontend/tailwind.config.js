@@ -8,14 +8,30 @@ export default {
   theme: {
     extend: {
       colors: {
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        card: {
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)',
+        },
+        border: 'var(--border)',
+        muted: {
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)',
+        },
         primary: {
-          DEFAULT: '#FFC107',
+          DEFAULT: 'var(--primary)',
           dark: '#E0A800',
           light: '#FFD54F',
+          foreground: 'var(--primary-foreground)',
         },
-        darkBg: '#0A0A0A',
-        secondaryBg: '#121212',
-        cardBg: '#202020',
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          foreground: 'var(--secondary-foreground)',
+        },
+        darkBg: 'var(--background)',
+        secondaryBg: 'var(--secondary)',
+        cardBg: 'var(--card)',
         accentBlue: '#00CFFF',
       },
       fontFamily: {

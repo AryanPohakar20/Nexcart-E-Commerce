@@ -123,17 +123,17 @@ const Cart = () => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left py-6">
       {/* Breadcrumb Header */}
-      <div className="border-b border-white/5 pb-6">
+      <div className="border-b border-border pb-6">
         <div className="flex items-center gap-1.5 text-xs text-primary font-bold mb-2">
           <Link to="/" className="hover:underline">Home</Link>
-          <FiChevronRight className="text-gray-600" />
-          <span className="text-white">Cart</span>
+          <FiChevronRight className="text-muted-foreground" />
+          <span className="text-foreground">Cart</span>
         </div>
-        <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+        <h1 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
           <FiShoppingBag className="text-primary text-3xl" />
           <span>Shopping Cart ({cart.length} items)</span>
         </h1>
-        <p className="text-sm text-gray-500 mt-1">Review your premium selections and customize your shipping options.</p>
+        <p className="text-sm text-muted-foreground mt-1">Review your premium selections and customize your shipping options.</p>
       </div>
 
       {cart.length === 0 ? (
@@ -141,7 +141,7 @@ const Cart = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="glass-card rounded-3xl p-16 text-center max-w-md mx-auto space-y-6 border border-white/5 shadow-2xl bg-[#0c111d]/40 backdrop-blur-xl relative overflow-hidden"
+          className="glass-card rounded-3xl p-16 text-center max-w-md mx-auto space-y-6 border border-border shadow-2xl relative overflow-hidden"
         >
           {/* Drifting Background Particles */}
           <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none z-0">
@@ -166,7 +166,7 @@ const Cart = () => {
               />
             ))}
           </div>
-
+ 
           <motion.div 
             animate={{ y: [0, -6, 0], scale: [1, 1.03, 1] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -179,10 +179,10 @@ const Cart = () => {
             />
             <FiShoppingBag size={42} className="text-primary drop-shadow-[0_0_8px_rgba(255,193,7,0.3)] animate-pulse" />
           </motion.div>
-
+ 
           <div className="space-y-2 relative z-10">
-            <h2 className="text-xl font-bold text-white">Your Cart is Empty</h2>
-            <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Your cart is waiting for you to fill it with premium electronics, gear, or fashion.</p>
+            <h2 className="text-xl font-bold text-foreground">Your Cart is Empty</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto">Your cart is waiting for you to fill it with premium electronics, gear, or fashion.</p>
           </div>
           <button 
             onClick={() => navigate('/products')}
@@ -210,11 +210,11 @@ const Cart = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -100 }}
                       transition={{ duration: 0.3 }}
-                      className="glass-card border border-white/10 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-5 bg-[#0E1420]/60 hover:shadow-[0_0_20px_rgba(255,255,255,0.03)] transition-all group"
+                      className="glass-card border border-border p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-5 bg-card hover:shadow-[0_0_20px_rgba(0,0,0,0.03)] transition-all group"
                     >
                       {/* Product Thumbnail & Details */}
                       <div className="flex items-center gap-5 w-full md:w-auto">
-                        <div className="relative overflow-hidden rounded-xl bg-black/20 flex-shrink-0 w-24 h-24 border border-white/5">
+                        <div className="relative overflow-hidden rounded-xl bg-black/20 flex-shrink-0 w-24 h-24 border border-border">
                           <img 
                             src={item.product.image} 
                             alt={item.product.title} 
@@ -229,12 +229,12 @@ const Cart = () => {
                         <div className="space-y-1.5 flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-[9px] text-primary uppercase font-extrabold tracking-widest">{item.product.brand}</span>
-                            <span className="text-gray-600 text-[10px]">•</span>
-                            <span className="text-[10px] text-gray-400 font-medium">Color: Space Black</span>
+                            <span className="text-muted-foreground text-[10px]">•</span>
+                            <span className="text-[10px] text-muted-foreground font-medium">Color: Space Black</span>
                           </div>
                           <h3 
                             onClick={() => navigate(`/product/${item.product.id}`)}
-                            className="text-xs font-bold text-white line-clamp-1 hover:text-primary transition-all cursor-pointer"
+                            className="text-xs font-bold text-foreground line-clamp-1 hover:text-primary transition-all cursor-pointer"
                           >
                             {item.product.title}
                           </h3>
@@ -262,33 +262,32 @@ const Cart = () => {
                               </span>
                             )}
                           </div>
-                          
-                          <p className="text-[10px] text-gray-500 font-medium flex items-center gap-1.5 pt-0.5">
+                                          <p className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5 pt-0.5">
                             <FiTruck /> Est. Delivery: {estimatedDelivery || '2-3 Days'}
                           </p>
                         </div>
                       </div>
-
+ 
                       {/* Quantity Selector, Pricing & Action Panel */}
-                      <div className="flex flex-row md:flex-col lg:flex-row items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0 border-white/5">
+                      <div className="flex flex-row md:flex-col lg:flex-row items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0 border-border">
                         
                         {/* Quantity adjustor */}
                         <div className="flex flex-col items-center gap-1">
-                          <div className="flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-inner">
+                          <div className="flex items-center bg-muted border border-border rounded-xl overflow-hidden shadow-inner">
                             <button 
                               onClick={() => updateCartQty(item.product.id, item.quantity - 1)}
                               disabled={isOutOfStock}
-                              className="px-3 py-2 hover:bg-white/10 text-white font-black transition-all text-xs disabled:opacity-30 disabled:cursor-not-allowed"
+                              className="px-3 py-2 hover:bg-muted/80 text-foreground font-black transition-all text-xs disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                               -
                             </button>
-                            <span className="px-3 py-2 text-xs font-bold text-white text-center min-w-[32px]">
+                            <span className="px-3 py-2 text-xs font-bold text-foreground text-center min-w-[32px]">
                               {item.quantity}
                             </span>
                             <button 
                               onClick={() => updateCartQty(item.product.id, item.quantity + 1)}
                               disabled={isOutOfStock || item.quantity >= maxStock}
-                              className="px-3 py-2 hover:bg-white/10 text-white font-black transition-all text-xs disabled:opacity-30 disabled:cursor-not-allowed"
+                              className="px-3 py-2 hover:bg-muted/80 text-foreground font-black transition-all text-xs disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                               +
                             </button>
@@ -297,14 +296,14 @@ const Cart = () => {
                             <span className="text-[9px] text-red-400 font-bold">Restocking soon</span>
                           )}
                         </div>
-
+ 
                         {/* Prices */}
                         <div className="text-right min-w-[100px] space-y-1">
-                          <p className="text-xs font-extrabold text-white">
+                          <p className="text-xs font-extrabold text-foreground">
                             ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
                           </p>
                           <div className="flex items-center justify-end gap-1.5">
-                            <span className="text-[10px] text-gray-500 line-through">
+                            <span className="text-[10px] text-muted-foreground line-through">
                               ₹{(item.product.mrp * item.quantity).toLocaleString('en-IN')}
                             </span>
                             <span className="text-[9px] text-red-400 font-bold">
@@ -312,13 +311,13 @@ const Cart = () => {
                             </span>
                           </div>
                         </div>
-
+ 
                         {/* Action buttons */}
                         <div className="flex items-center gap-2">
                           {/* Save For Later */}
                           <button 
                             onClick={() => moveToSaveLater(item.product)}
-                            className="p-2.5 bg-white/5 border border-white/10 text-gray-400 hover:text-white rounded-xl transition-all"
+                            className="p-2.5 bg-muted border border-border text-muted-foreground hover:text-foreground rounded-xl transition-all"
                             title="Save for Later"
                           >
                             <FiInbox size={14} />
@@ -329,12 +328,11 @@ const Cart = () => {
                               toggleWishlist(item.product);
                               removeFromCart(item.product.id);
                             }}
-                            className="p-2.5 bg-white/5 border border-white/10 text-gray-400 hover:text-primary rounded-xl transition-all"
+                            className="p-2.5 bg-muted border border-border text-muted-foreground hover:text-primary rounded-xl transition-all"
                             title="Move to Wishlist"
                           >
                             <FiHeart size={14} />
                           </button>
-                          {/* Remove */}
                           <button 
                             onClick={() => removeFromCart(item.product.id)}
                             className="p-2.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-xl transition-all"
@@ -352,8 +350,8 @@ const Cart = () => {
             </div>
 
             {/* SHIPPING ESTIMATOR CARD */}
-            <div className="glass-card border border-white/10 p-6 rounded-2xl bg-[#0E1420]/40 backdrop-blur-xl">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-4">
+            <div className="glass-card border border-border p-6 rounded-2xl bg-card">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2 mb-4">
                 <FiTruck className="text-primary" />
                 <span>Shipping Estimator</span>
               </h3>
@@ -364,7 +362,7 @@ const Cart = () => {
                   placeholder="Enter 6-Digit PIN Code (e.g. 500081)" 
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                  className="flex-grow bg-black/40 border border-white/10 rounded-xl p-3 px-4 text-xs focus:outline-none focus:border-primary/50 text-white placeholder-gray-500"
+                  className="flex-grow bg-background border border-border rounded-xl p-3 px-4 text-xs focus:outline-none focus:border-primary/50 text-foreground placeholder-muted-foreground"
                 />
                 <button type="submit" className="btn-glow-yellow py-3 px-6 text-xs uppercase font-extrabold tracking-wider rounded-xl">
                   Calculate
@@ -386,8 +384,8 @@ const Cart = () => {
                   exit={{ opacity: 0, y: 30 }}
                   className="space-y-4 pt-4"
                 >
-                  <div className="border-b border-white/5 pb-3">
-                    <h2 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+                  <div className="border-b border-border pb-3">
+                    <h2 className="text-lg font-black text-foreground tracking-tight flex items-center gap-2">
                       <FiInbox className="text-primary" />
                       <span>Saved For Later ({saveForLater.length} items)</span>
                     </h2>
@@ -397,11 +395,11 @@ const Cart = () => {
                       <motion.div 
                         key={item.product.id}
                         layout
-                        className="glass-card border border-white/5 p-4 rounded-xl flex items-center gap-4 bg-[#0c111d]/30"
+                        className="glass-card border border-border p-4 rounded-xl flex items-center gap-4 bg-card"
                       >
                         <img src={item.product.image} alt={item.product.title} className="w-16 h-16 rounded-lg object-cover bg-black/10" />
                         <div className="flex-1 min-w-0 text-left space-y-1">
-                          <h4 className="text-xs font-bold text-white line-clamp-1">{item.product.title}</h4>
+                          <h4 className="text-xs font-bold text-foreground line-clamp-1">{item.product.title}</h4>
                           <p className="text-xs text-primary font-black">₹{item.product.price.toLocaleString('en-IN')}</p>
                           <div className="flex items-center gap-3 pt-1.5">
                             <button 
@@ -410,7 +408,7 @@ const Cart = () => {
                             >
                               Move to Cart
                             </button>
-                            <span className="text-gray-700 text-[10px]">|</span>
+                            <span className="text-muted-foreground text-[10px]">|</span>
                             <button 
                               onClick={() => removeFromSaveLater(item.product.id)}
                               className="text-[10px] font-bold text-red-400 hover:underline uppercase tracking-wider"
@@ -426,13 +424,13 @@ const Cart = () => {
               )}
             </AnimatePresence>
           </motion.div>
-
+ 
           {/* Right Column: Order Summary (30%) */}
           <div className="lg:col-span-1 space-y-6 sticky top-24">
             
             {/* Coupon application panel */}
-            <div className="glass-card border border-white/10 p-6 rounded-2xl bg-[#0E1420]/40 backdrop-blur-xl space-y-4">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <div className="glass-card border border-border p-6 rounded-2xl bg-card space-y-4">
+              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                 <FiTag className="text-primary" />
                 <span>Apply Coupon</span>
               </h3>
@@ -449,7 +447,7 @@ const Cart = () => {
                       <p className="text-[10px] font-black text-primary tracking-widest uppercase flex items-center gap-1">
                         <FiPercent /> {appliedCoupon.code} ACTIVE
                       </p>
-                      <p className="text-[10px] text-gray-400 font-medium">{appliedCoupon.description}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium">{appliedCoupon.description}</p>
                     </div>
                     <button onClick={removeCouponCode} className="text-red-400 hover:text-red-500 transition-colors">
                       <FiX size={16} />
@@ -467,7 +465,7 @@ const Cart = () => {
                       placeholder="Enter Code (e.g. FLASH50)" 
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                      className="flex-grow bg-black/40 border border-white/10 rounded-xl p-3 px-4 text-xs focus:outline-none focus:border-primary/50 text-white placeholder-gray-500 uppercase font-semibold"
+                      className="flex-grow bg-background border border-border rounded-xl p-3 px-4 text-xs focus:outline-none focus:border-primary/50 text-foreground placeholder-muted-foreground uppercase font-semibold"
                     />
                     <button type="submit" className="btn-glow-yellow !px-5 text-xs tracking-wider uppercase font-extrabold rounded-xl">
                       Apply

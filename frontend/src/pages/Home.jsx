@@ -249,16 +249,16 @@ const Home = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/60 dark:bg-black/60 border border-gray-200 dark:border-white/10 text-slate-800 dark:text-white hover:text-primary rounded-full hover:bg-white/80 dark:hover:bg-black/80 transition-all cursor-pointer duration-500"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-card/60 border border-border text-foreground hover:text-primary rounded-full hover:bg-card/80 transition-all cursor-pointer duration-500"
         >
           <FiChevronLeft size={20} />
         </motion.button>
-
+ 
         <motion.button 
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-white/60 dark:bg-black/60 border border-gray-200 dark:border-white/10 text-slate-800 dark:text-white hover:text-primary rounded-full hover:bg-white/80 dark:hover:bg-black/80 transition-all cursor-pointer duration-500"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-card/60 border border-border text-foreground hover:text-primary rounded-full hover:bg-card/80 transition-all cursor-pointer duration-500"
         >
           <FiChevronRight size={20} />
         </motion.button>
@@ -279,8 +279,8 @@ const Home = () => {
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">Featured Categories</h2>
-            <p className="text-xs text-gray-500 mt-1">Discover items curated across major domains.</p>
+            <h2 className="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">Featured Categories</h2>
+            <p className="text-xs text-muted-foreground mt-1">Discover items curated across major domains.</p>
           </div>
           <Link to="/products" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
             <span>Explore All</span>
@@ -312,87 +312,76 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 3. Flash Sale & Deals banner */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Flash Sale Countdown Panel */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="lg:col-span-1 bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-3xl p-6 md:p-8 flex flex-col justify-between h-[360px]"
-        >
-          <div className="space-y-4">
-            <span className="bg-primary/20 border border-primary/40 text-primary text-[10px] font-extrabold px-2.5 py-1 rounded tracking-wider uppercase">Flash Sale</span>
-            <h3 className="text-2xl font-black text-white">Deals of the Day</h3>
-            <p className="text-xs text-gray-400 leading-relaxed font-medium">Limited stocks on top items. Prices return to standard soon.</p>
-            
-            {/* Clock Timer */}
-            <div className="flex items-center gap-3 pt-2">
-              <FiClock className="text-primary text-xl animate-spin" style={{ animationDuration: '10s' }} />
-              <div className="flex gap-1.5 text-center font-mono">
-                <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
-                  {String(timeLeft.hours).padStart(2, '0')}
+      {/* 3. Flash Deals Banner */}
+      <section className="bg-card border border-border p-6 md:p-8 rounded-3xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="space-y-3 z-10 text-left">
+          <span className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded">Limited Time</span>
+          <h3 className="text-2xl font-black text-foreground">Deals of the Day</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed font-medium">Limited stocks on top items. Prices return to standard soon.</p>
+          
+          {/* Clock Timer */}
+          <div className="flex items-center gap-3 pt-2">
+            <FiClock className="text-primary text-xl animate-spin" style={{ animationDuration: '10s' }} />
+            <div className="flex items-center gap-1.5 pt-1">
+              <div className="flex flex-col items-center">
+                <div className="bg-muted border border-border rounded px-2.5 py-1.5 text-sm font-bold text-foreground min-w-[36px]">
+                  {timeLeft.hours.toString().padStart(2, '0')}
                 </div>
-                <span className="text-primary font-bold self-center">:</span>
-                <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
-                  {String(timeLeft.minutes).padStart(2, '0')}
+                <span className="text-[9px] text-muted-foreground uppercase font-semibold mt-1">Hrs</span>
+              </div>
+              <span className="text-foreground font-black mb-4">:</span>
+              <div className="flex flex-col items-center">
+                <div className="bg-muted border border-border rounded px-2.5 py-1.5 text-sm font-bold text-foreground min-w-[36px]">
+                  {timeLeft.minutes.toString().padStart(2, '0')}
                 </div>
-                <span className="text-primary font-bold self-center">:</span>
-                <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
-                  {String(timeLeft.seconds).padStart(2, '0')}
+                <span className="text-[9px] text-muted-foreground uppercase font-semibold mt-1">Min</span>
+              </div>
+              <span className="text-foreground font-black mb-4">:</span>
+              <div className="flex flex-col items-center">
+                <div className="bg-muted border border-border rounded px-2.5 py-1.5 text-sm font-bold text-foreground min-w-[36px]">
+                  {timeLeft.seconds.toString().padStart(2, '0')}
                 </div>
+                <span className="text-[9px] text-muted-foreground uppercase font-semibold mt-1">Sec</span>
               </div>
             </div>
           </div>
-
-          <motion.button 
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => navigate('/products')}
-            className="w-full btn-glow-yellow text-xs font-bold py-3 text-center"
-          >
-            Show All Flash Deals
-          </motion.button>
-        </motion.div>
-
-        {/* Best deals preview grid */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {PRODUCTS.slice(0, 2).map((prod) => (
-            <ProductCard key={prod.id} product={prod} />
-          ))}
         </div>
+
+        <motion.button 
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={() => navigate('/products')}
+          className="btn-glow-yellow text-xs font-bold px-8 py-4 whitespace-nowrap"
+        >
+          Shop All Deals
+        </motion.button>
       </section>
 
-      {/* 4. Coupons Drawer */}
+      {/* 4. Super Saver Coupons */}
       <section className="space-y-6">
-        <div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">Super Saver Coupons</h2>
-          <p className="text-xs text-gray-500 mt-1">Click a coupon card to copy code and apply discounts during checkout.</p>
+        <div className="text-center">
+          <h2 className="text-xl md:text-2xl font-extrabold text-foreground">Super Saver Coupons</h2>
+          <p className="text-xs text-muted-foreground mt-1">Apply these codes at checkout to activate immediate markdowns.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {COUPONS.map((cp) => (
             <motion.div 
               key={cp.code}
-              whileHover={{ y: -5, boxShadow: '0 0 25px rgba(255, 193, 7, 0.25)', borderColor: 'rgba(255, 193, 7, 0.4)' }}
+              whileHover={{ y: -5 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => copyCoupon(cp.code)}
-              className="bg-cardBg border border-white/5 p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 relative overflow-hidden group"
+              className="p-5 bg-card border border-border rounded-2xl flex items-center justify-between group hover:border-primary/30 transition-all duration-300"
             >
-              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-darkBg" />
-              <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-darkBg" />
-              
-              <div className="pl-4 space-y-1.5">
-                <span className="text-[10px] text-accentBlue font-bold uppercase tracking-wider">Coupon Code</span>
-                <h4 className="text-lg font-black text-white tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
-                <p className="text-[10px] text-gray-400">{cp.description}</p>
+              <div className="space-y-1 text-left">
+                <h4 className="text-lg font-black text-foreground tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
+                <p className="text-xs font-bold text-primary">{cp.discountString}</p>
+                <p className="text-[10px] text-muted-foreground font-medium">{cp.description}</p>
               </div>
 
-              <div className="flex flex-col items-center gap-1 text-center bg-white/5 border border-white/5 p-2 rounded-lg pr-4">
+              <div className="flex flex-col items-center gap-1 text-center bg-muted border border-border p-2 rounded-lg pr-4">
                 <FiPercent className="text-primary text-lg" />
-                <span className="text-[10px] font-bold text-gray-400">
+                <span className="text-[10px] font-bold text-muted-foreground">
                   {copiedCoupon === cp.code ? 'Copied' : 'Copy'}
                 </span>
               </div>
@@ -404,8 +393,8 @@ const Home = () => {
       {/* 5. Trending & Recommended Items */}
       <section className="space-y-6">
         <div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">Trending Collections</h2>
-          <p className="text-xs text-gray-500 mt-1">Best-rated products by shoppers worldwide.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-foreground">Trending Collections</h2>
+          <p className="text-xs text-muted-foreground mt-1">Best-rated products by shoppers worldwide.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -418,20 +407,20 @@ const Home = () => {
       {/* 6. Popular Brands Banner */}
       <section className="space-y-6">
         <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">Shop By Brands</h2>
-          <p className="text-xs text-gray-500 mt-1">Explore authentic items from elite global suppliers.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-foreground">Shop By Brands</h2>
+          <p className="text-xs text-muted-foreground mt-1">Explore authentic items from elite global suppliers.</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 pt-4">
           {BRANDS.map((br) => (
             <motion.div 
               key={br.id}
-              whileHover={{ y: -5, borderColor: 'rgba(255, 193, 7, 0.4)' }}
+              whileHover={{ y: -5, borderColor: 'var(--primary)' }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(`/products?brand=${br.name}`)}
-              className="bg-cardBg border border-white/5 p-6 rounded-2xl flex items-center justify-center h-24 cursor-pointer transition-all duration-300 group"
+              className="bg-card border border-border p-6 rounded-2xl flex items-center justify-center h-24 cursor-pointer transition-all duration-300 group"
             >
-              <img src={br.logoUrl} alt={br.name} className="max-h-10 max-w-full object-contain filter invert opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
+              <img src={br.logoUrl} alt={br.name} className="max-h-10 max-w-full object-contain theme-logo-filter opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
             </motion.div>
           ))}
         </div>
@@ -440,8 +429,8 @@ const Home = () => {
       {/* 7. Testimonials */}
       <section className="space-y-6">
         <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">NexCart Reviews</h2>
-          <p className="text-xs text-gray-500 mt-1">What our premium customers have to say.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-foreground">NexCart Reviews</h2>
+          <p className="text-xs text-muted-foreground mt-1">What our premium customers have to say.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

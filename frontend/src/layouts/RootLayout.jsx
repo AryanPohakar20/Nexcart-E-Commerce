@@ -91,7 +91,7 @@ const ToastItem = ({ toast, removeToast }) => {
             </svg>
           </div>
         )}
-        <span className="text-sm font-medium text-white">{toast.message}</span>
+        <span className="text-sm font-medium text-foreground">{toast.message}</span>
       </div>
       <motion.div 
         animate={{ width: `${(timeLeft / 3500) * 100}%` }}
@@ -179,7 +179,7 @@ const RootLayout = () => {
 
   if (isAuthPage) {
     return (
-      <div className="min-h-screen bg-[#070B12] text-white selection:bg-primary selection:text-black relative overflow-x-hidden mesh-gradient-bg">
+      <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-black relative overflow-x-hidden mesh-gradient-bg">
         <ScrollToTop />
         
         {/* Top Scroll Progress Bar */}

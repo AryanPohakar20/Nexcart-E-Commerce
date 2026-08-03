@@ -30,17 +30,17 @@ const Wishlist = () => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left py-6">
       {/* Breadcrumb Page Header */}
-      <div className="border-b border-white/5 pb-6">
+      <div className="border-b border-border pb-6">
         <div className="flex items-center gap-1.5 text-xs text-primary font-bold mb-2">
           <Link to="/" className="hover:underline">Home</Link>
-          <FiChevronRight className="text-gray-600" />
-          <span className="text-white">Wishlist</span>
+          <FiChevronRight className="text-muted-foreground" />
+          <span className="text-foreground">Wishlist</span>
         </div>
-        <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+        <h1 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
           <FiHeart className="text-primary fill-current text-3xl animate-pulse" />
           <span>My Wishlist ({wishlist.length} items)</span>
         </h1>
-        <p className="text-sm text-gray-500 mt-1">Manage and purchase your saved premium items.</p>
+        <p className="text-sm text-muted-foreground mt-1">Manage and purchase your saved premium items.</p>
       </div>
 
       {/* Wishlist Items Shelf */}
@@ -49,7 +49,7 @@ const Wishlist = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="glass-card rounded-3xl p-16 text-center max-w-md mx-auto space-y-6 border border-white/5 shadow-2xl bg-[#0c111d]/40 backdrop-blur-xl relative overflow-hidden"
+          className="glass-card rounded-3xl p-16 text-center max-w-md mx-auto space-y-6 border border-border shadow-2xl relative overflow-hidden"
         >
           {/* Drifting Background Particles */}
           <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none z-0">
@@ -89,8 +89,8 @@ const Wishlist = () => {
           </motion.div>
 
           <div className="space-y-2 relative z-10">
-            <h2 className="text-xl font-bold text-white">Your Wishlist is Empty</h2>
-            <p className="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">Explore our catalog and click the heart icon on any product to save it here.</p>
+            <h2 className="text-xl font-bold text-foreground">Your Wishlist is Empty</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mx-auto">Explore our catalog and click the heart icon on any product to save it here.</p>
           </div>
           <button 
             onClick={() => navigate('/products')}
@@ -120,7 +120,7 @@ const Wishlist = () => {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8, y: 20 }}
                   transition={{ duration: 0.35, delay: index * 0.05 }}
-                  className="bg-cardBg border border-white/5 rounded-2xl p-4 flex flex-col justify-between hover-lift transition-all h-[420px] relative group"
+                  className="bg-card border border-border rounded-2xl p-4 flex flex-col justify-between hover-lift transition-all h-[420px] relative group"
                 >
                   <div className="space-y-3">
                     {/* Product Photo */}
@@ -138,7 +138,7 @@ const Wishlist = () => {
                       <div className="absolute top-2.5 right-2.5 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <button 
                           onClick={(e) => handleShareProduct(e, prod)}
-                          className="p-2 rounded-full border border-white/10 bg-black/60 hover:bg-black/80 text-white transition-all active:scale-90"
+                          className="p-2 rounded-full border border-border bg-card hover:bg-muted text-foreground transition-all active:scale-90"
                           title="Share Product"
                         >
                           <FiShare2 size={12} />
@@ -148,7 +148,7 @@ const Wishlist = () => {
                             e.stopPropagation();
                             navigate(`/product/${prod.id}`);
                           }}
-                          className="p-2 rounded-full border border-white/10 bg-black/60 hover:bg-black/80 text-white transition-all active:scale-90"
+                          className="p-2 rounded-full border border-border bg-card hover:bg-muted text-foreground transition-all active:scale-90"
                           title="Quick View"
                         >
                           <FiEye size={12} />
@@ -171,13 +171,13 @@ const Wishlist = () => {
                         <div className="flex items-center gap-1 text-[10px] font-bold text-amber-400">
                           <FiStar className="fill-current" />
                           <span>{prod.rating || 4.5}</span>
-                          <span className="text-gray-500">({prod.reviewsCount || 120})</span>
+                          <span className="text-muted-foreground">({prod.reviewsCount || 120})</span>
                         </div>
                       </div>
                       
                       <h3 
                         onClick={() => navigate(`/product/${prod.id}`)}
-                        className="text-xs font-bold text-white line-clamp-2 hover:text-primary transition-all cursor-pointer leading-relaxed h-8"
+                        className="text-xs font-bold text-foreground line-clamp-2 hover:text-primary transition-all cursor-pointer leading-relaxed h-8"
                       >
                         {prod.title}
                       </h3>
@@ -200,16 +200,16 @@ const Wishlist = () => {
                       </div>
 
                       <div className="flex items-baseline gap-2 pt-1">
-                        <span className="text-sm font-black text-white">₹{prod.price.toLocaleString('en-IN')}</span>
+                        <span className="text-sm font-black text-foreground">₹{prod.price.toLocaleString('en-IN')}</span>
                         {prod.mrp > prod.price && (
-                          <span className="text-[10px] text-gray-500 line-through">₹{prod.mrp.toLocaleString('en-IN')}</span>
+                          <span className="text-[10px] text-muted-foreground line-through">₹{prod.mrp.toLocaleString('en-IN')}</span>
                         )}
                       </div>
                     </div>
                   </div>
 
                   {/* Actions Bar */}
-                  <div className="grid grid-cols-5 gap-2 pt-4 border-t border-white/5 mt-4">
+                  <div className="grid grid-cols-5 gap-2 pt-4 border-t border-border mt-4">
                     <button 
                       onClick={() => handleAddToCart(prod)}
                       disabled={isOutOfStock}

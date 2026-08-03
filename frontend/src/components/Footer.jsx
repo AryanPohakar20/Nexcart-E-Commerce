@@ -22,15 +22,15 @@ const Footer = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="bg-secondaryBg border-t border-white/5 pt-16 pb-8 px-4 md:px-6 w-full relative z-10"
+      className="bg-secondary border-t border-border pt-16 pb-8 px-4 md:px-6 w-full relative z-10"
     >
       <div className="max-w-7xl mx-auto">
         
         {/* Newsletter Banner */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12 border-b border-white/5 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12 border-b border-border items-center">
           <div className="lg:col-span-1 text-left">
-            <h3 className="text-xl font-bold text-white mb-2">Subscribe to our newsletter</h3>
-            <p className="text-xs text-gray-400">Get 10% off your first purchase and stay updated on flash deals.</p>
+            <h3 className="text-xl font-bold text-foreground mb-2">Subscribe to our newsletter</h3>
+            <p className="text-xs text-muted-foreground">Get 10% off your first purchase and stay updated on flash deals.</p>
           </div>
           <div className="lg:col-span-2">
             <form onSubmit={handleSubscribe} className="flex gap-2 w-full max-w-lg lg:ml-auto">
@@ -41,7 +41,7 @@ const Footer = () => {
                   placeholder="Enter your email address" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/40 text-xs px-10 py-3 rounded-lg border border-white/10 focus:outline-none focus:border-primary/50 text-white placeholder-gray-500 transition-all duration-300"
+                  className="w-full bg-background text-xs px-10 py-3 rounded-lg border border-border focus:outline-none focus:border-primary/50 text-foreground placeholder-muted-foreground transition-all duration-300"
                   required
                 />
               </div>
@@ -65,8 +65,8 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 text-left">
           {/* Brand Info */}
           <div className="col-span-2 md:col-span-1 space-y-4">
-            <Link to="/" className="text-2xl font-bold tracking-wider text-primary inline-block hover:scale-105 transition-transform">NEX<span className="text-white">CART</span></Link>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <Link to="/" className="text-2xl font-bold tracking-wider text-primary inline-block hover:scale-105 transition-transform">NEX<span className="text-foreground">CART</span></Link>
+            <p className="text-xs text-muted-foreground leading-relaxed">
               NexCart is a next-generation shopping experience offering ultra-fast delivery, secure checkouts, and custom collections. Shop Beyond Limits.
             </p>
             <div className="flex gap-3 text-lg">
@@ -81,7 +81,7 @@ const Footer = () => {
                   whileHover={{ y: -4, scale: 1.15, rotate: 6 }}
                   whileTap={{ scale: 0.9 }}
                   href={item.href} 
-                  className="p-2 bg-white/5 rounded-lg text-gray-400 hover:text-primary hover:bg-white/10 transition-all"
+                  className="p-2 bg-muted rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/80 transition-all"
                 >
                   {item.icon}
                 </motion.a>
@@ -91,8 +91,8 @@ const Footer = () => {
 
           {/* Shop links */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Shop</h4>
-            <ul className="space-y-2 text-xs text-gray-400">
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">Shop</h4>
+            <ul className="space-y-2 text-xs text-muted-foreground">
               <li><Link to="/category/electronics" className="hover:text-primary transition-all link-underline">Electronics</Link></li>
               <li><Link to="/category/mobiles" className="hover:text-primary transition-all link-underline">Mobiles</Link></li>
               <li><Link to="/category/laptops" className="hover:text-primary transition-all link-underline">Laptops</Link></li>
@@ -100,11 +100,11 @@ const Footer = () => {
               <li><Link to="/category/sports" className="hover:text-primary transition-all link-underline">Sports Equipment</Link></li>
             </ul>
           </div>
-
+ 
           {/* Company Resources */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Resources</h4>
-            <ul className="space-y-2 text-xs text-gray-400">
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">Resources</h4>
+            <ul className="space-y-2 text-xs text-muted-foreground">
               <li><Link to="/about" className="hover:text-primary transition-all link-underline">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-primary transition-all link-underline">Contact Support</Link></li>
               <li><Link to="/faq" className="hover:text-primary transition-all link-underline">FAQs</Link></li>
@@ -112,11 +112,11 @@ const Footer = () => {
               <li><Link to="/terms" className="hover:text-primary transition-all link-underline">Terms of Service</Link></li>
             </ul>
           </div>
-
+ 
           {/* Account & Partner portals */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Portals</h4>
-            <ul className="space-y-2 text-xs text-gray-400">
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider">Portals</h4>
+            <ul className="space-y-2 text-xs text-muted-foreground">
               <li><Link to="/profile" className="hover:text-primary transition-all link-underline">My Profile</Link></li>
               <li><Link to="/orders" className="hover:text-primary transition-all link-underline">Track Orders</Link></li>
               <li><Link to="/seller/dashboard" className="hover:text-primary transition-all link-underline">Seller Studio</Link></li>
@@ -126,13 +126,13 @@ const Footer = () => {
         </div>
 
         {/* Footer Base Info */}
-        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} NexCart Inc. Shop Beyond Limits. Made with Premium React.</p>
+        <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} NexCart Inc. Shop Beyond Limits. Made with Premium React.</p>
           <div className="flex gap-2">
-            <span className="px-2.5 py-1 bg-white/5 border border-white/5 rounded text-[10px] text-gray-400 font-bold uppercase tracking-wider">UPI</span>
-            <span className="px-2.5 py-1 bg-white/5 border border-white/5 rounded text-[10px] text-gray-400 font-bold uppercase tracking-wider">VISA</span>
-            <span className="px-2.5 py-1 bg-white/5 border border-white/5 rounded text-[10px] text-gray-400 font-bold uppercase tracking-wider">MASTERCARD</span>
-            <span className="px-2.5 py-1 bg-white/5 border border-white/5 rounded text-[10px] text-gray-400 font-bold uppercase tracking-wider">COD</span>
+            <span className="px-2.5 py-1 bg-muted border border-border rounded text-[10px] text-muted-foreground font-bold uppercase tracking-wider">UPI</span>
+            <span className="px-2.5 py-1 bg-muted border border-border rounded text-[10px] text-muted-foreground font-bold uppercase tracking-wider">VISA</span>
+            <span className="px-2.5 py-1 bg-muted border border-border rounded text-[10px] text-muted-foreground font-bold uppercase tracking-wider">MASTERCARD</span>
+            <span className="px-2.5 py-1 bg-muted border border-border rounded text-[10px] text-muted-foreground font-bold uppercase tracking-wider">COD</span>
           </div>
         </div>
 

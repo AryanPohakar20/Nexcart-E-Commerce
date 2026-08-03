@@ -47,11 +47,7 @@ const NexCartLogo = ({ size = 'md', animated = true, showText = true, className 
           <img
             src={logoImg}
             alt="NexCart Logo"
-            className={`${currentSize.height} w-auto object-contain rounded-xl shadow-md border ${
-              theme === 'dark'
-                ? 'border-amber-500/30 bg-[#0a0f1d] p-1'
-                : 'border-gray-200 bg-white p-1'
-            } transition-all duration-300`}
+            className={`${currentSize.height} w-auto object-contain rounded-xl shadow-md border border-border bg-card p-1 transition-all duration-300`}
           />
         </motion.div>
       </AnimatePresence>

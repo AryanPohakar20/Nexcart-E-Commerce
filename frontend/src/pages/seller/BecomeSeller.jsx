@@ -11,7 +11,7 @@ const BecomeSeller = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#070B12] text-gray-900 dark:text-white relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden flex flex-col">
       {/* Navbar */}
       <nav className="flex justify-between items-center p-6 lg:px-12 relative z-10">
         <NexCartLogo />
@@ -40,7 +40,7 @@ const BecomeSeller = () => {
               Millions of Buyers
             </span>
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
             Join the NexCart Marketplace. Open your online shop in 5 minutes, list your items, and start earning money today.
           </p>
 
@@ -66,13 +66,13 @@ const BecomeSeller = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
-              className="glass-card p-8 rounded-3xl border border-gray-200 dark:border-white/10 text-left"
+              className="glass-card p-8 rounded-3xl border border-border text-left"
             >
               <div className="w-12 h-12 rounded-2xl bg-primary/20 text-primary flex items-center justify-center text-2xl mb-6">
                 {feature.icon}
               </div>
               <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
             </motion.div>
           ))}
         </div>

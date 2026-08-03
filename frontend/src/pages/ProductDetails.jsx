@@ -225,7 +225,7 @@ const ProductDetails = () => {
             onMouseLeave={handleImgMouseLeave}
             animate={{ rotateX: imgRotate.x, rotateY: imgRotate.y }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="bg-black/30 rounded-2xl overflow-hidden border border-white/5 h-[350px] md:h-[450px] cursor-zoom-in relative"
+            className="bg-muted rounded-2xl overflow-hidden border border-border h-[350px] md:h-[450px] cursor-zoom-in relative"
             style={{ perspective: 1000 }}
           >
             <motion.img 
@@ -236,21 +236,21 @@ const ProductDetails = () => {
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             />
           </motion.div>
-
+ 
           {/* Thumbnails list */}
           <div className="flex gap-3">
             <button 
               onClick={() => setSelectedImage(product.image)}
-              className={`w-20 h-20 bg-black/40 rounded-xl overflow-hidden border-2 transition-all ${
-                selectedImage === product.image ? 'border-primary' : 'border-white/5 hover:border-white/20'
+              className={`w-20 h-20 bg-muted rounded-xl overflow-hidden border-2 transition-all ${
+                selectedImage === product.image ? 'border-primary' : 'border-border hover:border-primary/50'
               }`}
             >
               <img src={product.image} alt="main" className="w-full h-full object-cover" />
             </button>
             <button 
               onClick={() => setSelectedImage('https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80')}
-              className={`w-20 h-20 bg-black/40 rounded-xl overflow-hidden border-2 transition-all ${
-                selectedImage === 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80' ? 'border-primary' : 'border-white/5 hover:border-white/20'
+              className={`w-20 h-20 bg-muted rounded-xl overflow-hidden border-2 transition-all ${
+                selectedImage === 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80' ? 'border-primary' : 'border-border hover:border-primary/50'
               }`}
             >
               <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80" alt="spec" className="w-full h-full object-cover" />
@@ -261,36 +261,36 @@ const ProductDetails = () => {
         {/* Right Column: Details Info Panel */}
         <div className="flex flex-col justify-between space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-gray-500 uppercase tracking-widest font-bold">
+            <div className="flex items-center justify-between text-xs text-muted-foreground uppercase tracking-widest font-bold">
               <span>{product.brand}</span>
               <span className={hasStock ? 'text-green-500' : 'text-red-500 font-bold'}>
                 {hasStock ? `In Stock (${product.stock} left)` : 'Sold Out'}
               </span>
             </div>
-
-            <h1 className="text-2xl md:text-3xl font-black text-white leading-tight tracking-tight">
+ 
+            <h1 className="text-2xl md:text-3xl font-black text-foreground leading-tight tracking-tight">
               {product.title}
             </h1>
-
+ 
             {/* Ratings stars summary */}
             <div className="flex items-center gap-2">
               <div className="flex items-center text-primary text-sm">
                 <FiStar className="fill-current" />
                 <span className="font-bold ml-1 text-sm">{ratingStats.average}</span>
               </div>
-              <span className="text-xs text-gray-500 font-semibold">|</span>
-              <span className="text-xs text-gray-400 font-semibold">{productReviews.length} Global Reviews</span>
+              <span className="text-xs text-muted-foreground font-semibold">|</span>
+              <span className="text-xs text-muted-foreground font-semibold">{productReviews.length} Global Reviews</span>
             </div>
-
-            <p className="text-sm text-gray-400 leading-relaxed font-medium">
+ 
+            <p className="text-sm text-muted-foreground leading-relaxed font-medium">
               {product.description}
             </p>
-
+ 
             {/* Pricing Section */}
             <div className="flex items-baseline gap-3 pt-2">
-              <span className="text-3xl font-black text-white">₹{product.price.toLocaleString('en-IN')}</span>
+              <span className="text-3xl font-black text-foreground">₹{product.price.toLocaleString('en-IN')}</span>
               {product.mrp > product.price && (
-                <span className="text-sm text-gray-500 line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+                <span className="text-sm text-muted-foreground line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
               )}
               {product.discount > 0 && (
                 <span className="text-xs text-primary font-bold bg-primary/10 border border-primary/20 px-2 py-0.5 rounded uppercase tracking-wider">
@@ -298,28 +298,28 @@ const ProductDetails = () => {
                 </span>
               )}
             </div>
-
+ 
             {/* Delivery estimates details */}
-            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="flex items-center gap-2.5 text-xs text-gray-300">
+            <div className="bg-card border border-border rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
                 <FiTruck className="text-primary text-base flex-shrink-0" />
                 <div>
-                  <p className="font-semibold text-white">Fast Shipping</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">Delivery by tomorrow</p>
+                  <p className="font-semibold text-foreground">Fast Shipping</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Delivery by tomorrow</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-gray-300">
+              <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
                 <FiShield className="text-primary text-base flex-shrink-0" />
                 <div>
-                  <p className="font-semibold text-white">Secure Brand</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">100% Original goods</p>
+                  <p className="font-semibold text-foreground">Secure Brand</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">100% Original goods</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 text-xs text-gray-300">
+              <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
                 <FiRefreshCw className="text-primary text-base flex-shrink-0" />
                 <div>
-                  <p className="font-semibold text-white">Free Returns</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">7-Day replacement</p>
+                  <p className="font-semibold text-foreground">Free Returns</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">7-Day replacement</p>
                 </div>
               </div>
             </div>
@@ -338,18 +338,18 @@ const ProductDetails = () => {
               <button 
                 onClick={handleBuyNow}
                 disabled={!hasStock}
-                className="flex-grow bg-white/5 hover:bg-white/10 border border-white/10 text-white !py-4 text-xs tracking-wider uppercase font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all"
+                className="flex-grow bg-muted hover:bg-muted/80 border border-border text-foreground !py-4 text-xs tracking-wider uppercase font-extrabold rounded-xl flex items-center justify-center gap-1.5 transition-all"
               >
                 Buy Now
               </button>
             </div>
-
+ 
             <div className="flex justify-between items-center pt-2">
               <div className="flex gap-4">
                 <button 
                   onClick={() => toggleWishlist(product)}
                   className={`flex items-center gap-2 text-xs font-bold transition-colors ${
-                    isWishlisted ? 'text-primary' : 'text-gray-400 hover:text-white'
+                    isWishlisted ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <FiHeart className={isWishlisted ? 'fill-current' : ''} />
@@ -358,14 +358,14 @@ const ProductDetails = () => {
                 <button 
                   onClick={() => toggleCompare(product)}
                   className={`flex items-center gap-2 text-xs font-bold transition-colors ${
-                    isCompared ? 'text-accentBlue' : 'text-gray-400 hover:text-white'
+                    isCompared ? 'text-accentBlue' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <FiActivity />
                   <span>{isCompared ? 'Compared' : 'Compare Item'}</span>
                 </button>
               </div>
-              <span className="text-[10px] text-gray-600 font-extrabold tracking-widest uppercase">NexCart Elite Platform</span>
+              <span className="text-[10px] text-muted-foreground font-extrabold tracking-widest uppercase">NexCart Elite Platform</span>
             </div>
           </div>
         </div>
@@ -373,11 +373,11 @@ const ProductDetails = () => {
 
       {/* 2. Interactive details Accordion tabs */}
       <section className="space-y-6 pt-6">
-        <div className="flex border-b border-white/5 text-xs font-bold uppercase tracking-wider gap-6">
+        <div className="flex border-b border-border text-xs font-bold uppercase tracking-wider gap-6">
           <button 
             onClick={() => setActiveTab('specs')}
             className={`pb-3 border-b-2 transition-all ${
-              activeTab === 'specs' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-white'
+              activeTab === 'specs' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             Technical Specifications
@@ -385,7 +385,7 @@ const ProductDetails = () => {
           <button 
             onClick={() => setActiveTab('shipping')}
             className={`pb-3 border-b-2 transition-all ${
-              activeTab === 'shipping' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-white'
+              activeTab === 'shipping' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             Delivery & Policies
@@ -393,7 +393,7 @@ const ProductDetails = () => {
           <button 
             onClick={() => setActiveTab('reviews')}
             className={`pb-3 border-b-2 transition-all ${
-              activeTab === 'reviews' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-white'
+              activeTab === 'reviews' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             Customer Reviews ({productReviews.length})
@@ -410,105 +410,103 @@ const ProductDetails = () => {
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.25 }}
             >
-              {activeTab === 'specs' && (
-                <div className="max-w-2xl divide-y divide-white/5 text-left">
+                        {activeTab === 'specs' && (
+                <div className="max-w-2xl divide-y divide-border text-left">
                   {product.specs?.map((spec) => (
                     <div key={spec.key} className="grid grid-cols-3 py-3 text-xs">
-                      <span className="font-bold text-gray-500 col-span-1">{spec.key}</span>
-                      <span className="text-gray-300 col-span-2 font-medium">{spec.val}</span>
+                      <span className="font-bold text-muted-foreground col-span-1">{spec.key}</span>
+                      <span className="text-muted-foreground col-span-2 font-medium">{spec.val}</span>
                     </div>
                   ))}
                 </div>
               )}
-
+ 
               {activeTab === 'shipping' && (
-                <div className="text-xs text-gray-400 space-y-3 leading-relaxed text-left">
-                  <p><strong className="text-white">Delivery Estimate:</strong> Standard shipping delivers within 3 business days. Elite member express delivery available within 24 hours.</p>
-                  <p><strong className="text-white">Return Policy:</strong> Returns are accepted within 7 days of delivery. Product packaging must remain intact with original security seal.</p>
-                  <p><strong className="text-white">Transit Damage:</strong> In case of damage during transition, report to custom helpline within 2 hours of delivery for immediate refunds.</p>
+                <div className="text-xs text-muted-foreground space-y-3 leading-relaxed text-left">
+                  <p><strong className="text-foreground">Delivery Estimate:</strong> Standard shipping delivers within 3 business days. Elite member express delivery available within 24 hours.</p>
+                  <p><strong className="text-foreground">Return Policy:</strong> Returns are accepted within 7 days of delivery. Product packaging must remain intact with original security seal.</p>
+                  <p><strong className="text-foreground">Transit Damage:</strong> In case of damage during transition, report to custom helpline within 2 hours of delivery for immediate refunds.</p>
                 </div>
-              )}
-
-              {activeTab === 'reviews' && (
+              )}                {activeTab === 'reviews' && (
                 <div className="space-y-8">
                   {/* Reviews Summary Section Grid (100% responsive layout) */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                     
                     {/* Left aggregate metrics card */}
-                    <div className="lg:col-span-1 bg-[#0E1420]/40 border border-white/10 p-5 rounded-2xl space-y-5">
-                      <h4 className="text-xs font-black uppercase text-white tracking-wider text-left">Reviews Aggregate</h4>
+                    <div className="lg:col-span-1 bg-card border border-border p-5 rounded-2xl space-y-5">
+                      <h4 className="text-xs font-black uppercase text-foreground tracking-wider text-left">Reviews Aggregate</h4>
                       <div className="flex items-center gap-4 text-left">
-                        <p className="text-4xl font-black text-white">{ratingStats.average}</p>
+                        <p className="text-4xl font-black text-foreground">{ratingStats.average}</p>
                         <div className="space-y-0.5">
                           <div className="flex text-primary text-xs">
                             {[...Array(Math.round(Number(ratingStats.average)))].map((_, i) => (
                               <FiStar key={i} className="fill-current" />
                             ))}
                           </div>
-                          <p className="text-[10px] text-gray-500 font-bold uppercase">{ratingStats.count} verified ratings</p>
+                          <p className="text-[10px] text-muted-foreground font-bold uppercase">{ratingStats.count} verified ratings</p>
                         </div>
                       </div>
-
+ 
                       {/* Ratings distribution bars */}
                       <div className="space-y-2.5 text-xs text-left">
                         {[5, 4, 3, 2, 1].map((stars, idx) => (
                           <div key={stars} className="flex items-center gap-3">
-                            <span className="text-gray-500 w-3 font-semibold">{stars}</span>
+                            <span className="text-muted-foreground w-3 font-semibold">{stars}</span>
                             <FiStar className="text-primary text-[10px] fill-current" />
-                            <div className="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden border border-white/5">
+                            <div className="flex-1 bg-muted h-1.5 rounded-full overflow-hidden border border-border">
                               <div className="h-full bg-primary" style={{ width: `${ratingStats.distribution[idx]}%` }} />
                             </div>
-                            <span className="text-gray-500 w-8 text-right font-semibold">{ratingStats.distribution[idx]}%</span>
+                            <span className="text-muted-foreground w-8 text-right font-semibold">{ratingStats.distribution[idx]}%</span>
                           </div>
                         ))}
                       </div>
-
+ 
                       {/* Video reviews carousel preview */}
-                      <div className="space-y-2.5 pt-4 border-t border-white/5">
-                        <p className="text-[9px] uppercase tracking-wider font-extrabold text-gray-500 text-left">Customer Media</p>
+                      <div className="space-y-2.5 pt-4 border-t border-border">
+                        <p className="text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground text-left">Customer Media</p>
                         <div className="flex gap-2">
-                          <div className="w-14 h-14 bg-black/40 rounded-xl overflow-hidden relative cursor-pointer group border border-white/5 flex-shrink-0">
+                          <div className="w-14 h-14 bg-muted rounded-xl overflow-hidden relative cursor-pointer group border border-border flex-shrink-0">
                             <img src={product.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                            <span className="absolute inset-0 bg-black/40 flex items-center justify-center text-white"><FiPlay size={10} /></span>
+                            <span className="absolute inset-0 bg-black/40 flex items-center justify-center text-foreground"><FiPlay size={10} /></span>
                           </div>
-                          <div className="w-14 h-14 bg-black/40 rounded-xl overflow-hidden relative cursor-pointer group border border-white/5 flex-shrink-0">
+                          <div className="w-14 h-14 bg-muted rounded-xl overflow-hidden relative cursor-pointer group border border-border flex-shrink-0">
                             <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&q=80" alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all" />
-                            <span className="absolute inset-0 bg-black/40 flex items-center justify-center text-white"><FiImage size={10} /></span>
+                            <span className="absolute inset-0 bg-black/40 flex items-center justify-center text-foreground"><FiImage size={10} /></span>
                           </div>
                         </div>
                       </div>
                     </div>
-
+ 
                     {/* Right filters toolbar & Reviews flow */}
                     <div className="lg:col-span-2 space-y-6">
                       
                       {/* Reviews filters toolbar */}
-                      <div className="bg-[#0E1420]/30 border border-white/5 p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between text-xs font-semibold text-gray-400">
+                      <div className="bg-card border border-border p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between text-xs font-semibold text-muted-foreground">
                         <div className="flex gap-4">
-                          <label className="flex items-center gap-2 cursor-pointer hover:text-white">
+                          <label className="flex items-center gap-2 cursor-pointer hover:text-foreground">
                             <input 
                               type="checkbox" 
                               checked={verifiedFilter}
                               onChange={(e) => setVerifiedFilter(e.target.checked)}
-                              className="rounded bg-black/40 border-white/10" 
+                              className="rounded bg-background border-border" 
                             />
                             <span>Verified Buyers</span>
                           </label>
-                          <label className="flex items-center gap-2 cursor-pointer hover:text-white">
+                          <label className="flex items-center gap-2 cursor-pointer hover:text-foreground">
                             <input 
                               type="checkbox" 
                               checked={mediaFilter}
                               onChange={(e) => setMediaFilter(e.target.checked)}
-                              className="rounded bg-black/40 border-white/10" 
+                              className="rounded bg-background border-border" 
                             />
                             <span>Has Media</span>
                           </label>
                         </div>
-
+ 
                         <select
                           value={sortBy}
                           onChange={(e) => setSortBy(e.target.value)}
-                          className="bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none cursor-pointer"
+                          className="bg-background border border-border rounded-lg px-2.5 py-1 text-xs text-foreground focus:outline-none cursor-pointer"
                         >
                           <option value="helpful">Most Helpful</option>
                           <option value="newest">Newest Reviews</option>
@@ -516,45 +514,45 @@ const ProductDetails = () => {
                           <option value="lowest">Lowest Rating</option>
                         </select>
                       </div>
-
+ 
                       {/* Reviews comments feeds */}
                       <div className="space-y-4">
                         {filteredAndSortedReviews.length === 0 ? (
-                          <div className="text-center py-12 bg-white/5 border border-white/5 rounded-2xl">
-                            <FiMessageCircle className="mx-auto text-gray-500 mb-3" size={24} />
-                            <p className="text-xs text-gray-400 font-bold">No reviews match filters</p>
+                          <div className="text-center py-12 bg-card border border-border rounded-2xl">
+                            <FiMessageCircle className="mx-auto text-muted-foreground mb-3" size={24} />
+                            <p className="text-xs text-muted-foreground font-bold">No reviews match filters</p>
                           </div>
                         ) : (
                           filteredAndSortedReviews.map((rev) => {
                             const isOwnReview = user && rev.customerName === user.name;
                             const isEditing = editingId === rev.id;
-
+ 
                             return (
                               <motion.div 
                                 key={rev.id} 
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="p-5 bg-cardBg border border-white/5 rounded-2xl text-left space-y-4"
+                                className="p-5 bg-card border border-border rounded-2xl text-left space-y-4"
                               >
                                 {/* Review header details */}
                                 <div className="flex justify-between items-start">
                                   <div className="flex items-center gap-3">
-                                    <img src={rev.customerAvatar} alt="" className="w-8 h-8 rounded-full object-cover border border-white/10" />
+                                    <img src={rev.customerAvatar} alt="" className="w-8 h-8 rounded-full object-cover border border-border" />
                                     <div className="space-y-0.5 text-xs text-left">
-                                      <p className="font-bold text-white flex items-center gap-1.5">
+                                      <p className="font-bold text-foreground flex items-center gap-1.5">
                                         <span>{rev.customerName}</span>
                                         {rev.verified && (
                                           <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-black uppercase tracking-wider">Verified Purchase</span>
                                         )}
                                       </p>
-                                      <p className="text-[9px] text-gray-500">{rev.date}</p>
+                                      <p className="text-[9px] text-muted-foreground">{rev.date}</p>
                                     </div>
                                   </div>
-
+ 
                                   {/* User self control edit window within 24h */}
                                   {isOwnReview && !isEditing && (
                                     <div className="flex gap-2">
-                                      <button onClick={() => handleOpenEdit(rev)} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white" title="Edit Review">
+                                      <button onClick={() => handleOpenEdit(rev)} className="p-2 bg-muted hover:bg-muted/80 rounded-lg text-muted-foreground hover:text-foreground" title="Edit Review">
                                         <FiEdit3 size={12} />
                                       </button>
                                       <button onClick={() => deleteProductReview(rev.id)} className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-red-400" title="Delete Review">
@@ -566,13 +564,13 @@ const ProductDetails = () => {
 
                                 {/* EDIT INLINE FORM */}
                                 {isEditing ? (
-                                  <div className="space-y-3 text-xs bg-black/20 p-4 rounded-xl border border-white/5">
+                                  <div className="space-y-3 text-xs bg-background p-4 rounded-xl border border-border">
                                     <div>
-                                      <label className="block text-gray-500 mb-1 font-bold">Edit Rating</label>
+                                      <label className="block text-muted-foreground mb-1 font-bold">Edit Rating</label>
                                       <select 
                                         value={editingRating} 
                                         onChange={(e) => setEditingRating(Number(e.target.value))}
-                                        className="bg-cardBg border border-white/10 rounded-lg p-2 text-white"
+                                        className="bg-card border border-border rounded-lg p-2 text-foreground"
                                       >
                                         <option value="5">5 Stars</option>
                                         <option value="4">4 Stars</option>
@@ -582,26 +580,26 @@ const ProductDetails = () => {
                                       </select>
                                     </div>
                                     <div>
-                                      <label className="block text-gray-500 mb-1 font-bold">Edit Title</label>
+                                      <label className="block text-muted-foreground mb-1 font-bold">Edit Title</label>
                                       <input 
                                         type="text" 
                                         value={editingTitle} 
                                         onChange={(e) => setEditingTitle(e.target.value)}
-                                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-white"
+                                        className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground"
                                       />
                                     </div>
                                     <div>
-                                      <label className="block text-gray-500 mb-1 font-bold">Edit Comment</label>
+                                      <label className="block text-muted-foreground mb-1 font-bold">Edit Comment</label>
                                       <textarea 
                                         rows="2"
                                         value={editingDesc} 
                                         onChange={(e) => setEditingDesc(e.target.value)}
-                                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-white resize-none"
+                                        className="w-full bg-background border border-border rounded-lg p-2.5 text-foreground resize-none"
                                       />
                                     </div>
                                     <div className="flex gap-2">
                                       <button onClick={handleSaveEdit} className="bg-primary text-black font-extrabold p-2 px-4 rounded-lg">Save</button>
-                                      <button onClick={() => setEditingId('')} className="bg-white/5 text-white p-2 px-4 rounded-lg">Cancel</button>
+                                      <button onClick={() => setEditingId('')} className="bg-muted text-foreground p-2 px-4 rounded-lg">Cancel</button>
                                     </div>
                                   </div>
                                 ) : (
@@ -613,28 +611,28 @@ const ProductDetails = () => {
                                           <FiStar key={i} className="fill-current" />
                                         ))}
                                       </div>
-                                      <h5 className="text-xs font-bold text-white uppercase tracking-wider">{rev.title}</h5>
-                                      <p className="text-xs text-gray-400 leading-relaxed font-medium">"{rev.description}"</p>
+                                      <h5 className="text-xs font-bold text-foreground uppercase tracking-wider">{rev.title}</h5>
+                                      <p className="text-xs text-muted-foreground leading-relaxed font-medium">"{rev.description}"</p>
                                     </div>
-
+ 
                                     {/* Seller reply segment */}
                                     {rev.reply && (
-                                      <div className="bg-white/5 border border-white/5 p-4 rounded-xl ml-4 space-y-2">
+                                      <div className="bg-muted border border-border p-4 rounded-xl ml-4 space-y-2">
                                         <div className="flex items-center gap-2">
                                           <div className="w-5 h-5 bg-primary/20 rounded-full flex items-center justify-center text-primary text-[8px] font-black">S</div>
                                           <span className="text-[10px] font-bold text-primary flex items-center gap-1">
-                                            Seller Hub Responded <span className="text-gray-500 font-normal">• Verified Vendor</span>
+                                            Seller Hub Responded <span className="text-muted-foreground font-normal">• Verified Vendor</span>
                                           </span>
                                         </div>
-                                        <p className="text-[11px] text-gray-400 italic">"{rev.reply}"</p>
+                                        <p className="text-[11px] text-muted-foreground italic">"{rev.reply}"</p>
                                       </div>
                                     )}
-
+ 
                                     {/* Action button likes and report triggers */}
-                                    <div className="flex gap-4 pt-2 border-t border-white/5 text-xs text-gray-500 font-bold">
+                                    <div className="flex gap-4 pt-2 border-t border-border text-xs text-muted-foreground font-bold">
                                       <button 
                                         onClick={() => voteHelpful(rev.id)}
-                                        className="flex items-center gap-1.5 hover:text-white transition-colors"
+                                        className="flex items-center gap-1.5 hover:text-foreground transition-colors"
                                       >
                                         <FiThumbsUp /> Helpful ({rev.helpfulCount})
                                       </button>
@@ -651,18 +649,16 @@ const ProductDetails = () => {
                             );
                           })
                         )}
-                      </div>
-
                     </div>
                   </div>
-
+ 
                   {/* Submit Review section form */}
-                  <div className="max-w-2xl bg-cardBg border border-white/5 p-6 rounded-3xl space-y-4 text-left">
-                    <h4 className="text-xs font-black uppercase text-white tracking-wider border-b border-white/5 pb-2">Publish Product Review</h4>
+                  <div className="max-w-2xl bg-card border border-border p-6 rounded-3xl space-y-4 text-left">
+                    <h4 className="text-xs font-black uppercase text-foreground tracking-wider border-b border-border pb-2">Publish Product Review</h4>
                     
                     <form onSubmit={handleReviewSubmit} className="space-y-4 text-xs">
                       <div>
-                        <label className="block text-gray-500 mb-1 font-bold">Select Stars Rating</label>
+                        <label className="block text-muted-foreground mb-1 font-bold">Select Stars Rating</label>
                         <div className="flex gap-1.5 text-lg">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
@@ -670,41 +666,41 @@ const ProductDetails = () => {
                               type="button"
                               onClick={() => setRatingInput(star)}
                               onMouseEnter={() => setHoverRating(star)}
-                              onMouseLeave={() => setHoverRating(0)}
-                              className="text-gray-600 focus:outline-none transition-colors"
+                              onMouseLeave={() => setHoverRating(star)}
+                              className="text-muted-foreground focus:outline-none transition-colors"
                             >
                               <FiStar 
                                 className={`${
-                                  (hoverRating || ratingInput) >= star ? 'text-primary fill-current' : 'text-gray-600'
+                                  (hoverRating || ratingInput) >= star ? 'text-primary fill-current' : 'text-muted-foreground'
                                 }`} 
                               />
                             </button>
                           ))}
                         </div>
                       </div>
-
+ 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-gray-500 mb-1 font-bold">Review Title Heading</label>
+                          <label className="block text-muted-foreground mb-1 font-bold">Review Title Heading</label>
                           <input 
                             type="text" 
                             placeholder="Excellent sound! / Sealed packaging..."
                             value={titleInput}
                             onChange={(e) => setTitleInput(e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none"
+                            className="w-full bg-background border border-border rounded-xl p-3 text-xs text-foreground focus:outline-none"
                             required
                           />
                         </div>
                       </div>
-
+ 
                       <div>
-                        <label className="block text-gray-500 mb-1 font-bold">Detailed Review Comments</label>
+                        <label className="block text-muted-foreground mb-1 font-bold">Detailed Review Comments</label>
                         <textarea 
                           rows="3"
                           placeholder="Tell other shoppers about shipping duration, packaging quality, setup difficulty..."
                           value={commentInput}
                           onChange={(e) => setCommentInput(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none resize-none"
+                          className="w-full bg-background border border-border rounded-xl p-3 text-xs text-foreground focus:outline-none resize-none"
                           required
                         />
                       </div>
@@ -719,12 +715,13 @@ const ProductDetails = () => {
                   </div>
 
                 </div>
-              )}
+              </div>
+            )}
             </motion.div>
           </AnimatePresence>
         </div>
       </section>
-
+ 
       {/* 3. Report Review Popup Dialog Modal */}
       <AnimatePresence>
         {isReportOpen && (
@@ -733,24 +730,24 @@ const ProductDetails = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-secondaryBg border border-white/10 p-6 rounded-3xl max-w-sm w-full text-xs space-y-4 text-left"
+              className="bg-card border border-border p-6 rounded-3xl max-w-sm w-full text-xs space-y-4 text-left"
             >
-              <div className="flex justify-between items-center border-b border-white/5 pb-2">
+              <div className="flex justify-between items-center border-b border-border pb-2">
                 <h4 className="text-xs font-black uppercase text-red-400 tracking-wider flex items-center gap-1.5">
                   <FiAlertTriangle /> Report Review Comment
                 </h4>
-                <button onClick={() => setIsReportOpen(false)} className="text-gray-500 hover:text-white">
+                <button onClick={() => setIsReportOpen(false)} className="text-muted-foreground hover:text-foreground">
                   <FiXCircle size={18} />
                 </button>
               </div>
-
+ 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-500 mb-1 font-bold">Reason for Report</label>
+                  <label className="block text-muted-foreground mb-1 font-bold">Reason for Report</label>
                   <select 
                     value={reportReason}
                     onChange={(e) => setReportReason(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white cursor-pointer"
+                    className="w-full bg-background border border-border rounded-xl p-3 text-xs text-foreground cursor-pointer"
                   >
                     <option value="Spam">Spam/Bot generated</option>
                     <option value="Fake Review">Fake review profile</option>
@@ -759,15 +756,15 @@ const ProductDetails = () => {
                     <option value="Duplicate Review">Duplicate review spam</option>
                   </select>
                 </div>
-
+ 
                 <div>
-                  <label className="block text-gray-500 mb-1 font-bold">Describe Concern Details</label>
+                  <label className="block text-muted-foreground mb-1 font-bold">Describe Concern Details</label>
                   <textarea 
                     rows="3"
                     placeholder="Provide additional details regarding how this review violates standards..."
                     value={reportDesc}
                     onChange={(e) => setReportDesc(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none resize-none"
+                    className="w-full bg-background border border-border rounded-xl p-3 text-xs text-foreground focus:outline-none resize-none"
                     required
                   />
                 </div>
@@ -788,8 +785,8 @@ const ProductDetails = () => {
       {relatedProducts.length > 0 && (
         <section className="space-y-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-white">Related Products</h2>
-            <p className="text-xs text-gray-500 mt-1">Explore similar items you may like.</p>
+            <h2 className="text-xl md:text-2xl font-extrabold text-foreground">Related Products</h2>
+            <p className="text-xs text-muted-foreground mt-1">Explore similar items you may like.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {relatedProducts.map(p => (

@@ -99,23 +99,23 @@ const Checkout = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="border-b border-white/5 pb-6 text-left">
+      <div className="border-b border-border pb-6 text-left">
         <div className="flex items-center gap-1.5 text-xs text-primary font-bold mb-2">
           <Link to="/cart" className="hover:underline">Cart</Link>
-          <FiChevronRight />
-          <span className="text-white">Checkout</span>
+          <FiChevronRight className="text-muted-foreground" />
+          <span className="text-foreground">Checkout</span>
         </div>
-        <h1 className="text-2xl font-black text-white tracking-tight">Billing & Shipping Checkout</h1>
-        <p className="text-xs text-gray-500 mt-1">Select shipping details and enter your payment information.</p>
+        <h1 className="text-2xl font-black text-foreground tracking-tight">Billing & Shipping Checkout</h1>
+        <p className="text-xs text-muted-foreground mt-1">Select shipping details and enter your payment information.</p>
       </div>
 
       {/* Step Progress Tracker */}
       <div className="max-w-xl mx-auto flex items-center justify-between pb-6 pt-2">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-primary text-black font-black flex items-center justify-center text-xs shadow-yellow-glow">1</div>
-          <span className="text-xs font-bold text-white">Shipping</span>
+          <span className="text-xs font-bold text-foreground">Shipping</span>
         </div>
-        <div className="flex-1 h-[2px] bg-white/10 mx-4 relative overflow-hidden">
+        <div className="flex-1 h-[2px] bg-muted mx-4 relative overflow-hidden">
           <motion.div 
             initial={{ width: '0%' }}
             animate={{ width: selectedAddrId ? '100%' : '0%' }}
@@ -125,11 +125,11 @@ const Checkout = () => {
         </div>
         <div className="flex items-center gap-2">
           <div className={`w-7 h-7 rounded-full font-black flex items-center justify-center text-xs transition-all ${
-            selectedAddrId ? 'bg-primary text-black shadow-yellow-glow' : 'bg-white/10 text-gray-500'
+            selectedAddrId ? 'bg-primary text-black shadow-yellow-glow' : 'bg-muted text-muted-foreground'
           }`}>2</div>
-          <span className={`text-xs font-bold ${selectedAddrId ? 'text-white' : 'text-gray-500'}`}>Payment</span>
+          <span className={`text-xs font-bold ${selectedAddrId ? 'text-foreground' : 'text-muted-foreground'}`}>Payment</span>
         </div>
-        <div className="flex-1 h-[2px] bg-white/10 mx-4 relative overflow-hidden">
+        <div className="flex-1 h-[2px] bg-muted mx-4 relative overflow-hidden">
           <motion.div 
             initial={{ width: '0%' }}
             animate={{ width: selectedAddrId && paymentMethod ? '100%' : '0%' }}
@@ -139,9 +139,9 @@ const Checkout = () => {
         </div>
         <div className="flex items-center gap-2">
           <div className={`w-7 h-7 rounded-full font-black flex items-center justify-center text-xs transition-all ${
-            selectedAddrId && paymentMethod ? 'bg-primary text-black shadow-yellow-glow' : 'bg-white/10 text-gray-500'
+            selectedAddrId && paymentMethod ? 'bg-primary text-black shadow-yellow-glow' : 'bg-muted text-muted-foreground'
           }`}>3</div>
-          <span className={`text-xs font-bold ${selectedAddrId && paymentMethod ? 'text-white' : 'text-gray-500'}`}>Review</span>
+          <span className={`text-xs font-bold ${selectedAddrId && paymentMethod ? 'text-foreground' : 'text-muted-foreground'}`}>Review</span>
         </div>
       </div>
 
@@ -151,9 +151,9 @@ const Checkout = () => {
         <div className="lg:col-span-2 space-y-6">
           
           {/* 1. Address Selection Card */}
-          <div className="bg-cardBg border border-white/5 p-6 rounded-3xl space-y-4">
+          <div className="bg-card border border-border p-6 rounded-3xl space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                 <FiMapPin className="text-primary" />
                 <span>1. Shipping Address</span>
               </h3>
@@ -165,7 +165,7 @@ const Checkout = () => {
                 <span>Add Address</span>
               </button>
             </div>
-
+ 
             {/* List addresses */}
             <div className="flex flex-col gap-3">
               {addresses.map((addr) => (
@@ -177,15 +177,15 @@ const Checkout = () => {
                   className={`border rounded-2xl p-4 text-left cursor-pointer transition-all ${
                     selectedAddrId === addr.id 
                       ? 'border-primary bg-primary/5 shadow-yellow-glow' 
-                      : 'border-white/5 bg-white/5 hover:border-white/20'
+                      : 'border-border bg-muted hover:border-primary/40'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-xs text-white">{addr.name}</span>
+                    <span className="font-bold text-xs text-foreground">{addr.name}</span>
                     {addr.isDefault && <span className="bg-primary/20 text-primary border border-primary/20 text-[9px] uppercase font-extrabold tracking-wider px-1.5 rounded">Default</span>}
                   </div>
-                  <p className="text-xs text-gray-400 leading-relaxed font-medium">{addr.street}, {addr.city}, {addr.state} - {addr.pin}</p>
-                  <p className="text-[10px] text-gray-500 font-bold mt-1">Phone: {addr.phone}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed font-medium">{addr.street}, {addr.city}, {addr.state} - {addr.pin}</p>
+                  <p className="text-[10px] text-muted-foreground font-bold mt-1">Phone: {addr.phone}</p>
                 </motion.div>
               ))}
             </div>
@@ -199,70 +199,70 @@ const Checkout = () => {
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3 }}
                   onSubmit={handleAddAddress} 
-                  className="p-4 bg-black/30 border border-white/10 rounded-2xl grid grid-cols-2 gap-3 text-xs overflow-hidden"
+                  className="p-4 bg-background border border-border rounded-2xl grid grid-cols-2 gap-3 text-xs overflow-hidden"
                 >
                   <div className="col-span-2">
-                    <label className="block text-gray-500 mb-1 font-bold">Full Name</label>
+                    <label className="block text-muted-foreground mb-1 font-bold">Full Name</label>
                     <input 
                       type="text" 
                       value={newAddr.name}
                       onChange={(e) => setNewAddr(p => ({ ...p, name: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                       placeholder="Arjun Verma"
                       required
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-gray-500 mb-1 font-bold">Street Address</label>
+                    <label className="block text-muted-foreground mb-1 font-bold">Street Address</label>
                     <input 
                       type="text" 
                       value={newAddr.street}
                       onChange={(e) => setNewAddr(p => ({ ...p, street: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                       placeholder="Apt 203, Sky Villa"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-500 mb-1 font-bold">City</label>
+                    <label className="block text-muted-foreground mb-1 font-bold">City</label>
                     <input 
                       type="text" 
                       value={newAddr.city}
                       onChange={(e) => setNewAddr(p => ({ ...p, city: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                       placeholder="Mumbai"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-500 mb-1 font-bold">State</label>
+                    <label className="block text-muted-foreground mb-1 font-bold">State</label>
                     <input 
                       type="text" 
                       value={newAddr.state}
                       onChange={(e) => setNewAddr(p => ({ ...p, state: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                       placeholder="Maharashtra"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-500 mb-1 font-bold">PIN Code</label>
+                    <label className="block text-muted-foreground mb-1 font-bold">PIN Code</label>
                     <input 
                       type="text" 
                       value={newAddr.pin}
                       onChange={(e) => setNewAddr(p => ({ ...p, pin: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                       placeholder="400001"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-500 mb-1 font-bold">Contact Number</label>
+                    <label className="block text-muted-foreground mb-1 font-bold">Contact Number</label>
                     <input 
                       type="text" 
                       value={newAddr.phone}
                       onChange={(e) => setNewAddr(p => ({ ...p, phone: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                       placeholder="9988776655"
                       required
                     />
@@ -277,12 +277,12 @@ const Checkout = () => {
           </div>
 
           {/* 2. Payment Method selection Card */}
-          <div className="bg-cardBg border border-white/5 p-6 rounded-3xl space-y-4">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <div className="bg-card border border-border p-6 rounded-3xl space-y-4">
+            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
               <FiCreditCard className="text-primary" />
               <span>2. Payment Method</span>
             </h3>
-
+ 
             <div className="grid grid-cols-3 gap-3">
               {[
                 { id: 'UPI', name: 'UPI / GPay', icon: FiCheck },
@@ -298,7 +298,7 @@ const Checkout = () => {
                   className={`flex flex-col items-center justify-center p-4 border rounded-2xl gap-2 transition-all ${
                     paymentMethod === pay.id 
                       ? 'border-primary bg-primary/5 shadow-yellow-glow text-primary' 
-                      : 'border-white/5 bg-white/5 text-gray-400 hover:border-white/20'
+                      : 'border-border bg-muted text-muted-foreground hover:border-primary/40'
                   }`}
                 >
                   <pay.icon size={20} />
@@ -318,18 +318,18 @@ const Checkout = () => {
                     exit={{ opacity: 0, y: -10 }}
                     className="space-y-2"
                   >
-                    <label className="block text-xs text-gray-500 font-bold">UPI ID</label>
+                    <label className="block text-xs text-muted-foreground font-bold">UPI ID</label>
                     <input 
                       type="text" 
                       placeholder="username@okhdfcbank" 
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                     />
-                    <p className="text-[10px] text-gray-500">Pay securely with GPay, PhonePe, or BHIM.</p>
+                    <p className="text-[10px] text-muted-foreground">Pay securely with GPay, PhonePe, or BHIM.</p>
                   </motion.div>
                 )}
-
+ 
                 {paymentMethod === 'Card' && (
                   <motion.div 
                     key="card"
@@ -339,89 +339,86 @@ const Checkout = () => {
                     className="grid grid-cols-2 gap-3 text-xs"
                   >
                     <div className="col-span-2">
-                      <label className="block text-gray-500 mb-1 font-bold">Card Number</label>
+                      <label className="block text-muted-foreground mb-1 font-bold">Card Number</label>
                       <input 
                         type="text" 
                         placeholder="4321 8765 2341 0987" 
                         value={cardDetails.number}
                         onChange={(e) => setCardDetails(p => ({ ...p, number: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                        className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-500 mb-1 font-bold">Expiry Date</label>
+                      <label className="block text-muted-foreground mb-1 font-bold">Expiry Date</label>
                       <input 
                         type="text" 
                         placeholder="MM/YY" 
                         value={cardDetails.expiry}
                         onChange={(e) => setCardDetails(p => ({ ...p, expiry: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                        className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-500 mb-1 font-bold">CVV Code</label>
+                      <label className="block text-muted-foreground mb-1 font-bold">CVV Code</label>
                       <input 
                         type="password" 
                         placeholder="***" 
                         value={cardDetails.cvv}
                         onChange={(e) => setCardDetails(p => ({ ...p, cvv: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                        className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-foreground focus:outline-none focus:border-primary/50" 
                       />
                     </div>
                   </motion.div>
                 )}
-
+ 
                 {paymentMethod === 'COD' && (
                   <motion.p 
                     key="cod"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="text-xs text-gray-400 bg-white/5 border border-white/5 p-4 rounded-xl leading-relaxed"
+                    className="text-xs text-muted-foreground bg-muted border border-border p-4 rounded-xl leading-relaxed"
                   >
                     <strong>Cash on Delivery (COD):</strong> An extra handling fee of ₹50 may apply. Please ensure exact cash is available during parcel arrival.
                   </motion.p>
                 )}
               </AnimatePresence>
             </div>
-
           </div>
-
         </div>
 
         {/* Right Column: Order Summary & Placement */}
         <div className="lg:col-span-1 space-y-6">
-          
           {/* Order Summary box */}
-          <div className="bg-cardBg border border-white/5 p-6 rounded-3xl space-y-4 text-left">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Order Summary</h3>
-
+          <div className="bg-card border border-border p-6 rounded-3xl space-y-4 text-left">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Order Summary</h3>
+ 
             {/* List items */}
-            <div className="divide-y divide-white/5 space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-thin">
+            <div className="divide-y divide-border space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-thin">
               {cart.map((item) => (
                 <div key={item.product.id} className="flex justify-between py-2 text-xs">
                   <div className="max-w-[150px] truncate">
-                    <p className="font-bold text-white truncate">{item.product.title}</p>
-                    <span className="text-[10px] text-gray-500">Qty: {item.quantity}</span>
+                    <p className="font-bold text-foreground truncate">{item.product.title}</p>
+                    <span className="text-[10px] text-muted-foreground">Qty: {item.quantity}</span>
                   </div>
-                  <span className="font-semibold text-gray-300">₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-muted-foreground">₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</span>
                 </div>
               ))}
             </div>
-
+ 
             {/* Price values breakdown */}
-            <div className="border-t border-white/5 pt-4 space-y-2 text-xs divide-y divide-white/5">
-              <div className="flex justify-between py-1.5 text-gray-400">
+            <div className="border-t border-border pt-4 space-y-2 text-xs divide-y divide-border">
+              <div className="flex justify-between py-1.5 text-muted-foreground">
                 <span>Subtotal</span>
-                <span className="text-white">₹{cartSubtotal.toLocaleString('en-IN')}</span>
+                <span className="text-foreground">₹{cartSubtotal.toLocaleString('en-IN')}</span>
               </div>
-              <div className="flex justify-between py-1.5 text-gray-400">
+              <div className="flex justify-between py-1.5 text-muted-foreground">
                 <span>GST (12% standard)</span>
-                <span className="text-white">₹{tax.toLocaleString('en-IN')}</span>
+                <span className="text-foreground">₹{tax.toLocaleString('en-IN')}</span>
               </div>
-              <div className="flex justify-between py-1.5 text-gray-400">
+              <div className="flex justify-between py-1.5 text-muted-foreground">
                 <span>Shipping fee</span>
-                <span>{shippingFee === 0 ? 'FREE' : `₹${shippingFee}`}</span>
+                <span className="text-foreground">{shippingFee === 0 ? 'FREE' : `₹${shippingFee}`}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between py-1.5 text-green-500 font-semibold">
@@ -429,13 +426,13 @@ const Checkout = () => {
                   <span>-₹{discount.toLocaleString('en-IN')}</span>
                 </div>
               )}
-              <div className="flex justify-between py-3 text-sm font-bold text-white">
+              <div className="flex justify-between py-3 text-sm font-bold text-foreground">
                 <span>Grand Total</span>
                 <span className="text-primary text-base">₹{grandTotal.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
-             <button 
+            <button 
               onClick={handlePlaceOrder}
               className="w-full btn-glow-yellow text-xs font-bold py-3 text-center btn-premium-interactive"
             >

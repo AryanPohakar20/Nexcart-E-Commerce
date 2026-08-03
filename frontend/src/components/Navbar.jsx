@@ -79,7 +79,7 @@ const Navbar = () => {
     >
       
       {/* Primary Main Navbar Header */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 border-b border-gray-200/50 dark:border-white/5">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 border-b border-border/50">
         <div className={`flex items-center justify-between transition-all duration-500 gap-4 sm:gap-6 ${
           isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
         }`}>
@@ -88,7 +88,7 @@ const Navbar = () => {
           <div className="flex items-center gap-3 flex-shrink-0">
             <motion.button 
               whileTap={{ scale: 0.9 }}
-              className="lg:hidden p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+              className="lg:hidden p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-muted/50 transition-all"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle navigation menu"
             >
@@ -117,7 +117,7 @@ const Navbar = () => {
               animate={{ maxWidth: isSearchFocused ? '800px' : '640px', boxShadow: isSearchFocused ? '0 0 20px rgba(255, 193, 7, 0.18)' : 'none' }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               onSubmit={handleSearch} 
-              className="flex h-11 bg-gray-100/80 dark:bg-white/[0.06] rounded-full border border-gray-200 dark:border-white/10 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-visible transition-all items-center px-1.5 group/search w-full"
+              className="flex h-11 bg-muted rounded-full border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-visible transition-all items-center px-1.5 group/search w-full"
             >
               {/* Inline Category Dropdown Selector */}
               <div className="relative flex-shrink-0">
@@ -125,12 +125,12 @@ const Navbar = () => {
                   whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:border-primary/50 transition-all"
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-card text-foreground border border-border hover:border-primary/50 transition-all"
                 >
                   <span>{selectedCategory === 'All' ? 'All' : selectedCategory}</span>
                   <FiChevronDown className={`text-xs transition-transform duration-300 ${isCategoryOpen ? 'rotate-180 text-primary' : ''}`} />
                 </motion.button>
-
+ 
                 <AnimatePresence>
                   {isCategoryOpen && (
                     <motion.div 
@@ -138,12 +138,12 @@ const Navbar = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 mt-2 w-52 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl z-50"
+                      className="absolute top-full left-0 mt-2 w-52 py-2 bg-card border border-border rounded-2xl shadow-2xl z-50"
                     >
                       <button
                         type="button"
                         onClick={() => { setSelectedCategory('All'); setIsCategoryOpen(false); }}
-                        className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
+                        className="w-full text-left px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
                       >
                         <span>All Categories</span>
                         {selectedCategory === 'All' && <FiCheckCircle className="text-primary" />}
@@ -153,7 +153,7 @@ const Navbar = () => {
                           key={cat.id}
                           type="button"
                           onClick={() => { setSelectedCategory(cat.name); setIsCategoryOpen(false); }}
-                          className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
+                          className="w-full text-left px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
                         >
                           <span>{cat.name}</span>
                           {selectedCategory === cat.name && <FiCheckCircle className="text-primary" />}
@@ -171,7 +171,7 @@ const Navbar = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                className="flex-grow bg-transparent text-xs sm:text-sm px-3 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
+                className="flex-grow bg-transparent text-xs sm:text-sm px-3 focus:outline-none text-foreground placeholder-muted-foreground"
               />
               
               <motion.button 
@@ -198,9 +198,9 @@ const Navbar = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left space-y-3"
+                  className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl p-4 z-50 text-left space-y-3"
                 >
-                  <div className="flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                  <div className="flex justify-between items-center text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
                     <span>Recent Searches</span>
                     <span className="cursor-pointer hover:text-primary transition-colors">Clear</span>
                   </div>
@@ -213,7 +213,7 @@ const Navbar = () => {
                           setSearchQuery(keyword);
                           navigate(`/search?q=${encodeURIComponent(keyword)}&cat=${selectedCategory}`);
                         }}
-                        className="bg-gray-100 dark:bg-white/10 hover:bg-primary/20 hover:text-primary text-xs px-3 py-1.5 rounded-full transition-colors text-gray-700 dark:text-gray-200 font-medium"
+                        className="bg-muted hover:bg-primary/20 hover:text-primary text-xs px-3 py-1.5 rounded-full transition-colors text-foreground font-medium"
                       >
                         {keyword}
                       </button>
@@ -323,10 +323,10 @@ const Navbar = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-full mt-3 w-80 sm:w-96 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left"
+                    className="absolute right-0 top-full mt-3 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl p-4 z-50 text-left"
                   >
-                    <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-3 mb-3">
-                      <h3 className="text-sm font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div className="flex items-center justify-between border-b border-border pb-3 mb-3">
+                      <h3 className="text-sm font-extrabold text-foreground flex items-center gap-2">
                         <FiBell className="text-accentBlue" />
                         <span>Notifications</span>
                       </h3>
@@ -339,10 +339,10 @@ const Navbar = () => {
                         </button>
                       )}
                     </div>
-
+ 
                     <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
                       {notifications.length === 0 ? (
-                        <p className="text-xs text-gray-500 py-6 text-center">No new notifications</p>
+                        <p className="text-xs text-muted-foreground py-6 text-center">No new notifications</p>
                       ) : (
                         notifications.map(n => (
                           <div
@@ -350,15 +350,15 @@ const Navbar = () => {
                             onClick={() => markNotificationRead(n.id)}
                             className={`p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                               n.read
-                                ? 'bg-gray-50 dark:bg-white/[0.02] border-transparent text-gray-500'
-                                : 'bg-primary/5 dark:bg-primary/10 border-primary/30 text-gray-900 dark:text-white font-medium'
+                                ? 'bg-muted/40 border-transparent text-muted-foreground'
+                                : 'bg-primary/5 dark:bg-primary/10 border-primary/30 text-foreground font-medium'
                             }`}
                           >
                             <div className="flex justify-between items-start mb-1">
                               <span className="font-bold text-primary">{n.title}</span>
-                              <span className="text-[10px] text-gray-400">{n.time}</span>
+                              <span className="text-[10px] text-muted-foreground">{n.time}</span>
                             </div>
-                            <p className="text-[11px] leading-relaxed text-gray-600 dark:text-gray-300">{n.message}</p>
+                            <p className="text-[11px] leading-relaxed text-muted-foreground">{n.message}</p>
                           </div>
                         ))
                       )}
@@ -404,13 +404,13 @@ const Navbar = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left"
+                    className="absolute right-0 top-full mt-3 w-64 bg-card border border-border rounded-2xl shadow-2xl p-4 z-50 text-left"
                   >
-                    <div className="flex items-center gap-3 border-b border-gray-200 dark:border-white/10 pb-3 mb-3">
+                    <div className="flex items-center gap-3 border-b border-border pb-3 mb-3">
                       <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-primary" />
                       <div>
-                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.name}</h4>
-                        <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+                        <h4 className="text-sm font-bold text-foreground truncate">{user.name}</h4>
+                        <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
                         <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-primary/20 text-primary">
                           {user.role} Account
                         </span>
@@ -478,17 +478,17 @@ const Navbar = () => {
       </div>
 
       {/* Secondary Utility Navigation Strip (Desktop & Tablet) */}
-      <div className="hidden md:block bg-gray-50/90 dark:bg-black/40 border-b border-gray-200/40 dark:border-white/5 py-2 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-[1440px] mx-auto flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+      <div className="hidden md:block bg-muted/90 border-b border-border py-2 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto flex items-center justify-between text-xs text-muted-foreground">
           
           {/* Left: Location & Categories quick trigger */}
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer group">
               <FiMapPin className="text-primary text-sm flex-shrink-0 group-hover:bounce" />
-              <span>Deliver to <strong className="text-gray-900 dark:text-white font-bold">Hyderabad 500081</strong></span>
+              <span>Deliver to <strong className="text-foreground font-bold">Hyderabad 500081</strong></span>
             </div>
 
-            <div className="h-3 w-px bg-gray-300 dark:bg-white/10" />
+            <div className="h-3 w-px bg-border" />
 
             <motion.div 
               initial="hidden"
@@ -544,13 +544,13 @@ const Navbar = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 top-full mt-2 w-36 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-xl shadow-xl z-50 text-xs"
+                  className="absolute right-0 top-full mt-2 w-36 py-2 bg-card border border-border rounded-xl shadow-xl z-50 text-xs"
                 >
                   {['EN / USD', 'IN / INR', 'EU / EUR', 'UK / GBP'].map(lang => (
                     <button
                       key={lang}
                       onClick={() => { setSelectedLang(lang); setIsLanguageOpen(false); }}
-                      className="w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 transition-colors"
+                      className="w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary text-muted-foreground transition-colors"
                     >
                       {lang}
                     </button>
@@ -571,39 +571,39 @@ const Navbar = () => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="lg:hidden bg-white dark:bg-[#070B12] border-b border-gray-200 dark:border-white/10 px-4 py-4 space-y-4 shadow-2xl overflow-hidden"
+            className="lg:hidden bg-background border-b border-border px-4 py-4 space-y-4 shadow-2xl overflow-hidden"
           >
             {/* Mobile Search */}
-            <form onSubmit={handleSearch} className="flex h-10 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden border border-gray-300 dark:border-white/10">
+            <form onSubmit={handleSearch} className="flex h-10 bg-muted rounded-full overflow-hidden border border-border">
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-grow bg-transparent text-xs px-4 text-gray-900 dark:text-white focus:outline-none"
+                className="flex-grow bg-transparent text-xs px-4 text-foreground focus:outline-none"
               />
               <button type="submit" className="px-4 bg-primary text-black font-bold">
                 <FiSearch />
               </button>
             </form>
-
+ 
             {/* Location mobile */}
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground p-2.5 rounded-xl bg-muted border border-border/50">
               <FiMapPin className="text-primary" />
-              <span>Deliver to <strong className="text-gray-900 dark:text-white font-bold">Hyderabad 500081</strong></span>
+              <span>Deliver to <strong className="text-foreground font-bold">Hyderabad 500081</strong></span>
             </div>
-
+ 
             <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
-              <Link to="/products" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
+              <Link to="/products" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-muted text-foreground">
                 All Products
               </Link>
-              <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
+              <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-muted text-foreground">
                 Categories
               </Link>
               <Link to="/seller/become-seller" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-primary/10 border border-primary/30 text-primary font-bold">
                 Become Seller
               </Link>
-              <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200 flex items-center justify-between">
+              <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-muted text-foreground flex items-center justify-between">
                 <span>Wishlist</span>
                 <span className="text-primary font-extrabold">{wishlistCount}</span>
               </Link>
