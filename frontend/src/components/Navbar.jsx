@@ -177,16 +177,16 @@ const Navbar = () => {
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-card/90 backdrop-blur-md shadow-lg border-b border-border' 
-          : 'bg-card border-b border-border shadow-sm'
-      }`}
     >
-      {/* 1. Main Navbar Strip */}
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
-          
+      {/* 1. Main Sticky Navbar (Top-most level z-index 1000) */}
+      <div 
+        className={`fixed top-0 left-0 right-0 z-[1000] bg-card border-b border-border transition-all duration-300 ease-in-out ${
+          isScrolled ? 'shadow-md bg-card/95 backdrop-blur-md' : 'shadow-sm'
+        }`}
+      >
+        <div className={`max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-300 ease-in-out gap-4 ${
+          isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
+        }`}>
           {/* LEFT: Logo & Location Select */}
           <div className="flex items-center gap-6 flex-shrink-0">
             <div className="flex items-center gap-3">
@@ -650,8 +650,13 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* 2. Secondary Navigation Strip */}
-      <div className="bg-muted border-t border-border py-1 px-4 sm:px-6 lg:px-8 relative">
+      {/* 2. Category Navigation Bar (Z-index 999, placed directly below main navbar) */}
+      <div 
+        ref={megaMenuRef}
+        className={`fixed left-0 right-0 z-[999] bg-muted border-b border-border py-1 px-4 sm:px-6 lg:px-8 transition-all duration-300 ease-in-out ${
+          isScrolled ? 'top-14 sm:top-16 shadow-md' : 'top-16 sm:top-20 shadow-sm'
+        }`}
+      >
         <div className="max-w-[1440px] mx-auto flex items-center justify-between">
           
           {/* Left: Mega Menu Toggle & Categories list */}
@@ -702,7 +707,6 @@ const Navbar = () => {
         <AnimatePresence>
           {isMegaMenuOpen && (
             <motion.div
-              ref={megaMenuRef}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -808,7 +812,8 @@ const Navbar = () => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="lg:hidden bg-background border-t border-border px-4 py-4 space-y-4 shadow-2xl overflow-hidden text-left"
+            className="fixed left-0 right-0 z-[998] bg-background border-t border-border px-4 py-4 space-y-4 shadow-2xl overflow-hidden text-left"
+            style={{ top: isScrolled ? '94px' : '102px' }}
           >
             {/* Mobile Location Selector */}
             <div className="flex items-center justify-between text-xs text-muted-foreground p-3 rounded-xl bg-muted border border-border/50">

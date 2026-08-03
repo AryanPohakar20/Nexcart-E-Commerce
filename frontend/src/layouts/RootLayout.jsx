@@ -313,7 +313,7 @@ const RootLayout = () => {
       <Navbar />
 
       {/* Main Page Content with Animated Page Transitions */}
-      <main className="flex-grow pt-24 md:pt-32 pb-12 px-4 md:px-8 max-w-7xl mx-auto w-full relative z-10">
+      <main className="flex-grow pt-28 md:pt-32 pb-12 px-4 md:px-8 max-w-7xl mx-auto w-full relative z-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
