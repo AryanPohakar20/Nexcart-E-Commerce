@@ -31,3 +31,21 @@ export const getSuggestions = asyncHandler(async (req, res) => {
   const result = await productService.getSuggestions(req.query.q);
   return successResponse(res, 'Search suggestions fetched successfully', result);
 });
+
+/**
+ * Handle GET /api/products/featured
+ * Returns a paginated list of featured products.
+ */
+export const getFeaturedProducts = asyncHandler(async (req, res) => {
+  const result = await productService.getFeaturedProducts(req.query);
+  return successResponse(res, 'Featured products fetched successfully', result);
+});
+
+/**
+ * Handle GET /api/products/trending
+ * Returns a paginated list of trending products.
+ */
+export const getTrendingProducts = asyncHandler(async (req, res) => {
+  const result = await productService.getTrendingProducts(req.query);
+  return successResponse(res, 'Trending products fetched successfully', result);
+});

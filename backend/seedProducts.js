@@ -217,6 +217,8 @@ const seedProducts = async () => {
         tags: p.tags || [],
         seller: p.seller || '',
         warranty: p.warranty || '',
+        isFeatured: count % 7 === 0,
+        isTrending: count % 8 === 0,
         condition: getRandomCondition(),
         location: getRandomLocation(),
       });

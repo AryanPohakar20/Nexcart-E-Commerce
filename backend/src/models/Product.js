@@ -83,6 +83,14 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+    isTrending: {
+      type: Boolean,
+      default: false,
+    },
     stockQuantity: {
       type: Number,
       required: [true, 'Stock quantity is required'],
@@ -164,6 +172,8 @@ productSchema.index({ price: 1 });
 productSchema.index({ condition: 1 });
 productSchema.index({ location: 1 });
 productSchema.index({ rating: 1 });
+productSchema.index({ isFeatured: 1 });
+productSchema.index({ isTrending: 1 });
 productSchema.index({ createdAt: -1 });
 
 // Text index for keyword search across title, description, and tags

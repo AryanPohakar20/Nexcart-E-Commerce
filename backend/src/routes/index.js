@@ -7,6 +7,7 @@ import attributeRoutes from './attributeRoutes.js';
 import brandRoutes from './brandRoutes.js';
 import searchRoutes from './searchRoutes.js';
 import searchHistoryRoutes from './searchHistoryRoutes.js';
+import productRoutes from './productRoutes.js';
 
 // Import controllers and middlewares directly to map legacy/frontend routes
 import {
@@ -36,6 +37,7 @@ router.use('/attributes', attributeRoutes);
 router.use('/brands', brandRoutes);
 router.use('/search/history', searchHistoryRoutes);
 router.use('/search', searchRoutes);
+router.use('/products', productRoutes);
 
 // ─── Phase 1B Standard Spec Routes ───────────────────────────────────────────
 router.use('/seller/auth', authRoutes);

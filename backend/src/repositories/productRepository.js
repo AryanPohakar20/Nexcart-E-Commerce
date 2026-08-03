@@ -57,3 +57,43 @@ const escapeRegex = (string) => {
 export const bulkInsert = async (products) => {
   return Product.insertMany(products);
 };
+
+/**
+ * Find featured products with pagination, sorted by rating and creation time.
+ */
+export const findFeatured = async (limit = 10, skip = 0) => {
+  return Product.find({ isFeatured: true })
+    .populate('category', 'name slug')
+    .populate('subcategory', 'name slug')
+    .populate('brand', 'name slug logo')
+    .sort({ rating: -1, createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+};
+
+/**
+ * Count total featured products in the database.
+ */
+export const countFeatured = async () => {
+  return Product.countDocuments({ isFeatured: true });
+};
+
+/**
+ * Find trending products with pagination, sorted by reviewCount, rating, and creation time.
+ */
+export const findTrending = async (limit = 10, skip = 0) => {
+  return Product.find({ isTrending: true })
+    .populate('category', 'name slug')
+    .populate('subcategory', 'name slug')
+    .populate('brand', 'name slug logo')
+    .sort({ reviewCount: -1, rating: -1, createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+};
+
+/**
+ * Count total trending products in the database.
+ */
+export const countTrending = async () => {
+  return Product.countDocuments({ isTrending: true });
+};

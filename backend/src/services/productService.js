@@ -2,6 +2,7 @@
 // Service implementation for the Product search features in NexCart.
 
 import * as productRepository from '../repositories/productRepository.js';
+import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import Brand from '../models/Brand.js';
 import Subcategory from '../models/Subcategory.js';
@@ -276,5 +277,85 @@ export const getSuggestions = async (q) => {
       price: p.price,
       thumbnail: p.thumbnail,
     })),
+  };
+};
+
+/**
+ * Internal helper to ensure some products are flagged as featured if none are.
+ */
+const checkAndSeedFeatured = async () => {
+  const count = await Product.countDocuments({ isFeatured: true });
+  if (count === 0) {
+    // Flag the top 15 highest-rated products as featured
+    const topRated = await Product.find({}).sort({ rating: -1 }).limit(15);
+    if (topRated.length > 0) {
+      const ids = topRated.map((p) => p._id);
+      await Product.updateMany({ _id: { $in: ids } }, { $set: { isFeatured: true } });
+    }
+  }
+};
+
+/**
+ * Internal helper to ensure some products are flagged as trending if none are.
+ */
+const checkAndSeedTrending = async () => {
+  const count = await Product.countDocuments({ isTrending: true });
+  if (count === 0) {
+    // Flag the top 15 highest-reviewed products as trending
+    const topReviewed = await Product.find({}).sort({ reviewCount: -1 }).limit(15);
+    if (topReviewed.length > 0) {
+      const ids = topReviewed.map((p) => p._id);
+      await Product.updateMany({ _id: { $in: ids } }, { $set: { isTrending: true } });
+    }
+  }
+};
+
+/**
+ * Fetch featured products with pagination and safety auto-seeding.
+ */
+export const getFeaturedProducts = async (queryParams) => {
+  const { page = 1, limit = 10 } = queryParams;
+  
+  // Safety check: Auto-flag products if none exist
+  await checkAndSeedFeatured();
+  
+  const skip = (page - 1) * limit;
+  const products = await productRepository.findFeatured(limit, skip);
+  const total = await productRepository.countFeatured();
+  const pages = Math.ceil(total / limit);
+
+  return {
+    products,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages,
+    },
+  };
+};
+
+/**
+ * Fetch trending products with pagination and safety auto-seeding.
+ */
+export const getTrendingProducts = async (queryParams) => {
+  const { page = 1, limit = 10 } = queryParams;
+  
+  // Safety check: Auto-flag products if none exist
+  await checkAndSeedTrending();
+  
+  const skip = (page - 1) * limit;
+  const products = await productRepository.findTrending(limit, skip);
+  const total = await productRepository.countTrending();
+  const pages = Math.ceil(total / limit);
+
+  return {
+    products,
+    pagination: {
+      total,
+      page,
+      limit,
+      pages,
+    },
   };
 };
