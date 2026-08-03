@@ -4,6 +4,19 @@
 // Also handles graceful shutdown on SIGTERM/SIGINT and uncaught exceptions.
 
 import 'dotenv/config'; // Load .env variables FIRST, before any other imports
+import dns from 'dns';
+
+// Force DNS resolution to use public DNS servers (Cloudflare/Google)
+// to bypass local/ISP DNS configuration issues with MongoDB SRV records. (Touch to reload)
+try {
+  dns.setServers(['1.1.1.1', '8.8.8.8']);
+  if (typeof dns.setDefaultResultOrder === 'function') {
+    dns.setDefaultResultOrder('ipv4first');
+  }
+} catch (err) {
+  console.warn('⚠️ Warning: Failed to configure public DNS resolver:', err.message);
+}
+
 import validateEnv from './config/env.js';
 import connectDB from './config/db.js';
 import app from './app.js';

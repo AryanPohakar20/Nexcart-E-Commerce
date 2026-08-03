@@ -4,6 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
+import mongoose from 'mongoose';
 
 import apiRouter from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
@@ -41,6 +42,15 @@ app.use(morgan('dev'));
 
 // API Routes
 app.use('/api', apiRouter);
+
+// Health Check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'UP',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    timestamp: new Date(),
+  });
+});
 
 // 404 Handler
 app.use(notFoundHandler);

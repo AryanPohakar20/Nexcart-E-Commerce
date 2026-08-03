@@ -149,17 +149,32 @@ export const AppProvider = ({ children }) => {
 
   const updateWishlistStateFromBackend = (wishlistData) => {
     if (!wishlistData) return;
-    const formattedWish = wishlistData.map(item => ({
-      id: item.productId?._id || item.productId,
-      title: item.productId?.title || 'Catalog Product',
-      image: item.productId?.image || '',
-      price: item.productId?.price || 0,
-      mrp: item.productId?.mrp || 0,
-      stock: item.productId?.stock || 0,
-      brand: item.productId?.brand || 'Brand',
-      category: item.productId?.category || 'Category',
-      rating: item.productId?.rating || 0
-    }));
+    const formattedWish = wishlistData.map(item => {
+      const info = item.productInformation || {};
+      const prod = typeof item.productId === 'object' ? item.productId : {};
+      
+      let stockVal = 10;
+      if (info.stockStatus) {
+        if (info.stockStatus.toLowerCase() === 'out of stock' || info.stockStatus.toLowerCase() === 'out_of_stock') {
+          stockVal = 0;
+        }
+      } else if (prod.stock !== undefined) {
+        stockVal = prod.stock;
+      }
+
+      return {
+        id: item.productId?._id || item.productId,
+        title: info.title || prod.title || 'Catalog Product',
+        image: info.imageUrl || prod.image || '',
+        price: info.price || prod.price || 0,
+        mrp: info.discountPrice || prod.mrp || info.price || prod.price || 0,
+        stock: stockVal,
+        brand: info.brand || prod.brand || 'Brand',
+        category: prod.category || 'Category',
+        rating: prod.rating || 4.5,
+        reviewsCount: prod.reviewsCount || 120
+      };
+    });
     setWishlist(formattedWish);
   };
 
@@ -204,7 +219,7 @@ export const AppProvider = ({ children }) => {
             }
 
             // Load backend wishlist
-            const wishData = await wishlistService.getWishlist();
+            const wishData = await wishlistService.getWishlist(user.id || user._id);
             if (wishData.success) {
               updateWishlistStateFromBackend(wishData.data);
             }
@@ -513,21 +528,51 @@ export const AppProvider = ({ children }) => {
   const toggleWishlist = async (product) => {
     if (user) {
       const exists = wishlist.some((item) => item.id === product.id);
+      const previousWishlist = [...wishlist];
+
+      // Optimistically update the local state for immediate UI feedback
+      if (exists) {
+        setWishlist((prev) => prev.filter((item) => item.id !== product.id));
+      } else {
+        setWishlist((prev) => [...prev, product]);
+      }
+
       try {
         if (exists) {
           const response = await wishlistService.removeFromWishlist(product.id);
           if (response.success) {
-            setWishlist((prev) => prev.filter((item) => item.id !== product.id));
             showToast('Removed from Wishlist', 'info');
+          } else {
+            // Revert state if unsuccessful
+            setWishlist(previousWishlist);
+            showToast('Failed to remove from Wishlist', 'error');
           }
         } else {
-          const response = await wishlistService.addToWishlist(product.id);
+          const payload = {
+            userId: user.id || user._id,
+            userEmail: user.email,
+            productId: product.id || product._id,
+            productInformation: {
+              title: product.title,
+              price: product.price,
+              discountPrice: product.mrp || product.price,
+              brand: product.brand || 'Brand',
+              imageUrl: product.image || '',
+              stockStatus: product.stock > 0 ? 'In Stock' : 'Out of Stock'
+            }
+          };
+          const response = await wishlistService.addToWishlist(payload);
           if (response.success) {
-            setWishlist((prev) => [...prev, product]);
             showToast('Added to Wishlist');
+          } else {
+            // Revert state if unsuccessful
+            setWishlist(previousWishlist);
+            showToast('Failed to add to Wishlist', 'error');
           }
         }
       } catch (error) {
+        // Revert state on error
+        setWishlist(previousWishlist);
         showToast(error.message || 'Failed to update wishlist', 'error');
       }
     } else {

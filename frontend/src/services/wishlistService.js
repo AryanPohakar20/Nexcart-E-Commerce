@@ -1,18 +1,19 @@
 import axiosInstance from '../api/axios';
 
 const wishlistService = {
-  getWishlist: async () => {
+  getWishlist: async (userId) => {
     try {
-      const response = await axiosInstance.get('/wishlist');
+      const url = userId ? `/wishlist/${userId}` : '/wishlist';
+      const response = await axiosInstance.get(url);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  addToWishlist: async (productId) => {
+  addToWishlist: async (payload) => {
     try {
-      const response = await axiosInstance.post('/wishlist/add', { productId });
+      const response = await axiosInstance.post('/wishlist/add', payload);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

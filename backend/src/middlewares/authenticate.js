@@ -5,16 +5,43 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const authenticate = asyncHandler(async (req, res, next) => {
   if (process.env.MOCK_DB === 'true') {
-    req.user = {
-      _id: 'mock_seller_123',
-      firstName: 'Srushti',
-      lastName: 'Salunke',
-      username: 'srushti',
-      email: 'srushtisalunke41@gmail.com',
-      phone: '1234567890',
-      role: 'seller',
-      isVerified: false,
-    };
+    let token = '';
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
+    const saveMethod = async function() { return this; };
+
+    if (token === 'mock_token_user') {
+      req.user = {
+        _id: 'mock_user_123',
+        firstName: 'John',
+        lastName: 'Doe',
+        username: 'johndoe',
+        email: 'johndoe@example.com',
+        phone: '1234567890',
+        role: 'user',
+        isVerified: true,
+        save: saveMethod,
+      };
+    } else {
+      req.user = {
+        _id: 'mock_seller_123',
+        firstName: 'Srushti',
+        lastName: 'Salunke',
+        username: 'srushti',
+        email: 'srushtisalunke41@gmail.com',
+        phone: '1234567890',
+        role: 'seller',
+        isVerified: false,
+        save: saveMethod,
+      };
+    }
     return next();
   }
 

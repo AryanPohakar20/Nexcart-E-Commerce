@@ -11,18 +11,16 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: [true, 'First name is required'],
       trim: true,
     },
     lastName: {
       type: String,
-      required: [true, 'Last name is required'],
       trim: true,
     },
     username: {
       type: String,
-      required: [true, 'Username is required'],
       unique: true,
+      sparse: true,
       trim: true,
       lowercase: true,
     },
@@ -49,6 +47,47 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['customer', 'seller', 'admin'],
       default: 'customer',
+    },
+    ownerName: {
+      type: String,
+      trim: true,
+    },
+    businessName: {
+      type: String,
+      trim: true,
+    },
+    businessType: {
+      type: String,
+      trim: true,
+    },
+    gstNumber: {
+      type: String,
+      trim: true,
+    },
+    address: {
+      type: String,
+      trim: true,
+    },
+    city: {
+      type: String,
+      trim: true,
+    },
+    state: {
+      type: String,
+      trim: true,
+    },
+    country: {
+      type: String,
+      trim: true,
+    },
+    pincode: {
+      type: String,
+      trim: true,
+    },
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
     },
     aadhaar: {
       number: { type: String, default: null },

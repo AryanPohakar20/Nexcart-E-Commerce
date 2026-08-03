@@ -4,6 +4,17 @@ import { uploadAadhaarImage } from '../services/cloudinaryService.js';
 import User from '../models/User.js';
 
 export const uploadAadhaar = asyncHandler(async (req, res) => {
+  if (process.env.MOCK_DB === 'true') {
+    return res.status(200).json({
+      success: true,
+      message: 'Aadhaar uploaded successfully (Mock Mode)',
+      data: {
+        frontImage: 'https://via.placeholder.com/150',
+        backImage: 'https://via.placeholder.com/150',
+      },
+    });
+  }
+
   const frontImageFile = req.files?.frontImage?.[0];
   const backImageFile = req.files?.backImage?.[0];
 

@@ -5,6 +5,7 @@
 import mongoose from 'mongoose';
 import logger from '../utils/logger.js';
 
+
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 5000;
 
@@ -14,7 +15,6 @@ const RETRY_DELAY_MS = 5000;
  */
 const connectDB = async (retryCount = 0) => {
   try {
-    // Enforce strict query mode — unknown filter fields throw an error
     mongoose.set('strictQuery', true);
 
     const conn = await mongoose.connect(process.env.MONGO_URI, {
@@ -23,6 +23,7 @@ const connectDB = async (retryCount = 0) => {
 
     logger.info(`✅ MongoDB Connected: ${conn.connection.host}`);
     logger.info(`📦 Database: ${conn.connection.name}`);
+
 
     // Handle post-connection events
     mongoose.connection.on('error', (err) => {
@@ -46,8 +47,8 @@ const connectDB = async (retryCount = 0) => {
       return connectDB(retryCount + 1);
     }
 
-    logger.error('Could not connect to MongoDB. Enabling MOCK DATABASE mode for development.');
-    process.env.MOCK_DB = 'true';
+    logger.error('Could not connect to MongoDB after multiple attempts. Exiting.');
+    process.exit(1);
   }
 };
 
