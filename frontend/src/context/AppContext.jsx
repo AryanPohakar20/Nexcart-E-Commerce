@@ -1,12 +1,15 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { PRODUCTS, COUPONS } from '../constants/dummyData';
 import profileService from '../services/profileService';
 import addressService from '../services/addressService';
 import authService from '../services/authService';
+import { AuthContext } from './AuthContext';
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  const { user: authUser } = useContext(AuthContext) || {};
+
   // ─── User / Profile State ────────────────────────────────────────────────
   const [user, setUser] = useState(() => {
     try {
@@ -16,6 +19,13 @@ export const AppProvider = ({ children }) => {
       return null;
     }
   });
+
+  // Keep AppContext user state in sync with AuthContext user state
+  useEffect(() => {
+    if (authUser !== undefined && authUser !== user) {
+      setUser(authUser);
+    }
+  }, [authUser]);
   const [profileLoading, setProfileLoading] = useState(false);
 
   const logoutUser = async () => {
@@ -33,18 +43,6 @@ export const AppProvider = ({ children }) => {
       showToast('Logged out successfully', 'info');
     }
   };
-
-  const loginUser = (email, password, role) => {
-    const updatedUser = {
-      ...user,
-      email: email || user?.email,
-      role: role || user?.role || 'customer',
-      name: user?.firstName ? `${user.firstName} ${user.lastName}` : (user?.name || 'User Account'),
-    };
-    setUser(updatedUser);
-    localStorage.setItem('nexcart-user', JSON.stringify(updatedUser));
-  };
-
   // Persist user to localStorage whenever it changes
   useEffect(() => {
     if (user) {
@@ -319,7 +317,6 @@ export const AppProvider = ({ children }) => {
         setUser,
         profileLoading,
         logoutUser,
-        loginUser,
         // Theme
         theme,
         setTheme,

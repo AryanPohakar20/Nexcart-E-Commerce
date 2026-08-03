@@ -41,7 +41,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   // Enforce phone uniqueness across users (skip self)
   if (phone) {
-    const existing = await User.findOne({ phone: phone.trim(), _id: { $ne: userId } });
+    const existing = await User.findOne({ phone: phone.trim(), role: req.user.role, _id: { $ne: userId } });
     if (existing) {
       throw new ApiError(409, 'This phone number is already associated with another account');
     }

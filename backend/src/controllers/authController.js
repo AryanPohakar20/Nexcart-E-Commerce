@@ -103,8 +103,8 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-  await authService.forgotPassword(email);
+  const { email, role } = req.body;
+  await authService.forgotPassword(email, role);
   res.status(200).json({
     success: true,
     message: 'If an account exists, a 6-digit OTP has been sent.',
@@ -112,8 +112,8 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 });
 
 export const verifyOtp = asyncHandler(async (req, res) => {
-  const { email, otp, purpose } = req.body;
-  const result = await authService.verifyOtp(email, otp, purpose);
+  const { email, otp, purpose, role } = req.body;
+  const result = await authService.verifyOtp(email, otp, purpose, role);
   res.status(200).json({
     success: true,
     message: 'OTP verified successfully.',
@@ -122,8 +122,8 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
-  const { email, otp, newPassword } = req.body;
-  await authService.resetPassword(email, otp, newPassword);
+  const { email, otp, newPassword, role } = req.body;
+  await authService.resetPassword(email, otp, newPassword, role);
   res.status(200).json({
     success: true,
     message: 'Password reset successful. Please log in with your new password.',

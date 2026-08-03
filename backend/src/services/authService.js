@@ -140,29 +140,36 @@ export const registerUserService = async (userData) => {
 
 export const loginUserService = async (email, password) => {
   const normalizedEmail = email ? email.toLowerCase().trim() : '';
-  const user = await User.findOne({
+  const users = await User.find({
     email: normalizedEmail,
     role: { $in: ['customer', 'admin'] },
   }).select('+password');
 
-  if (!user) {
+  if (!users || users.length === 0) {
     throw new ApiError(401, 'Invalid credentials');
   }
 
-  const isMatch = await user.comparePassword(password);
+  let matchedUser = null;
+  for (const user of users) {
+    const isMatch = await user.comparePassword(password);
+    if (isMatch) {
+      matchedUser = user;
+      break;
+    }
+  }
 
-  if (!isMatch) {
+  if (!matchedUser) {
     throw new ApiError(401, 'Invalid credentials');
   }
 
   // Check if blocked
-  if (user.isBlocked) {
+  if (matchedUser.isBlocked) {
     throw new ApiError(403, 'Your account has been blocked');
   }
 
-  const token = user.generateJWT();
+  const token = matchedUser.generateJWT();
 
-  return { user, token };
+  return { user: matchedUser, token };
 };
 
 // ─── Forgot Password ──────────────────────────────────────────────────────────

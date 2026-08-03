@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+import sellerAuthService from '../services/sellerAuthService';
 import logo from '../assets/logo.jpg';
 import { 
   FiGrid, FiPackage, FiShoppingBag, FiBarChart2, FiDollarSign, 
@@ -10,12 +11,40 @@ import {
 const SellerLayout = () => {
   const { user, logoutUser, showToast } = useContext(AppContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCheckingSeller, setIsCheckingSeller] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const verifySellerAccount = async () => {
+      try {
+        await sellerAuthService.getProfile();
+        setIsCheckingSeller(false);
+      } catch (err) {
+        console.warn('Seller profile not found or incomplete:', err);
+        if (err?.statusCode === 404 || err?.message?.toLowerCase().includes('not found')) {
+          showToast('Please complete your seller onboarding first', 'info');
+          navigate('/seller/onboarding', { replace: true });
+        } else {
+          setIsCheckingSeller(false);
+        }
+      }
+    };
+
+    verifySellerAccount();
+  }, [navigate, showToast]);
 
   const handleLogout = () => {
     logoutUser();
     navigate('/');
   };
+
+  if (isCheckingSeller) {
+    return (
+      <div className="min-h-screen bg-darkBg text-white flex items-center justify-center">
+        <div className="text-primary font-bold animate-pulse">Verifying Seller Account...</div>
+      </div>
+    );
+  }
 
   const navItems = [
     { name: 'Dashboard', path: '/seller/dashboard', icon: FiGrid },
