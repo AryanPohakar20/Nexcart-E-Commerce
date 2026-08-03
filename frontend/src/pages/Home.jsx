@@ -1,52 +1,93 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { CATEGORIES, BRANDS, PRODUCTS, COUPONS, TESTIMONIALS } from '../constants/dummyData';
-import { FiChevronLeft, FiChevronRight, FiClock, FiStar, FiPercent, FiCopy, FiCheck, FiArrowRight, FiShoppingCart, FiHeart } from 'react-icons/fi';
+import { 
+  FiChevronLeft, FiChevronRight, FiClock, FiStar, FiPercent, 
+  FiCopy, FiCheck, FiArrowRight, FiShoppingCart, FiHeart, FiGift, FiZap
+} from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
+
+// Reusable Horizontal Product Slider Component
+const ProductSlider = ({ title, products, onViewAll }) => {
+  const containerRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (containerRef.current) {
+      const { scrollLeft, clientWidth } = containerRef.current;
+      const scrollAmount = clientWidth * 0.75;
+      const scrollTo = direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
+      containerRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <div className="space-y-4 text-left relative group py-2">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg md:text-xl font-extrabold text-foreground tracking-tight">{title}</h3>
+        </div>
+        <button 
+          onClick={onViewAll} 
+          className="text-xs text-primary font-bold hover:underline flex items-center gap-1.5"
+        >
+          <span>View All</span>
+          <FiArrowRight />
+        </button>
+      </div>
+
+      <div className="relative">
+        {/* Left Arrow Button */}
+        <button 
+          onClick={() => scroll('left')}
+          className="absolute left-[-18px] top-1/2 -translate-y-1/2 z-20 p-2.5 bg-card border border-border text-foreground hover:text-primary rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer hidden md:flex items-center justify-center"
+        >
+          <FiChevronLeft size={16} />
+        </button>
+
+        {/* Scrollable Row */}
+        <div 
+          ref={containerRef}
+          className="flex gap-6 overflow-x-auto pb-4 pt-1 scrollbar-none snap-x snap-mandatory scroll-smooth"
+        >
+          {products.map(prod => (
+            <div key={prod.id} className="w-[250px] sm:w-[280px] flex-shrink-0 snap-start">
+              <ProductCard product={prod} />
+            </div>
+          ))}
+        </div>
+
+        {/* Right Arrow Button */}
+        <button 
+          onClick={() => scroll('right')}
+          className="absolute right-[-18px] top-1/2 -translate-y-1/2 z-20 p-2.5 bg-card border border-border text-foreground hover:text-primary rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer hidden md:flex items-center justify-center"
+        >
+          <FiChevronRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const Home = () => {
   const { addToCart, showToast } = useContext(AppContext);
   const navigate = useNavigate();
+  const categoryScrollRef = useRef(null);
 
-  // Mouse position for Hero parallax
+  // Parallax Hero Mouse tracking
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setMousePos({ x: x * 20, y: y * 20 });
+    setMousePos({ x: x * 15, y: y * 15 });
   };
   const handleMouseLeave = () => {
     setMousePos({ x: 0, y: 0 });
   };
 
-  // Text Reveal stagger variants
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1, 
-      transition: { 
-        staggerChildren: 0.12, 
-        delayChildren: 0.1 
-      } 
-    }
-  };
-
-  const staggerItem = {
-    hidden: { opacity: 0, y: 15 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { 
-        duration: 0.5, 
-        ease: [0.16, 1, 0.3, 1] 
-      } 
-    }
-  };
-  
-  // Hero Slider State
+  // Hero Slider
   const [currentSlide, setCurrentSlide] = useState(0);
   const heroSlides = [
     {
@@ -75,8 +116,16 @@ const Home = () => {
     }
   ];
 
-  // Countdown timer for Flash Sale
-  const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 34, seconds: 12 });
+  // Auto scroll banner slides
+  useEffect(() => {
+    const slideInterval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
+    }, 6500);
+    return () => clearInterval(slideInterval);
+  }, [heroSlides.length]);
+
+  // Flash sales countdown timer
+  const [timeLeft, setTimeLeft] = useState({ hours: 3, minutes: 54, seconds: 48 });
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -90,97 +139,44 @@ const Home = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Slider auto-scroll
-  useEffect(() => {
-    const slideInterval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-    }, 6000);
-    return () => clearInterval(slideInterval);
-  }, [heroSlides.length]);
-
-  // Copy Coupon Helper
+  // Coupon copy handler
   const [copiedCoupon, setCopiedCoupon] = useState(null);
   const copyCoupon = (code) => {
     navigator.clipboard.writeText(code);
     setCopiedCoupon(code);
-    showToast(`Coupon ${code} copied to clipboard!`);
+    showToast(`Coupon ${code} copied to clipboard!`, 'success');
     setTimeout(() => setCopiedCoupon(null), 3000);
   };
+
+  const scrollCategories = (direction) => {
+    if (categoryScrollRef.current) {
+      const { scrollLeft, clientWidth } = categoryScrollRef.current;
+      const scrollAmount = clientWidth * 0.5;
+      const scrollTo = direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
+      categoryScrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
+  // Structured content filters
+  const bestDeals = PRODUCTS.filter(p => p.discount >= 10);
+  const recommended = PRODUCTS;
+  const trending = PRODUCTS.filter(p => p.rating >= 4.6);
+  const recentlyViewed = [PRODUCTS[0], PRODUCTS[2], PRODUCTS[5], PRODUCTS[7]];
+  const newArrivals = [...PRODUCTS].reverse();
 
   return (
     <div className="space-y-16">
       
-      {/* 1. Hero Slider Module */}
+      {/* 1. WIDER HERO BANNER SLIDER */}
       <section 
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-gray-200 dark:border-white/5 shadow-2xl bg-gray-50 dark:bg-black/40 transition-colors duration-500"
+        className="relative w-full h-[400px] md:h-[520px] rounded-3xl overflow-hidden border border-border shadow-2xl bg-muted/20 transition-all duration-300"
       >
-        {/* Floating background gradient colors */}
+        {/* Glow ambient design orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-          <motion.div 
-            animate={{ 
-              x: [0, 40, -40, 0], 
-              y: [0, -30, 30, 0],
-              scale: [1, 1.15, 0.9, 1]
-            }}
-            transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute top-10 left-10 w-72 h-72 rounded-full bg-primary/10 blur-[80px]"
-          />
-          <motion.div 
-            animate={{ 
-              x: [0, -50, 50, 0], 
-              y: [0, 40, -40, 0],
-              scale: [1, 0.9, 1.1, 1]
-            }}
-            transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-accentBlue/10 blur-[90px]"
-          />
-          {/* Slowly moving light beam */}
-          <motion.div 
-            animate={{ 
-              x: ['-100%', '200%'],
-              opacity: [0.1, 0.3, 0.1]
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute inset-0 w-2/3 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"
-          />
-          {/* Glowing particles */}
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1.5 h-1.5 rounded-full bg-primary/40 shadow-yellow-glow"
-              style={{
-                left: `${15 + i * 14}%`,
-                top: `${20 + (i * 19) % 60}%`
-              }}
-              animate={{
-                y: [0, -25, 0],
-                opacity: [0.2, 0.8, 0.2],
-                scale: [1, 1.3, 1]
-              }}
-              transition={{
-                duration: 4 + (i % 3),
-                repeat: Infinity,
-                delay: i * 0.3
-              }}
-            />
-          ))}
-          {/* Floating shopping icons */}
-          <motion.div 
-            animate={{ y: [0, -12, 0], rotate: [0, 10, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute top-12 right-24 text-gray-300 dark:text-white/10 hidden md:block transition-colors duration-500"
-          >
-            <FiShoppingCart size={40} />
-          </motion.div>
-          <motion.div 
-            animate={{ y: [0, 10, 0], rotate: [0, -8, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-            className="absolute bottom-16 left-32 text-gray-300 dark:text-white/10 hidden md:block transition-colors duration-500"
-          >
-            <FiHeart size={36} />
-          </motion.div>
+          <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-primary/10 blur-[80px]" />
+          <div className="absolute bottom-10 right-10 w-85 h-85 rounded-full bg-accentBlue/10 blur-[100px]" />
         </div>
 
         <AnimatePresence mode="wait">
@@ -188,200 +184,204 @@ const Home = () => {
             index === currentSlide && (
               <motion.div 
                 key={index}
-                initial={{ opacity: 0, scale: 1.02 }}
-                animate={{ opacity: 1, scale: 1, x: mousePos.x * 0.3, y: mousePos.y * 0.3 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.6, ease: 'easeInOut' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, x: mousePos.x * 0.25, y: mousePos.y * 0.25 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.55 }}
                 className="absolute inset-0 flex items-center"
               >
-                {/* Background Image overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-[#0B0B0B] dark:via-[#0B0B0B]/80 dark:to-transparent z-10 transition-all duration-500" />
-                <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                {/* Visual gradient overlays */}
+                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-transparent z-10 transition-all duration-300" />
+                <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-50" />
                 
-                {/* Slide Content */}
-                <motion.div 
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="relative z-20 max-w-lg px-8 md:px-16 space-y-4 md:space-y-6 text-left"
-                  style={{ x: mousePos.x * 0.1, y: mousePos.y * 0.1 }}
-                >
-                  <motion.span 
-                    variants={staggerItem}
-                    className="inline-block bg-primary/20 border border-primary/40 text-primary text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded"
-                  >
+                {/* Slide content columns */}
+                <div className="relative z-20 max-w-xl px-8 md:px-16 space-y-4 md:space-y-6 text-left">
+                  <span className="inline-block bg-primary/20 border border-primary/30 text-primary text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded">
                     {slide.badge}
-                  </motion.span>
+                  </span>
 
-                  <motion.div 
-                    variants={staggerItem}
-                    className="space-y-2"
-                  >
+                  <div className="space-y-2">
                     <h3 className="text-sm font-semibold uppercase tracking-widest text-accentBlue leading-none">{slide.subtitle}</h3>
-                    <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight transition-colors duration-500">{slide.title}</h1>
-                  </motion.div>
+                    <h1 className="text-3xl md:text-5xl font-black text-foreground tracking-tight leading-tight">{slide.title}</h1>
+                  </div>
 
-                  <motion.p 
-                    variants={staggerItem}
-                    className="text-xs md:text-sm text-slate-700 dark:text-gray-400 leading-relaxed font-medium transition-colors duration-500"
-                  >
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-medium">
                     {slide.desc}
-                  </motion.p>
+                  </p>
 
-                  <motion.button 
-                    variants={staggerItem}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
+                  <button 
                     onClick={() => navigate(slide.actionUrl)}
-                    className="btn-glow-yellow text-xs font-bold px-6 py-3 flex items-center gap-1.5 btn-premium-interactive"
+                    className="btn-glow-yellow text-xs font-bold px-6 py-3.5 flex items-center gap-1.5"
                   >
                     <span>Shop This Deal</span>
                     <FiArrowRight />
-                  </motion.button>
-                </motion.div>
+                  </button>
+                </div>
               </motion.div>
             )
           ))}
         </AnimatePresence>
         
-        {/* Carousel controls */}
-        <motion.button 
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+        {/* Slider Controls */}
+        <button 
           onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-card/60 border border-border text-foreground hover:text-primary rounded-full hover:bg-card/80 transition-all cursor-pointer duration-500"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-card/75 border border-border text-foreground hover:text-primary rounded-full hover:bg-card shadow-lg transition-all cursor-pointer"
         >
-          <FiChevronLeft size={20} />
-        </motion.button>
- 
-        <motion.button 
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-card/60 border border-border text-foreground hover:text-primary rounded-full hover:bg-card/80 transition-all cursor-pointer duration-500"
-        >
-          <FiChevronRight size={20} />
-        </motion.button>
+          <FiChevronLeft size={18} />
+        </button>
 
-        {/* Carousel Indicators */}
+        <button 
+          onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-card/75 border border-border text-foreground hover:text-primary rounded-full hover:bg-card shadow-lg transition-all cursor-pointer"
+        >
+          <FiChevronRight size={18} />
+        </button>
+
+        {/* Bullet Indicators */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
           {heroSlides.map((_, idx) => (
             <button 
               key={idx}
               onClick={() => setCurrentSlide(idx)}
-              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${idx === currentSlide ? 'bg-primary w-8' : 'bg-white/30 hover:bg-white/50'}`}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${idx === currentSlide ? 'bg-primary w-8' : 'bg-white/30 hover:bg-white/55'}`}
             />
           ))}
         </div>
       </section>
 
-      {/* 2. Featured Categories List */}
-      <section className="space-y-6">
+      {/* 2. FEATURED CATEGORIES SECTION */}
+      <section className="space-y-6 text-left relative group">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">Featured Categories</h2>
-            <p className="text-xs text-muted-foreground mt-1">Discover items curated across major domains.</p>
+            <h2 className="text-lg md:text-xl font-extrabold text-foreground tracking-tight">Featured Categories</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Explore standard collections & sectors.</p>
           </div>
-          <Link to="/products" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
-            <span>Explore All</span>
-            <FiArrowRight />
-          </Link>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => scrollCategories('left')}
+              className="p-1.5 rounded-full border border-border hover:bg-muted text-muted-foreground hover:text-primary"
+            >
+              <FiChevronLeft size={14} />
+            </button>
+            <button 
+              onClick={() => scrollCategories('right')}
+              className="p-1.5 rounded-full border border-border hover:bg-muted text-muted-foreground hover:text-primary"
+            >
+              <FiChevronRight size={14} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-thin">
-          {CATEGORIES.map((cat, i) => (
+        <div 
+          ref={categoryScrollRef}
+          className="flex gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-none snap-x snap-mandatory"
+        >
+          {CATEGORIES.map((cat) => (
             <motion.div
               key={cat.id}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: i * 0.05 }}
               whileHover={{ y: -4 }}
+              className="flex-shrink-0 snap-start"
             >
               <Link 
                 to={`/category/${cat.id}`}
-                className="flex-shrink-0 flex flex-col items-center gap-3 group"
+                className="flex flex-col items-center gap-3 group w-[100px] md:w-[120px]"
               >
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white/5 group-hover:border-primary/60 group-hover:shadow-yellow-glow transition-all duration-300">
-                  <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-border group-hover:border-primary/60 group-hover:shadow-yellow-glow transition-all duration-300">
+                  <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                 </div>
-                <span className="text-xs font-semibold text-gray-400 group-hover:text-white transition-all text-center">{cat.name}</span>
+                <span className="text-[11px] font-bold text-muted-foreground group-hover:text-primary transition-colors text-center truncate w-full">{cat.name}</span>
               </Link>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* 3. Flash Deals Banner */}
-      <section className="bg-card border border-border p-6 md:p-8 rounded-3xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="space-y-3 z-10 text-left">
-          <span className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded">Limited Time</span>
-          <h3 className="text-2xl font-black text-foreground">Deals of the Day</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed font-medium">Limited stocks on top items. Prices return to standard soon.</p>
-          
-          {/* Clock Timer */}
-          <div className="flex items-center gap-3 pt-2">
-            <FiClock className="text-primary text-xl animate-spin" style={{ animationDuration: '10s' }} />
-            <div className="flex items-center gap-1.5 pt-1">
-              <div className="flex flex-col items-center">
-                <div className="bg-muted border border-border rounded px-2.5 py-1.5 text-sm font-bold text-foreground min-w-[36px]">
-                  {timeLeft.hours.toString().padStart(2, '0')}
-                </div>
-                <span className="text-[9px] text-muted-foreground uppercase font-semibold mt-1">Hrs</span>
-              </div>
-              <span className="text-foreground font-black mb-4">:</span>
-              <div className="flex flex-col items-center">
-                <div className="bg-muted border border-border rounded px-2.5 py-1.5 text-sm font-bold text-foreground min-w-[36px]">
-                  {timeLeft.minutes.toString().padStart(2, '0')}
-                </div>
-                <span className="text-[9px] text-muted-foreground uppercase font-semibold mt-1">Min</span>
-              </div>
-              <span className="text-foreground font-black mb-4">:</span>
-              <div className="flex flex-col items-center">
-                <div className="bg-muted border border-border rounded px-2.5 py-1.5 text-sm font-bold text-foreground min-w-[36px]">
-                  {timeLeft.seconds.toString().padStart(2, '0')}
-                </div>
-                <span className="text-[9px] text-muted-foreground uppercase font-semibold mt-1">Sec</span>
-              </div>
-            </div>
-          </div>
+      {/* 3. BEST DEALS SECTION */}
+      <ProductSlider 
+        title="Best Deals of the Day" 
+        products={bestDeals} 
+        onViewAll={() => navigate('/products')} 
+      />
+
+      {/* 4. RECOMMENDED PRODUCTS SECTION */}
+      <ProductSlider 
+        title="Recommended For You" 
+        products={recommended} 
+        onViewAll={() => navigate('/products')} 
+      />
+
+      {/* 5. TRENDING PRODUCTS SECTION */}
+      <ProductSlider 
+        title="Trending Products" 
+        products={trending} 
+        onViewAll={() => navigate('/products')} 
+      />
+
+      {/* 6. TOP BRANDS SECTION */}
+      <section className="space-y-6 text-left">
+        <div>
+          <h2 className="text-lg md:text-xl font-extrabold text-foreground tracking-tight">Shop By Brands</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Authentic collections direct from global suppliers.</p>
         </div>
 
-        <motion.button 
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.96 }}
-          onClick={() => navigate('/products')}
-          className="btn-glow-yellow text-xs font-bold px-8 py-4 whitespace-nowrap"
-        >
-          Shop All Deals
-        </motion.button>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+          {BRANDS.map((br) => (
+            <motion.div 
+              key={br.id}
+              whileHover={{ y: -4, borderColor: 'var(--primary)' }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => navigate(`/products?brand=${br.name}`)}
+              className="bg-card border border-border p-5 rounded-2xl flex items-center justify-center h-20 cursor-pointer transition-all duration-300 group"
+            >
+              <img 
+                src={br.logoUrl} 
+                alt={br.name} 
+                className="max-h-8 max-w-full object-contain theme-logo-filter opacity-50 group-hover:opacity-100 transition-opacity" 
+              />
+            </motion.div>
+          ))}
+        </div>
       </section>
 
-      {/* 4. Super Saver Coupons */}
-      <section className="space-y-6">
-        <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-foreground">Super Saver Coupons</h2>
-          <p className="text-xs text-muted-foreground mt-1">Apply these codes at checkout to activate immediate markdowns.</p>
+      {/* 7. RECENTLY VIEWED SECTION */}
+      <ProductSlider 
+        title="Recently Viewed Items" 
+        products={recentlyViewed} 
+        onViewAll={() => navigate('/products')} 
+      />
+
+      {/* 8. NEW ARRIVALS SECTION */}
+      <ProductSlider 
+        title="New Arrivals" 
+        products={newArrivals} 
+        onViewAll={() => navigate('/products')} 
+      />
+
+      {/* 9. SUPER SAVER COUPONS (Maturity Feature) */}
+      <section className="space-y-6 text-left">
+        <div>
+          <h2 className="text-lg md:text-xl font-extrabold text-foreground tracking-tight">Super Saver Coupons</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Click discount cards below to copy promo codes.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {COUPONS.map((cp) => (
             <motion.div 
               key={cp.code}
-              whileHover={{ y: -5 }}
+              whileHover={{ y: -4 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => copyCoupon(cp.code)}
-              className="p-5 bg-card border border-border rounded-2xl flex items-center justify-between group hover:border-primary/30 transition-all duration-300"
+              className="p-5 bg-card border border-border rounded-2xl flex items-center justify-between group hover:border-primary/30 transition-all duration-300 cursor-pointer"
             >
-              <div className="space-y-1 text-left">
-                <h4 className="text-lg font-black text-foreground tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
-                <p className="text-xs font-bold text-primary">{cp.discountString}</p>
+              <div className="space-y-1">
+                <h4 className="text-base font-black text-foreground tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
+                <p className="text-xs font-bold text-primary">{cp.discountPercent}% OFF</p>
                 <p className="text-[10px] text-muted-foreground font-medium">{cp.description}</p>
               </div>
 
-              <div className="flex flex-col items-center gap-1 text-center bg-muted border border-border p-2 rounded-lg pr-4">
-                <FiPercent className="text-primary text-lg" />
-                <span className="text-[10px] font-bold text-muted-foreground">
+              <div className="flex flex-col items-center gap-1 bg-muted border border-border p-2 rounded-lg min-w-[60px] justify-center">
+                <FiPercent className="text-primary text-sm" />
+                <span className="text-[9px] font-bold text-muted-foreground">
                   {copiedCoupon === cp.code ? 'Copied' : 'Copy'}
                 </span>
               </div>
@@ -390,65 +390,29 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 5. Trending & Recommended Items */}
-      <section className="space-y-6">
+      {/* 10. SOCIAL TESTIMONIALS SECTION */}
+      <section className="space-y-6 text-left">
         <div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-foreground">Trending Collections</h2>
-          <p className="text-xs text-muted-foreground mt-1">Best-rated products by shoppers worldwide.</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {PRODUCTS.slice(2, 6).map((prod) => (
-            <ProductCard key={prod.id} product={prod} />
-          ))}
-        </div>
-      </section>
-
-      {/* 6. Popular Brands Banner */}
-      <section className="space-y-6">
-        <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-foreground">Shop By Brands</h2>
-          <p className="text-xs text-muted-foreground mt-1">Explore authentic items from elite global suppliers.</p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 pt-4">
-          {BRANDS.map((br) => (
-            <motion.div 
-              key={br.id}
-              whileHover={{ y: -5, borderColor: 'var(--primary)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate(`/products?brand=${br.name}`)}
-              className="bg-card border border-border p-6 rounded-2xl flex items-center justify-center h-24 cursor-pointer transition-all duration-300 group"
-            >
-              <img src={br.logoUrl} alt={br.name} className="max-h-10 max-w-full object-contain theme-logo-filter opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* 7. Testimonials */}
-      <section className="space-y-6">
-        <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-foreground">NexCart Reviews</h2>
-          <p className="text-xs text-muted-foreground mt-1">What our premium customers have to say.</p>
+          <h2 className="text-lg md:text-xl font-extrabold text-foreground tracking-tight">NexCart Client Reviews</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Hear directly from our verified premium buyers.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {TESTIMONIALS.map((t, idx) => (
             <motion.div 
               key={t.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: idx * 0.1 }}
+              transition={{ duration: 0.4, delay: idx * 0.08 }}
               whileHover={{ y: -4 }}
-              className="bg-cardBg border border-white/5 hover:border-primary/30 p-6 rounded-2xl space-y-4 transition-all duration-300"
+              className="bg-card border border-border p-6 rounded-2xl space-y-4 transition-all duration-300"
             >
               <div className="flex items-center gap-3">
                 <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover border border-primary/20" />
                 <div>
-                  <h4 className="text-xs font-bold text-white">{t.name}</h4>
-                  <span className="text-[10px] text-gray-500">{t.role}</span>
+                  <h4 className="text-xs font-bold text-foreground">{t.name}</h4>
+                  <span className="text-[9px] text-muted-foreground">{t.role}</span>
                 </div>
               </div>
 
@@ -458,7 +422,7 @@ const Home = () => {
                 ))}
               </div>
 
-              <p className="text-xs text-gray-400 leading-relaxed font-medium italic">
+              <p className="text-xs text-muted-foreground leading-relaxed italic font-medium">
                 "{t.comment}"
               </p>
             </motion.div>
