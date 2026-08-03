@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+import '../models/Order.js'; // Ensure Order model is registered with Mongoose on bootstrap
 
 // Import controllers and middlewares directly to map legacy/frontend routes
 import {
