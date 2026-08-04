@@ -16,6 +16,7 @@ import {
   verifyOtp,
   resetPassword,
 } from '../controllers/authController.js';
+import { getPublicProfile } from '../controllers/sellerController.js';
 import { validateRegistration, validateLogin } from '../validations/authValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 
@@ -27,8 +28,12 @@ router.post('/seller/auth/login', validateLogin, loginSeller);
 router.post('/seller/auth/logout', logoutSeller);
 router.get('/seller/auth/me', authenticate, getCurrentSeller);
 
-// ─── Seller Onboarding Routes ─────────────────────────────────────────────────
+// ─── Seller Onboarding & Dashboard Routes ────────────────────────────────────
 router.use('/seller', sellerRoutes);
+
+// ─── Public Seller Search / Discovery (no auth) ───────────────────────────────
+// Accessible to customers and anonymous visitors
+router.get('/search/seller/:slug', getPublicProfile);
 
 // ─── General User Auth Routes ─────────────────────────────────────────────────
 router.post('/auth/register', validateRegistration, registerUser);
@@ -44,4 +49,3 @@ router.use('/profile', profileRoutes);
 router.use('/address', addressRoutes);
 
 export default router;
-

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AppContext } from './AppContext';
 import sellerAuthService from '../services/sellerAuthService';
 
@@ -323,6 +323,7 @@ const INITIAL_ORDERS = [
 
 const INITIAL_SETTINGS = {
   sellerMode: 'hybrid', // 'individual_c2c', 'business', or 'hybrid'
+  sellerType: 'individual',  // synced from backend: 'individual' | 'business'
   businessName: 'NexCraft & Resale Studio',
   displayName: 'Aryan Pohakar',
   handle: '@nexseller_hub',
@@ -333,11 +334,24 @@ const INITIAL_SETTINGS = {
   state: 'Karnataka',
   address: '12th Main Road, HAL 2nd Stage, Indiranagar',
   bio: 'Curated boutique crafts, certified electronics & transparent second-hand tech gear. Fast response & verified quality guarantee.',
+  // Individual-specific
+  fullName: '',
+  about: '',
+  avatar: null,
+  // Business-specific
+  ownerName: '',
+  businessDescription: '',
+  businessCategory: '',
+  website: '',
+  gst: '',
+  businessBanner: null,
+  // Bank / payment
   bankAccountHolder: 'Aryan Pohakar',
   bankAccountNumber: '987654321012',
   bankIfsc: 'HDFC0001234',
   bankName: 'HDFC Bank',
   upiId: 'aryan@okaxis',
+  // Legacy toggles
   autoAcceptMeetups: true,
   enableInstantBuy: true,
   freeShippingThreshold: 1500,
@@ -345,6 +359,22 @@ const INITIAL_SETTINGS = {
   smsNotifications: true,
   orderAlerts: true,
   lowStockAlerts: true,
+  // Seller metadata
+  slug: '',
+  sellerStatus: '',
+  verificationStatus: '',
+  trustScore: 0,
+  sellerLevel: 'bronze',
+  rating: 0,
+  totalReviews: 0,
+  followers: 0,
+  profileViews: 0,
+  profileCompletion: 0,
+  // Settings (synced from backend)
+  notificationSettings: null,
+  privacySettings: null,
+  shippingSettings: null,
+  returnsSettings: null,
 };
 
 export const SellerProvider = ({ children }) => {
@@ -359,6 +389,9 @@ export const SellerProvider = ({ children }) => {
       return INITIAL_SETTINGS;
     }
   });
+
+  // Seller backend loading state
+  const [sellerLoading, setSellerLoading] = useState(true);
 
   // Active seller mode filter / persona: 'all' | 'individual_c2c' | 'business'
   const [activePersona, setActivePersona] = useState('all');
@@ -396,31 +429,79 @@ export const SellerProvider = ({ children }) => {
     localStorage.setItem('nexcart-seller-orders', JSON.stringify(orders));
   }, [orders]);
 
-  // Sync profile data from backend if available
+  // Sync profile data from backend dashboard API
   useEffect(() => {
-    sellerAuthService.getProfile().then((res) => {
-      if (res?.data?.seller) {
-        const s = res.data.seller;
-        setSettings((prev) => ({
-          ...prev,
-          displayName: s.accountInfo?.displayName || prev.displayName,
-          businessName: s.profile?.shopName || prev.businessName,
-          phone: s.accountInfo?.phone || prev.phone,
-          email: s.accountInfo?.email || prev.email,
-          city: s.profile?.city || prev.city,
-          state: s.profile?.state || prev.state,
-          pincode: s.profile?.pincode || prev.pincode,
-          address: s.profile?.address || prev.address,
-          bio: s.profile?.description || prev.bio,
-          bankAccountHolder: s.payment?.accountHolder || prev.bankAccountHolder,
-          bankAccountNumber: s.payment?.accountNumber || prev.bankAccountNumber,
-          bankIfsc: s.payment?.ifsc || prev.bankIfsc,
-          upiId: s.payment?.upiId || prev.upiId,
-        }));
-      }
-    }).catch(() => {
-      // Backend not running or offline; local state handles seamlessly
-    });
+    setSellerLoading(true);
+    sellerAuthService.getDashboardProfile()
+      .then((res) => {
+        if (res?.data?.seller) {
+          const s = res.data.seller;
+          const isBusiness = s.sellerType === 'business';
+
+          setSettings((prev) => ({
+            ...prev,
+            // Core identity
+            sellerType: s.sellerType || prev.sellerType,
+            email: s.email || prev.email,
+            phone: s.phone || prev.phone,
+            slug: s.slug || prev.slug,
+            sellerStatus: s.sellerStatus || prev.sellerStatus,
+            verificationStatus: s.verificationStatus || prev.verificationStatus,
+            trustScore: s.trustScore ?? prev.trustScore,
+            sellerLevel: s.sellerLevel || prev.sellerLevel,
+            rating: s.rating ?? prev.rating,
+            totalReviews: s.totalReviews ?? prev.totalReviews,
+            followers: s.followers ?? prev.followers,
+            profileViews: s.profileViews ?? prev.profileViews,
+            profileCompletion: s.dashboard?.profileCompletion ?? prev.profileCompletion,
+
+            // Address
+            address: s.address?.address || prev.address,
+            city: s.address?.city || prev.city,
+            state: s.address?.state || prev.state,
+            pincode: s.address?.pincode || prev.pincode,
+
+            // Type-specific display name and avatar
+            displayName: isBusiness
+              ? (s.businessName || s.ownerName || prev.displayName)
+              : (s.fullName || s.displayName || prev.displayName),
+            avatar: s.avatar || prev.avatar,
+
+            // Individual-specific
+            ...((!isBusiness) && {
+              fullName: s.fullName || prev.fullName,
+              about: s.about || prev.about,
+            }),
+
+            // Business-specific
+            ...(isBusiness && {
+              businessName: s.businessName || prev.businessName,
+              ownerName: s.ownerName || prev.ownerName,
+              businessDescription: s.businessDescription || prev.businessDescription,
+              businessCategory: s.businessCategory || prev.businessCategory,
+              website: s.website || prev.website,
+              gst: s.gst || prev.gst,
+              businessBanner: s.banner || prev.businessBanner,
+            }),
+
+            // Settings (from backend)
+            notificationSettings: s.settings?.notifications || prev.notificationSettings,
+            privacySettings: s.settings?.privacy || prev.privacySettings,
+            shippingSettings: s.settings?.shipping || prev.shippingSettings,
+            returnsSettings: s.settings?.returns || prev.returnsSettings,
+
+            // Legacy payment fields (from onboarding data via profile)
+            bankAccountHolder: prev.bankAccountHolder,
+            bankAccountNumber: prev.bankAccountNumber,
+            bankIfsc: prev.bankIfsc,
+            upiId: prev.upiId,
+          }));
+        }
+      })
+      .catch(() => {
+        // Backend not running or offline — local/localStorage state handles seamlessly
+      })
+      .finally(() => setSellerLoading(false));
   }, []);
 
   // ─── CRUD Actions: Products ───────────────────────────────────────────────
@@ -520,10 +601,56 @@ export const SellerProvider = ({ children }) => {
     showToast('Studio settings saved');
   };
 
+  // Local-only update (immediate UI feedback)
   const updateProfileData = (profileFields) => {
     setSettings((prev) => ({ ...prev, ...profileFields }));
     showToast('Seller Profile updated successfully');
   };
+
+  // Backend-persisting profile update
+  const saveProfileToBackend = useCallback(async (profileFields) => {
+    try {
+      const res = await sellerAuthService.updateDashboardProfile(profileFields);
+      if (res?.data?.seller) {
+        const s = res.data.seller;
+        updateProfileData({
+          displayName: s.displayName || profileFields.displayName || '',
+          avatar: s.avatar || profileFields.avatar,
+          city: s.address?.city || profileFields.city,
+          state: s.address?.state || profileFields.state,
+          profileCompletion: s.dashboard?.profileCompletion,
+          ...profileFields,
+        });
+      }
+      showToast('Profile saved successfully!');
+      return res;
+    } catch (err) {
+      showToast(err?.message || 'Failed to save profile', 'error');
+      throw err;
+    }
+  }, []);
+
+  // Backend-persisting settings update
+  const saveSettingsToBackend = useCallback(async (settingsData) => {
+    try {
+      const res = await sellerAuthService.updateSettings(settingsData);
+      if (res?.data?.settings) {
+        const s = res.data.settings;
+        setSettings((prev) => ({
+          ...prev,
+          notificationSettings: s.notifications || prev.notificationSettings,
+          privacySettings: s.privacy || prev.privacySettings,
+          shippingSettings: s.shipping || prev.shippingSettings,
+          returnsSettings: s.returns || prev.returnsSettings,
+        }));
+      }
+      showToast('Settings saved successfully!');
+      return res;
+    } catch (err) {
+      showToast(err?.message || 'Failed to save settings', 'error');
+      throw err;
+    }
+  }, []);
 
   // ─── Computed Dynamic Stats ───────────────────────────────────────────────
 
@@ -561,6 +688,7 @@ export const SellerProvider = ({ children }) => {
     <SellerContext.Provider
       value={{
         settings,
+        sellerLoading,
         activePersona,
         setActivePersona,
         products,
@@ -575,9 +703,12 @@ export const SellerProvider = ({ children }) => {
         // Order Actions
         updateOrderStatus,
         cancelOrder,
-        // Settings & Profile
+        // Settings & Profile (local)
         updateSettings,
         updateProfileData,
+        // Settings & Profile (backend-persisting)
+        saveProfileToBackend,
+        saveSettingsToBackend,
       }}
     >
       {children}

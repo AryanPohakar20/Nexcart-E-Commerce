@@ -1,6 +1,8 @@
 import axiosInstance from '../api/axios';
 
 const sellerAuthService = {
+  // ─── Auth ──────────────────────────────────────────────────────────────────
+
   register: async (firstName, lastName, email, password, phone, username) => {
     try {
       const response = await axiosInstance.post('/seller/auth/register', {
@@ -47,6 +49,8 @@ const sellerAuthService = {
     }
   },
 
+  // ─── Onboarding ────────────────────────────────────────────────────────────
+
   createSellerEntry: async () => {
     try {
       const response = await axiosInstance.post('/seller/create');
@@ -65,6 +69,7 @@ const sellerAuthService = {
     }
   },
 
+  /** @deprecated Use getDashboardProfile instead */
   getProfile: async () => {
     try {
       const response = await axiosInstance.get('/seller/profile');
@@ -74,6 +79,7 @@ const sellerAuthService = {
     }
   },
 
+  /** @deprecated Use updateDashboardProfile instead */
   updateProfile: async (data) => {
     try {
       const response = await axiosInstance.put('/seller/onboarding/step-2', data);
@@ -91,9 +97,7 @@ const sellerAuthService = {
       if (data.backImage) formData.append('backImage', data.backImage);
 
       const response = await axiosInstance.put('/seller/onboarding/step-3', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
     } catch (error) {
@@ -122,6 +126,149 @@ const sellerAuthService = {
   getVerificationStatus: async () => {
     try {
       const response = await axiosInstance.get('/seller/verification-status');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // ─── Dashboard Profile ─────────────────────────────────────────────────────
+
+  /** Get full dashboard seller profile (replaces dummy data). */
+  getDashboardProfile: async () => {
+    try {
+      const response = await axiosInstance.get('/seller/dashboard/profile');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /** Update seller profile fields (type-aware: individual vs business). */
+  updateDashboardProfile: async (data) => {
+    try {
+      const response = await axiosInstance.put('/seller/dashboard/profile', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Upload/replace profile photo (individual) or business logo (business).
+   * @param {File} file - Image file from input[type=file]
+   */
+  updateProfileImage: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await axiosInstance.patch('/seller/dashboard/profile/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Upload/replace business banner image (business sellers only).
+   * @param {File} file - Banner image file
+   */
+  updateBanner: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('banner', file);
+      const response = await axiosInstance.patch('/seller/dashboard/profile/banner', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /** Get dashboard summary stats (trust score, completion, etc.) */
+  getDashboardSummary: async () => {
+    try {
+      const response = await axiosInstance.get('/seller/dashboard/summary');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // ─── Settings ──────────────────────────────────────────────────────────────
+
+  /** Fetch seller settings (notifications, privacy, shipping, returns). */
+  getSettings: async () => {
+    try {
+      const response = await axiosInstance.get('/seller/dashboard/settings');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Update seller settings (partial update — only provided sections change).
+   * @param {Object} data - { notifications?, privacy?, shipping?, returns? }
+   */
+  updateSettings: async (data) => {
+    try {
+      const response = await axiosInstance.put('/seller/dashboard/settings', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /**
+   * Change seller account password.
+   * @param {string} currentPassword
+   * @param {string} newPassword
+   */
+  changePassword: async (currentPassword, newPassword) => {
+    try {
+      const response = await axiosInstance.patch('/seller/dashboard/settings/password', {
+        currentPassword,
+        newPassword,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /** Soft-deactivate the store (keeps data, marks as inactive). */
+  deactivateStore: async () => {
+    try {
+      const response = await axiosInstance.patch('/seller/dashboard/settings/deactivate');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  /** Permanently delete the seller store and all associated data. */
+  deleteStore: async () => {
+    try {
+      const response = await axiosInstance.delete('/seller/dashboard/settings/delete');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // ─── Public Discovery ──────────────────────────────────────────────────────
+
+  /**
+   * Get public seller profile by slug (no auth required).
+   * @param {string} slug - e.g. 'aryan-pohakar'
+   */
+  getPublicProfile: async (slug) => {
+    try {
+      const response = await axiosInstance.get(`/seller/public/${slug}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
