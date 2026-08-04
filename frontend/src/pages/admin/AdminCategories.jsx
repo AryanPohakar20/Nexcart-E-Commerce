@@ -1,17 +1,18 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiTag, FiGrid, FiList, FiPlus, FiEdit2, FiTrash2, FiBox,
-  FiChevronRight, FiFolder, FiX, FiCheck
+  FiChevronRight, FiFolder, FiX, FiCheck, FiRefreshCw
 } from 'react-icons/fi';
 import StatusBadge from '../../components/admin/shared/StatusBadge';
 import ActionDropdown from '../../components/admin/shared/ActionDropdown';
 import TableToolbar from '../../components/admin/shared/TableToolbar';
 import ConfirmDialog from '../../components/admin/shared/ConfirmDialog';
-import { ADMIN_CATEGORIES } from '../../constants/adminDummyData';
+import adminService from '../../services/adminService';
 
 const AdminCategories = () => {
-  const [categories, setCategories] = useState(ADMIN_CATEGORIES);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,23 +24,51 @@ const AdminCategories = () => {
     name: '',
     slug: '',
     parent: '',
-    active: true,
+    status: 'Active',
+    description: '',
   });
 
-  const filtered = useMemo(() => {
-    return categories.filter((c) => {
-      return (
-        !search ||
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.slug.toLowerCase().includes(search.toLowerCase()) ||
-        (c.parent && c.parent.toLowerCase().includes(search.toLowerCase()))
-      );
-    });
-  }, [categories, search]);
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminService.getCategories({ limit: 100 });
+      if (res.data?.categories) {
+        const mapped = res.data.categories.map((c) => ({
+          id: c._id,
+          name: c.name,
+          slug: c.slug,
+          productCount: c.productCount || 0,
+          parent: c.parentCategory?.name || null,
+          parentId: c.parent?._id || c.parent || null,
+          status: c.status || 'Active',
+          description: c.description || '',
+          order: c.order || 0,
+        }));
+        setCategories(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const filtered = categories.filter((c) => {
+    return (
+      !search ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.slug.toLowerCase().includes(search.toLowerCase()) ||
+      (c.parent && c.parent.toLowerCase().includes(search.toLowerCase()))
+    );
+  });
 
   const openCreateModal = () => {
     setEditingCategory(null);
-    setFormState({ name: '', slug: '', parent: '', active: true });
+    setFormState({ name: '', slug: '', parent: '', status: 'Active', description: '' });
     setIsModalOpen(true);
   };
 
@@ -48,42 +77,36 @@ const AdminCategories = () => {
     setFormState({
       name: category.name,
       slug: category.slug,
-      parent: category.parent || '',
-      active: category.active,
+      parent: category.parentId || '',
+      status: category.status,
+      description: category.description || '',
     });
     setIsModalOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!formState.name) return;
 
-    if (editingCategory) {
-      setCategories((prev) =>
-        prev.map((c) =>
-          c.id === editingCategory.id
-            ? {
-                ...c,
-                name: formState.name,
-                slug: formState.slug || formState.name.toLowerCase().replace(/\s+/g, '-'),
-                parent: formState.parent || null,
-                active: formState.active,
-              }
-            : c
-        )
-      );
-    } else {
-      const newCat = {
-        id: `cat_${Date.now().toString().slice(-4)}`,
+    try {
+      const payload = {
         name: formState.name,
-        slug: formState.slug || formState.name.toLowerCase().replace(/\s+/g, '-'),
-        productCount: 0,
+        slug: formState.slug || undefined,
         parent: formState.parent || null,
-        active: formState.active,
+        status: formState.status,
+        description: formState.description,
       };
-      setCategories((prev) => [newCat, ...prev]);
+
+      if (editingCategory) {
+        await adminService.updateCategory(editingCategory.id, payload);
+      } else {
+        await adminService.createCategory(payload);
+      }
+      setIsModalOpen(false);
+      fetchCategories();
+    } catch (err) {
+      console.error('Failed to save category:', err);
     }
-    setIsModalOpen(false);
   };
 
   const handleDelete = (category) => {
@@ -105,9 +128,14 @@ const AdminCategories = () => {
       message: `Are you sure you want to delete category "${category.name}"?`,
       type: 'danger',
       confirmLabel: 'Delete',
-      onConfirm: () => {
-        setCategories((prev) => prev.filter((c) => c.id !== category.id));
-        setConfirmDialog({ open: false });
+      onConfirm: async () => {
+        try {
+          await adminService.deleteCategory(category.id);
+          setConfirmDialog({ open: false });
+          fetchCategories();
+        } catch (err) {
+          console.error('Failed to delete category:', err);
+        }
       },
     });
   };
@@ -171,7 +199,12 @@ const AdminCategories = () => {
         />
 
         {/* View Mode: Grid */}
-        {viewMode === 'grid' ? (
+        {loading ? (
+          <div className="p-12 text-center text-gray-500">
+            <FiRefreshCw className="animate-spin inline mr-2" size={16} />
+            Loading category architecture...
+          </div>
+        ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filtered.map((cat) => (
               <motion.div
@@ -261,7 +294,7 @@ const AdminCategories = () => {
                     </td>
                     <td className="p-4 font-bold text-white">{cat.productCount} listings</td>
                     <td className="p-4">
-                      <StatusBadge status={cat.active ? 'active' : 'inactive'} />
+                      <StatusBadge status={cat.status.toLowerCase()} />
                     </td>
                     <td className="p-4 text-right space-x-2">
                       <button
@@ -355,7 +388,7 @@ const AdminCategories = () => {
                     {categories
                       .filter((c) => !editingCategory || c.id !== editingCategory.id)
                       .map((c) => (
-                        <option key={c.id} value={c.name}>
+                        <option key={c.id} value={c.id}>
                           {c.name}
                         </option>
                       ))}
@@ -366,8 +399,10 @@ const AdminCategories = () => {
                   <input
                     type="checkbox"
                     id="activeToggle"
-                    checked={formState.active}
-                    onChange={(e) => setFormState({ ...formState, active: e.target.checked })}
+                    checked={formState.status === 'Active'}
+                    onChange={(e) =>
+                      setFormState({ ...formState, status: e.target.checked ? 'Active' : 'Inactive' })
+                    }
                     className="w-4 h-4 rounded accent-yellow-500"
                   />
                   <label htmlFor="activeToggle" className="text-gray-300 font-bold cursor-pointer">

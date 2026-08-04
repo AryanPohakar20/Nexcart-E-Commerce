@@ -10,13 +10,17 @@ import ActionDropdown from '../../components/admin/shared/ActionDropdown';
 import TableToolbar from '../../components/admin/shared/TableToolbar';
 import Pagination from '../../components/admin/shared/Pagination';
 import ConfirmDialog from '../../components/admin/shared/ConfirmDialog';
-import { ADMIN_USERS } from '../../constants/adminDummyData';
+import adminService from '../../services/adminService';
 
 const ROLE_OPTIONS = ['All Roles', 'customer', 'seller', 'marketplace_seller'];
 const STATUS_OPTIONS = ['All Status', 'active', 'suspended', 'blocked'];
 
 const AdminUsers = () => {
-  const [users, setUsers] = useState(ADMIN_USERS);
+  const [users, setUsers] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All Roles');
   const [statusFilter, setStatusFilter] = useState('All Status');
@@ -26,37 +30,72 @@ const AdminUsers = () => {
   const [confirmDialog, setConfirmDialog] = useState({ open: false });
   const perPage = 10;
 
-  const filtered = useMemo(() => {
-    return users.filter((u) => {
-      const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
-      const matchRole = roleFilter === 'All Roles' || u.role === roleFilter;
-      const matchStatus = statusFilter === 'All Status' || u.status === statusFilter;
-      return matchSearch && matchRole && matchStatus;
-    });
-  }, [users, search, roleFilter, statusFilter]);
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        page,
+        limit: perPage,
+        ...(search && { search }),
+        ...(roleFilter !== 'All Roles' && { role: roleFilter }),
+        ...(statusFilter !== 'All Status' && { status: statusFilter === 'active' ? 'Active' : statusFilter === 'suspended' ? 'Suspended' : 'Blocked' }),
+      };
+      const res = await adminService.getUsers(params);
+      setUsers(res.data.users);
+      setTotalItems(res.data.pagination.totalItems);
+      setTotalPages(res.data.pagination.totalPages);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
-  const totalPages = Math.ceil(filtered.length / perPage);
+  React.useEffect(() => {
+    fetchUsers();
+  }, [page, search, roleFilter, statusFilter]);
 
   const toggleSelectAll = () => {
-    if (selected.length === paged.length) setSelected([]);
-    else setSelected(paged.map((u) => u.id));
+    if (selected.length === users.length) setSelected([]);
+    else setSelected(users.map((u) => u._id));
   };
 
   const toggleSelect = (id) => {
     setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
 
-  const handleAction = (action, user) => {
+  const handleAction = async (action, user) => {
     if (action === 'view') setDrawerUser(user);
     else if (action === 'suspend') {
-      setConfirmDialog({ open: true, title: 'Suspend User', message: `Suspend ${user.name}? They won't be able to login.`, type: 'warning', onConfirm: () => { setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: 'suspended' } : u)); setConfirmDialog({ open: false }); } });
+      setConfirmDialog({
+        open: true, title: 'Suspend User', message: `Suspend ${user.firstName}? They won't be able to login.`, type: 'warning',
+        onConfirm: async () => {
+          await adminService.suspendUser(user._id, 'Suspended by admin');
+          setConfirmDialog({ open: false });
+          fetchUsers();
+        }
+      });
     } else if (action === 'block') {
-      setConfirmDialog({ open: true, title: 'Block User', message: `Permanently block ${user.name}?`, type: 'danger', onConfirm: () => { setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: 'blocked' } : u)); setConfirmDialog({ open: false }); } });
+      setConfirmDialog({
+        open: true, title: 'Block User', message: `Permanently block ${user.firstName}?`, type: 'danger',
+        onConfirm: async () => {
+          await adminService.blockUser(user._id, 'Blocked by admin');
+          setConfirmDialog({ open: false });
+          fetchUsers();
+        }
+      });
     } else if (action === 'activate') {
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: 'active' } : u));
+      await adminService.activateUser(user._id);
+      fetchUsers();
     } else if (action === 'delete') {
-      setConfirmDialog({ open: true, title: 'Delete User', message: `Permanently delete ${user.name}? This cannot be undone.`, type: 'danger', confirmLabel: 'Delete', onConfirm: () => { setUsers(prev => prev.filter(u => u.id !== user.id)); setConfirmDialog({ open: false }); } });
+      setConfirmDialog({
+        open: true, title: 'Delete User', message: `Permanently delete ${user.firstName}? This cannot be undone.`, type: 'danger', confirmLabel: 'Delete',
+        onConfirm: async () => {
+          await adminService.deleteUser(user._id);
+          setConfirmDialog({ open: false });
+          fetchUsers();
+        }
+      });
     }
   };
 
@@ -64,7 +103,7 @@ const AdminUsers = () => {
     { label: 'View Details', icon: FiEye, onClick: () => handleAction('view', user) },
     { label: 'Edit User', icon: FiEdit2, onClick: () => {} },
     { type: 'divider' },
-    ...(user.status === 'active' ? [
+    ...(user.status?.toLowerCase() === 'active' ? [
       { label: 'Suspend', icon: FiPauseCircle, onClick: () => handleAction('suspend', user), warning: true },
       { label: 'Block', icon: FiSlash, onClick: () => handleAction('block', user), danger: true },
     ] : [
@@ -121,7 +160,7 @@ const AdminUsers = () => {
             <thead>
               <tr className="bg-white/3 border-b border-white/5 text-gray-500 uppercase tracking-wider font-bold">
                 <th className="p-4 w-10">
-                  <input type="checkbox" checked={paged.length > 0 && selected.length === paged.length} onChange={toggleSelectAll} className="w-3.5 h-3.5 rounded accent-yellow-500" />
+                  <input type="checkbox" checked={users.length > 0 && selected.length === users.length} onChange={toggleSelectAll} className="w-3.5 h-3.5 rounded accent-yellow-500" />
                 </th>
                 <th className="p-4">User</th>
                 <th className="p-4">Email</th>
@@ -133,35 +172,58 @@ const AdminUsers = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/3">
-              {paged.map((user) => (
-                <tr key={user.id} className="hover:bg-white/3 transition-colors group">
-                  <td className="p-4">
-                    <input type="checkbox" checked={selected.includes(user.id)} onChange={() => toggleSelect(user.id)} className="w-3.5 h-3.5 rounded accent-yellow-500" />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-white/10" />
-                      <div>
-                        <p className="text-sm font-bold text-white">{user.name}</p>
-                        <p className="text-[10px] text-gray-500">{user.location}</p>
-                      </div>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center text-gray-500">
+                    <div className="flex justify-center mb-2">
+                      <div className="w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                  </td>
-                  <td className="p-4 text-gray-400">{user.email}</td>
-                  <td className="p-4 text-gray-400 hidden lg:table-cell">{user.phone}</td>
-                  <td className="p-4"><StatusBadge status={user.role} /></td>
-                  <td className="p-4"><StatusBadge status={user.status} /></td>
-                  <td className="p-4 text-gray-500 hidden md:table-cell">{user.joined}</td>
-                  <td className="p-4 text-right">
-                    <ActionDropdown actions={getActions(user)} />
+                    Loading users...
                   </td>
                 </tr>
-              ))}
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center text-gray-500">No users found</td>
+                </tr>
+              ) : (
+                users.map((user) => (
+                  <tr key={user._id} className="hover:bg-white/3 transition-colors group">
+                    <td className="p-4">
+                      <input type="checkbox" checked={selected.includes(user._id)} onChange={() => toggleSelect(user._id)} className="w-3.5 h-3.5 rounded accent-yellow-500" />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        {user.avatar ? (
+                          <img src={user.avatar} alt={user.firstName} className="w-8 h-8 rounded-full object-cover border border-white/10" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white border border-white/10">
+                            {user.firstName?.[0]}{user.lastName?.[0]}
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-bold text-white">{user.firstName} {user.lastName}</p>
+                          <p className="text-[10px] text-gray-500">{(user.isVerified || user.profileCompleted) ? 'Verified Profile' : 'Unverified'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-gray-400">{user.email}</td>
+                    <td className="p-4 text-gray-400 hidden lg:table-cell">{user.phone}</td>
+                    <td className="p-4"><StatusBadge status={user.role} /></td>
+                    <td className="p-4"><StatusBadge status={user.status} /></td>
+                    <td className="p-4 text-gray-500 hidden md:table-cell">{new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td className="p-4 text-right">
+                      <ActionDropdown actions={getActions(user)} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalItems={filtered.length} itemsPerPage={perPage} />
+        {!loading && users.length > 0 && (
+          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} totalItems={totalItems} itemsPerPage={perPage} />
+        )}
       </div>
 
       {/* User Details Drawer */}
@@ -185,13 +247,19 @@ const AdminUsers = () => {
 
                 {/* Profile Card */}
                 <div className="bg-white/3 border border-white/5 rounded-2xl p-5 text-center">
-                  <img src={drawerUser.avatar} alt={drawerUser.name} className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-yellow-500/30 mb-3" />
-                  <h4 className="text-lg font-bold text-white">{drawerUser.name}</h4>
+                  {drawerUser.avatar ? (
+                    <img src={drawerUser.avatar} alt={drawerUser.firstName} className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-yellow-500/30 mb-3" />
+                  ) : (
+                    <div className="w-20 h-20 mx-auto rounded-full bg-white/10 flex items-center justify-center text-3xl font-bold text-white border-2 border-yellow-500/30 mb-3">
+                      {drawerUser.firstName?.[0]}{drawerUser.lastName?.[0]}
+                    </div>
+                  )}
+                  <h4 className="text-lg font-bold text-white">{drawerUser.firstName} {drawerUser.lastName}</h4>
                   <div className="flex items-center justify-center gap-2 mt-2">
                     <StatusBadge status={drawerUser.role} size="md" />
                     <StatusBadge status={drawerUser.status} size="md" />
                   </div>
-                  {drawerUser.verified && (
+                  {(drawerUser.isVerified || drawerUser.profileCompleted) && (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-cyan-400 mt-2">
                       <FiCheckCircle size={11} /> Verified Account
                     </span>
@@ -209,20 +277,16 @@ const AdminUsers = () => {
                     <FiPhone size={14} className="text-gray-500" />
                     <span className="text-gray-300">{drawerUser.phone}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <FiMapPin size={14} className="text-gray-500" />
-                    <span className="text-gray-300">{drawerUser.location}</span>
-                  </div>
                 </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-center">
-                    <p className="text-lg font-black text-white">{drawerUser.orders}</p>
+                    <p className="text-lg font-black text-white">-</p>
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">Orders</p>
                   </div>
                   <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-center">
-                    <p className="text-lg font-black text-white">₹{drawerUser.totalSpent.toLocaleString('en-IN')}</p>
+                    <p className="text-lg font-black text-white">₹0</p>
                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">Total Spent</p>
                   </div>
                 </div>
@@ -231,8 +295,8 @@ const AdminUsers = () => {
                 <div className="bg-white/3 border border-white/5 rounded-2xl p-4">
                   <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Activity</h5>
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between"><span className="text-gray-500">Joined</span><span className="text-white font-semibold">{drawerUser.joined}</span></div>
-                    <div className="flex justify-between"><span className="text-gray-500">Last Active</span><span className="text-white font-semibold">{drawerUser.lastActive}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">Joined</span><span className="text-white font-semibold">{new Date(drawerUser.createdAt).toLocaleDateString()}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500">Last Active</span><span className="text-white font-semibold">{drawerUser.lastLogin ? new Date(drawerUser.lastLogin).toLocaleDateString() : 'N/A'}</span></div>
                   </div>
                 </div>
 

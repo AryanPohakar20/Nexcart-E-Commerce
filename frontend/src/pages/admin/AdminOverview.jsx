@@ -9,21 +9,21 @@ import {
 import StatsCard from '../../components/admin/shared/StatsCard';
 import DashboardChart, { ChartCard } from '../../components/admin/shared/DashboardChart';
 import StatusBadge from '../../components/admin/shared/StatusBadge';
+import adminService from '../../services/adminService';
 import {
-  PLATFORM_STATS, REVENUE_MONTHLY, USER_GROWTH_MONTHLY,
-  ADMIN_USERS, ADMIN_ORDERS, ADMIN_SELLERS, ADMIN_PRODUCTS,
-  RECENT_ACTIVITY, SYSTEM_ALERTS, ADMIN_VERIFICATIONS
+  REVENUE_MONTHLY, USER_GROWTH_MONTHLY,
+  ADMIN_ORDERS, SYSTEM_ALERTS
 } from '../../constants/adminDummyData';
 
-const STATS_CARDS = [
-  { label: 'Total Users', value: PLATFORM_STATS.totalUsers, icon: FiUsers, color: 'blue', trend: 12.4, trendLabel: '+2,840 this month', delay: 0 },
-  { label: 'Total Sellers', value: PLATFORM_STATS.totalSellers, icon: FiShoppingBag, color: 'purple', trend: 8.7, trendLabel: '+124 this month', delay: 0.05 },
-  { label: 'Products', value: PLATFORM_STATS.totalProducts, icon: FiPackage, color: 'yellow', trend: 5.2, trendLabel: '+1,240 this month', delay: 0.1 },
-  { label: 'Orders', value: PLATFORM_STATS.totalOrders, icon: FiShoppingCart, color: 'green', trend: 15.6, trendLabel: '+4,120 this month', delay: 0.15 },
-  { label: 'Revenue', value: PLATFORM_STATS.totalRevenue, icon: FiDollarSign, color: 'yellow', prefix: '₹', trend: 23.1, trendLabel: '+₹14.2L this month', delay: 0.2 },
-  { label: 'Pending Verifications', value: PLATFORM_STATS.pendingVerifications, icon: FiCheckSquare, color: 'orange', trend: -5, trendLabel: '5 fewer than yesterday', delay: 0.25 },
-  { label: 'Blocked Users', value: PLATFORM_STATS.blockedUsers, icon: FiXCircle, color: 'red', trend: 2.3, trendLabel: '+3 this week', delay: 0.3 },
-  { label: 'Open Reports', value: PLATFORM_STATS.openReports, icon: FiAlertTriangle, color: 'red', trend: -12, trendLabel: '12 resolved today', delay: 0.35 },
+const getStatsCards = (stats) => [
+  { label: 'Total Users', value: stats?.users?.total || 0, icon: FiUsers, color: 'blue', trend: 12.4, trendLabel: '+2,840 this month', delay: 0 },
+  { label: 'Total Sellers', value: stats?.sellers?.total || 0, icon: FiShoppingBag, color: 'purple', trend: 8.7, trendLabel: '+124 this month', delay: 0.05 },
+  { label: 'Products', value: stats?.products?.total || 0, icon: FiPackage, color: 'yellow', trend: 5.2, trendLabel: '+1,240 this month', delay: 0.1 },
+  { label: 'Orders', value: stats?.orders?.total || 0, icon: FiShoppingCart, color: 'green', trend: 15.6, trendLabel: '+4,120 this month', delay: 0.15 },
+  { label: 'Revenue', value: stats?.revenue?.total || 0, icon: FiDollarSign, color: 'yellow', prefix: '₹', trend: 23.1, trendLabel: '+₹14.2L this month', delay: 0.2 },
+  { label: 'Pending Verifications', value: stats?.sellers?.pendingVerify || 0, icon: FiCheckSquare, color: 'orange', trend: -5, trendLabel: '5 fewer than yesterday', delay: 0.25 },
+  { label: 'Blocked Users', value: stats?.users?.blocked || 0, icon: FiXCircle, color: 'red', trend: 2.3, trendLabel: '+3 this week', delay: 0.3 },
+  { label: 'Open Reports', value: 0, icon: FiAlertTriangle, color: 'red', trend: -12, trendLabel: '12 resolved today', delay: 0.35 },
 ];
 
 const activityTypeIcon = {
@@ -45,6 +45,64 @@ const alertTypeConfig = {
 const AdminOverview = () => {
   const navigate = useNavigate();
   const [chartRange, setChartRange] = useState('monthly');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const [stats, setStats] = useState(null);
+  const [recentUsers, setRecentUsers] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [pendingVerifications, setPendingVerifications] = useState([]);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [statsRes, usersRes, activityRes, verificationsRes] = await Promise.all([
+          adminService.getDashboardStats(),
+          adminService.getRecentUsers(5),
+          adminService.getRecentActivity(10),
+          adminService.getPendingVerifications(5)
+        ]);
+        
+        setStats(statsRes.data);
+        setRecentUsers(usersRes.data?.users || []);
+        setRecentActivity((activityRes.data?.logs || []).map(log => ({
+          id: log._id,
+          type: log.module ? log.module.toLowerCase().slice(0, -1) : 'system',
+          event: log.action,
+          detail: `${log.target} in ${log.module}`,
+          time: new Date(log.createdAt).toLocaleDateString()
+        })));
+        setPendingVerifications(verificationsRes.data?.sellers || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <FiAlertTriangle className="text-red-500 mb-4" size={48} />
+        <h3 className="text-lg font-bold text-white mb-2">Error Loading Dashboard</h3>
+        <p className="text-sm text-gray-400 max-w-md">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -75,7 +133,7 @@ const AdminOverview = () => {
 
       {/* Stats Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {STATS_CARDS.map((card) => (
+        {getStatsCards(stats).map((card) => (
           <StatsCard key={card.label} {...card} />
         ))}
       </div>
@@ -166,11 +224,13 @@ const AdminOverview = () => {
             </button>
           </div>
           <div className="divide-y divide-white/3">
-            {ADMIN_USERS.slice(0, 5).map((u) => (
-              <div key={u.id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/3 transition-colors">
-                <img src={u.avatar} alt={u.name} className="w-8 h-8 rounded-full object-cover" />
+            {recentUsers.map((u) => (
+              <div key={u._id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/3 transition-colors">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white">
+                  {u.firstName?.[0]}{u.lastName?.[0]}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-white truncate">{u.name}</p>
+                  <p className="text-xs font-bold text-white truncate">{u.firstName} {u.lastName}</p>
                   <p className="text-[10px] text-gray-500 truncate">{u.email}</p>
                 </div>
                 <StatusBadge status={u.status} size="sm" />
@@ -217,7 +277,7 @@ const AdminOverview = () => {
               </h3>
             </div>
             <div className="divide-y divide-white/3 max-h-48 overflow-y-auto">
-              {RECENT_ACTIVITY.map((a) => {
+              {recentActivity.length > 0 ? recentActivity.map((a) => {
                 const Icon = activityTypeIcon[a.type] || FiActivity;
                 return (
                   <div key={a.id} className="flex items-start gap-3 px-5 py-3">
@@ -231,7 +291,9 @@ const AdminOverview = () => {
                     <span className="text-[9px] text-gray-600 whitespace-nowrap">{a.time}</span>
                   </div>
                 );
-              })}
+              }) : (
+                <div className="p-5 text-center text-xs text-gray-500">No recent activity</div>
+              )}
             </div>
           </div>
 
@@ -273,15 +335,17 @@ const AdminOverview = () => {
             </button>
           </div>
           <div className="divide-y divide-white/3">
-            {ADMIN_VERIFICATIONS.filter(v => v.status === 'pending').map((v) => (
-              <div key={v.id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/3 transition-colors">
-                <img src={v.logo} alt={v.seller} className="w-8 h-8 rounded-full object-cover" />
+            {pendingVerifications.length > 0 ? pendingVerifications.map((v) => (
+              <div key={v._id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/3 transition-colors">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white">
+                  {v.storeName?.[0]}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-white truncate">{v.seller}</p>
-                  <p className="text-[10px] text-gray-500">{v.documentType}</p>
+                  <p className="text-xs font-bold text-white truncate">{v.storeName || `${v.user?.firstName} ${v.user?.lastName}`}</p>
+                  <p className="text-[10px] text-gray-500">{v.sellerType}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <StatusBadge status={v.status} size="sm" />
+                  <StatusBadge status={v.verificationStatus} size="sm" />
                   <button
                     onClick={() => navigate('/admin/verification')}
                     className="text-[10px] font-bold text-yellow-400 hover:text-yellow-300 px-2.5 py-1 bg-yellow-500/10 rounded-lg"
@@ -290,7 +354,9 @@ const AdminOverview = () => {
                   </button>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="p-5 text-center text-xs text-gray-500">No pending verifications</div>
+            )}
           </div>
         </div>
 

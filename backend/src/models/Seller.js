@@ -321,6 +321,13 @@ const sellerSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     isSuspended: { type: Boolean, default: false },
     suspendedReason: { type: String, default: null },
+    isBlocked: { type: Boolean, default: false },
+    blockedReason: { type: String, default: null },
+
+    // ── Soft Delete ──────────────────────────────────────────────────
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 
     // ── New: Seller Settings ───────────────────────────────────────────────────
     settings: {
@@ -351,6 +358,9 @@ sellerSchema.index({ verificationStatus: 1 });
 sellerSchema.index({ rating: -1 });
 sellerSchema.index({ isActive: 1, sellerStatus: 1 });
 sellerSchema.index({ 'business.businessCategory': 1 });
+sellerSchema.index({ isDeleted: 1 });
+sellerSchema.index({ isBlocked: 1 });
+sellerSchema.index({ createdAt: -1 });
 
 // ─── Pre-save: Auto-generate sellerId ─────────────────────────────────────────
 // Slug is generated in the service layer (requires async DB lookups for uniqueness)

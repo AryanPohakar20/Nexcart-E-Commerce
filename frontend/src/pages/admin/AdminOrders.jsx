@@ -1,82 +1,126 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiShoppingCart, FiEye, FiCheckCircle, FiTruck, FiXCircle,
-  FiDollarSign, FiX, FiCalendar, FiCreditCard, FiMapPin, FiPackage
+  FiDollarSign, FiX, FiCalendar, FiCreditCard, FiMapPin, FiPackage,
+  FiRefreshCw
 } from 'react-icons/fi';
 import StatusBadge from '../../components/admin/shared/StatusBadge';
 import ActionDropdown from '../../components/admin/shared/ActionDropdown';
 import TableToolbar from '../../components/admin/shared/TableToolbar';
 import Pagination from '../../components/admin/shared/Pagination';
 import ConfirmDialog from '../../components/admin/shared/ConfirmDialog';
-import { ADMIN_ORDERS } from '../../constants/adminDummyData';
+import adminService from '../../services/adminService';
 
 const STATUS_OPTIONS = ['All Statuses', 'delivered', 'shipped', 'processing', 'cancelled', 'pending'];
-const PAYMENT_OPTIONS = ['All Payments', 'paid', 'pending', 'refunded'];
+const PAYMENT_OPTIONS = ['All Payments', 'paid', 'pending', 'refunded', 'failed'];
 
 const AdminOrders = () => {
-  const [orders, setOrders] = useState(ADMIN_ORDERS);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [paymentFilter, setPaymentFilter] = useState('All Payments');
   const [selected, setSelected] = useState([]);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [drawerOrder, setDrawerOrder] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false });
   const perPage = 10;
 
-  const filtered = useMemo(() => {
-    return orders.filter((o) => {
-      const matchSearch =
-        !search ||
-        o.id.toLowerCase().includes(search.toLowerCase()) ||
-        o.customer.toLowerCase().includes(search.toLowerCase()) ||
-        o.seller.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter === 'All Statuses' || o.status === statusFilter;
-      const matchPayment = paymentFilter === 'All Payments' || o.paymentStatus === paymentFilter;
-      return matchSearch && matchStatus && matchPayment;
-    });
-  }, [orders, search, statusFilter, paymentFilter]);
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page,
+        limit: perPage,
+      };
 
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
-  const totalPages = Math.ceil(filtered.length / perPage) || 1;
+      if (search.trim()) params.search = search.trim();
+      if (statusFilter !== 'All Statuses') params.status = statusFilter;
+      if (paymentFilter !== 'All Payments') params.paymentStatus = paymentFilter;
+
+      const res = await adminService.getOrders(params);
+      if (res.data) {
+        const mapped = (res.data.orders || []).map((o) => ({
+          id: o._id,
+          orderId: o.orderId || o._id.slice(-6).toUpperCase(),
+          customer: o.customer
+            ? `${o.customer.firstName || ''} ${o.customer.lastName || ''}`.trim()
+            : o.shippingAddress?.fullName || 'Customer',
+          customerEmail: o.customer?.email || 'N/A',
+          seller: o.seller?.business?.businessName || o.seller?.accountInfo?.displayName || o.seller?.slug || 'Direct Fulfillment',
+          total: o.totalAmount || 0,
+          items: o.items?.length || 1,
+          itemList: o.items || [],
+          status: o.orderStatus?.toLowerCase() || 'pending',
+          paymentStatus: o.paymentInfo?.status?.toLowerCase() || 'pending',
+          paymentMethod: o.paymentInfo?.method || 'Card',
+          shippingAddress: o.shippingAddress || {},
+          date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+          deliveredDate: o.deliveredDate ? new Date(o.deliveredDate).toLocaleDateString('en-IN') : null,
+          statusHistory: o.statusHistory || [],
+        }));
+
+        setOrders(mapped);
+        setTotalPages(res.data.pagination?.pages || 1);
+        setTotalItems(res.data.pagination?.total || 0);
+      }
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, statusFilter, paymentFilter]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const toggleSelectAll = () => {
-    if (selected.length === paged.length) setSelected([]);
-    else setSelected(paged.map((o) => o.id));
+    if (selected.length === orders.length) setSelected([]);
+    else setSelected(orders.map((o) => o.id));
   };
 
   const toggleSelect = (id) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
+  const updateOrderStatus = async (orderId, newStatus, note = '') => {
+    try {
+      await adminService.updateOrderStatus(orderId, newStatus, note);
+      fetchOrders();
+      if (drawerOrder && drawerOrder.id === orderId) {
+        setDrawerOrder((prev) => ({ ...prev, status: newStatus }));
+      }
+    } catch (err) {
+      console.error('Failed to update order status:', err);
+    }
   };
 
   const handleAction = (action, order) => {
     if (action === 'view') {
       setDrawerOrder(order);
     } else if (action === 'mark_shipped') {
-      updateOrderStatus(order.id, 'shipped');
+      updateOrderStatus(order.id, 'shipped', 'Order dispatched via courier');
     } else if (action === 'mark_delivered') {
-      updateOrderStatus(order.id, 'delivered');
+      updateOrderStatus(order.id, 'delivered', 'Order delivered to recipient');
     } else if (action === 'cancel') {
       setConfirmDialog({
         open: true,
         title: 'Cancel Order & Issue Refund',
-        message: `Are you sure you want to cancel order ${order.id}? The customer will be refunded ₹${order.total.toLocaleString('en-IN')}.`,
+        message: `Are you sure you want to cancel order ${order.orderId}? The customer will be refunded ₹${order.total.toLocaleString('en-IN')}.`,
         type: 'danger',
         confirmLabel: 'Cancel & Refund',
-        onConfirm: () => {
-          setOrders((prev) =>
-            prev.map((o) =>
-              o.id === order.id ? { ...o, status: 'cancelled', paymentStatus: 'refunded' } : o
-            )
-          );
-          setConfirmDialog({ open: false });
+        onConfirm: async () => {
+          try {
+            await adminService.cancelOrder(order.id, 'Cancelled by admin request');
+            setConfirmDialog({ open: false });
+            fetchOrders();
+          } catch (err) {
+            console.error('Failed to cancel order:', err);
+          }
         },
       });
     }
@@ -85,7 +129,7 @@ const AdminOrders = () => {
   const getActions = (order) => [
     { label: 'View Order Dossier', icon: FiEye, onClick: () => handleAction('view', order) },
     { type: 'divider' },
-    ...(order.status === 'processing'
+    ...(order.status === 'processing' || order.status === 'pending'
       ? [{ label: 'Dispatch / Mark Shipped', icon: FiTruck, onClick: () => handleAction('mark_shipped', order), success: true }]
       : []),
     ...(order.status === 'shipped'
@@ -99,19 +143,28 @@ const AdminOrders = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-black text-white tracking-tight">Order Fulfillment Center</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Track transaction streams, logistics pipelines, refunds, and merchant payouts
-        </p>
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-white tracking-tight">Order Fulfillment Center</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Track transaction streams, logistics pipelines, refunds, and merchant payouts
+          </p>
+        </div>
+        <button
+          onClick={fetchOrders}
+          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold bg-white/5 border border-white/10 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-colors w-fit"
+        >
+          <FiRefreshCw className={loading ? 'animate-spin' : ''} />
+          Refresh
+        </button>
       </motion.div>
 
       {/* Table Card */}
       <div className="bg-[#1A1A1A] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
         <TableToolbar
           search={search}
-          onSearch={setSearch}
-          onSearchClear={() => setSearch('')}
+          onSearch={(val) => { setSearch(val); setPage(1); }}
+          onSearchClear={() => { setSearch(''); setPage(1); }}
           searchPlaceholder="Search order ID, customer, merchant..."
           selectedCount={selected.length}
           onExport={() => {}}
@@ -119,7 +172,7 @@ const AdminOrders = () => {
             <>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
                 className="h-9 px-3 text-xs font-semibold bg-white/5 border border-white/8 rounded-xl text-gray-300 outline-none hover:border-white/20"
               >
                 {STATUS_OPTIONS.map((s) => (
@@ -130,7 +183,7 @@ const AdminOrders = () => {
               </select>
               <select
                 value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value)}
+                onChange={(e) => { setPaymentFilter(e.target.value); setPage(1); }}
                 className="h-9 px-3 text-xs font-semibold bg-white/5 border border-white/8 rounded-xl text-gray-300 outline-none hover:border-white/20"
               >
                 {PAYMENT_OPTIONS.map((p) => (
@@ -151,7 +204,7 @@ const AdminOrders = () => {
                 <th className="p-4 w-10">
                   <input
                     type="checkbox"
-                    checked={paged.length > 0 && selected.length === paged.length}
+                    checked={orders.length > 0 && selected.length === orders.length}
                     onChange={toggleSelectAll}
                     className="w-3.5 h-3.5 rounded accent-yellow-500"
                   />
@@ -167,45 +220,60 @@ const AdminOrders = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/3">
-              {paged.map((order) => (
-                <tr key={order.id} className="hover:bg-white/3 transition-colors group">
-                  <td className="p-4">
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(order.id)}
-                      onChange={() => toggleSelect(order.id)}
-                      className="w-3.5 h-3.5 rounded accent-yellow-500"
-                    />
-                  </td>
-                  <td className="p-4">
-                    <span className="font-mono font-bold text-yellow-400 group-hover:underline cursor-pointer" onClick={() => handleAction('view', order)}>
-                      {order.id}
-                    </span>
-                    <p className="text-[10px] text-gray-500">{order.items} items</p>
-                  </td>
-                  <td className="p-4">
-                    <p className="font-bold text-white">{order.customer}</p>
-                    <p className="text-[10px] text-gray-500">{order.customerEmail}</p>
-                  </td>
-                  <td className="p-4 text-gray-300 font-medium">{order.seller}</td>
-                  <td className="p-4 font-bold text-white text-sm">
-                    ₹{order.total.toLocaleString('en-IN')}
-                  </td>
-                  <td className="p-4">
-                    <div className="space-y-0.5">
-                      <StatusBadge status={order.paymentStatus} />
-                      <p className="text-[10px] text-gray-500 font-medium">{order.paymentMethod}</p>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <StatusBadge status={order.status} />
-                  </td>
-                  <td className="p-4 text-gray-400">{order.date}</td>
-                  <td className="p-4 text-right">
-                    <ActionDropdown actions={getActions(order)} />
+              {loading ? (
+                <tr>
+                  <td colSpan="9" className="p-12 text-center text-gray-500">
+                    <FiRefreshCw className="animate-spin inline mr-2" size={16} />
+                    Loading orders...
                   </td>
                 </tr>
-              ))}
+              ) : orders.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="p-12 text-center text-gray-500">
+                    No orders found matching the filter criteria.
+                  </td>
+                </tr>
+              ) : (
+                orders.map((order) => (
+                  <tr key={order.id} className="hover:bg-white/3 transition-colors group">
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(order.id)}
+                        onChange={() => toggleSelect(order.id)}
+                        className="w-3.5 h-3.5 rounded accent-yellow-500"
+                      />
+                    </td>
+                    <td className="p-4">
+                      <span className="font-mono font-bold text-yellow-400 group-hover:underline cursor-pointer" onClick={() => handleAction('view', order)}>
+                        {order.orderId}
+                      </span>
+                      <p className="text-[10px] text-gray-500">{order.items} items</p>
+                    </td>
+                    <td className="p-4">
+                      <p className="font-bold text-white">{order.customer}</p>
+                      <p className="text-[10px] text-gray-500">{order.customerEmail}</p>
+                    </td>
+                    <td className="p-4 text-gray-300 font-medium">{order.seller}</td>
+                    <td className="p-4 font-bold text-white text-sm">
+                      ₹{order.total.toLocaleString('en-IN')}
+                    </td>
+                    <td className="p-4">
+                      <div className="space-y-0.5">
+                        <StatusBadge status={order.paymentStatus} />
+                        <p className="text-[10px] text-gray-500 font-medium">{order.paymentMethod}</p>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <StatusBadge status={order.status} />
+                    </td>
+                    <td className="p-4 text-gray-400">{order.date}</td>
+                    <td className="p-4 text-right">
+                      <ActionDropdown actions={getActions(order)} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -214,7 +282,7 @@ const AdminOrders = () => {
           currentPage={page}
           totalPages={totalPages}
           onPageChange={setPage}
-          totalItems={filtered.length}
+          totalItems={totalItems}
           itemsPerPage={perPage}
         />
       </div>
@@ -240,7 +308,7 @@ const AdminOrders = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs text-yellow-400 font-mono font-bold">INVOICE & MANIFEST</span>
-                  <h3 className="text-lg font-bold text-white">{drawerOrder.id}</h3>
+                  <h3 className="text-lg font-bold text-white">{drawerOrder.orderId}</h3>
                 </div>
                 <button
                   onClick={() => setDrawerOrder(null)}
@@ -299,7 +367,7 @@ const AdminOrders = () => {
                 <div className="space-y-3 text-xs pl-2 border-l-2 border-yellow-500/30">
                   <div className="relative pl-3">
                     <span className="absolute -left-[17px] top-1 w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                    <p className="font-bold text-white">Order Received & Paid</p>
+                    <p className="font-bold text-white">Order Placed & Registered</p>
                     <p className="text-[10px] text-gray-500">{drawerOrder.date}</p>
                   </div>
                   {drawerOrder.status !== 'cancelled' && (
@@ -314,7 +382,7 @@ const AdminOrders = () => {
                       <p className="font-bold text-white">Dispatched to Carrier</p>
                       <p className="text-[10px] text-gray-500">
                         {drawerOrder.status === 'delivered' || drawerOrder.status === 'shipped'
-                          ? 'Express Carrier AWB #889410'
+                          ? 'Express Carrier Assigned'
                           : 'Awaiting Merchant Packing'}
                       </p>
                     </div>
@@ -323,7 +391,7 @@ const AdminOrders = () => {
                     <div className="relative pl-3">
                       <span className="absolute -left-[17px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-400" />
                       <p className="font-bold text-emerald-400">Delivered Successfully</p>
-                      <p className="text-[10px] text-gray-500">{drawerOrder.deliveredDate || 'Recent'}</p>
+                      <p className="text-[10px] text-gray-500">{drawerOrder.deliveredDate || 'Confirmed'}</p>
                     </div>
                   )}
                 </div>
@@ -331,12 +399,9 @@ const AdminOrders = () => {
 
               {/* Quick Actions */}
               <div className="grid grid-cols-2 gap-3">
-                {drawerOrder.status === 'processing' && (
+                {(drawerOrder.status === 'processing' || drawerOrder.status === 'pending') && (
                   <button
-                    onClick={() => {
-                      updateOrderStatus(drawerOrder.id, 'shipped');
-                      setDrawerOrder({ ...drawerOrder, status: 'shipped' });
-                    }}
+                    onClick={() => updateOrderStatus(drawerOrder.id, 'shipped', 'Dispatched from dashboard')}
                     className="col-span-2 h-10 bg-yellow-500 text-black text-xs font-bold rounded-xl hover:bg-yellow-400 transition-all shadow-[0_0_12px_rgba(255,193,7,0.3)]"
                   >
                     Mark as Shipped
@@ -344,10 +409,7 @@ const AdminOrders = () => {
                 )}
                 {drawerOrder.status === 'shipped' && (
                   <button
-                    onClick={() => {
-                      updateOrderStatus(drawerOrder.id, 'delivered');
-                      setDrawerOrder({ ...drawerOrder, status: 'delivered' });
-                    }}
+                    onClick={() => updateOrderStatus(drawerOrder.id, 'delivered', 'Delivered from dashboard')}
                     className="col-span-2 h-10 bg-emerald-500 text-black text-xs font-bold rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_12px_rgba(16,185,129,0.3)]"
                   >
                     Confirm Delivered

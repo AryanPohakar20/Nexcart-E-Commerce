@@ -2,6 +2,7 @@ import { Router } from 'express';
 import sellerRoutes from './sellerRoutes.js';
 import profileRoutes from './profileRoutes.js';
 import addressRoutes from './addressRoutes.js';
+import adminRoutes from './adminRoutes.js';
 
 import {
   registerUser,
@@ -47,5 +48,9 @@ router.post('/auth/reset-password', resetPassword);
 // ─── Customer Profile & Address Routes ───────────────────────────────────────
 router.use('/profile', profileRoutes);
 router.use('/address', addressRoutes);
+
+// ─── Admin Routes ─────────────────────────────────────────────────────────
+// All admin routes are protected by authenticate + authorize('admin') inside adminRoutes.js
+router.use('/admin', adminRoutes);
 
 export default router;

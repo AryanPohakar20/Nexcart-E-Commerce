@@ -10,14 +10,18 @@ import ActionDropdown from '../../components/admin/shared/ActionDropdown';
 import TableToolbar from '../../components/admin/shared/TableToolbar';
 import Pagination from '../../components/admin/shared/Pagination';
 import ConfirmDialog from '../../components/admin/shared/ConfirmDialog';
-import { ADMIN_SELLERS } from '../../constants/adminDummyData';
+import adminService from '../../services/adminService';
 
 const VERIFICATION_OPTIONS = ['All Verifications', 'verified', 'pending', 'rejected'];
 const SELLER_TYPE_OPTIONS = ['All Seller Types', 'marketplace_seller', 'seller'];
 const STATUS_OPTIONS = ['All Status', 'active', 'suspended'];
 
 const AdminSellers = () => {
-  const [sellers, setSellers] = useState(ADMIN_SELLERS);
+  const [sellers, setSellers] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState('');
   const [verificationFilter, setVerificationFilter] = useState('All Verifications');
   const [sellerTypeFilter, setSellerTypeFilter] = useState('All Seller Types');
@@ -28,81 +32,89 @@ const AdminSellers = () => {
   const [confirmDialog, setConfirmDialog] = useState({ open: false });
   const perPage = 10;
 
-  const filtered = useMemo(() => {
-    return sellers.filter((s) => {
-      const matchSearch =
-        !search ||
-        s.businessName.toLowerCase().includes(search.toLowerCase()) ||
-        s.ownerName.toLowerCase().includes(search.toLowerCase()) ||
-        s.ownerEmail.toLowerCase().includes(search.toLowerCase());
-      const matchVerification =
-        verificationFilter === 'All Verifications' || s.verificationStatus === verificationFilter;
-      const matchType =
-        sellerTypeFilter === 'All Seller Types' || s.sellerType === sellerTypeFilter;
-      const matchStatus = statusFilter === 'All Status' || s.status === statusFilter;
-      return matchSearch && matchVerification && matchType && matchStatus;
-    });
-  }, [sellers, search, verificationFilter, sellerTypeFilter, statusFilter]);
+  const fetchSellers = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        page,
+        limit: perPage,
+        ...(search && { search }),
+        ...(verificationFilter !== 'All Verifications' && { verificationStatus: verificationFilter === 'verified' ? 'Verified' : verificationFilter === 'pending' ? 'Pending' : 'Rejected' }),
+        ...(sellerTypeFilter !== 'All Seller Types' && { sellerType: sellerTypeFilter }),
+        ...(statusFilter !== 'All Status' && { status: statusFilter === 'active' ? 'Active' : 'Suspended' }),
+      };
+      const res = await adminService.getSellers(params);
+      setSellers(res.data.sellers);
+      setTotalItems(res.data.pagination.totalItems);
+      setTotalPages(res.data.pagination.totalPages);
+    } catch (error) {
+      console.error('Error fetching sellers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
-  const totalPages = Math.ceil(filtered.length / perPage) || 1;
+  React.useEffect(() => {
+    fetchSellers();
+  }, [page, search, verificationFilter, sellerTypeFilter, statusFilter]);
 
   const toggleSelectAll = () => {
-    if (selected.length === paged.length) setSelected([]);
-    else setSelected(paged.map((s) => s.id));
+    if (selected.length === sellers.length) setSelected([]);
+    else setSelected(sellers.map((s) => s._id));
   };
 
   const toggleSelect = (id) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  const handleAction = (action, seller) => {
+  const handleAction = async (action, seller) => {
     if (action === 'view') {
       setDrawerSeller(seller);
     } else if (action === 'approve') {
-      setSellers((prev) =>
-        prev.map((s) =>
-          s.id === seller.id ? { ...s, verificationStatus: 'verified', status: 'active' } : s
-        )
-      );
+      // In a real implementation this would call an approve endpoint
+      // We didn't build a specific KYC approve endpoint yet, but we have updateSeller
+      await adminService.updateSeller(seller._id, { verificationStatus: 'Verified', status: 'Active' });
+      fetchSellers();
     } else if (action === 'reject') {
       setConfirmDialog({
         open: true,
         title: 'Reject Seller Verification',
-        message: `Reject verification for ${seller.businessName}?`,
+        message: `Reject verification for ${seller.storeName}?`,
         type: 'warning',
         confirmLabel: 'Reject',
-        onConfirm: () => {
-          setSellers((prev) =>
-            prev.map((s) => (s.id === seller.id ? { ...s, verificationStatus: 'rejected' } : s))
-          );
+        onConfirm: async () => {
+          await adminService.updateSeller(seller._id, { verificationStatus: 'Rejected' });
           setConfirmDialog({ open: false });
+          fetchSellers();
         },
       });
     } else if (action === 'suspend') {
       setConfirmDialog({
         open: true,
         title: 'Suspend Seller Store',
-        message: `Suspend ${seller.businessName}? Their products will be hidden from the storefront.`,
+        message: `Suspend ${seller.storeName}? Their products will be hidden from the storefront.`,
         type: 'warning',
         confirmLabel: 'Suspend',
-        onConfirm: () => {
-          setSellers((prev) =>
-            prev.map((s) => (s.id === seller.id ? { ...s, status: 'suspended' } : s))
-          );
+        onConfirm: async () => {
+          await adminService.suspendSeller(seller._id, 'Suspended by admin');
           setConfirmDialog({ open: false });
+          fetchSellers();
         },
       });
+    } else if (action === 'activate') {
+      await adminService.activateSeller(seller._id);
+      fetchSellers();
     } else if (action === 'delete') {
       setConfirmDialog({
         open: true,
         title: 'Delete Seller',
-        message: `Permanently delete ${seller.businessName} and all associated products?`,
+        message: `Permanently delete ${seller.storeName} and all associated products?`,
         type: 'danger',
         confirmLabel: 'Delete',
-        onConfirm: () => {
-          setSellers((prev) => prev.filter((s) => s.id !== seller.id));
+        onConfirm: async () => {
+          await adminService.deleteSeller(seller._id);
           setConfirmDialog({ open: false });
+          fetchSellers();
         },
       });
     }
@@ -112,15 +124,15 @@ const AdminSellers = () => {
     { label: 'View Details', icon: FiEye, onClick: () => handleAction('view', seller) },
     { label: 'Edit Store', icon: FiEdit2, onClick: () => {} },
     { type: 'divider' },
-    ...(seller.verificationStatus !== 'verified'
+    ...(seller.verificationStatus?.toLowerCase() !== 'verified'
       ? [{ label: 'Approve KYC', icon: FiCheckCircle, onClick: () => handleAction('approve', seller), success: true }]
       : []),
-    ...(seller.verificationStatus === 'pending'
+    ...(seller.verificationStatus?.toLowerCase() === 'pending'
       ? [{ label: 'Reject KYC', icon: FiXCircle, onClick: () => handleAction('reject', seller), warning: true }]
       : []),
-    ...(seller.status === 'active'
+    ...(seller.status?.toLowerCase() === 'active'
       ? [{ label: 'Suspend Store', icon: FiPauseCircle, onClick: () => handleAction('suspend', seller), warning: true }]
-      : [{ label: 'Activate Store', icon: FiCheckCircle, onClick: () => handleAction('approve', seller), success: true }]),
+      : [{ label: 'Activate Store', icon: FiCheckCircle, onClick: () => handleAction('activate', seller), success: true }]),
     { type: 'divider' },
     { label: 'Open Public Store', icon: FiExternalLink, onClick: () => {} },
     { label: 'View Verification Docs', icon: FiFileText, onClick: () => handleAction('view', seller) },
@@ -202,7 +214,7 @@ const AdminSellers = () => {
                 <th className="p-4 w-10">
                   <input
                     type="checkbox"
-                    checked={paged.length > 0 && selected.length === paged.length}
+                    checked={sellers.length > 0 && selected.length === sellers.length}
                     onChange={toggleSelectAll}
                     className="w-3.5 h-3.5 rounded accent-yellow-500"
                   />
@@ -217,81 +229,104 @@ const AdminSellers = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/3">
-              {paged.map((seller) => (
-                <tr key={seller.id} className="hover:bg-white/3 transition-colors group">
-                  <td className="p-4">
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(seller.id)}
-                      onChange={() => toggleSelect(seller.id)}
-                      className="w-3.5 h-3.5 rounded accent-yellow-500"
-                    />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={seller.logo}
-                        alt={seller.businessName}
-                        className="w-9 h-9 rounded-xl object-cover border border-white/10"
-                      />
-                      <div>
-                        <p className="text-sm font-bold text-white group-hover:text-yellow-400 transition-colors">
-                          {seller.businessName}
-                        </p>
-                        <p className="text-[10px] text-gray-500">
-                          {seller.ownerName} • {seller.location}
-                        </p>
-                      </div>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center text-gray-500">
+                    <div className="flex justify-center mb-2">
+                      <div className="w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                  </td>
-                  <td className="p-4">
-                    <StatusBadge status={seller.sellerType} />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 bg-white/10 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            seller.trustScore >= 80
-                              ? 'bg-emerald-400'
-                              : seller.trustScore >= 65
-                              ? 'bg-yellow-400'
-                              : 'bg-red-400'
-                          }`}
-                          style={{ width: `${seller.trustScore}%` }}
-                        />
-                      </div>
-                      <span className="font-bold text-white">{seller.trustScore}%</span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <StatusBadge status={seller.verificationStatus} />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-1 font-bold text-white">
-                      <FiStar className="text-yellow-400 fill-yellow-400" size={13} />
-                      <span>{seller.rating}</span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <StatusBadge status={seller.status} />
-                  </td>
-                  <td className="p-4 text-right">
-                    <ActionDropdown actions={getActions(seller)} />
+                    Loading sellers...
                   </td>
                 </tr>
-              ))}
+              ) : sellers.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center text-gray-500">No sellers found</td>
+                </tr>
+              ) : (
+                sellers.map((seller) => (
+                  <tr key={seller._id} className="hover:bg-white/3 transition-colors group">
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(seller._id)}
+                        onChange={() => toggleSelect(seller._id)}
+                        className="w-3.5 h-3.5 rounded accent-yellow-500"
+                      />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        {seller.logo ? (
+                          <img
+                            src={seller.logo}
+                            alt={seller.storeName}
+                            className="w-9 h-9 rounded-xl object-cover border border-white/10"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-xs font-bold text-white border border-white/10">
+                            {seller.storeName?.[0] || seller.user?.firstName?.[0]}
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-bold text-white group-hover:text-yellow-400 transition-colors">
+                            {seller.storeName}
+                          </p>
+                          <p className="text-[10px] text-gray-500">
+                            {seller.user?.firstName} {seller.user?.lastName} • {seller.businessAddress?.city || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <StatusBadge status={seller.sellerType} />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-white/10 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              seller.trustScore >= 80
+                                ? 'bg-emerald-400'
+                                : seller.trustScore >= 65
+                                ? 'bg-yellow-400'
+                                : 'bg-red-400'
+                            }`}
+                            style={{ width: `${seller.trustScore}%` }}
+                          />
+                        </div>
+                        <span className="font-bold text-white">{seller.trustScore}%</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <StatusBadge status={seller.verificationStatus} />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-1 font-bold text-white">
+                        <FiStar className="text-yellow-400 fill-yellow-400" size={13} />
+                        <span>{seller.averageRating || 0}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <StatusBadge status={seller.status} />
+                    </td>
+                    <td className="p-4 text-right">
+                      <ActionDropdown actions={getActions(seller)} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          totalItems={filtered.length}
-          itemsPerPage={perPage}
-        />
+        {!loading && sellers.length > 0 && (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={totalItems}
+            itemsPerPage={perPage}
+          />
+        )}
       </div>
 
       {/* Seller Details Drawer */}
@@ -325,13 +360,19 @@ const AdminSellers = () => {
 
               {/* Profile Card */}
               <div className="bg-white/3 border border-white/5 rounded-2xl p-5 text-center">
-                <img
-                  src={drawerSeller.logo}
-                  alt={drawerSeller.businessName}
-                  className="w-20 h-20 rounded-2xl object-cover mx-auto border-2 border-yellow-500/30 mb-3 shadow-lg"
-                />
-                <h4 className="text-lg font-bold text-white">{drawerSeller.businessName}</h4>
-                <p className="text-xs text-gray-400 mt-0.5">Operated by {drawerSeller.ownerName}</p>
+                {drawerSeller.logo ? (
+                  <img
+                    src={drawerSeller.logo}
+                    alt={drawerSeller.storeName}
+                    className="w-20 h-20 rounded-2xl object-cover mx-auto border-2 border-yellow-500/30 mb-3 shadow-lg"
+                  />
+                ) : (
+                  <div className="w-20 h-20 mx-auto rounded-2xl bg-white/10 flex items-center justify-center text-3xl font-bold text-white border-2 border-yellow-500/30 mb-3 shadow-lg">
+                    {drawerSeller.storeName?.[0]}
+                  </div>
+                )}
+                <h4 className="text-lg font-bold text-white">{drawerSeller.storeName}</h4>
+                <p className="text-xs text-gray-400 mt-0.5">Operated by {drawerSeller.user?.firstName} {drawerSeller.user?.lastName}</p>
                 <div className="flex items-center justify-center gap-2 mt-3">
                   <StatusBadge status={drawerSeller.sellerType} size="md" />
                   <StatusBadge status={drawerSeller.verificationStatus} size="md" />
@@ -342,20 +383,20 @@ const AdminSellers = () => {
               {/* Quick Metrics */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-center">
-                  <p className="text-xl font-black text-white">{drawerSeller.totalProducts}</p>
+                  <p className="text-xl font-black text-white">-</p>
                   <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">
                     Products
                   </p>
                 </div>
                 <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-center">
-                  <p className="text-xl font-black text-white">{drawerSeller.totalOrders}</p>
+                  <p className="text-xl font-black text-white">-</p>
                   <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">
                     Orders
                   </p>
                 </div>
                 <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-center">
                   <p className="text-xl font-black text-yellow-400">
-                    ₹{(drawerSeller.totalRevenue / 100000).toFixed(1)}L
+                    ₹0
                   </p>
                   <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">
                     Revenue
@@ -376,19 +417,19 @@ const AdminSellers = () => {
                 </h5>
                 <div className="flex justify-between items-center py-1 border-b border-white/5">
                   <span className="text-gray-500">Email</span>
-                  <span className="text-white font-medium">{drawerSeller.ownerEmail}</span>
+                  <span className="text-white font-medium">{drawerSeller.user?.email}</span>
                 </div>
                 <div className="flex justify-between items-center py-1 border-b border-white/5">
                   <span className="text-gray-500">GST Registration</span>
-                  <span className="text-yellow-400 font-mono font-bold">{drawerSeller.gstNumber}</span>
+                  <span className="text-yellow-400 font-mono font-bold">{drawerSeller.businessDetails?.gstNumber || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between items-center py-1 border-b border-white/5">
                   <span className="text-gray-500">Location</span>
-                  <span className="text-white font-medium">{drawerSeller.location}</span>
+                  <span className="text-white font-medium">{drawerSeller.businessAddress?.city || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between items-center py-1">
                   <span className="text-gray-500">Joined Date</span>
-                  <span className="text-white font-medium">{drawerSeller.joined}</span>
+                  <span className="text-white font-medium">{new Date(drawerSeller.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
 

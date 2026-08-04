@@ -8,12 +8,16 @@ import {
 import TableToolbar from '../../components/admin/shared/TableToolbar';
 import Pagination from '../../components/admin/shared/Pagination';
 import Timeline from '../../components/admin/shared/Timeline';
-import { AUDIT_LOGS } from '../../constants/adminDummyData';
+import adminService from '../../services/adminService';
 
 const ACTION_TYPE_OPTIONS = ['All Actions', 'user', 'seller', 'product', 'category', 'order', 'settings'];
 
 const AdminAuditLogs = () => {
-  const [logs, setLogs] = useState(AUDIT_LOGS);
+  const [logs, setLogs] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('All Actions');
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'timeline'
@@ -21,20 +25,30 @@ const AdminAuditLogs = () => {
   const [selectedLog, setSelectedLog] = useState(null);
   const perPage = 10;
 
-  const filtered = useMemo(() => {
-    return logs.filter((l) => {
-      const matchSearch =
-        !search ||
-        l.admin.toLowerCase().includes(search.toLowerCase()) ||
-        l.action.toLowerCase().includes(search.toLowerCase()) ||
-        l.target.toLowerCase().includes(search.toLowerCase());
-      const matchType = typeFilter === 'All Actions' || l.type === typeFilter;
-      return matchSearch && matchType;
-    });
-  }, [logs, search, typeFilter]);
+  const fetchLogs = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        page,
+        limit: perPage,
+        ...(search && { search }),
+        ...(typeFilter !== 'All Actions' && { action: typeFilter }),
+      };
+      
+      const res = await adminService.getAuditLogs(params);
+      setLogs(res.data.logs);
+      setTotalItems(res.data.pagination.totalItems);
+      setTotalPages(res.data.pagination.totalPages);
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
-  const totalPages = Math.ceil(filtered.length / perPage) || 1;
+  React.useEffect(() => {
+    fetchLogs();
+  }, [page, search, typeFilter]);
 
   return (
     <div className="space-y-6">
@@ -118,56 +132,81 @@ const AdminAuditLogs = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/3">
-                  {paged.map((l) => (
-                    <tr key={l.id} className="hover:bg-white/3 transition-colors">
-                      <td className="p-4 font-mono text-gray-400">{l.timestamp}</td>
-                      <td className="p-4 font-bold text-white flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-yellow-500/10 text-yellow-400 flex items-center justify-center text-[10px]">
-                          {l.admin[0]}
+                  {loading ? (
+                    <tr>
+                      <td colSpan="7" className="p-8 text-center text-gray-500">
+                        <div className="flex justify-center mb-2">
+                          <div className="w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
                         </div>
-                        {l.admin}
-                      </td>
-                      <td className="p-4">
-                        <span className="font-semibold text-gray-200">{l.action}</span>
-                      </td>
-                      <td className="p-4 text-yellow-400 font-mono">{l.target}</td>
-                      <td className="p-4 font-mono text-gray-500">{l.ip}</td>
-                      <td className="p-4">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            l.status === 'success'
-                              ? 'bg-emerald-500/10 text-emerald-400'
-                              : 'bg-red-500/10 text-red-400'
-                          }`}
-                        >
-                          {l.status.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right">
-                        <button
-                          onClick={() => setSelectedLog(l)}
-                          className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg text-xs font-semibold"
-                        >
-                          Inspect
-                        </button>
+                        Loading logs...
                       </td>
                     </tr>
-                  ))}
+                  ) : logs.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="p-8 text-center text-gray-500">No logs found</td>
+                    </tr>
+                  ) : (
+                    logs.map((l) => (
+                      <tr key={l._id} className="hover:bg-white/3 transition-colors">
+                        <td className="p-4 font-mono text-gray-400">{new Date(l.createdAt).toLocaleString()}</td>
+                        <td className="p-4 font-bold text-white flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-yellow-500/10 text-yellow-400 flex items-center justify-center text-[10px]">
+                            {l.admin?.firstName?.[0] || 'S'}
+                          </div>
+                          {l.admin ? `${l.admin.firstName} ${l.admin.lastName}` : 'System'}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-semibold text-gray-200">{l.action}</span>
+                        </td>
+                        <td className="p-4 text-yellow-400 font-mono">{l.targetModel || 'N/A'} - {l.targetId?.substring(l.targetId?.length - 6) || ''}</td>
+                        <td className="p-4 font-mono text-gray-500">{l.ipAddress || '127.0.0.1'}</td>
+                        <td className="p-4">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              l.status === 'Success'
+                                ? 'bg-emerald-500/10 text-emerald-400'
+                                : 'bg-red-500/10 text-red-400'
+                            }`}
+                          >
+                            {l.status ? l.status.toUpperCase() : 'SUCCESS'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => setSelectedLog(l)}
+                            className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg text-xs font-semibold"
+                          >
+                            Inspect
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              totalItems={filtered.length}
-              itemsPerPage={perPage}
-            />
+            {!loading && logs.length > 0 && (
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                totalItems={totalItems}
+                itemsPerPage={perPage}
+              />
+            )}
           </>
         ) : (
           /* View Mode: Timeline */
           <div className="p-6">
-            <Timeline events={filtered} />
+            <Timeline events={logs.map(l => ({
+              id: l._id,
+              time: new Date(l.createdAt).toLocaleTimeString(),
+              date: new Date(l.createdAt).toLocaleDateString(),
+              user: l.admin ? `${l.admin.firstName} ${l.admin.lastName}` : 'System',
+              action: l.action,
+              target: `${l.targetModel || 'Unknown'} (${l.targetId?.substring(l.targetId?.length - 6) || 'N/A'})`,
+              details: l.details
+            }))} />
           </div>
         )}
       </div>
@@ -202,7 +241,7 @@ const AdminAuditLogs = () => {
               <div className="bg-white/3 border border-white/5 rounded-xl p-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Executing Admin</span>
-                  <span className="text-white font-bold">{selectedLog.admin}</span>
+                  <span className="text-white font-bold">{selectedLog.admin ? `${selectedLog.admin.firstName} ${selectedLog.admin.lastName}` : 'System'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Operation</span>
@@ -210,20 +249,20 @@ const AdminAuditLogs = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Resource</span>
-                  <span className="text-yellow-400 font-mono">{selectedLog.target}</span>
+                  <span className="text-yellow-400 font-mono">{selectedLog.targetModel} {selectedLog.targetId}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Client IP Address</span>
-                  <span className="text-gray-300 font-mono">{selectedLog.ip}</span>
+                  <span className="text-gray-300 font-mono">{selectedLog.ipAddress || '127.0.0.1'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Event Time</span>
-                  <span className="text-gray-300">{selectedLog.timestamp}</span>
+                  <span className="text-gray-300">{new Date(selectedLog.createdAt).toLocaleString()}</span>
                 </div>
-                {selectedLog.remarks && (
+                {selectedLog.details && (
                   <div className="pt-2 border-t border-white/5">
                     <span className="text-gray-500 block mb-1">Administrative Remarks:</span>
-                    <span className="text-gray-300 italic">"{selectedLog.remarks}"</span>
+                    <span className="text-gray-300 italic">"{JSON.stringify(selectedLog.details)}"</span>
                   </div>
                 )}
               </div>

@@ -124,6 +124,21 @@ const userSchema = new mongoose.Schema(
       code: { type: String, select: false, default: null },
       expiresAt: { type: Date, select: false, default: null },
     },
+
+    // ─── Soft Delete ─────────────────────────────────────────────────────────────
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -132,6 +147,14 @@ const userSchema = new mongoose.Schema(
 
 // Compound unique index: allows same email for customer and seller accounts
 userSchema.index({ email: 1, role: 1 }, { unique: true });
+
+// ─── Admin query indexes ──────────────────────────────────────────────────────
+userSchema.index({ email: 1 });
+userSchema.index({ phone: 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ status: 1 });
+userSchema.index({ isDeleted: 1 });
+userSchema.index({ createdAt: -1 });
 
 // Normalize role and generate username if missing before validation
 userSchema.pre('validate', function (next) {
