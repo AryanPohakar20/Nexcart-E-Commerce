@@ -38,3 +38,18 @@ export const decreaseProductStock = async (id, quantity, session = null) => {
     { session }
   );
 };
+
+/**
+ * Atomically increase the stock of a product (e.g. on order cancellation).
+ * Also resets isOutOfStock status to false.
+ */
+export const increaseProductStock = async (id, quantity, session = null) => {
+  return Product.updateOne(
+    { _id: id },
+    {
+      $inc: { stock: quantity },
+      $set: { isOutOfStock: false }
+    },
+    { session }
+  );
+};

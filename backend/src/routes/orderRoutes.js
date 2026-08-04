@@ -1,6 +1,6 @@
 import express from 'express';
-import { placeOrder, getOrderDetails, getCustomerOrders } from '../controllers/orderController.js';
-import { validateOrderPlacement, validateCustomerOrderListing, validateOrderId } from '../validations/orderValidation.js';
+import { placeOrder, getOrderDetails, getCustomerOrders, cancelOrder } from '../controllers/orderController.js';
+import { validateOrderPlacement, validateCustomerOrderListing, validateOrderId, validateOrderCancellation } from '../validations/orderValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 
@@ -31,6 +31,15 @@ router.get(
   authorize('customer'),
   validateOrderId,
   getOrderDetails
+);
+
+// Authenticated customers can cancel their own eligible orders
+router.patch(
+  '/:orderId/cancel',
+  authenticate,
+  authorize('customer'),
+  validateOrderCancellation,
+  cancelOrder
 );
 
 export default router;

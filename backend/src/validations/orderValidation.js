@@ -161,3 +161,34 @@ export const validateOrderId = [
     next();
   },
 ];
+
+export const validateOrderCancellation = [
+  param('orderId')
+    .isMongoId()
+    .withMessage('Invalid order id.'),
+
+  body('cancellationReason')
+    .exists()
+    .withMessage('Cancellation reason is required')
+    .isString()
+    .withMessage('Cancellation reason must be a string')
+    .trim()
+    .notEmpty()
+    .withMessage('Cancellation reason cannot be empty or only whitespace')
+    .isLength({ min: 10, max: 500 })
+    .withMessage('Cancellation reason must be between 10 and 500 characters'),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const paramError = errors.array().find((err) => err.path === 'orderId');
+      if (paramError) {
+        throw new ApiError(400, 'Invalid order id.');
+      }
+
+      const errorMessages = errors.array().map((err) => err.msg);
+      throw new ApiError(400, 'Validation failed', errorMessages);
+    }
+    next();
+  },
+];

@@ -440,3 +440,101 @@ export const getCustomerOrderDetails = async (orderId, customerId) => {
     updatedAt: order.updatedAt,
   };
 };
+
+/**
+ * Handle transactional order cancellation by customer.
+ * Restores product stock and updates timeline and status logs.
+ * @param {string} orderId - Mongoose ID of the target order
+ * @param {string} customerId - ID of the customer requesting cancellation
+ * @param {string} cancellationReason - Explanation text for cancel request
+ */
+export const cancelCustomerOrder = async (orderId, customerId, cancellationReason) => {
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw new ApiError(400, 'Invalid order id.');
+  }
+
+  // Retrieve the full order document
+  const order = await orderRepo.findById(orderId);
+
+  // Security check: If order doesn't exist or is owned by someone else, return 404
+  if (!order || order.customer?._id.toString() !== customerId.toString()) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  // Validation: Status check (Only Pending or Confirmed orders are cancellable)
+  if (order.orderStatus !== 'Pending' && order.orderStatus !== 'Confirmed') {
+    throw new ApiError(409, `Order cannot be cancelled. Current status is '${order.orderStatus}'.`);
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // 1. Update status and cancellation info
+    order.orderStatus = 'Cancelled';
+    order.cancellation = {
+      reason: cancellationReason,
+      cancelledBy: customerId,
+      cancelledAt: new Date(),
+    };
+
+    // 2. Append new timeline entry
+    order.timeline.push({
+      status: 'Cancelled',
+      title: 'Cancelled',
+      description: 'Customer cancelled the order.',
+      timestamp: new Date(),
+    });
+
+    // 3. Append history log
+    order.statusHistory.push({
+      status: 'Cancelled',
+      updatedBy: customerId,
+      comment: cancellationReason,
+      updatedAt: new Date(),
+    });
+
+    // Save changes to Order collection in session
+    await order.save({ session });
+
+    // 4. Restore inventory for all items in the order
+    for (const item of order.items) {
+      const updateResult = await productRepo.increaseProductStock(
+        item.product,
+        item.quantity,
+        session
+      );
+
+      if (updateResult.matchedCount === 0) {
+        throw new ApiError(500, `Failed to restore stock. Product with ID ${item.product} does not exist.`);
+      }
+    }
+
+    // 5. Commit all modifications
+    await session.commitTransaction();
+
+  } catch (error) {
+    // 6. Rollback edits on error
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+
+  // Map timeline items to return schema
+  const timelineMapped = order.timeline.map((event) => ({
+    status: event.status,
+    updatedBy: 'Customer', // Timeline updated by customer role
+    timestamp: event.timestamp,
+    message: event.description || event.title || '',
+  }));
+
+  // Structure response payload matching spec
+  return {
+    orderNumber: order.orderNumber,
+    orderStatus: order.orderStatus,
+    cancelledAt: order.cancellation?.cancelledAt || null,
+    cancellationReason: order.cancellation?.reason || null,
+    timeline: timelineMapped,
+  };
+};

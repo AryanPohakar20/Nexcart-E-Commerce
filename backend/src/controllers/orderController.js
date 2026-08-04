@@ -37,3 +37,16 @@ export const getCustomerOrders = asyncHandler(async (req, res) => {
 
   return successResponse(res, 'Orders fetched successfully.', result);
 });
+
+/**
+ * Handle order cancellation requests by a customer.
+ */
+export const cancelOrder = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const { cancellationReason } = req.body;
+  const customerId = req.user._id;
+
+  const updatedOrder = await orderService.cancelCustomerOrder(orderId, customerId, cancellationReason);
+
+  return successResponse(res, 'Order cancelled successfully.', { order: updatedOrder });
+});
