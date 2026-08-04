@@ -50,3 +50,25 @@ export const cancelOrder = asyncHandler(async (req, res) => {
 
   return successResponse(res, 'Order cancelled successfully.', { order: updatedOrder });
 });
+
+/**
+ * Handle requests to list the logged-in seller's orders.
+ */
+export const getSellerOrders = asyncHandler(async (req, res) => {
+  const sellerId = req.user._id;
+  const result = await orderService.getSellerOrders(sellerId, req.query);
+
+  return successResponse(res, 'Seller orders fetched successfully.', result);
+});
+
+/**
+ * Handle requests to get details of a specific seller order.
+ */
+export const getSellerOrderDetails = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const sellerId = req.user._id;
+
+  const order = await orderService.getSellerOrderDetails(orderId, sellerId);
+
+  return successResponse(res, 'Seller order details fetched successfully.', { order });
+});

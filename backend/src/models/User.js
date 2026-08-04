@@ -50,6 +50,11 @@ const userSchema = new mongoose.Schema(
       enum: ['customer', 'seller', 'admin'],
       default: 'customer',
     },
+    profileImage: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     shopName: {
       type: String,
       trim: true,

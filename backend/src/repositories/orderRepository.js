@@ -148,3 +148,39 @@ export const findCustomerOrderDetails = async (orderId, customerId) => {
     .populate('items.product', 'title thumbnail brand')
     .lean();
 };
+
+/**
+ * Retrieve paginated, filtered, and sorted orders for a seller.
+ */
+export const findSellerOrders = async ({
+  queryFilters,
+  sortQuery,
+  skip,
+  limit,
+}) => {
+  return Order.find(queryFilters)
+    .sort(sortQuery)
+    .skip(skip)
+    .limit(limit)
+    .populate('customer', 'firstName lastName profileImage')
+    .populate('items.product', 'title thumbnail')
+    .select('orderNumber createdAt orderStatus payment pricing tracking items customer')
+    .lean();
+};
+
+/**
+ * Count total seller orders matching filter criteria.
+ */
+export const countSellerOrders = async (queryFilters) => {
+  return Order.countDocuments(queryFilters);
+};
+
+/**
+ * Retrieve detailed seller order by its ID, ensuring ownership.
+ */
+export const findSellerOrderDetails = async (orderId, sellerId) => {
+  return Order.findOne({ _id: orderId, seller: sellerId })
+    .populate('customer', 'firstName lastName profileImage phone')
+    .populate('items.product', 'title thumbnail slug')
+    .lean();
+};

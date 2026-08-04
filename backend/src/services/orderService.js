@@ -538,3 +538,166 @@ export const cancelCustomerOrder = async (orderId, customerId, cancellationReaso
     timeline: timelineMapped,
   };
 };
+
+/**
+ * Retrieve paginated, searchable, sorted, and filtered orders belonging to a seller.
+ * @param {string} sellerId - Mongoose ID of the seller
+ * @param {Object} query - Express query parameters object
+ */
+export const getSellerOrders = async (sellerId, query = {}) => {
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(query.limit) || 10));
+  const skip = (page - 1) * limit;
+
+  const sortBy = query.sortBy || 'createdAt';
+  const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
+  const sortQuery = { [sortBy]: sortOrder };
+
+  const { orderStatus, paymentStatus, paymentMethod, dateFrom, dateTo, search } = query;
+
+  const queryFilters = { seller: sellerId };
+
+  if (orderStatus) queryFilters.orderStatus = orderStatus;
+  if (paymentStatus) queryFilters['payment.paymentStatus'] = paymentStatus;
+  if (paymentMethod) queryFilters['payment.paymentMethod'] = paymentMethod;
+
+  if (dateFrom || dateTo) {
+    queryFilters.createdAt = {};
+    if (dateFrom) queryFilters.createdAt.$gte = new Date(dateFrom);
+    if (dateTo) queryFilters.createdAt.$lte = new Date(dateTo);
+  }
+
+  if (search) {
+    const escapedSearch = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const searchRegex = new RegExp(escapedSearch, 'i');
+
+    const matchingCustomers = await User.find({
+      role: 'customer',
+      $or: [
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+      ],
+    }).select('_id').lean();
+    const customerIds = matchingCustomers.map((c) => c._id);
+
+    queryFilters.$or = [
+      { orderNumber: searchRegex },
+      { 'items.title': searchRegex },
+      { customer: { $in: customerIds } },
+    ];
+  }
+
+  const [orders, totalOrders] = await Promise.all([
+    orderRepo.findSellerOrders({ queryFilters, sortQuery, skip, limit }),
+    orderRepo.countSellerOrders(queryFilters),
+  ]);
+
+  const totalPages = Math.ceil(totalOrders / limit);
+
+  const mappedOrders = orders.map((order) => {
+    const totalItems = order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+
+    return {
+      _id: order._id,
+      id: order._id,
+      orderNumber: order.orderNumber,
+      customerName: order.customer
+        ? `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
+        : 'Unknown Customer',
+      customerProfileImage: order.customer?.profileImage || null,
+      orderDate: order.createdAt,
+      orderStatus: order.orderStatus,
+      paymentStatus: order.payment?.paymentStatus || 'pending',
+      paymentMethod: order.payment?.paymentMethod || 'Cash on Delivery',
+      grandTotal: order.pricing?.total || 0,
+      totalItems,
+      estimatedDeliveryDate: order.tracking?.estimatedDelivery || null,
+      firstProductThumbnail: order.items?.[0]?.product?.thumbnail || order.items?.[0]?.thumbnail || null,
+    };
+  });
+
+  return {
+    orders: mappedOrders,
+    pagination: {
+      totalOrders,
+      currentPage: page,
+      totalPages,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    },
+  };
+};
+
+/**
+ * Fetch and map complete details of a specific order for an authorized seller.
+ * @param {string} orderId - Mongoose ID of the order
+ * @param {string} sellerId - ID of the authenticated seller
+ */
+export const getSellerOrderDetails = async (orderId, sellerId) => {
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw new ApiError(400, 'Invalid order id.');
+  }
+
+  const order = await orderRepo.findSellerOrderDetails(orderId, sellerId);
+
+  // Security check: If order doesn't exist or is owned by another seller, return 404
+  if (!order) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  // Format ordered products
+  const orderedProducts = order.items.map((item) => {
+    const productData = item.product || {};
+    return {
+      productId: productData._id || item.product || null,
+      name: productData.title || item.title || 'Unknown Product',
+      thumbnail: productData.thumbnail || item.thumbnail || null,
+      slug: productData.slug || null,
+      quantity: item.quantity,
+      priceAtPurchase: item.price,
+      subtotal: (item.price || 0) * (item.quantity || 0),
+      variant: item.variant || null,
+    };
+  });
+
+  // Map timeline items
+  const timeline = order.timeline?.map((event) => ({
+    status: event.status,
+    updatedBy: 'Customer', // Timeline read-only view
+    timestamp: event.timestamp,
+    message: event.description || event.title || '',
+  })) || [];
+
+  // Address mapping
+  const shippingAddress = order.shippingAddress
+    ? {
+        recipientName: `${order.shippingAddress.firstName || ''} ${order.shippingAddress.lastName || ''}`.trim(),
+        phone: order.shippingAddress.phone || '',
+        street: order.shippingAddress.street || '',
+        city: order.shippingAddress.city || '',
+        state: order.shippingAddress.state || '',
+        postalCode: order.shippingAddress.zipCode || '',
+        country: order.shippingAddress.country || 'India',
+      }
+    : null;
+
+  return {
+    orderNumber: order.orderNumber,
+    orderDate: order.createdAt,
+    orderStatus: order.orderStatus,
+    paymentMethod: order.payment?.paymentMethod || 'Cash on Delivery',
+    paymentStatus: order.payment?.paymentStatus || 'pending',
+    shippingAddress,
+    customerName: order.customer
+      ? `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
+      : 'Unknown Customer',
+    customerPhone: order.customer?.phone || null,
+    orderedProducts,
+    grandTotal: order.pricing?.total || 0,
+    estimatedDeliveryDate: order.tracking?.estimatedDelivery || null,
+    trackingNumber: order.tracking?.trackingNumber || null,
+    customerNotes: order.orderNotes || null,
+    timeline,
+  };
+};

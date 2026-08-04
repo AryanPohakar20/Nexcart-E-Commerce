@@ -192,3 +192,70 @@ export const validateOrderCancellation = [
     next();
   },
 ];
+
+export const validateSellerOrderListing = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer (at least 1)'),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 50 })
+    .withMessage('Limit must be a positive integer between 1 and 50'),
+
+  query('sortBy')
+    .optional()
+    .isIn(['createdAt', 'grandTotal', 'orderStatus'])
+    .withMessage('Sort field must be one of: createdAt, grandTotal, orderStatus'),
+
+  query('sortOrder')
+    .optional()
+    .isIn(['asc', 'desc'])
+    .withMessage('Sort order must be one of: asc, desc'),
+
+  query('dateFrom')
+    .optional()
+    .isISO8601()
+    .withMessage('dateFrom must be a valid ISO 8601 date (e.g. YYYY-MM-DD)'),
+
+  query('dateTo')
+    .optional()
+    .isISO8601()
+    .withMessage('dateTo must be a valid ISO 8601 date (e.g. YYYY-MM-DD)'),
+
+  query('orderStatus')
+    .optional()
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('orderStatus must be a non-empty string'),
+
+  query('paymentStatus')
+    .optional()
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('paymentStatus must be a non-empty string'),
+
+  query('paymentMethod')
+    .optional()
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('paymentMethod must be a non-empty string'),
+
+  query('search')
+    .optional()
+    .isString()
+    .trim(),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map((err) => err.msg);
+      throw new ApiError(400, 'Validation failed', errorMessages);
+    }
+    next();
+  },
+];
