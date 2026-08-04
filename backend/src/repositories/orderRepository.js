@@ -112,3 +112,29 @@ export const addTimelineEvent = async (orderId, status, title, description = '')
     { new: true }
   );
 };
+
+/**
+ * Retrieve paginated, filtered, and sorted orders for a customer.
+ */
+export const findCustomerOrders = async ({
+  queryFilters,
+  sortQuery,
+  skip,
+  limit,
+}) => {
+  return Order.find(queryFilters)
+    .sort(sortQuery)
+    .skip(skip)
+    .limit(limit)
+    .populate('seller', 'shopName')
+    .populate('items.product', 'title thumbnail')
+    .select('orderNumber createdAt orderStatus payment pricing tracking items seller')
+    .lean();
+};
+
+/**
+ * Count total customer orders matching filter criteria.
+ */
+export const countCustomerOrders = async (queryFilters) => {
+  return Order.countDocuments(queryFilters);
+};

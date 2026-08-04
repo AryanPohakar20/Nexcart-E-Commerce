@@ -1,5 +1,6 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as orderService from '../services/orderService.js';
+import { successResponse } from '../utils/ApiResponse.js';
 
 /**
  * Handle order placement requests.
@@ -28,4 +29,14 @@ export const getOrderDetails = asyncHandler(async (req, res) => {
     success: true,
     data: order,
   });
+});
+
+/**
+ * Handle requests to list the logged-in customer's orders.
+ */
+export const getCustomerOrders = asyncHandler(async (req, res) => {
+  const customerId = req.user._id;
+  const result = await orderService.getCustomerOrders(customerId, req.query);
+
+  return successResponse(res, 'Orders fetched successfully.', result);
 });

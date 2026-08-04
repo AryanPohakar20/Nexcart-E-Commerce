@@ -206,3 +206,135 @@ export const getOrderDetails = async (orderId, userId) => {
 
   return order;
 };
+
+/**
+ * Retrieve a paginated, filterable, searchable list of orders for the logged-in customer.
+ * @param {string} customerId - Authenticated customer's ID
+ * @param {Object} queryParams - Filters, sorting, search, and pagination parameters
+ */
+export const getCustomerOrders = async (customerId, queryParams) => {
+  let {
+    page = 1,
+    limit = 10,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    orderStatus,
+    paymentStatus,
+    paymentMethod,
+    dateFrom,
+    dateTo,
+    search,
+  } = queryParams;
+
+  // Normalize parameters
+  page = Math.max(1, parseInt(page, 10) || 1);
+  limit = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
+
+  const queryFilters = { customer: customerId };
+
+  // Exact match filters for status and payment details
+  if (orderStatus) {
+    queryFilters.orderStatus = orderStatus;
+  }
+  if (paymentStatus) {
+    queryFilters['payment.paymentStatus'] = paymentStatus;
+  }
+  if (paymentMethod) {
+    queryFilters['payment.paymentMethod'] = paymentMethod;
+  }
+
+  // Date range filters
+  if (dateFrom || dateTo) {
+    queryFilters.createdAt = {};
+    if (dateFrom) {
+      queryFilters.createdAt.$gte = new Date(dateFrom);
+    }
+    if (dateTo) {
+      const endOfDay = new Date(dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
+      queryFilters.createdAt.$lte = endOfDay;
+    }
+  }
+
+  // Case-insensitive, partial-match search on: orderNumber, items.title, seller.shopName
+  if (search) {
+    const escapedSearch = search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const searchRegex = new RegExp(escapedSearch, 'i');
+
+    // Query seller user IDs matching shopName search
+    const matchingSellers = await User.find({
+      role: 'seller',
+      shopName: searchRegex,
+    }).select('_id').lean();
+
+    const sellerIds = matchingSellers.map(s => s._id);
+
+    const searchConditions = [
+      { orderNumber: searchRegex },
+      { 'items.title': searchRegex },
+    ];
+
+    if (sellerIds.length > 0) {
+      searchConditions.push({ seller: { $in: sellerIds } });
+    }
+
+    queryFilters.$and = queryFilters.$and || [];
+    queryFilters.$and.push({ $or: searchConditions });
+  }
+
+  // Sorting maps query key to database path
+  let sortField = 'createdAt';
+  if (sortBy === 'grandTotal') {
+    sortField = 'pricing.total';
+  } else if (sortBy === 'orderStatus') {
+    sortField = 'orderStatus';
+  }
+
+  const sortDirection = sortOrder === 'asc' ? 1 : -1;
+  const sortQuery = { [sortField]: sortDirection };
+
+  // Skip count for database pagination
+  const skip = (page - 1) * limit;
+
+  // Retrieve records and total count concurrently
+  const [orders, totalOrders] = await Promise.all([
+    orderRepo.findCustomerOrders({ queryFilters, sortQuery, skip, limit }),
+    orderRepo.countCustomerOrders(queryFilters),
+  ]);
+
+  // Construct flat response schema for front-end consumption
+  const mappedOrders = orders.map((order) => {
+    const firstItem = order.items?.[0] || {};
+    const totalNumberOfItems = order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+
+    return {
+      _id: order._id,
+      id: order._id,
+      orderNumber: order.orderNumber,
+      orderDate: order.createdAt,
+      orderStatus: order.orderStatus,
+      paymentStatus: order.payment?.paymentStatus || 'pending',
+      paymentMethod: order.payment?.paymentMethod || 'Cash on Delivery',
+      grandTotal: order.pricing?.total || 0,
+      estimatedDeliveryDate: order.tracking?.estimatedDelivery || null,
+      totalNumberOfItems,
+      totalItems: totalNumberOfItems, // Compatibility alias
+      firstProductThumbnail: firstItem.thumbnail || '',
+      sellerShopName: order.seller?.shopName || 'Nexcart Seller',
+    };
+  });
+
+  const totalPages = Math.ceil(totalOrders / limit);
+
+  return {
+    orders: mappedOrders,
+    pagination: {
+      totalOrders,
+      currentPage: page,
+      totalPages,
+      limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    },
+  };
+};

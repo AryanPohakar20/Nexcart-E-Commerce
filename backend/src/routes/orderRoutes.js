@@ -1,6 +1,6 @@
 import express from 'express';
-import { placeOrder, getOrderDetails } from '../controllers/orderController.js';
-import { validateOrderPlacement } from '../validations/orderValidation.js';
+import { placeOrder, getOrderDetails, getCustomerOrders } from '../controllers/orderController.js';
+import { validateOrderPlacement, validateCustomerOrderListing } from '../validations/orderValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 
@@ -13,6 +13,15 @@ router.post(
   authorize('customer'),
   validateOrderPlacement,
   placeOrder
+);
+
+// Authenticated customers can retrieve their order history
+router.get(
+  '/my',
+  authenticate,
+  authorize('customer'),
+  validateCustomerOrderListing,
+  getCustomerOrders
 );
 
 // Authenticated customers and sellers can view order details

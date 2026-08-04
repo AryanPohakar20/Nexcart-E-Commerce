@@ -26,7 +26,8 @@ const seed = async () => {
     phone: '9999999999',
     password: 'password123',
     role: 'seller',
-    isVerified: true
+    isVerified: true,
+    shopName: 'Alice Electronics'
   });
 
   console.log('Seeding customer...');
