@@ -43,8 +43,8 @@ export const AppProvider = ({ children }) => {
   });
   const [comparedProducts, setComparedProducts] = useState([]);
   const [addresses, setAddresses] = useState([
-    { id: 'addr-1', name: 'Aravind Swamy', street: 'Penthouse B, Skyview Heights, Hitec City', city: 'Hyderabad', state: 'Telangana', pin: '500081', phone: '9876543210', isDefault: true },
-    { id: 'addr-2', name: 'Aravind Swamy (Office)', street: '8th Floor, Nex Tower, Gachibowli', city: 'Hyderabad', state: 'Telangana', pin: '500032', phone: '9876543211', isDefault: false }
+    { id: 'addr-1', name: 'Aravind Swamy', houseNo: 'Penthouse B', streetName: 'Skyview Heights', area: 'Hitec City', street: 'Penthouse B, Skyview Heights, Hitec City', city: 'Hyderabad', state: 'Telangana', country: 'India', pin: '500081', phone: '9876543210', addressType: 'Home', isDefault: true },
+    { id: 'addr-2', name: 'Aravind Swamy (Office)', houseNo: '8th Floor', streetName: 'Nex Tower', area: 'Gachibowli', street: '8th Floor, Nex Tower, Gachibowli', city: 'Hyderabad', state: 'Telangana', country: 'India', pin: '500032', phone: '9876543211', addressType: 'Office', isDefault: false }
   ]);
   
   const [orders, setOrders] = useState([
@@ -675,6 +675,24 @@ export const AppProvider = ({ children }) => {
     showToast('Shipping Address Saved');
   };
 
+  const editAddress = (id, updatedAddress) => {
+    setAddresses((prev) => {
+      const updated = prev.map((addr) => (addr.id === id ? { ...updatedAddress, id } : addr));
+      if (updatedAddress.isDefault) {
+        return updated.map((addr) => (addr.id === id ? addr : { ...addr, isDefault: false }));
+      }
+      return updated;
+    });
+    showToast('Shipping Address Updated');
+  };
+
+  const setDefaultAddress = (id) => {
+    setAddresses((prev) =>
+      prev.map((addr) => ({ ...addr, isDefault: addr.id === id }))
+    );
+    showToast('Default Address Changed');
+  };
+
   const deleteAddress = (id) => {
     setAddresses((prev) => prev.filter((addr) => addr.id !== id));
     showToast('Address Deleted', 'info');
@@ -764,6 +782,8 @@ export const AppProvider = ({ children }) => {
         toggleCompare,
         clearComparison,
         addAddress,
+        editAddress,
+        setDefaultAddress,
         deleteAddress,
         applyCouponCode,
         removeCouponCode,

@@ -8,7 +8,8 @@ import { CATEGORIES } from '../constants/dummyData';
 import { 
   FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, 
   FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, 
-  FiCheckCircle, FiZap, FiGrid, FiMic, FiCamera, FiChevronRight, FiMaximize, FiHelpCircle, FiGift
+  FiCheckCircle, FiZap, FiGrid, FiMic, FiCamera, FiChevronRight, FiMaximize, FiHelpCircle, FiGift,
+  FiPlus, FiHome, FiEdit2, FiCheck, FiTrash2
 } from 'react-icons/fi';
 
 const MEGA_CATEGORIES = [
@@ -66,7 +67,8 @@ const MEGA_CATEGORIES = [
 
 const Navbar = () => {
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser 
+    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser,
+    addresses, addAddress, editAddress, setDefaultAddress, showToast
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -74,17 +76,30 @@ const Navbar = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [location, setLocation] = useState('Hyderabad 500081');
-  const [pinInput, setPinInput] = useState('');
   const [selectedLang, setSelectedLang] = useState('EN / USD');
   
+  // Address modals states
+  const [activeAddressModal, setActiveAddressModal] = useState(null); // 'add', 'edit', 'change_default', null
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [addressForm, setAddressForm] = useState({
+    name: '',
+    phone: '',
+    houseNo: '',
+    streetName: '',
+    area: '',
+    city: '',
+    state: '',
+    country: 'India',
+    pin: '',
+    addressType: 'Home'
+  });
+
   // Interactive UI toggles
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLocationOpen, setIsLocationOpen] = useState(false);
   
   // Mega menu states
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
@@ -155,13 +170,74 @@ const Navbar = () => {
     }, 1500);
   };
 
-  const handleLocationChange = (e) => {
+  const handleOpenAddAddress = () => {
+    setAddressForm({
+      name: '',
+      phone: '',
+      houseNo: '',
+      streetName: '',
+      area: '',
+      city: '',
+      state: '',
+      country: 'India',
+      pin: '',
+      addressType: 'Home'
+    });
+    setActiveAddressModal('add');
+    setIsProfileOpen(false);
+  };
+
+  const handleOpenEditAddress = (addr) => {
+    setEditingAddress(addr);
+    setAddressForm({
+      name: addr.name || '',
+      phone: addr.phone || '',
+      houseNo: addr.houseNo || '',
+      streetName: addr.streetName || addr.street || '',
+      area: addr.area || '',
+      city: addr.city || '',
+      state: addr.state || '',
+      country: addr.country || 'India',
+      pin: addr.pin || '',
+      addressType: addr.addressType || 'Home'
+    });
+    setActiveAddressModal('edit');
+    setIsProfileOpen(false);
+  };
+
+  const handleOpenChangeDefault = () => {
+    setActiveAddressModal('change_default');
+    setIsProfileOpen(false);
+  };
+
+  const handleSaveAddress = (e) => {
     e.preventDefault();
-    if (pinInput.trim()) {
-      setLocation(`PIN: ${pinInput}`);
-      setIsLocationOpen(false);
-      setPinInput('');
+    if (!addressForm.name || !addressForm.phone || !addressForm.streetName || !addressForm.city || !addressForm.state || !addressForm.pin) {
+      showToast('Please fill in all required fields.', 'error');
+      return;
     }
+    if (!/^\d{6}$/.test(addressForm.pin)) {
+      showToast('Please type a valid 6-digit PIN code.', 'error');
+      return;
+    }
+    if (!/^\d{10}$/.test(addressForm.phone)) {
+      showToast('Please type a valid 10-digit phone number.', 'error');
+      return;
+    }
+    const computedStreet = `${addressForm.houseNo ? addressForm.houseNo + ', ' : ''}${addressForm.streetName}${addressForm.area ? ', ' + addressForm.area : ''}`;
+    const payload = {
+      ...addressForm,
+      street: computedStreet,
+    };
+    if (activeAddressModal === 'add') {
+      addAddress({
+        ...payload,
+        isDefault: addresses.length === 0
+      });
+    } else if (activeAddressModal === 'edit' && editingAddress) {
+      editAddress(editingAddress.id, payload);
+    }
+    setActiveAddressModal(null);
   };
 
   const switchRole = (role) => {
@@ -171,7 +247,142 @@ const Navbar = () => {
     else if (role === 'admin') navigate('/admin/dashboard');
     else navigate('/');
   };
+  const renderAddressSection = () => {
+    const defaultAddress = addresses.find((addr) => addr.isDefault) || addresses[0];
+    return (
+      <div className="border-b border-border pb-4 mb-4">
+        <h5 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
+          <span>📍 Delivery Address</span>
+        </h5>
+        {defaultAddress ? (
+          <div className="bg-muted/40 border border-border rounded-xl p-3 text-xs space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-foreground">{defaultAddress.name}</span>
+              <span className="bg-primary/20 text-primary text-[8px] font-black uppercase px-2 py-0.5 rounded">
+                {defaultAddress.addressType || 'Home'}
+              </span>
+            </div>
+            <p className="text-muted-foreground text-[11px] leading-tight truncate">
+              {defaultAddress.houseNo ? `${defaultAddress.houseNo}, ` : ''}{defaultAddress.streetName || defaultAddress.street}
+            </p>
+            {defaultAddress.area && (
+              <p className="text-muted-foreground text-[11px] leading-tight truncate">{defaultAddress.area}</p>
+            )}
+            <p className="text-muted-foreground text-[11px]">
+              {defaultAddress.city}, {defaultAddress.state} - {defaultAddress.pin}
+            </p>
+            
+            <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-border mt-2 text-[10px] font-bold">
+              <button
+                onClick={handleOpenAddAddress}
+                className="text-primary hover:underline text-left"
+              >
+                + Add Address
+              </button>
+              <button
+                onClick={() => handleOpenEditAddress(defaultAddress)}
+                className="text-primary hover:underline text-right"
+              >
+                Edit Address
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1 text-[10px] font-bold">
+              <button
+                onClick={handleOpenChangeDefault}
+                className="text-accentBlue hover:underline text-left"
+              >
+                Change Default
+              </button>
+              <Link
+                to="/addresses"
+                onClick={() => setIsProfileOpen(false)}
+                className="text-muted-foreground hover:text-foreground hover:underline text-right"
+              >
+                Manage Addresses
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-muted/40 border border-border rounded-xl p-4 text-center text-xs space-y-2">
+            <p className="text-muted-foreground">No delivery address added</p>
+            <button
+              onClick={handleOpenAddAddress}
+              className="bg-primary text-black font-extrabold text-[10px] py-1.5 px-3 rounded-lg hover:brightness-105 transition-all shadow-sm"
+            >
+              Add Address
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
+  const renderProfileMenuLinks = () => (
+    <div className="space-y-1 text-xs font-bold text-foreground">
+      <Link
+        to="/profile"
+        onClick={() => setIsProfileOpen(false)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+      >
+        <span>👤</span> <span>My Profile</span>
+      </Link>
+      <Link
+        to="/orders"
+        onClick={() => setIsProfileOpen(false)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+      >
+        <span>📦</span> <span>My Orders</span>
+      </Link>
+      <Link
+        to="/wishlist"
+        onClick={() => setIsProfileOpen(false)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+      >
+        <span>❤️</span> <span>Wishlist</span>
+      </Link>
+      <Link
+        to="/addresses"
+        onClick={() => setIsProfileOpen(false)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+      >
+        <span>📍</span> <span>My Addresses</span>
+      </Link>
+      <Link
+        to="/notifications"
+        onClick={() => setIsProfileOpen(false)}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+      >
+        <span>🔔</span> <span>Notifications</span>
+      </Link>
+      <Link
+        to="#"
+        onClick={() => { setIsProfileOpen(false); showToast('Payment options coming soon!', 'info'); }}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+      >
+        <span>💳</span> <span>Payments</span>
+      </Link>
+      <Link
+        to="#"
+        onClick={() => { setIsProfileOpen(false); showToast('Reviews section coming soon!', 'info'); }}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+      >
+        <span>⭐</span> <span>Reviews</span>
+      </Link>
+      <Link
+        to="#"
+        onClick={() => { setIsProfileOpen(false); showToast('Settings page coming soon!', 'info'); }}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+      >
+        <span>⚙️</span> <span>Settings</span>
+      </Link>
+      <button
+        onClick={() => { logoutUser(); setIsProfileOpen(false); }}
+        className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 font-bold transition-colors border-t border-border mt-2 pt-2"
+      >
+        <span>🚪</span> <span>Logout</span>
+      </button>
+    </div>
+  );
   return (
     <motion.header 
       initial={{ y: -60, opacity: 0 }}
@@ -199,60 +410,18 @@ const Navbar = () => {
                 {isMobileMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
               </motion.button>
               
-              <Link to="/" className="flex items-center hover:opacity-95 transition-opacity">
+              <Link to="/" className="flex items-center gap-2 hover:opacity-95 transition-opacity">
                 <NexCartLogo size="md" />
+                <span className="font-bold text-[30px] font-sans tracking-wide leading-none select-none flex items-center transition-colors duration-300">
+                  <span className="text-[#0F172A] dark:text-white transition-colors duration-300">Nex</span>
+                  <span className="text-[#FFC107]">Cart</span>
+                </span>
               </Link>
-            </div>
-
-            {/* Delivery Location Panel (Desktop Only) */}
-            <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-border text-left relative">
-              <FiMapPin className="text-primary text-lg flex-shrink-0" />
-              <div className="flex flex-col text-[11px] leading-tight">
-                <span className="text-muted-foreground font-semibold">Deliver to</span>
-                <span className="font-bold text-foreground truncate max-w-[120px]">{location}</span>
-                <button 
-                  onClick={() => setIsLocationOpen(!isLocationOpen)} 
-                  className="text-[10px] text-primary hover:underline font-bold text-left"
-                >
-                  Change Location
-                </button>
-              </div>
-
-              {/* Pin Code Selector Popover */}
-              <AnimatePresence>
-                {isLocationOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 mt-3 w-64 p-4 bg-card border border-border rounded-2xl shadow-2xl z-50"
-                  >
-                    <form onSubmit={handleLocationChange} className="space-y-3">
-                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Select Delivery Location</p>
-                      <input 
-                        type="text" 
-                        placeholder="Enter 6-digit PIN code" 
-                        value={pinInput}
-                        maxLength={6}
-                        onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
-                        className="w-full bg-background border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
-                      />
-                      <button 
-                        type="submit"
-                        className="w-full bg-primary text-black font-extrabold text-xs py-2 rounded-xl"
-                      >
-                        Apply PIN
-                      </button>
-                    </form>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </div>
 
           {/* CENTER: Large Multi-Element Search Bar */}
-          <div className="hidden md:block flex-grow max-w-xl lg:max-w-2xl relative">
+          <div className="hidden md:block flex-grow max-w-2xl lg:max-w-4xl relative">
             <form 
               onSubmit={handleSearch}
               className={`flex h-11 bg-muted rounded-full border transition-all duration-300 items-center px-1.5 w-full ${
@@ -612,36 +781,67 @@ const Navbar = () => {
 
               <AnimatePresence>
                 {isProfileOpen && user && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-full mt-3 w-60 bg-card border border-border rounded-2xl shadow-2xl p-4 z-50 text-left"
-                  >
-                    <div className="flex items-center gap-3 border-b border-border pb-3 mb-3">
-                      <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-primary" />
-                      <div>
-                        <h4 className="text-xs font-bold text-foreground truncate">{user.name}</h4>
-                        <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded text-[8px] font-extrabold uppercase bg-primary/20 text-primary">
-                          {user.role} view
-                        </span>
+                  <>
+                    {/* Desktop Dropdown Popover */}
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="hidden md:block absolute right-0 top-full mt-3 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl p-4 z-50 text-left"
+                    >
+                      <div className="flex items-center gap-3 border-b border-border pb-3 mb-3">
+                        <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-primary" />
+                        <div>
+                          <h4 className="text-xs font-bold text-foreground truncate">{user.name}</h4>
+                          <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                          <span className="inline-block mt-1 px-2 py-0.5 rounded text-[8px] font-extrabold uppercase bg-primary/20 text-primary">
+                            {user.role} view
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-1 text-xs font-semibold">
-                      <Link to="/profile" onClick={() => setIsProfileOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-muted text-foreground">My Profile</Link>
-                      <Link to="/orders" onClick={() => setIsProfileOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-muted text-foreground">My Orders</Link>
-                      <Link to="/addresses" onClick={() => setIsProfileOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-muted text-foreground">Saved Addresses</Link>
-                      <button
-                        onClick={() => { logoutUser(); setIsProfileOpen(false); }}
-                        className="w-full text-left px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 font-bold transition-colors flex items-center justify-between border-t border-border mt-2 pt-2"
-                      >
-                        <span>Logout</span>
-                        <FiLogOut />
-                      </button>
-                    </div>
-                  </motion.div>
+                      {renderAddressSection()}
+                      {renderProfileMenuLinks()}
+                    </motion.div>
+
+                    {/* Mobile Profile Drawer Backdrop */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setIsProfileOpen(false)}
+                      className="md:hidden fixed inset-0 bg-black/60 z-[1050]"
+                    />
+
+                    {/* Mobile Profile Drawer Panel */}
+                    <motion.div 
+                      initial={{ x: '100%' }}
+                      animate={{ x: 0 }}
+                      exit={{ x: '100%' }}
+                      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                      className="md:hidden fixed inset-y-0 right-0 w-80 bg-card border-l border-border shadow-2xl p-5 z-[1100] text-left flex flex-col justify-between overflow-y-auto animate-none"
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between border-b border-border pb-3 mb-3">
+                          <div className="flex items-center gap-3">
+                            <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-primary" />
+                            <div>
+                              <h4 className="text-xs font-bold text-foreground truncate">{user.name}</h4>
+                              <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => setIsProfileOpen(false)}
+                            className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <FiX size={18} />
+                          </button>
+                        </div>
+                        {renderAddressSection()}
+                        {renderProfileMenuLinks()}
+                      </div>
+                    </motion.div>
+                  </>
                 )}
               </AnimatePresence>
             </div>
@@ -695,11 +895,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Right: Location shortcut for mobile/tablet */}
-          <div className="hidden sm:flex lg:hidden items-center gap-1.5 text-xs text-muted-foreground font-semibold flex-shrink-0 pl-4 border-l border-border">
-            <FiMapPin className="text-primary text-sm" />
-            <span className="truncate max-w-[120px]">{location}</span>
-          </div>
+
 
         </div>
 
@@ -815,19 +1011,7 @@ const Navbar = () => {
             className="fixed left-0 right-0 z-[998] bg-background border-t border-border px-4 py-4 space-y-4 shadow-2xl overflow-hidden text-left"
             style={{ top: isScrolled ? '94px' : '102px' }}
           >
-            {/* Mobile Location Selector */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground p-3 rounded-xl bg-muted border border-border/50">
-              <div className="flex items-center gap-2">
-                <FiMapPin className="text-primary" />
-                <span>Deliver to: <strong className="text-foreground font-bold">{location}</strong></span>
-              </div>
-              <button 
-                onClick={() => { setIsMobileMenuOpen(false); setIsLocationOpen(true); }} 
-                className="text-primary font-bold hover:underline"
-              >
-                Edit
-              </button>
-            </div>
+
 
             {/* Mobile categories scroll links */}
             <div className="space-y-1">
@@ -854,6 +1038,275 @@ const Navbar = () => {
               <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 text-foreground">My Wishlist ({wishlistCount})</Link>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+      {/* 4. Address Form Modal (Add / Edit) */}
+      <AnimatePresence>
+        {(activeAddressModal === 'add' || activeAddressModal === 'edit') && (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveAddressModal(null)}
+              className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+            />
+            {/* Modal Body */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-card border border-border rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative z-10 text-left flex flex-col max-h-[90vh]"
+            >
+              {/* Header */}
+              <div className="border-b border-border p-5 flex items-center justify-between">
+                <h3 className="text-sm font-black text-foreground uppercase tracking-wider">
+                  {activeAddressModal === 'add' ? 'Add New Delivery Address' : 'Edit Delivery Address'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveAddressModal(null)}
+                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSaveAddress} className="p-5 overflow-y-auto space-y-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-bold">Full Name *</label>
+                    <input
+                      type="text"
+                      value={addressForm.name}
+                      onChange={(e) => setAddressForm((p) => ({ ...p, name: e.target.value }))}
+                      placeholder="e.g. Arjun Verma"
+                      className="w-full bg-muted/50 border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-bold">Phone Number *</label>
+                    <input
+                      type="text"
+                      value={addressForm.phone}
+                      onChange={(e) => setAddressForm((p) => ({ ...p, phone: e.target.value.replace(/\D/g, '') }))}
+                      placeholder="10-digit number"
+                      maxLength={10}
+                      className="w-full bg-muted/50 border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-bold">House / Flat / Apt No *</label>
+                    <input
+                      type="text"
+                      value={addressForm.houseNo}
+                      onChange={(e) => setAddressForm((p) => ({ ...p, houseNo: e.target.value }))}
+                      placeholder="e.g. Penthouse B"
+                      className="w-full bg-muted/50 border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                      required
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-muted-foreground mb-1 font-bold">Street / Road / Lane *</label>
+                    <input
+                      type="text"
+                      value={addressForm.streetName}
+                      onChange={(e) => setAddressForm((p) => ({ ...p, streetName: e.target.value }))}
+                      placeholder="e.g. Skyview Heights"
+                      className="w-full bg-muted/50 border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-bold">Area / Locality / Sector</label>
+                    <input
+                      type="text"
+                      value={addressForm.area}
+                      onChange={(e) => setAddressForm((p) => ({ ...p, area: e.target.value }))}
+                      placeholder="e.g. Hitec City"
+                      className="w-full bg-muted/50 border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-bold">City *</label>
+                    <input
+                      type="text"
+                      value={addressForm.city}
+                      onChange={(e) => setAddressForm((p) => ({ ...p, city: e.target.value }))}
+                      placeholder="e.g. Hyderabad"
+                      className="w-full bg-muted/50 border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-bold">State *</label>
+                    <input
+                      type="text"
+                      value={addressForm.state}
+                      onChange={(e) => setAddressForm((p) => ({ ...p, state: e.target.value }))}
+                      placeholder="e.g. Telangana"
+                      className="w-full bg-muted/50 border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-bold">Country *</label>
+                    <input
+                      type="text"
+                      value={addressForm.country}
+                      onChange={(e) => setAddressForm((p) => ({ ...p, country: e.target.value }))}
+                      placeholder="e.g. India"
+                      className="w-full bg-muted/50 border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-muted-foreground mb-1 font-bold">PIN Code *</label>
+                    <input
+                      type="text"
+                      value={addressForm.pin}
+                      onChange={(e) => setAddressForm((p) => ({ ...p, pin: e.target.value.replace(/\D/g, '') }))}
+                      placeholder="6 digits"
+                      maxLength={6}
+                      className="w-full bg-muted/50 border border-border rounded-xl p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-muted-foreground mb-2 font-bold font-sans uppercase text-[10px] tracking-wider">Address Type</label>
+                  <div className="flex gap-4">
+                    {['Home', 'Office', 'Other'].map((type) => (
+                      <label key={type} className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-foreground">
+                        <input
+                          type="radio"
+                          name="addressType"
+                          value={type}
+                          checked={addressForm.addressType === type}
+                          onChange={(e) => setAddressForm((p) => ({ ...p, addressType: e.target.value }))}
+                          className="text-primary focus:ring-primary h-4 w-4 bg-muted border-border"
+                        />
+                        <span>{type}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-border flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveAddressModal(null)}
+                    className="px-4 py-2 rounded-lg bg-muted text-foreground hover:bg-muted/80 font-bold transition-all text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-glow-yellow !py-2 !px-5 text-xs text-black font-extrabold"
+                  >
+                    Save Address
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 5. Change Default Address Modal */}
+      <AnimatePresence>
+        {activeAddressModal === 'change_default' && (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveAddressModal(null)}
+              className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+            />
+            {/* Modal Body */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-card border border-border rounded-3xl w-full max-w-md shadow-2xl p-5 relative z-10 text-left space-y-4"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="text-sm font-black text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <span>📍 Select Default Address</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveAddressModal(null)}
+                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+
+              {/* List */}
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                {addresses.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">No addresses added yet.</p>
+                ) : (
+                  addresses.map((addr) => (
+                    <div
+                      key={addr.id}
+                      onClick={() => {
+                        setDefaultAddress(addr.id);
+                        setActiveAddressModal(null);
+                      }}
+                      className={`p-3 rounded-xl border text-xs cursor-pointer text-left transition-all duration-200 flex items-center justify-between gap-3 ${
+                        addr.isDefault
+                          ? 'border-primary bg-primary/5 hover:bg-primary/10'
+                          : 'border-border hover:bg-muted/40'
+                      }`}
+                    >
+                      <div className="space-y-1 flex-grow overflow-hidden">
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-foreground">{addr.name}</span>
+                          <span className="bg-primary/20 text-primary text-[8px] font-black uppercase px-1.5 py-0.5 rounded">
+                            {addr.addressType || 'Home'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {addr.houseNo ? `${addr.houseNo}, ` : ''}{addr.streetName || addr.street}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {addr.city}, {addr.state} - {addr.pin}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0">
+                        {addr.isDefault ? (
+                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center text-black">
+                            <FiCheck size={12} className="stroke-[3]" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border border-border" />
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </motion.header>
