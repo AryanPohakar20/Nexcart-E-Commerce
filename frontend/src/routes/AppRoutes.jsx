@@ -32,7 +32,20 @@ import SellerAnalytics from "../pages/seller/SellerAnalytics";
 import SellerInventory from "../pages/seller/SellerInventory";
 import SellerSettings from "../pages/seller/SellerSettings";
 import SellerProfile from "../pages/seller/SellerProfile";
-import AdminDashboard from "../pages/AdminDashboard";
+import AdminOverview from "../pages/admin/AdminOverview";
+import AdminUsers from "../pages/admin/AdminUsers";
+import AdminSellers from "../pages/admin/AdminSellers";
+import AdminProducts from "../pages/admin/AdminProducts";
+import AdminCategories from "../pages/admin/AdminCategories";
+import AdminOrders from "../pages/admin/AdminOrders";
+import AdminVerification from "../pages/admin/AdminVerification";
+import AdminReports from "../pages/admin/AdminReports";
+import AdminCSVImport from "../pages/admin/AdminCSVImport";
+import AdminAuditLogs from "../pages/admin/AdminAuditLogs";
+import AdminNotifications from "../pages/admin/AdminNotifications";
+import AdminAnalytics from "../pages/admin/AdminAnalytics";
+import AdminSettings from "../pages/admin/AdminSettings";
+import AdminProfile from "../pages/admin/AdminProfile";
 
 // Authentication imports
 import Login from "../pages/Login";
@@ -194,14 +207,21 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="users" element={<AdminDashboard />} />
-        <Route path="products" element={<AdminDashboard />} />
-        <Route path="orders" element={<AdminDashboard />} />
-        <Route path="categories" element={<AdminDashboard />} />
-        <Route path="brands" element={<AdminDashboard />} />
-        <Route path="reports" element={<AdminDashboard />} />
-        <Route path="settings" element={<AdminDashboard />} />
+        <Route index element={<AdminOverview />} />
+        <Route path="dashboard" element={<AdminOverview />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="sellers" element={<AdminSellers />} />
+        <Route path="products" element={<AdminProducts />} />
+        <Route path="categories" element={<AdminCategories />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="verification" element={<AdminVerification />} />
+        <Route path="reports" element={<AdminReports />} />
+        <Route path="csv-import" element={<AdminCSVImport />} />
+        <Route path="audit-logs" element={<AdminAuditLogs />} />
+        <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="analytics" element={<AdminAnalytics />} />
+        <Route path="settings" element={<AdminSettings />} />
+        <Route path="profile" element={<AdminProfile />} />
       </Route>
     </Routes>
   );
