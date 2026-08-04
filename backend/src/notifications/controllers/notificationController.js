@@ -1,4 +1,3 @@
-import { ApiError } from '../../utils/ApiError.js';
 import {
   createNotificationService,
   createBulkNotificationsService,
@@ -10,65 +9,57 @@ import {
 
 export const createNotification = async (req, res, next) => {
   try {
-    const notification = await createNotificationService(req.body);
-    res.status(201).json({ success: true, data: notification });
+    const result = await createNotificationService(req.body, req.user);
+    return res.status(result.statusCode).json(result);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
 export const createBulkNotifications = async (req, res, next) => {
   try {
-    const notifications = await createBulkNotificationsService(req.body?.notifications ?? []);
-    res.status(201).json({ success: true, data: notifications });
+    const result = await createBulkNotificationsService(req.body?.notifications ?? [], req.user);
+    return res.status(result.statusCode).json(result);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
 export const getNotifications = async (req, res, next) => {
   try {
-    const notifications = await getNotificationsService({
-      receiver: req.user?.id,
+    const result = await getNotificationsService(req.user, {
       ...req.query,
+      receiverId: req.user?.id,
     });
-    res.status(200).json({ success: true, data: notifications });
+    return res.status(result.statusCode).json(result);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
 export const getUnreadNotifications = async (req, res, next) => {
   try {
-    const notifications = await getUnreadNotificationsService(req.user?.id);
-    res.status(200).json({ success: true, data: notifications });
+    const result = await getUnreadNotificationsService(req.user);
+    return res.status(result.statusCode).json(result);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
 export const markNotificationAsRead = async (req, res, next) => {
   try {
-    const notification = await markNotificationAsReadService(req.params.notificationId);
-    if (!notification) {
-      throw new ApiError(404, 'Notification not found');
-    }
-
-    res.status(200).json({ success: true, data: notification });
+    const result = await markNotificationAsReadService(req.params.notificationId, req.user);
+    return res.status(result.statusCode).json(result);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
 export const softDeleteNotification = async (req, res, next) => {
   try {
-    const notification = await softDeleteNotificationService(req.params.notificationId);
-    if (!notification) {
-      throw new ApiError(404, 'Notification not found');
-    }
-
-    res.status(200).json({ success: true, data: notification });
+    const result = await softDeleteNotificationService(req.params.notificationId, req.user);
+    return res.status(result.statusCode).json(result);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
