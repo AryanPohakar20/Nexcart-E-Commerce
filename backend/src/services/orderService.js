@@ -49,9 +49,19 @@ export const placeOrder = async (customerId, orderData) => {
       }
       sellerId = product.seller;
 
-      // 6. Update product stock (decrease)
-      product.stock -= item.quantity;
-      await product.save({ session });
+      // 6. Update product stock atomically and concurrently
+      const updateResult = await productRepo.decreaseProductStock(
+        item.product,
+        item.quantity,
+        session
+      );
+
+      if (updateResult.modifiedCount === 0) {
+        throw new ApiError(
+          400,
+          `Failed to reserve stock for product "${product.title}". It may have run out of stock or become inactive concurrently.`
+        );
+      }
 
       // 7. Add snapshot to order items list
       orderItems.push({

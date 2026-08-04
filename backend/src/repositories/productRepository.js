@@ -26,3 +26,15 @@ export const updateProductStock = async (id, quantityChange, session = null) => 
     { new: true, runValidators: true, session }
   );
 };
+
+/**
+ * Atomically decrease the stock of a product.
+ * Returns the write result containing modifiedCount.
+ */
+export const decreaseProductStock = async (id, quantity, session = null) => {
+  return Product.updateOne(
+    { _id: id, stock: { $gte: quantity }, isActive: true },
+    { $inc: { stock: -quantity } },
+    { session }
+  );
+};
