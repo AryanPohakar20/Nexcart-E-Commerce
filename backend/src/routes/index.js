@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+import notificationRoutes from '../notifications/routes/notificationRoutes.js';
 
 // Import controllers and middlewares directly to map legacy/frontend routes
 import {
@@ -26,6 +27,7 @@ const router = Router();
 // ─── Phase 1B Standard Spec Routes ───────────────────────────────────────────
 router.use('/seller/auth', authRoutes);
 router.use('/seller/upload-aadhaar', uploadRoutes);
+router.use('/notifications', notificationRoutes);
 
 // ─── Frontend Integration Routes ─────────────────────────────────────────────
 router.post('/seller/register', validateRegistration, registerSeller);

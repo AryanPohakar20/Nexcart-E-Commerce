@@ -42,18 +42,12 @@ const normalizePagination = (options = {}) => {
 
 const getActorId = (actor = {}) => actor?.id || actor?._id || null;
 
-const isAdminActor = (actor = {}) => actor?.role === 'admin';
-
 const enforceOwnership = (notification, actor = {}) => {
   if (!notification) {
     return {
       allowed: false,
       error: buildResult(404, false, 'Notification not found'),
     };
-  }
-
-  if (isAdminActor(actor)) {
-    return { allowed: true };
   }
 
   const actorId = getActorId(actor);
@@ -99,15 +93,67 @@ const buildNotificationQuery = (actor, options = {}) => {
     query.priority = options.priority;
   }
 
+  if (options.status) {
+    if (options.status === 'read') {
+      query.isRead = true;
+    } else if (options.status === 'unread') {
+      query.isRead = false;
+    }
+  }
+
   if (options.isRead !== undefined) {
     query.isRead = Boolean(options.isRead);
   }
 
+  if (options.startDate || options.endDate) {
+    query.createdAt = {};
+    if (options.startDate) {
+      query.createdAt.$gte = new Date(options.startDate);
+    }
+    if (options.endDate) {
+      query.createdAt.$lte = new Date(options.endDate);
+    }
+  }
+
+  const filters = [];
+
+  if (options.search) {
+    filters.push({
+      $or: [
+        { title: { $regex: options.search, $options: 'i' } },
+        { message: { $regex: options.search, $options: 'i' } },
+      ],
+    });
+  }
+
   if (options.includeExpired !== true) {
-    query.$or = [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }];
+    filters.push({
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
+    });
+  }
+
+  if (filters.length > 0) {
+    query.$and = filters;
   }
 
   return query;
+};
+
+const buildSortOptions = (sortBy = 'newest', order = 'desc') => {
+  const normalizedOrder = order === 'asc' ? 1 : -1;
+
+  switch (sortBy) {
+    case 'oldest':
+      return { createdAt: 1 };
+    case 'priority':
+      return {
+        priorityOrder: normalizedOrder,
+        createdAt: -1,
+      };
+    case 'newest':
+    default:
+      return { createdAt: -1 };
+  }
 };
 
 export const createNotificationService = async (payload, actor = {}) => {
@@ -167,7 +213,7 @@ export const getNotificationsService = async (actor = {}, options = {}) => {
     }
 
     const requestedReceiver = options.receiverId || actorId;
-    if (requestedReceiver && requestedReceiver.toString() !== actorId.toString() && !isAdminActor(actor)) {
+    if (requestedReceiver && requestedReceiver.toString() !== actorId.toString()) {
       return buildResult(403, false, 'You are not authorized to access these notifications');
     }
 
@@ -198,6 +244,26 @@ export const getNotificationsService = async (actor = {}, options = {}) => {
   } catch (error) {
     logger.error(`Failed to fetch notifications: ${error.message}`);
     return buildResult(500, false, 'Failed to fetch notifications', null, null, [error.message]);
+  }
+};
+
+export const getNotificationByIdService = async (notificationId, actor = {}) => {
+  try {
+    const notification = await Notification.findById(notificationId).lean();
+    const ownership = enforceOwnership(notification, actor);
+
+    if (!ownership.allowed) {
+      return ownership.error;
+    }
+
+    if (!notification) {
+      return buildResult(404, false, 'Notification not found');
+    }
+
+    return buildResult(200, true, 'Notification fetched successfully', notification);
+  } catch (error) {
+    logger.error(`Failed to fetch notification: ${error.message}`);
+    return buildResult(500, false, 'Failed to fetch notification', null, null, [error.message]);
   }
 };
 
@@ -386,12 +452,15 @@ export const getNotificationsByCategoryService = async (actor = {}, category, op
       return buildResult(401, false, 'Authentication required to fetch notifications');
     }
 
+    const sortOptions = buildSortOptions(options.sortBy || options.sort, options.order);
+    const notificationsQuery = Notification.find(query);
+
+    if (sortOptions && Object.keys(sortOptions).length > 0) {
+      notificationsQuery.sort(sortOptions);
+    }
+
     const [notifications, total] = await Promise.all([
-      Notification.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+      notificationsQuery.skip(skip).limit(limit).lean(),
       Notification.countDocuments(query),
     ]);
 
@@ -423,12 +492,15 @@ export const getNotificationsByTypeService = async (actor = {}, type, options = 
       return buildResult(401, false, 'Authentication required to fetch notifications');
     }
 
+    const sortOptions = buildSortOptions(options.sortBy || options.sort, options.order);
+    const notificationsQuery = Notification.find(query);
+
+    if (sortOptions && Object.keys(sortOptions).length > 0) {
+      notificationsQuery.sort(sortOptions);
+    }
+
     const [notifications, total] = await Promise.all([
-      Notification.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+      notificationsQuery.skip(skip).limit(limit).lean(),
       Notification.countDocuments(query),
     ]);
 
