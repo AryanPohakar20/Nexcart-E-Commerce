@@ -33,7 +33,7 @@ const auditLogSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      enum: ['Users', 'Sellers', 'Products', 'Categories', 'Orders', 'Verification', 'Settings', 'Reports', 'System', 'Imports', 'Bulk'],
+      enum: ['Users', 'Sellers', 'Products', 'Categories', 'Orders', 'Verification', 'Settings', 'Reports', 'System', 'Imports', 'Bulk', 'Analytics', 'Notifications', 'Export', 'Roles'],
     },
 
     // Human-readable description of the target entity

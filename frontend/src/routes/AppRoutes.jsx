@@ -42,7 +42,6 @@ import AdminVerification from "../pages/admin/AdminVerification";
 import AdminReports from "../pages/admin/AdminReports";
 import AdminCSVImport from "../pages/admin/AdminCSVImport";
 import AdminAuditLogs from "../pages/admin/AdminAuditLogs";
-import AdminNotifications from "../pages/admin/AdminNotifications";
 import AdminAnalytics from "../pages/admin/AdminAnalytics";
 import AdminSettings from "../pages/admin/AdminSettings";
 import AdminProfile from "../pages/admin/AdminProfile";
@@ -218,7 +217,6 @@ const AppRoutes = () => {
         <Route path="reports" element={<AdminReports />} />
         <Route path="csv-import" element={<AdminCSVImport />} />
         <Route path="audit-logs" element={<AdminAuditLogs />} />
-        <Route path="notifications" element={<AdminNotifications />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="profile" element={<AdminProfile />} />

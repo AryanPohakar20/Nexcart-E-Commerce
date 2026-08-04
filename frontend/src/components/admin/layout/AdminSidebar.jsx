@@ -43,7 +43,6 @@ const NAV_SECTIONS = [
     id: 'analytics',
     label: 'Insights',
     items: [
-      { name: 'Notifications', path: '/admin/notifications', icon: FiBell, badge: 3 },
       { name: 'Analytics', path: '/admin/analytics', icon: FiBarChart2 },
       { name: 'Settings', path: '/admin/settings', icon: FiSettings },
     ]

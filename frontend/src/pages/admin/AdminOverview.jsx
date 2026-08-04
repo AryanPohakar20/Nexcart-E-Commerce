@@ -52,20 +52,25 @@ const AdminOverview = () => {
   const [recentUsers, setRecentUsers] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [pendingVerifications, setPendingVerifications] = useState([]);
+  const [charts, setCharts] = useState({ revenueMonthly: [], userGrowthMonthly: [] });
 
   React.useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [statsRes, usersRes, activityRes, verificationsRes] = await Promise.all([
+        const [statsRes, usersRes, activityRes, verificationsRes, analyticsRes] = await Promise.all([
           adminService.getDashboardStats(),
           adminService.getRecentUsers(5),
           adminService.getRecentActivity(10),
-          adminService.getPendingVerifications(5)
+          adminService.getPendingVerifications(5),
+          adminService.getMarketplaceAnalytics('12 Months').catch(() => ({ data: null })),
         ]);
         
         setStats(statsRes.data);
         setRecentUsers(usersRes.data?.users || []);
+        if (analyticsRes?.data?.charts) {
+          setCharts(analyticsRes.data.charts);
+        }
         setRecentActivity((activityRes.data?.logs || []).map(log => ({
           id: log._id,
           type: log.module ? log.module.toLowerCase().slice(0, -1) : 'system',
@@ -161,7 +166,7 @@ const AdminOverview = () => {
             }
           >
             <DashboardChart
-              data={REVENUE_MONTHLY}
+              data={charts.revenueMonthly?.length ? charts.revenueMonthly : REVENUE_MONTHLY}
               dataKey="revenue"
               color="#FFC107"
               type="area"
@@ -174,7 +179,7 @@ const AdminOverview = () => {
         <div>
           <ChartCard title="User Growth" subtitle="New registrations per month">
             <DashboardChart
-              data={USER_GROWTH_MONTHLY}
+              data={charts.userGrowthMonthly?.length ? charts.userGrowthMonthly : USER_GROWTH_MONTHLY}
               dataKey="users"
               color="#00CFFF"
               type="bar"
@@ -190,7 +195,7 @@ const AdminOverview = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <ChartCard title="Orders Trend" subtitle="Monthly order volume">
           <DashboardChart
-            data={REVENUE_MONTHLY}
+            data={charts.revenueMonthly?.length ? charts.revenueMonthly : REVENUE_MONTHLY}
             dataKey="orders"
             color="#A855F7"
             type="area"
@@ -201,7 +206,7 @@ const AdminOverview = () => {
         </ChartCard>
         <ChartCard title="Seller Growth" subtitle="New sellers per month">
           <DashboardChart
-            data={USER_GROWTH_MONTHLY}
+            data={charts.userGrowthMonthly?.length ? charts.userGrowthMonthly : USER_GROWTH_MONTHLY}
             dataKey="sellers"
             color="#10B981"
             type="bar"

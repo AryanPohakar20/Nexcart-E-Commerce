@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiAlertTriangle, FiCheckCircle, FiXCircle, FiSlash, FiMessageSquare,
-  FiEye, FiFilter, FiX, FiShield, FiUser, FiPackage, FiShoppingBag
+  FiEye, FiFilter, FiX, FiShield, FiUser, FiPackage, FiShoppingBag, FiLoader
 } from 'react-icons/fi';
 import StatusBadge from '../../components/admin/shared/StatusBadge';
 import ConfirmDialog from '../../components/admin/shared/ConfirmDialog';
-import { ADMIN_REPORTS } from '../../constants/adminDummyData';
+import adminService from '../../services/adminService';
 
 const TABS = [
   { id: 'all', label: 'All Incidents' },
@@ -16,42 +16,67 @@ const TABS = [
 ];
 
 const AdminReports = () => {
-  const [reports, setReports] = useState(ADMIN_REPORTS);
+  const [reports, setReports] = useState([]);
   const [activeTab, setActiveTab] = useState('open');
+  const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false });
+  const [remarks, setRemarks] = useState('');
 
-  const filtered = useMemo(() => {
-    if (activeTab === 'all') return reports;
-    return reports.filter((r) => r.status === activeTab);
-  }, [reports, activeTab]);
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const res = await adminService.getDisputeReports({ tab: activeTab });
+      if (res && res.data && res.data.reports) {
+        setReports(res.data.reports);
+      }
+    } catch (err) {
+      console.error('Error fetching dispute reports:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleResolve = (report, action) => {
-    if (action === 'dismiss') {
-      setReports((prev) =>
-        prev.map((r) => (r.id === report.id ? { ...r, status: 'dismissed' } : r))
-      );
-      setSelectedReport(null);
-    } else if (action === 'resolve') {
-      setReports((prev) =>
-        prev.map((r) => (r.id === report.id ? { ...r, status: 'resolved' } : r))
-      );
-      setSelectedReport(null);
-    } else if (action === 'ban_entity') {
+  useEffect(() => {
+    fetchReports();
+  }, [activeTab]);
+
+  const handleResolve = async (report, action) => {
+    if (action === 'ban_entity') {
       setConfirmDialog({
         open: true,
         title: 'Enforce Suspension on Entity',
         message: `Permanently suspend or penalize "${report.target}" based on this dispute?`,
         type: 'danger',
         confirmLabel: 'Enforce Suspension',
-        onConfirm: () => {
-          setReports((prev) =>
-            prev.map((r) => (r.id === report.id ? { ...r, status: 'resolved' } : r))
-          );
-          setSelectedReport(null);
-          setConfirmDialog({ open: false });
+        onConfirm: async () => {
+          try {
+            await adminService.resolveDisputeReport(report._id || report.id, {
+              action: 'ban_entity',
+              remarks: remarks || 'Suspension enforced via dispute investigation.',
+            });
+            setSelectedReport(null);
+            setRemarks('');
+            setConfirmDialog({ open: false });
+            fetchReports();
+          } catch (err) {
+            console.error('Failed to resolve dispute:', err);
+          }
         },
       });
+      return;
+    }
+
+    try {
+      await adminService.resolveDisputeReport(report._id || report.id, {
+        action,
+        remarks: remarks || `Dispute marked as ${action}`,
+      });
+      setSelectedReport(null);
+      setRemarks('');
+      fetchReports();
+    } catch (err) {
+      console.error('Failed to resolve dispute:', err);
     }
   };
 
@@ -99,42 +124,61 @@ const AdminReports = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/3">
-              {filtered.map((r) => (
-                <tr key={r.id} className="hover:bg-white/3 transition-colors">
-                  <td className="p-4 font-mono font-bold text-yellow-400">{r.id}</td>
-                  <td className="p-4">
-                    <span className="font-bold text-white block">{r.target}</span>
-                    <span className="text-[10px] text-gray-500 capitalize">{r.type}</span>
-                  </td>
-                  <td className="p-4 text-gray-300 font-medium max-w-xs">{r.reason}</td>
-                  <td className="p-4 text-gray-400">{r.reporter}</td>
-                  <td className="p-4">
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        r.priority === 'critical'
-                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                          : r.priority === 'high'
-                          ? 'bg-orange-500/20 text-orange-400'
-                          : 'bg-yellow-500/10 text-yellow-400'
-                      }`}
-                    >
-                      {r.priority.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <StatusBadge status={r.status} />
-                  </td>
-                  <td className="p-4 text-gray-500">{r.date}</td>
-                  <td className="p-4 text-right">
-                    <button
-                      onClick={() => setSelectedReport(r)}
-                      className="px-3 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 rounded-lg font-bold text-xs transition-all"
-                    >
-                      Investigate
-                    </button>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center text-gray-500">
+                    <FiLoader className="animate-spin inline-block mr-2" size={16} /> Loading incidents...
                   </td>
                 </tr>
-              ))}
+              ) : reports.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center text-gray-500">
+                    No dispute incidents found in this category.
+                  </td>
+                </tr>
+              ) : (
+                reports.map((r) => (
+                  <tr key={r._id || r.id} className="hover:bg-white/3 transition-colors">
+                    <td className="p-4 font-mono font-bold text-yellow-400">{r.reportId || r.id}</td>
+                    <td className="p-4">
+                      <span className="font-bold text-white block">{r.target}</span>
+                      <span className="text-[10px] text-gray-500 capitalize">{r.type}</span>
+                    </td>
+                    <td className="p-4 text-gray-300 font-medium max-w-xs truncate">{r.reason}</td>
+                    <td className="p-4 text-gray-400">{r.reporter}</td>
+                    <td className="p-4">
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          r.priority === 'critical'
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : r.priority === 'high'
+                            ? 'bg-orange-500/20 text-orange-400'
+                            : 'bg-yellow-500/10 text-yellow-400'
+                        }`}
+                      >
+                        {(r.priority || 'NORMAL').toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <StatusBadge status={r.status} />
+                    </td>
+                    <td className="p-4 text-gray-500">
+                      {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : r.date || 'Recent'}
+                    </td>
+                    <td className="p-4 text-right">
+                      <button
+                        onClick={() => {
+                          setSelectedReport(r);
+                          setRemarks(r.adminRemarks || '');
+                        }}
+                        className="px-3 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 rounded-lg font-bold text-xs transition-all"
+                      >
+                        Investigate
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -160,7 +204,7 @@ const AdminReports = () => {
               <div className="flex items-center justify-between pb-3 border-b border-white/5">
                 <div>
                   <span className="text-xs text-yellow-400 font-mono font-bold">CASE INVESTIGATION</span>
-                  <h3 className="text-base font-bold text-white">{selectedReport.id}</h3>
+                  <h3 className="text-base font-bold text-white">{selectedReport.reportId || selectedReport.id}</h3>
                 </div>
                 <button onClick={() => setSelectedReport(null)} className="text-gray-400 hover:text-white">
                   <FiX size={18} />
@@ -187,6 +231,19 @@ const AdminReports = () => {
                     "{selectedReport.reason}"
                   </p>
                 </div>
+
+                {selectedReport.status === 'open' && (
+                  <div className="pt-2">
+                    <label className="text-gray-400 block mb-1">Admin Investigation Remarks:</label>
+                    <input
+                      type="text"
+                      value={remarks}
+                      onChange={(e) => setRemarks(e.target.value)}
+                      placeholder="Enter investigation notes or resolution summary..."
+                      className="w-full bg-[#111] border border-white/10 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-yellow-500"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Action buttons */}
@@ -219,6 +276,9 @@ const AdminReports = () => {
                     This dispute has been marked as{' '}
                     <strong className="text-white uppercase">{selectedReport.status}</strong>.
                   </span>
+                  {selectedReport.adminRemarks && (
+                    <p className="text-[11px] text-gray-500 mt-1">"{selectedReport.adminRemarks}"</p>
+                  )}
                 </div>
               )}
             </motion.div>

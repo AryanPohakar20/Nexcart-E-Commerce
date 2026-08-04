@@ -231,6 +231,126 @@ const adminService = {
     });
     return response.data;
   },
+
+  // ─── Reports & Disputes ──────────────────────────────────────────────────
+  getBusinessReport: async (type = 'marketplace', timeframe = 'monthly', params = {}) => {
+    const response = await axiosInstance.get('/admin/reports/business', {
+      params: { type, timeframe, ...params },
+    });
+    return response.data;
+  },
+  getDisputeReports: async (params = {}) => {
+    const response = await axiosInstance.get('/admin/reports/disputes', { params });
+    return response.data;
+  },
+  getDisputeReport: async (id) => {
+    const response = await axiosInstance.get(`/admin/reports/disputes/${id}`);
+    return response.data;
+  },
+  resolveDisputeReport: async (id, data) => {
+    const response = await axiosInstance.patch(`/admin/reports/disputes/${id}/resolve`, data);
+    return response.data;
+  },
+
+  // ─── Marketplace Analytics & BI ──────────────────────────────────────────
+  getMarketplaceAnalytics: async (range = '12 Months') => {
+    const response = await axiosInstance.get('/admin/analytics', { params: { range } });
+    return response.data;
+  },
+
+  // ─── Notifications & Alerts ──────────────────────────────────────────────
+  getNotifications: async (params = {}) => {
+    const response = await axiosInstance.get('/admin/notifications', { params });
+    return response.data;
+  },
+  getUnreadNotificationsCount: async () => {
+    const response = await axiosInstance.get('/admin/notifications/unread-count');
+    return response.data;
+  },
+  markNotificationRead: async (id) => {
+    const response = await axiosInstance.patch(`/admin/notifications/${id}/read`);
+    return response.data;
+  },
+  markAllNotificationsRead: async () => {
+    const response = await axiosInstance.patch('/admin/notifications/read-all');
+    return response.data;
+  },
+  deleteNotification: async (id) => {
+    const response = await axiosInstance.delete(`/admin/notifications/${id}`);
+    return response.data;
+  },
+
+  // ─── Platform Settings ───────────────────────────────────────────────────
+  getPlatformSettings: async () => {
+    const response = await axiosInstance.get('/admin/settings');
+    return response.data;
+  },
+  updatePlatformSettings: async (settingsData) => {
+    const response = await axiosInstance.put('/admin/settings', settingsData);
+    return response.data;
+  },
+
+  // ─── System Monitoring ───────────────────────────────────────────────────
+  getSystemHealth: async () => {
+    const response = await axiosInstance.get('/admin/system/health');
+    return response.data;
+  },
+
+  // ─── Data Export Engine ──────────────────────────────────────────────────
+  exportData: async (entity, format = 'csv', params = {}) => {
+    const response = await axiosInstance.get(`/admin/export/${entity}`, {
+      params: { format, ...params },
+      responseType: format === 'json' ? 'json' : 'blob',
+    });
+
+    if (format === 'json') {
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `nexcart_${entity}_export.json`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      return;
+    }
+
+    const mimeTypes = {
+      csv: 'text/csv;charset=utf-8;',
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    };
+
+    const blob = new Blob([response.data], { type: mimeTypes[format] || 'application/octet-stream' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `nexcart_${entity}_export.${format === 'excel' ? 'xlsx' : format}`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
+
+  // ─── Roles & Permissions ─────────────────────────────────────────────────
+  getRolesAndPermissions: async () => {
+    const response = await axiosInstance.get('/admin/roles-permissions');
+    return response.data;
+  },
+
+  // ─── Admin Profile & Security ────────────────────────────────────────────
+  getAdminProfile: async () => {
+    const response = await axiosInstance.get('/admin/profile');
+    return response.data;
+  },
+  updateAdminProfile: async (profileData) => {
+    const response = await axiosInstance.put('/admin/profile', profileData);
+    return response.data;
+  },
+  updateAdminPassword: async (passwordData) => {
+    const response = await axiosInstance.put('/admin/profile/password', passwordData);
+    return response.data;
+  },
 };
 
 export default adminService;

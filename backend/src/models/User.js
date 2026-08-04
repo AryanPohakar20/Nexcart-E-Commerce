@@ -58,8 +58,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['customer', 'seller', 'marketplace_seller', 'admin'],
+      enum: ['customer', 'seller', 'marketplace_seller', 'admin', 'super_admin', 'moderator', 'support_staff'],
       default: 'customer',
+    },
+    customPermissions: {
+      type: Map,
+      of: [String], // module -> ['read', 'create', 'update', 'delete', etc.]
+      default: () => new Map(),
     },
 
     // ─── Profile Fields ────────────────────────────────────────────────────────

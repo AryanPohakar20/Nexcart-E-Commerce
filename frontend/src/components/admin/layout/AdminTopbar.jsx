@@ -3,11 +3,10 @@ import { useNavigate, useLocation, NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../../../context/AppContext';
 import {
-  FiMenu, FiSearch, FiBell, FiChevronDown, FiChevronRight,
+  FiMenu, FiSearch, FiChevronDown, FiChevronRight,
   FiUser, FiSettings, FiLogOut, FiSun, FiMoon, FiZap,
   FiPlus, FiAlertTriangle, FiX
 } from 'react-icons/fi';
-import { ADMIN_NOTIFICATIONS } from '../../../constants/adminDummyData';
 
 const Breadcrumb = ({ location }) => {
   const parts = location.pathname.split('/').filter(Boolean);
@@ -49,19 +48,15 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
   const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const notifRef = useRef(null);
   const profileRef = useRef(null);
 
-  const unreadCount = ADMIN_NOTIFICATIONS.filter((n) => !n.read).length;
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
   useEffect(() => {
     const handler = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
       if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false);
     };
     document.addEventListener('mousedown', handler);
@@ -138,61 +133,10 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
         </button>
       </div>
 
-      {/* Notifications */}
-      <div className="relative" ref={notifRef}>
-        <button
-          onClick={() => { setNotifOpen((v) => !v); setProfileOpen(false); }}
-          className="relative w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 border border-white/8 transition-all"
-        >
-          <FiBell size={17} />
-          {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-yellow-500 ring-2 ring-[#111111]" />
-          )}
-        </button>
-
-        <AnimatePresence>
-          {notifOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.95 }}
-              className="absolute right-0 top-12 w-80 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
-            >
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-                <h4 className="text-sm font-bold text-white">Notifications</h4>
-                <span className="text-xs text-yellow-400 font-bold">{unreadCount} unread</span>
-              </div>
-              <div className="max-h-72 overflow-y-auto divide-y divide-white/3">
-                {ADMIN_NOTIFICATIONS.slice(0, 5).map((n) => (
-                  <div
-                    key={n.id}
-                    onClick={() => { navigate(n.link); setNotifOpen(false); }}
-                    className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors"
-                  >
-                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.read ? 'bg-gray-600' : 'bg-yellow-500'}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-bold ${n.read ? 'text-gray-400' : 'text-white'} truncate`}>{n.title}</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                    </div>
-                    <span className="text-[10px] text-gray-600 whitespace-nowrap">{n.time}</span>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={() => { navigate('/admin/notifications'); setNotifOpen(false); }}
-                className="w-full text-center py-3 text-xs font-bold text-yellow-400 hover:bg-yellow-500/5 border-t border-white/5 transition-colors"
-              >
-                View All Notifications →
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
       {/* Profile Dropdown */}
       <div className="relative" ref={profileRef}>
         <button
-          onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}
+          onClick={() => { setProfileOpen((v) => !v); }}
           className="flex items-center gap-2 h-9 pl-2 pr-3 bg-white/5 border border-white/8 hover:border-yellow-500/30 rounded-xl transition-all"
         >
           <img

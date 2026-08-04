@@ -16,6 +16,15 @@ import * as adminImportService        from '../services/adminImportService.js';
 import * as adminBulkService          from '../services/adminBulkService.js';
 import * as adminSearchService        from '../services/adminSearchService.js';
 import * as auditLogRepo              from '../repositories/auditLogRepository.js';
+import * as settingsService          from '../services/settingsService.js';
+import * as notificationService      from '../services/notificationService.js';
+import * as adminReportsService      from '../services/adminReportsService.js';
+import * as adminAnalyticsService    from '../services/adminAnalyticsService.js';
+import * as adminExportService       from '../services/adminExportService.js';
+import * as systemMonitorService     from '../services/systemMonitorService.js';
+import * as rolePermissionService    from '../services/rolePermissionService.js';
+import User                          from '../models/User.js';
+import bcrypt                        from 'bcryptjs';
 import { buildPaginationMeta, parsePagination } from '../utils/pagination.js';
 import { buildAuditFilter }           from '../utils/buildFilter.js';
 
@@ -482,4 +491,198 @@ export const executeBulkAction = asyncHandler(async (req, res) => {
   );
   return successResponse(res, 'Bulk action completed successfully.', result);
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REPORTS & DISPUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/reports/business
+export const getBusinessReport = asyncHandler(async (req, res) => {
+  const { type = 'marketplace', timeframe = 'monthly' } = req.query;
+  const report = await adminReportsService.getBusinessReport(type, timeframe, req.query);
+  return successResponse(res, 'Business report generated successfully.', report);
+});
+
+// GET /api/admin/reports/disputes
+export const getDisputeReports = asyncHandler(async (req, res) => {
+  const data = await adminReportsService.getDisputeReports(req.query);
+  return successResponse(res, 'Dispute reports fetched successfully.', data);
+});
+
+// GET /api/admin/reports/disputes/:id
+export const getDisputeReport = asyncHandler(async (req, res) => {
+  const report = await adminReportsService.getDisputeReportById(req.params.id);
+  return successResponse(res, 'Dispute report fetched successfully.', { report });
+});
+
+// PATCH /api/admin/reports/disputes/:id/resolve
+export const resolveDisputeReport = asyncHandler(async (req, res) => {
+  const report = await adminReportsService.resolveDisputeReport(
+    req.params.id,
+    req.body,
+    req.user,
+    getIp(req)
+  );
+  return successResponse(res, 'Dispute report resolved successfully.', { report });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MARKETPLACE ANALYTICS & BI
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/analytics
+export const getMarketplaceAnalytics = asyncHandler(async (req, res) => {
+  const range = req.query.range || '12 Months';
+  const analytics = await adminAnalyticsService.getMarketplaceAnalytics(range);
+  return successResponse(res, 'Marketplace analytics generated successfully.', analytics);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/notifications
+export const getNotifications = asyncHandler(async (req, res) => {
+  const data = await notificationService.getNotifications(req.query);
+  return successResponse(res, 'Notifications fetched successfully.', data);
+});
+
+// GET /api/admin/notifications/unread-count
+export const getUnreadNotificationsCount = asyncHandler(async (req, res) => {
+  const unreadCount = await notificationService.getUnreadCount();
+  return successResponse(res, 'Unread notification count fetched.', { unreadCount });
+});
+
+// PATCH /api/admin/notifications/:id/read
+export const markNotificationRead = asyncHandler(async (req, res) => {
+  const notification = await notificationService.markNotificationRead(req.params.id);
+  return successResponse(res, 'Notification marked as read.', { notification });
+});
+
+// PATCH /api/admin/notifications/read-all
+export const markAllNotificationsRead = asyncHandler(async (req, res) => {
+  await notificationService.markAllNotificationsRead();
+  return successResponse(res, 'All notifications marked as read.');
+});
+
+// DELETE /api/admin/notifications/:id
+export const deleteNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.deleteNotification(req.params.id);
+  return successResponse(res, 'Notification dismissed.', { notification });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLATFORM SETTINGS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/settings
+export const getPlatformSettings = asyncHandler(async (req, res) => {
+  const settings = await settingsService.getPlatformSettings();
+  return successResponse(res, 'Platform settings fetched successfully.', { settings });
+});
+
+// PUT /api/admin/settings
+export const updatePlatformSettings = asyncHandler(async (req, res) => {
+  const settings = await settingsService.updatePlatformSettings(req.body, req.user, getIp(req));
+  return successResponse(res, 'Platform settings saved successfully.', { settings });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SYSTEM MONITORING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/system/health
+export const getSystemHealth = asyncHandler(async (req, res) => {
+  const health = await systemMonitorService.getSystemHealth();
+  return successResponse(res, 'System telemetry fetched successfully.', health);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA EXPORT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/export/:entity?format=csv|xlsx|json
+export const exportData = asyncHandler(async (req, res) => {
+  const { entity } = req.params;
+  const { format = 'csv', ...filters } = req.query;
+
+  const exportResult = await adminExportService.exportEntityData(
+    entity,
+    format,
+    filters,
+    req.user,
+    getIp(req)
+  );
+
+  res.setHeader('Content-Type', exportResult.contentType);
+  res.setHeader('Content-Disposition', `attachment; filename="${exportResult.filename}"`);
+
+  if (exportResult.isBuffer) {
+    return res.end(exportResult.data);
+  }
+  return res.send(exportResult.data);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ROLES & PERMISSIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/roles-permissions
+export const getRolesAndPermissions = asyncHandler(async (req, res) => {
+  const data = rolePermissionService.getRolesAndPermissions();
+  return successResponse(res, 'Roles and permissions matrix fetched successfully.', data);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADMIN PROFILE & CREDENTIALS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/profile
+export const getAdminProfile = asyncHandler(async (req, res) => {
+  const adminUser = await User.findById(req.user._id).lean();
+  if (!adminUser) throw new ApiError(404, 'Admin user not found.');
+  return successResponse(res, 'Admin profile fetched successfully.', { user: adminUser });
+});
+
+// PUT /api/admin/profile
+export const updateAdminProfile = asyncHandler(async (req, res) => {
+  const { name, firstName, lastName, phone, bio, avatar } = req.body;
+  const updateData = {};
+
+  if (firstName) updateData.firstName = firstName;
+  if (lastName) updateData.lastName = lastName;
+  if (name && !firstName) {
+    const parts = name.split(' ');
+    updateData.firstName = parts[0];
+    updateData.lastName = parts.slice(1).join(' ') || '.';
+  }
+  if (phone) updateData.phone = phone;
+  if (bio !== undefined) updateData.bio = bio;
+  if (avatar !== undefined) updateData.avatar = avatar;
+
+  const user = await User.findByIdAndUpdate(req.user._id, updateData, { new: true }).lean();
+  return successResponse(res, 'Admin profile updated successfully.', { user });
+});
+
+// PUT /api/admin/profile/password
+export const updateAdminPassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    throw new ApiError(400, 'Current password and new password are required.');
+  }
+
+  const user = await User.findById(req.user._id).select('+password');
+  if (!user) throw new ApiError(404, 'Admin user not found.');
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    throw new ApiError(400, 'Incorrect current password.');
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  return successResponse(res, 'Admin password changed successfully.');
+});
+
 

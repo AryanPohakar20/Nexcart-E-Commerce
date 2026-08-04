@@ -1,36 +1,99 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import {
   FiUser, FiMail, FiPhone, FiLock, FiShield, FiKey,
-  FiCheck, FiSave, FiSmartphone, FiGlobe
+  FiCheck, FiSave, FiSmartphone, FiGlobe, FiAlertCircle, FiLoader
 } from 'react-icons/fi';
 import { AppContext } from '../../context/AppContext';
+import adminService from '../../services/adminService';
 
 const AdminProfile = () => {
-  const { user } = useContext(AppContext);
+  const { user, setUser } = useContext(AppContext);
   const [profileSaved, setProfileSaved] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: user?.name || 'Administrator',
+    name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.name || 'Administrator'),
     email: user?.email || 'admin@nexcart.in',
-    phone: '+91 98765 43210',
+    phone: user?.phone || '+91 98765 43210',
+    role: user?.role || 'admin',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
 
-  const handleProfileUpdate = (e) => {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await adminService.getAdminProfile();
+        if (res && res.data && res.data.user) {
+          const u = res.data.user;
+          setFormData((prev) => ({
+            ...prev,
+            name: u.firstName ? `${u.firstName} ${u.lastName || ''}`.trim() : (u.name || prev.name),
+            email: u.email || prev.email,
+            phone: u.phone || prev.phone,
+            role: u.role || prev.role,
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch admin profile:', err);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    setProfileSaved(true);
-    setTimeout(() => setProfileSaved(false), 3000);
+    setErrorMessage('');
+    try {
+      setLoading(true);
+      const res = await adminService.updateAdminProfile({
+        name: formData.name,
+        phone: formData.phone,
+      });
+      if (res && res.data && res.data.user) {
+        if (setUser) setUser(res.data.user);
+      }
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 3000);
+    } catch (err) {
+      setErrorMessage(err?.response?.data?.message || 'Failed to update profile.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handlePasswordUpdate = (e) => {
+  const handlePasswordUpdate = async (e) => {
     e.preventDefault();
-    setPasswordSaved(true);
-    setFormData({ ...formData, currentPassword: '', newPassword: '', confirmPassword: '' });
-    setTimeout(() => setPasswordSaved(false), 3000);
+    setPasswordError('');
+    if (formData.newPassword !== formData.confirmPassword) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+    if (formData.newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await adminService.updateAdminPassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+      setPasswordSaved(true);
+      setFormData((prev) => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
+      setTimeout(() => setPasswordSaved(false), 3000);
+    } catch (err) {
+      setPasswordError(err?.response?.data?.message || 'Failed to update password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,13 +120,13 @@ const AdminProfile = () => {
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <h2 className="text-lg font-black text-white">{formData.name}</h2>
             <span className="bg-yellow-500/15 border border-yellow-500/20 text-yellow-400 text-[10px] uppercase font-black px-2 py-0.5 rounded-md">
-              Root Administrator
+              {formData.role === 'super_admin' ? 'Super Administrator' : 'Platform Administrator'}
             </span>
           </div>
           <p className="text-xs text-gray-400 mt-1">{formData.email}</p>
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 mt-3 text-xs text-gray-500">
             <span>Privilege Level: <strong className="text-white">Tier 0 (Full Access)</strong></span>
-            <span>2FA: <strong className="text-emerald-400">Enforced</strong></span>
+            <span>2FA Status: <strong className="text-emerald-400">Enforced & Active</strong></span>
           </div>
         </div>
       </div>
@@ -82,6 +145,12 @@ const AdminProfile = () => {
             )}
           </div>
 
+          {errorMessage && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center gap-2">
+              <FiAlertCircle /> {errorMessage}
+            </div>
+          )}
+
           <div>
             <label className="block text-gray-400 font-bold mb-1">Full Name</label>
             <input
@@ -96,9 +165,9 @@ const AdminProfile = () => {
             <label className="block text-gray-400 font-bold mb-1">Email Address</label>
             <input
               type="email"
+              disabled
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
+              className="w-full h-10 px-3 bg-white/3 border border-white/5 rounded-xl text-gray-400 outline-none cursor-not-allowed"
             />
           </div>
 
@@ -114,9 +183,11 @@ const AdminProfile = () => {
 
           <button
             type="submit"
-            className="w-full h-10 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 transition-all shadow-md mt-2"
+            disabled={loading}
+            className="w-full h-10 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 transition-all shadow-md mt-2 cursor-pointer flex items-center justify-center gap-2"
           >
-            Update Profile Information
+            {loading ? <FiLoader className="animate-spin" size={14} /> : <FiSave size={14} />}
+            {loading ? 'Saving...' : 'Update Profile Information'}
           </button>
         </form>
 
@@ -132,6 +203,12 @@ const AdminProfile = () => {
               </span>
             )}
           </div>
+
+          {passwordError && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center gap-2">
+              <FiAlertCircle /> {passwordError}
+            </div>
+          )}
 
           <div>
             <label className="block text-gray-400 font-bold mb-1">Current Password</label>
@@ -168,14 +245,16 @@ const AdminProfile = () => {
 
           <button
             type="submit"
-            className="w-full h-10 bg-white/10 text-white font-bold rounded-xl hover:bg-white/15 transition-all mt-2"
+            disabled={loading}
+            className="w-full h-10 bg-white/10 text-white font-bold rounded-xl hover:bg-white/15 transition-all mt-2 cursor-pointer flex items-center justify-center gap-2"
           >
-            Update Security Password
+            {loading ? <FiLoader className="animate-spin" size={14} /> : <FiLock size={14} />}
+            {loading ? 'Updating...' : 'Update Security Password'}
           </button>
         </form>
       </div>
 
-      {/* Active Login Sessions */}
+      {/* Active Hardware Sessions */}
       <div className="bg-[#1A1A1A] border border-white/5 rounded-2xl p-6 shadow-2xl space-y-4">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
           <FiSmartphone className="text-yellow-400" /> Active Hardware Sessions
@@ -187,8 +266,8 @@ const AdminProfile = () => {
                 <FiGlobe size={16} />
               </div>
               <div>
-                <p className="font-bold text-white">Chrome on macOS (Current Session)</p>
-                <p className="text-[10px] text-gray-500">IP: 103.21.144.92 • Mumbai, India</p>
+                <p className="font-bold text-white">Browser Session (Current Active)</p>
+                <p className="text-[10px] text-gray-500">Node API Gateway • Authenticated Bearer Session</p>
               </div>
             </div>
             <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
