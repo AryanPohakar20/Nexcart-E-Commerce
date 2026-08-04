@@ -24,8 +24,14 @@ import UserProfile from "../pages/UserProfile";
 import Addresses from "../pages/Addresses";
 import Notifications from "../pages/Notifications";
 
-// Dashboards imports
+// Dashboards & Seller Studio imports
 import SellerDashboard from "../pages/SellerDashboard";
+import SellerProducts from "../pages/seller/SellerProducts";
+import SellerOrders from "../pages/seller/SellerOrders";
+import SellerAnalytics from "../pages/seller/SellerAnalytics";
+import SellerInventory from "../pages/seller/SellerInventory";
+import SellerSettings from "../pages/seller/SellerSettings";
+import SellerProfile from "../pages/seller/SellerProfile";
 import AdminDashboard from "../pages/AdminDashboard";
 
 // Authentication imports
@@ -171,12 +177,12 @@ const AppRoutes = () => {
         }
       >
         <Route path="dashboard" element={<SellerDashboard />} />
-        <Route path="products" element={<SellerDashboard />} />
-        <Route path="orders" element={<SellerDashboard />} />
-        <Route path="analytics" element={<SellerDashboard />} />
-        <Route path="inventory" element={<SellerDashboard />} />
-        <Route path="settings" element={<SellerDashboard />} />
-        <Route path="profile" element={<SellerDashboard />} />
+        <Route path="products" element={<SellerProducts />} />
+        <Route path="orders" element={<SellerOrders />} />
+        <Route path="analytics" element={<SellerAnalytics />} />
+        <Route path="inventory" element={<SellerInventory />} />
+        <Route path="settings" element={<SellerSettings />} />
+        <Route path="profile" element={<SellerProfile />} />
       </Route>
 
       {/* 3. Admin Layout Routes */}

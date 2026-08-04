@@ -86,6 +86,11 @@ const sellerSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+    sellerType: {
+      type: String,
+      enum: ['individual', 'business'],
+      default: 'individual',
+    },
     onboardingStep: {
       type: Number,
       default: 0,
