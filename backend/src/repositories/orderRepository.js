@@ -8,9 +8,9 @@ import Order from '../models/Order.js';
  * Create a new order.
  * @param {Object} data - Order creation payload
  */
-export const createOrder = async (data) => {
+export const createOrder = async (data, options = {}) => {
   const order = new Order(data);
-  return order.save();
+  return order.save(options);
 };
 
 /**

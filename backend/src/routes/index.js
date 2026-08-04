@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+import orderRoutes from './orderRoutes.js';
 import '../models/Order.js'; // Ensure Order model is registered with Mongoose on bootstrap
+import '../models/Product.js'; // Ensure Product model is registered with Mongoose on bootstrap
 
 // Import controllers and middlewares directly to map legacy/frontend routes
 import {
@@ -27,6 +29,7 @@ const router = Router();
 // ─── Phase 1B Standard Spec Routes ───────────────────────────────────────────
 router.use('/seller/auth', authRoutes);
 router.use('/seller/upload-aadhaar', uploadRoutes);
+router.use('/orders', orderRoutes);
 
 // ─── Frontend Integration Routes ─────────────────────────────────────────────
 router.post('/seller/register', validateRegistration, registerSeller);
