@@ -1,6 +1,6 @@
 import express from 'express';
 import { placeOrder, getOrderDetails, getCustomerOrders } from '../controllers/orderController.js';
-import { validateOrderPlacement, validateCustomerOrderListing } from '../validations/orderValidation.js';
+import { validateOrderPlacement, validateCustomerOrderListing, validateOrderId } from '../validations/orderValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 
@@ -24,10 +24,12 @@ router.get(
   getCustomerOrders
 );
 
-// Authenticated customers and sellers can view order details
+// Authenticated customers can view details of their own orders
 router.get(
-  '/:id',
+  '/:orderId',
   authenticate,
+  authorize('customer'),
+  validateOrderId,
   getOrderDetails
 );
 

@@ -55,6 +55,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
+    shopLogo: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     aadhaar: {
       number: { type: String, default: null },
       frontImage: { type: aadhaarImageSchema, default: null },

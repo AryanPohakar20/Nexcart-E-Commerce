@@ -338,3 +338,105 @@ export const getCustomerOrders = async (customerId, queryParams) => {
     },
   };
 };
+
+/**
+ * Fetch and map complete details of a specific order for an authorized customer.
+ * @param {string} orderId - Mongoose ID of the order
+ * @param {string} customerId - ID of the authenticated customer
+ */
+export const getCustomerOrderDetails = async (orderId, customerId) => {
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw new ApiError(400, 'Invalid order id.');
+  }
+
+  const order = await orderRepo.findCustomerOrderDetails(orderId, customerId);
+  if (!order) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  // Generate URL slug from titles
+  const generateSlug = (title) => {
+    return (title || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+  };
+
+  // Map products list
+  const orderedProducts = (order.items || []).map((item) => {
+    const p = item.product || {};
+    const priceAtPurchase = item.price || 0;
+    const quantity = item.quantity || 0;
+
+    return {
+      productId: p._id || item.product || null,
+      name: p.title || item.title || '',
+      thumbnail: item.thumbnail || p.thumbnail || '',
+      slug: generateSlug(p.title || item.title),
+      quantity,
+      priceAtPurchase,
+      subtotal: priceAtPurchase * quantity,
+      variant: item.variant || null,
+    };
+  });
+
+  // Map timeline (reads from stored timeline or falls back to status history)
+  const timeline = (order.timeline && order.timeline.length > 0)
+    ? order.timeline.map((event) => ({
+        status: event.status,
+        updatedBy: event.updatedBy || null,
+        timestamp: event.timestamp,
+        message: event.description || event.title || '',
+      }))
+    : (order.statusHistory || []).map((history) => ({
+        status: history.status,
+        updatedBy: history.updatedBy || null,
+        timestamp: history.updatedAt,
+        message: history.comment || '',
+      }));
+
+  // Map address fields to standard output keys
+  const shippingAddress = order.shippingAddress
+    ? {
+        recipientName: `${order.shippingAddress.firstName || ''} ${order.shippingAddress.lastName || ''}`.trim(),
+        phone: order.shippingAddress.phone || '',
+        street: order.shippingAddress.street || '',
+        city: order.shippingAddress.city || '',
+        state: order.shippingAddress.state || '',
+        postalCode: order.shippingAddress.zipCode || '',
+        country: order.shippingAddress.country || 'India',
+      }
+    : null;
+
+  // Final mapping format
+  return {
+    _id: order._id,
+    id: order._id,
+    orderNumber: order.orderNumber,
+    orderDate: order.createdAt,
+    orderStatus: order.orderStatus,
+    paymentMethod: order.payment?.paymentMethod || 'Cash on Delivery',
+    paymentStatus: order.payment?.paymentStatus || 'pending',
+    subtotal: order.pricing?.subtotal || 0,
+    discount: order.pricing?.discount || 0,
+    tax: order.pricing?.tax || 0,
+    shippingCharges: order.pricing?.shippingCharges || 0,
+    grandTotal: order.pricing?.total || 0,
+    estimatedDeliveryDate: order.tracking?.estimatedDelivery || null,
+    trackingNumber: order.tracking?.trackingNumber || null,
+    courierName: order.tracking?.carrier || null,
+    shippingAddress,
+    billingAddress: null, // Billing address not stored separately
+    orderedProducts,
+    sellerInformation: {
+      sellerId: order.seller?._id || order.seller || null,
+      shopName: order.seller?.shopName || 'Nexcart Seller',
+      shopLogo: order.seller?.shopLogo || null,
+    },
+    customerNotes: order.orderNotes || null,
+    cancellationReason: order.cancellation?.reason || null,
+    timeline,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+  };
+};

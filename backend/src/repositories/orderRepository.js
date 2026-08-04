@@ -138,3 +138,13 @@ export const findCustomerOrders = async ({
 export const countCustomerOrders = async (queryFilters) => {
   return Order.countDocuments(queryFilters);
 };
+
+/**
+ * Retrieve detailed customer order by its ID, ensuring ownership.
+ */
+export const findCustomerOrderDetails = async (orderId, customerId) => {
+  return Order.findOne({ _id: orderId, customer: customerId })
+    .populate('seller', 'shopName shopLogo')
+    .populate('items.product', 'title thumbnail brand')
+    .lean();
+};

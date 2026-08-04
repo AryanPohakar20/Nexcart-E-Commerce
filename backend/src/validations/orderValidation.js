@@ -1,4 +1,4 @@
-import { body, query, validationResult } from 'express-validator';
+import { body, query, param, validationResult } from 'express-validator';
 import { ApiError } from '../utils/ApiError.js';
 
 export const validateOrderPlacement = [
@@ -143,6 +143,20 @@ export const validateCustomerOrderListing = [
     if (!errors.isEmpty()) {
       const errorMessages = errors.array().map((err) => err.msg);
       throw new ApiError(400, 'Validation failed', errorMessages);
+    }
+    next();
+  },
+];
+
+export const validateOrderId = [
+  param('orderId')
+    .isMongoId()
+    .withMessage('Invalid order id.'),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      throw new ApiError(400, 'Invalid order id.');
     }
     next();
   },

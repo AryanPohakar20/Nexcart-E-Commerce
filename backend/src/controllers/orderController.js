@@ -20,15 +20,12 @@ export const placeOrder = asyncHandler(async (req, res) => {
  * Handle requests to get a single order's details.
  */
 export const getOrderDetails = asyncHandler(async (req, res) => {
-  const orderId = req.params.id;
-  const userId = req.user._id;
+  const { orderId } = req.params;
+  const customerId = req.user._id;
 
-  const order = await orderService.getOrderDetails(orderId, userId);
+  const order = await orderService.getCustomerOrderDetails(orderId, customerId);
 
-  res.status(200).json({
-    success: true,
-    data: order,
-  });
+  return successResponse(res, 'Order details fetched successfully.', { order });
 });
 
 /**
