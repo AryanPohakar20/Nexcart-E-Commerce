@@ -17,12 +17,16 @@ const PORT = process.env.PORT || 5000;
 // ─── Connect to MongoDB, then Start Server ────────────────────────────────────
 const startServer = async () => {
   try {
-    await connectDB();
+    const dbConnected = await connectDB();
 
     const server = app.listen(PORT, () => {
       logger.info(`🚀 NexCart Backend running on http://localhost:${PORT}`);
       logger.info(`📌 Environment: ${process.env.NODE_ENV}`);
       logger.info(`🩺 Health check: http://localhost:${PORT}/api/health`);
+
+      if (!dbConnected) {
+        logger.warn('MongoDB is unavailable; API routes that require the database may return errors until the connection is restored.');
+      }
     });
 
     // ─── Graceful Shutdown ────────────────────────────────────────────────────

@@ -39,6 +39,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
+app.get('/api/health', (req, res) => {
+  const dbConnected = globalThis.__dbConnected === true;
+
+  res.status(dbConnected ? 200 : 503).json({
+    success: dbConnected,
+    status: dbConnected ? 'ok' : 'degraded',
+    message: dbConnected
+      ? 'Backend is healthy.'
+      : 'Backend is running, but MongoDB is currently unavailable.',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // API Routes
 app.use('/api', apiRouter);
 
