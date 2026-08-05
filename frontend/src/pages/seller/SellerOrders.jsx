@@ -50,20 +50,20 @@ const SellerOrders = () => {
   return (
     <div className="space-y-6 text-left">
       {/* ── 1. Header ───────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-borderColor pb-5">
         <div>
-          <h1 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-xl md:text-2xl font-black text-textPrimary tracking-tight flex items-center gap-2.5">
             <FiShoppingBag className="text-primary" />
             <span>Orders Management Pipeline</span>
           </h1>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-textSecondary mt-1">
             Track customer shipments, direct C2C meetups, and fulfillment status in real time.
           </p>
         </div>
       </div>
 
       {/* ── 2. Status Pipeline Tabs ─────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/5 text-xs">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-borderColor text-xs">
         {TAB_STATUSES.map((tab) => {
           const count = getStatusCount(tab.key);
           const isActive = activeTab === tab.key;
@@ -75,13 +75,13 @@ const SellerOrders = () => {
               className={`px-4 py-2.5 rounded-2xl font-bold transition-all flex items-center gap-2 flex-shrink-0 ${
                 isActive
                   ? 'bg-primary text-black shadow-yellow-glow'
-                  : 'bg-cardBg border border-white/5 text-gray-400 hover:text-white hover:border-white/20'
+                  : 'bg-cardBg border border-borderColor text-textSecondary hover:text-textPrimary hover:border-borderColor/50'
               }`}
             >
               <span>{tab.label}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
-                  isActive ? 'bg-black/20 text-black' : 'bg-white/10 text-gray-300'
+                  isActive ? 'bg-black/20 text-black' : 'bg-surface text-textSecondary'
                 }`}
               >
                 {count}
@@ -92,17 +92,17 @@ const SellerOrders = () => {
       </div>
 
       {/* ── 3. Filters & Search ─────────────────────────────────────────────── */}
-      <div className="bg-cardBg/90 backdrop-blur-sm border border-white/5 p-4 rounded-2xl space-y-3">
+      <div className="bg-cardBg border border-borderColor p-4 rounded-2xl space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           {/* Search Input */}
           <div className="sm:col-span-2 relative">
-            <FiSearch className="absolute left-3.5 top-3 text-gray-400" size={14} />
+            <FiSearch className="absolute left-3.5 top-3 text-textSecondary" size={14} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by Order ID, Buyer name, product or tracking #..."
-              className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary text-xs"
+              className="w-full bg-surface border border-borderColor rounded-xl pl-9 pr-3 py-2 text-textPrimary placeholder-textSecondary focus:outline-none focus:border-primary text-xs"
             />
           </div>
 
@@ -111,11 +111,11 @@ const SellerOrders = () => {
             <select
               value={selectedDeliveryType}
               onChange={(e) => setSelectedDeliveryType(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-primary text-xs cursor-pointer"
+              className="w-full bg-surface border border-borderColor rounded-xl px-3 py-2 text-textPrimary focus:outline-none focus:border-primary text-xs cursor-pointer"
             >
-              <option value="all" className="bg-secondaryBg">All Delivery Modes</option>
-              <option value="courier" className="bg-secondaryBg">Courier Dispatch (BlueDart, Delhivery)</option>
-              <option value="meetup" className="bg-secondaryBg">Buyer Meetup / Local Handshake (C2C)</option>
+              <option value="all" className="bg-secondaryBg text-textPrimary">All Delivery Modes</option>
+              <option value="courier" className="bg-secondaryBg text-textPrimary">Courier Dispatch (BlueDart, Delhivery)</option>
+              <option value="meetup" className="bg-secondaryBg text-textPrimary">Buyer Meetup / Local Handshake (C2C)</option>
             </select>
           </div>
         </div>
@@ -123,12 +123,12 @@ const SellerOrders = () => {
 
       {/* ── 4. Orders Table List ────────────────────────────────────────────── */}
       {filteredOrders.length === 0 ? (
-        <div className="bg-cardBg/90 border border-white/5 rounded-3xl p-12 text-center space-y-4">
+        <div className="bg-cardBg border border-borderColor rounded-3xl p-12 text-center space-y-4">
           <div className="w-16 h-16 rounded-3xl bg-primary/10 text-primary mx-auto flex items-center justify-center border border-primary/20">
             <FiShoppingBag size={32} />
           </div>
-          <h3 className="text-base font-bold text-white">No orders matching this filter</h3>
-          <p className="text-xs text-gray-400 max-w-sm mx-auto">
+          <h3 className="text-base font-bold text-textPrimary">No orders matching this filter</h3>
+          <p className="text-xs text-textSecondary max-w-sm mx-auto">
             You currently have no orders in the <span className="text-primary font-bold">"{activeTab}"</span> stage.
           </p>
           <button
@@ -137,17 +137,17 @@ const SellerOrders = () => {
               setSearchQuery('');
               setSelectedDeliveryType('all');
             }}
-            className="px-4 py-2 rounded-xl bg-white/5 text-primary text-xs font-bold hover:bg-white/10"
+            className="px-4 py-2 rounded-xl bg-surface border border-borderColor text-primary text-xs font-bold hover:bg-bgSecondary"
           >
             Reset Order Filter
           </button>
         </div>
       ) : (
-        <div className="bg-cardBg/90 backdrop-blur-sm border border-white/5 rounded-3xl overflow-hidden shadow-card-hover">
+        <div className="bg-cardBg border border-borderColor rounded-3xl overflow-hidden shadow-card-hover">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse">
               <thead>
-                <tr className="bg-white/5 text-gray-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-white/5">
+                <tr className="bg-surface text-textSecondary font-extrabold uppercase text-[10px] tracking-wider border-b border-borderColor">
                   <th className="p-4">Order ID & Date</th>
                   <th className="p-4">Buyer Customer</th>
                   <th className="p-4">Purchased Items</th>
@@ -157,18 +157,18 @@ const SellerOrders = () => {
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-borderColor">
                 {filteredOrders.map((ord) => (
                   <tr
                     key={ord.id}
-                    className="hover:bg-white/5 transition-colors group"
+                    className="hover:bg-surface transition-colors group"
                   >
                     {/* ID & Date */}
                     <td className="p-4">
-                      <div className="font-bold text-white group-hover:text-primary transition-colors">
+                      <div className="font-bold text-textPrimary group-hover:text-primary transition-colors">
                         {ord.id}
                       </div>
-                      <span className="text-[10px] text-gray-500">{ord.orderDate}</span>
+                      <span className="text-[10px] text-textSecondary">{ord.orderDate}</span>
                     </td>
 
                     {/* Customer */}
@@ -177,11 +177,11 @@ const SellerOrders = () => {
                         <img
                           src={ord.customer?.avatar}
                           alt={ord.customer?.name}
-                          className="w-8 h-8 rounded-full object-cover border border-white/10 flex-shrink-0"
+                          className="w-8 h-8 rounded-full object-cover border border-borderColor flex-shrink-0"
                         />
                         <div>
-                          <span className="font-bold text-white block">{ord.customer?.name}</span>
-                          <span className="text-[10px] text-gray-400 block">{ord.customer?.phone}</span>
+                          <span className="font-bold text-textPrimary block">{ord.customer?.name}</span>
+                          <span className="text-[10px] text-textSecondary block">{ord.customer?.phone}</span>
                         </div>
                       </div>
                     </td>
@@ -192,10 +192,10 @@ const SellerOrders = () => {
                         <img
                           src={ord.items[0]?.image}
                           alt={ord.items[0]?.title}
-                          className="w-9 h-9 rounded-lg object-cover border border-white/10"
+                          className="w-9 h-9 rounded-lg object-cover border border-borderColor"
                         />
                         <div className="max-w-[200px]">
-                          <span className="font-medium text-gray-300 truncate block">
+                          <span className="font-medium text-textSecondary truncate block">
                             {ord.items[0]?.title}
                           </span>
                           {ord.items.length > 1 && (
@@ -220,17 +220,17 @@ const SellerOrders = () => {
                           <span>Courier ({ord.carrier || 'Express'})</span>
                         </div>
                       )}
-                      <span className="text-[10px] text-gray-500 block truncate max-w-[150px]">
+                      <span className="text-[10px] text-textSecondary block truncate max-w-[150px]">
                         {ord.shippingAddress}
                       </span>
                     </td>
 
                     {/* Total Amount */}
                     <td className="p-4">
-                      <div className="font-black text-white text-sm">
+                      <div className="font-black text-textPrimary text-sm">
                         ₹{ord.totalAmount.toLocaleString('en-IN')}
                       </div>
-                      <span className="text-[10px] text-gray-400">{ord.paymentMethod}</span>
+                      <span className="text-[10px] text-textSecondary">{ord.paymentMethod}</span>
                     </td>
 
                     {/* Status Badge */}
@@ -238,14 +238,14 @@ const SellerOrders = () => {
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold uppercase text-[9px] tracking-wider border ${
                           ord.status === 'Delivered'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                             : ord.status === 'Shipped'
-                            ? 'bg-accentBlue/10 text-accentBlue border-accentBlue/20'
+                            ? 'bg-accentBlue/10 text-blue-600 dark:text-accentBlue border-accentBlue/20'
                             : ord.status === 'Processing'
                             ? 'bg-primary/10 text-primary border-primary/20'
                             : ord.status === 'Cancelled'
-                            ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                            : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                            ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                            : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20'
                         }`}
                       >
                         {ord.status === 'Delivered' && <FiCheckCircle size={10} />}
@@ -260,7 +260,7 @@ const SellerOrders = () => {
                     <td className="p-4 text-right">
                       <button
                         onClick={() => setSelectedOrder(ord)}
-                        className="px-3 py-1.5 rounded-xl bg-white/5 text-primary border border-primary/20 hover:bg-primary hover:text-black font-bold transition-all text-xs flex items-center gap-1.5 ml-auto"
+                        className="px-3 py-1.5 rounded-xl bg-surface text-primary border border-primary/20 hover:bg-primary hover:text-black font-bold transition-all text-xs flex items-center gap-1.5 ml-auto"
                       >
                         <FiEye size={12} />
                         <span>Manage</span>
@@ -269,6 +269,10 @@ const SellerOrders = () => {
                   </tr>
                 ))}
               </tbody>
+            </table>
+          </div>
+        </div>
+      )}
             </table>
           </div>
         </div>

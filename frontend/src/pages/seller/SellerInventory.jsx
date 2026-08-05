@@ -36,13 +36,13 @@ const SellerInventory = () => {
   return (
     <div className="space-y-6 text-left">
       {/* ── 1. Header ───────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-borderColor pb-5">
         <div>
-          <h1 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-xl md:text-2xl font-black text-textPrimary tracking-tight flex items-center gap-2.5">
             <FiArchive className="text-primary" />
             <span>{isBusiness ? 'Store Inventory' : 'My Listings'}</span>
           </h1>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-textSecondary mt-1">
             Real-time stock capacity management, inline inventory counters, and automated reorder alerts.
           </p>
         </div>
@@ -95,16 +95,16 @@ const SellerInventory = () => {
 
       {/* ── 3. Low Stock Alert Banner ───────────────────────────────────────── */}
       {stats.lowStockCount > 0 && (
-        <div className="bg-gradient-to-r from-amber-500/15 via-cardBg to-cardBg border border-amber-500/30 p-4 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-amber-500/15 via-cardBg to-cardBg border border-borderColor p-4 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+            <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
               <FiAlertTriangle size={20} />
             </div>
             <div>
-              <h4 className="font-extrabold text-white text-xs">
+              <h4 className="font-extrabold text-textPrimary text-xs">
                 {stats.lowStockCount} item(s) are nearing stock depletion
               </h4>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-textSecondary">
                 Replenish units promptly to avoid losing marketplace search ranking and customer buy box.
               </p>
             </div>
@@ -119,21 +119,21 @@ const SellerInventory = () => {
       )}
 
       {/* ── 4. Search & Filters ─────────────────────────────────────────────── */}
-      <div className="bg-cardBg/90 backdrop-blur-sm border border-white/5 p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-center justify-between text-xs">
+      <div className="bg-cardBg border border-borderColor p-4 rounded-2xl flex flex-col sm:flex-row gap-3 items-center justify-between text-xs">
         {/* Search */}
         <div className="relative w-full sm:w-80">
-          <FiSearch className="absolute left-3.5 top-3 text-gray-400" size={14} />
+          <FiSearch className="absolute left-3.5 top-3 text-textSecondary" size={14} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filter by product name, category, SKU..."
-            className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary text-xs"
+            className="w-full bg-surface border border-borderColor rounded-xl pl-9 pr-3 py-2 text-textPrimary placeholder-textSecondary focus:outline-none focus:border-primary text-xs"
           />
         </div>
 
         {/* Stock Level Filter Tabs */}
-        <div className="flex items-center bg-black/40 border border-white/10 p-1 rounded-xl w-full sm:w-auto overflow-x-auto">
+        <div className="flex items-center bg-surface border border-borderColor p-1 rounded-xl w-full sm:w-auto overflow-x-auto">
           {[
             { key: 'all', label: 'All Items' },
             { key: 'in_stock', label: 'In Stock (>5)' },
@@ -146,7 +146,7 @@ const SellerInventory = () => {
               className={`px-3 py-1.5 rounded-lg font-bold transition-all whitespace-nowrap ${
                 stockFilter === tab.key
                   ? 'bg-primary text-black shadow-yellow-glow'
-                  : 'text-gray-400 hover:text-white'
+                  : 'text-textSecondary hover:text-textPrimary hover:bg-bgSecondary'
               }`}
             >
               {tab.label}
@@ -156,11 +156,11 @@ const SellerInventory = () => {
       </div>
 
       {/* ── 5. Interactive Inventory Table with Inline +/- Adjuster ─────────── */}
-      <div className="bg-cardBg/90 backdrop-blur-sm border border-white/5 rounded-3xl overflow-hidden shadow-card-hover">
+      <div className="bg-cardBg border border-borderColor rounded-3xl overflow-hidden shadow-card-hover">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="bg-white/5 text-gray-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-white/5">
+              <tr className="bg-surface text-textSecondary font-extrabold uppercase text-[10px] tracking-wider border-b border-borderColor">
                 <th className="p-4">Catalog Listing</th>
                 <th className="p-4">Format</th>
                 <th className="p-4">Unit Price</th>
@@ -170,22 +170,22 @@ const SellerInventory = () => {
                 <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-borderColor">
               {filteredProducts.map((p) => (
-                <tr key={p.id} className="hover:bg-white/5 transition-colors group">
+                <tr key={p.id} className="hover:bg-surface transition-colors group">
                   {/* Product Details */}
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <img
                         src={p.image}
                         alt={p.title}
-                        className="w-12 h-12 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                        className="w-12 h-12 rounded-xl object-cover border border-borderColor flex-shrink-0"
                       />
                       <div className="max-w-[220px]">
-                        <h4 className="font-bold text-white text-xs truncate group-hover:text-primary transition-colors">
+                        <h4 className="font-bold text-textPrimary text-xs truncate group-hover:text-primary transition-colors">
                           {p.title}
                         </h4>
-                        <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-0.5">
+                        <div className="flex items-center gap-2 text-[10px] text-textSecondary mt-0.5">
                           <span className="capitalize">{p.category}</span>
                           {p.sku && <span>• {p.sku}</span>}
                         </div>
@@ -195,13 +195,13 @@ const SellerInventory = () => {
 
                   {/* Format */}
                   <td className="p-4">
-                    <span className="capitalize font-semibold text-gray-300">
+                    <span className="capitalize font-semibold text-textSecondary">
                       {p.sellerType === 'individual_c2c' ? 'C2C Used' : 'Retail'}
                     </span>
                   </td>
 
                   {/* Unit Price */}
-                  <td className="p-4 font-bold text-white">
+                  <td className="p-4 font-bold text-textPrimary">
                     ₹{p.price.toLocaleString('en-IN')}
                   </td>
 
@@ -217,17 +217,17 @@ const SellerInventory = () => {
                         <span
                           className={
                             p.stock === 0
-                              ? 'text-red-400'
+                              ? 'text-red-500'
                               : p.stock <= 5
-                              ? 'text-amber-400'
-                              : 'text-emerald-400'
+                              ? 'text-amber-600 dark:text-amber-400'
+                              : 'text-emerald-600 dark:text-emerald-400'
                           }
                         >
                           {p.stock === 0 ? 'Empty' : p.stock <= 5 ? 'Low Stock' : 'Optimal'}
                         </span>
-                        <span className="text-gray-400">{p.stock} pcs</span>
+                        <span className="text-textSecondary">{p.stock} pcs</span>
                       </div>
-                      <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                      <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden border border-borderColor">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${
                             p.stock === 0
@@ -244,20 +244,20 @@ const SellerInventory = () => {
 
                   {/* Inline Stock Counter (+ / -) */}
                   <td className="p-4 text-center">
-                    <div className="inline-flex items-center gap-1.5 bg-black/50 border border-white/10 p-1 rounded-xl">
+                    <div className="inline-flex items-center gap-1.5 bg-surface border border-borderColor p-1 rounded-xl">
                       <button
                         onClick={() => updateStock(p.id, Math.max(0, p.stock - 1))}
-                        className="w-7 h-7 rounded-lg bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 flex items-center justify-center font-bold transition-colors"
+                        className="w-7 h-7 rounded-lg bg-surface border border-borderColor text-textSecondary hover:text-textPrimary hover:bg-bgSecondary flex items-center justify-center font-bold transition-colors"
                         title="Decrease 1 unit"
                       >
                         <FiMinus size={12} />
                       </button>
-                      <span className="w-10 text-center font-black text-white text-xs font-mono">
+                      <span className="w-10 text-center font-black text-textPrimary text-xs font-mono">
                         {p.stock}
                       </span>
                       <button
                         onClick={() => updateStock(p.id, p.stock + 1)}
-                        className="w-7 h-7 rounded-lg bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 flex items-center justify-center font-bold transition-colors"
+                        className="w-7 h-7 rounded-lg bg-surface border border-borderColor text-textSecondary hover:text-textPrimary hover:bg-bgSecondary flex items-center justify-center font-bold transition-colors"
                         title="Increase 1 unit"
                       >
                         <FiPlus size={12} />
@@ -269,7 +269,7 @@ const SellerInventory = () => {
                   <td className="p-4 text-right">
                     <button
                       onClick={() => setStockModalProduct(p)}
-                      className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 hover:text-primary hover:border-primary/30 font-bold transition-all text-xs inline-flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-surface border border-borderColor text-textSecondary hover:text-primary hover:bg-bgSecondary font-bold transition-all text-xs inline-flex items-center gap-1.5"
                     >
                       <FiSliders size={12} />
                       <span>Custom Qty</span>

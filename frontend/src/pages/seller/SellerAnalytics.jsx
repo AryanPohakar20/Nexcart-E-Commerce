@@ -31,13 +31,13 @@ const SellerAnalytics = () => {
   return (
     <div className="space-y-8 text-left">
       {/* ── 1. Header ───────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-borderColor pb-5">
         <div>
-          <h1 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-xl md:text-2xl font-black text-textPrimary tracking-tight flex items-center gap-2.5">
             <FiBarChart2 className="text-primary" />
             <span>Studio Analytics & Intelligence</span>
           </h1>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-textSecondary mt-1">
             Real-time analytics on revenue velocity, traffic sources, top-selling items, and C2C vs retail demand.
           </p>
         </div>
@@ -97,23 +97,23 @@ const SellerAnalytics = () => {
       {/* ── 4. Category Share & Traffic Distribution ───────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         {/* Category Revenue Breakdown */}
-        <div className="bg-cardBg/90 backdrop-blur-sm border border-white/5 rounded-3xl p-6 space-y-6">
-          <div className="flex items-center justify-between border-b border-white/5 pb-4">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-cardBg border border-borderColor rounded-3xl p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-borderColor pb-4">
+            <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider flex items-center gap-2">
               <FiPieChart className="text-primary" />
               <span>Revenue by Marketplace Category</span>
             </h3>
-            <span className="text-xs text-gray-400 font-semibold">100% Normalized</span>
+            <span className="text-xs text-textSecondary font-semibold">100% Normalized</span>
           </div>
 
           <div className="space-y-4 text-xs">
             {CATEGORY_SHARE.map((cat) => (
               <div key={cat.name} className="space-y-1.5">
-                <div className="flex justify-between font-bold text-white">
+                <div className="flex justify-between font-bold text-textPrimary">
                   <span>{cat.name}</span>
-                  <span className="text-gray-400">{cat.percentage}%</span>
+                  <span className="text-textSecondary">{cat.percentage}%</span>
                 </div>
-                <div className="w-full h-2.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                <div className="w-full h-2.5 bg-surface rounded-full overflow-hidden border border-borderColor">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${cat.percentage}%` }}
@@ -125,38 +125,38 @@ const SellerAnalytics = () => {
             ))}
           </div>
 
-          <div className="p-4 bg-black/40 border border-white/5 rounded-2xl flex items-center justify-between text-xs">
+          <div className="p-4 bg-surface border border-borderColor rounded-2xl flex items-center justify-between text-xs">
             <div>
-              <span className="text-gray-400 block">C2C Pre-owned Share:</span>
+              <span className="text-textSecondary block">C2C Pre-owned Share:</span>
               <strong className="text-primary font-black text-sm">60% of Gross Revenue</strong>
             </div>
             <div>
-              <span className="text-gray-400 block">Retail Brand Share:</span>
+              <span className="text-textSecondary block">Retail Brand Share:</span>
               <strong className="text-accentBlue font-black text-sm">40% of Gross Revenue</strong>
             </div>
           </div>
         </div>
 
         {/* Traffic Channels */}
-        <div className="bg-cardBg/90 backdrop-blur-sm border border-white/5 rounded-3xl p-6 space-y-6">
-          <div className="flex items-center justify-between border-b border-white/5 pb-4">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-cardBg border border-borderColor rounded-3xl p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-borderColor pb-4">
+            <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider flex items-center gap-2">
               <FiUsers className="text-primary" />
               <span>Buyer Traffic Acquisition</span>
             </h3>
-            <span className="text-xs text-gray-400 font-semibold">Live Feed</span>
+            <span className="text-xs text-textSecondary font-semibold">Live Feed</span>
           </div>
 
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-borderColor">
             {TRAFFIC_SOURCES.map((ts) => (
               <div key={ts.source} className="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between text-xs">
                 <div>
-                  <h4 className="font-bold text-white">{ts.source}</h4>
-                  <span className="text-[10px] text-gray-400">{ts.visitors} unique page impressions</span>
+                  <h4 className="font-bold text-textPrimary">{ts.source}</h4>
+                  <span className="text-[10px] text-textSecondary">{ts.visitors} unique page impressions</span>
                 </div>
                 <div className="text-right">
                   <span className="text-primary font-black text-sm">{ts.share}</span>
-                  <span className="text-[10px] text-gray-400 block">of total traffic</span>
+                  <span className="text-[10px] text-textSecondary block">of total traffic</span>
                 </div>
               </div>
             ))}
