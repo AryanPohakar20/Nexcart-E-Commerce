@@ -110,7 +110,7 @@ const Home = () => {
   return (
     <div className="space-y-16">
       
-      {/* 1. Hero Slider Module */}
+      {/* 1. Hero Slider Module — intentionally kept dark (cinematic banner) */}
       <section 
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -194,7 +194,7 @@ const Home = () => {
                 transition={{ duration: 0.6, ease: 'easeInOut' }}
                 className="absolute inset-0 flex items-center"
               >
-                {/* Background Image overlay */}
+                {/* Background Image overlay — always dark for cinematic look */}
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0B0B0B] via-[#0B0B0B]/80 to-transparent z-10" />
                 <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
                 
@@ -218,6 +218,7 @@ const Home = () => {
                     className="space-y-2"
                   >
                     <h3 className="text-sm font-semibold uppercase tracking-widest text-accentBlue leading-none">{slide.subtitle}</h3>
+                    {/* Hero title always white — sits on dark overlay */}
                     <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">{slide.title}</h1>
                   </motion.div>
 
@@ -279,8 +280,8 @@ const Home = () => {
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">Featured Categories</h2>
-            <p className="text-xs text-gray-500 mt-1">Discover items curated across major domains.</p>
+            <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary tracking-tight">Featured Categories</h2>
+            <p className="text-xs text-textSecondary mt-1">Discover items curated across major domains.</p>
           </div>
           <Link to="/products" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
             <span>Explore All</span>
@@ -302,10 +303,10 @@ const Home = () => {
                 to={`/category/${cat.id}`}
                 className="flex-shrink-0 flex flex-col items-center gap-3 group"
               >
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white/5 group-hover:border-primary/60 group-hover:shadow-yellow-glow transition-all duration-300">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-borderColor group-hover:border-primary/60 group-hover:shadow-yellow-glow transition-all duration-300">
                   <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                 </div>
-                <span className="text-xs font-semibold text-gray-400 group-hover:text-white transition-all text-center">{cat.name}</span>
+                <span className="text-xs font-semibold text-textSecondary group-hover:text-primary transition-all text-center">{cat.name}</span>
               </Link>
             </motion.div>
           ))}
@@ -325,22 +326,22 @@ const Home = () => {
         >
           <div className="space-y-4">
             <span className="bg-primary/20 border border-primary/40 text-primary text-[10px] font-extrabold px-2.5 py-1 rounded tracking-wider uppercase">Flash Sale</span>
-            <h3 className="text-2xl font-black text-white">Deals of the Day</h3>
-            <p className="text-xs text-gray-400 leading-relaxed font-medium">Limited stocks on top items. Prices return to standard soon.</p>
+            <h3 className="text-2xl font-black text-textPrimary">Deals of the Day</h3>
+            <p className="text-xs text-textSecondary leading-relaxed font-medium">Limited stocks on top items. Prices return to standard soon.</p>
             
             {/* Clock Timer */}
             <div className="flex items-center gap-3 pt-2">
               <FiClock className="text-primary text-xl animate-spin" style={{ animationDuration: '10s' }} />
               <div className="flex gap-1.5 text-center font-mono">
-                <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
+                <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
                   {String(timeLeft.hours).padStart(2, '0')}
                 </div>
                 <span className="text-primary font-bold self-center">:</span>
-                <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
+                <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
                   {String(timeLeft.minutes).padStart(2, '0')}
                 </div>
                 <span className="text-primary font-bold self-center">:</span>
-                <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
+                <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
                   {String(timeLeft.seconds).padStart(2, '0')}
                 </div>
               </div>
@@ -368,8 +369,8 @@ const Home = () => {
       {/* 4. Coupons Drawer */}
       <section className="space-y-6">
         <div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">Super Saver Coupons</h2>
-          <p className="text-xs text-gray-500 mt-1">Click a coupon card to copy code and apply discounts during checkout.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Super Saver Coupons</h2>
+          <p className="text-xs text-textSecondary mt-1">Click a coupon card to copy code and apply discounts during checkout.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -379,20 +380,21 @@ const Home = () => {
               whileHover={{ y: -5, boxShadow: '0 0 25px rgba(255, 193, 7, 0.25)', borderColor: 'rgba(255, 193, 7, 0.4)' }}
               whileTap={{ scale: 0.98 }}
               onClick={() => copyCoupon(cp.code)}
-              className="bg-cardBg border border-white/5 p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 relative overflow-hidden group"
+              className="bg-cardBg border border-borderColor p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 relative overflow-hidden group"
             >
-              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-darkBg" />
-              <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-darkBg" />
+              {/* Ticket punch-holes — use bgPrimary to blend with page background */}
+              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-bgPrimary" />
+              <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-bgPrimary" />
               
               <div className="pl-4 space-y-1.5">
                 <span className="text-[10px] text-accentBlue font-bold uppercase tracking-wider">Coupon Code</span>
-                <h4 className="text-lg font-black text-white tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
-                <p className="text-[10px] text-gray-400">{cp.description}</p>
+                <h4 className="text-lg font-black text-textPrimary tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
+                <p className="text-[10px] text-textSecondary">{cp.description}</p>
               </div>
 
-              <div className="flex flex-col items-center gap-1 text-center bg-white/5 border border-white/5 p-2 rounded-lg pr-4">
+              <div className="flex flex-col items-center gap-1 text-center bg-surface border border-borderColor p-2 rounded-lg pr-4">
                 <FiPercent className="text-primary text-lg" />
-                <span className="text-[10px] font-bold text-gray-400">
+                <span className="text-[10px] font-bold text-textSecondary">
                   {copiedCoupon === cp.code ? 'Copied' : 'Copy'}
                 </span>
               </div>
@@ -404,8 +406,8 @@ const Home = () => {
       {/* 5. Trending & Recommended Items */}
       <section className="space-y-6">
         <div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">Trending Collections</h2>
-          <p className="text-xs text-gray-500 mt-1">Best-rated products by shoppers worldwide.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Trending Collections</h2>
+          <p className="text-xs text-textSecondary mt-1">Best-rated products by shoppers worldwide.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -418,8 +420,8 @@ const Home = () => {
       {/* 6. Popular Brands Banner */}
       <section className="space-y-6">
         <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">Shop By Brands</h2>
-          <p className="text-xs text-gray-500 mt-1">Explore authentic items from elite global suppliers.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Shop By Brands</h2>
+          <p className="text-xs text-textSecondary mt-1">Explore authentic items from elite global suppliers.</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 pt-4">
@@ -429,9 +431,14 @@ const Home = () => {
               whileHover={{ y: -5, borderColor: 'rgba(255, 193, 7, 0.4)' }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(`/products?brand=${br.name}`)}
-              className="bg-cardBg border border-white/5 p-6 rounded-2xl flex items-center justify-center h-24 cursor-pointer transition-all duration-300 group"
+              className="bg-cardBg border border-borderColor p-6 rounded-2xl flex flex-col items-center justify-center gap-2 h-24 cursor-pointer transition-all duration-300 group"
             >
-              <img src={br.logoUrl} alt={br.name} className="max-h-10 max-w-full object-contain filter invert opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
+              {/* Logo: invert only in dark mode so logos stay visible in both themes */}
+              <img
+                src={br.logoUrl}
+                alt={br.name}
+                className="max-h-8 max-w-full object-contain opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 dark:invert dark:brightness-200"
+              />
             </motion.div>
           ))}
         </div>
@@ -440,8 +447,8 @@ const Home = () => {
       {/* 7. Testimonials */}
       <section className="space-y-6">
         <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">NexCart Reviews</h2>
-          <p className="text-xs text-gray-500 mt-1">What our premium customers have to say.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">NexCart Reviews</h2>
+          <p className="text-xs text-textSecondary mt-1">What our premium customers have to say.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -453,13 +460,13 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: idx * 0.1 }}
               whileHover={{ y: -4 }}
-              className="bg-cardBg border border-white/5 hover:border-primary/30 p-6 rounded-2xl space-y-4 transition-all duration-300"
+              className="bg-cardBg border border-borderColor hover:border-primary/30 p-6 rounded-2xl space-y-4 transition-all duration-300"
             >
               <div className="flex items-center gap-3">
                 <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover border border-primary/20" />
                 <div>
-                  <h4 className="text-xs font-bold text-white">{t.name}</h4>
-                  <span className="text-[10px] text-gray-500">{t.role}</span>
+                  <h4 className="text-xs font-bold text-textPrimary">{t.name}</h4>
+                  <span className="text-[10px] text-textSecondary">{t.role}</span>
                 </div>
               </div>
 
@@ -469,7 +476,7 @@ const Home = () => {
                 ))}
               </div>
 
-              <p className="text-xs text-gray-400 leading-relaxed font-medium italic">
+              <p className="text-xs text-textSecondary leading-relaxed font-medium italic">
                 "{t.comment}"
               </p>
             </motion.div>
