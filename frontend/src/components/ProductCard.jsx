@@ -36,13 +36,13 @@ const ProductCard = ({ product }) => {
         viewport={{ once: true }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
         whileHover={{ y: -6, boxShadow: '0 20px 40px rgba(0,0,0,0.4), 0 0 25px rgba(255,193,7,0.25)' }}
-        className="group relative bg-cardBg rounded-2xl overflow-hidden border border-white/5 hover:border-primary/40 cursor-pointer flex flex-col justify-between h-[450px] transition-all duration-300"
+        className="group relative bg-cardBg rounded-2xl overflow-hidden border border-borderColor hover:border-primary/40 cursor-pointer flex flex-col justify-between h-[450px] transition-all duration-300"
       >
         {/* Shimmer Light Reflection Line */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none z-10" />
 
         {/* Upper Image Section */}
-        <div className="relative h-48 w-full bg-black/30 overflow-hidden">
+        <div className="relative h-48 w-full bg-surface overflow-hidden">
           <img 
             src={product.image} 
             alt={product.title} 
@@ -65,7 +65,7 @@ const ProductCard = ({ product }) => {
               className={`card-action-btn p-2 rounded-full border shadow-md transition-all ${
                 isWishlisted 
                   ? 'bg-primary border-primary text-black' 
-                  : 'bg-black/60 border-white/10 text-white hover:text-primary hover:bg-black/80'
+                  : 'bg-cardBg border-borderColor text-textSecondary hover:text-primary hover:border-primary/40'
               }`}
               title="Add to Wishlist"
             >
@@ -76,7 +76,7 @@ const ProductCard = ({ product }) => {
               whileHover={{ scale: 1.15, rotate: -6 }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => { e.stopPropagation(); setIsQuickViewOpen(true); }}
-              className="card-action-btn p-2 rounded-full bg-black/60 border border-white/10 text-white hover:text-primary hover:bg-black/80 shadow-md transition-all"
+              className="card-action-btn p-2 rounded-full bg-cardBg border border-borderColor text-textSecondary hover:text-primary hover:border-primary/40 shadow-md transition-all"
               title="Quick View"
             >
               <FiEye size={15} />
@@ -89,7 +89,7 @@ const ProductCard = ({ product }) => {
               className={`card-action-btn p-2 rounded-full border shadow-md transition-all ${
                 isCompared 
                   ? 'bg-accentBlue border-accentBlue text-black animate-pulse' 
-                  : 'bg-black/60 border-white/10 text-white hover:text-accentBlue hover:bg-black/80'
+                  : 'bg-cardBg border-borderColor text-textSecondary hover:text-accentBlue hover:border-accentBlue/40'
               }`}
               title="Compare Product"
             >
@@ -108,14 +108,14 @@ const ProductCard = ({ product }) => {
         {/* Lower Info Details */}
         <div className="p-4 flex-grow flex flex-col justify-between">
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+            <div className="flex items-center justify-between text-[10px] text-textSecondary uppercase tracking-widest font-semibold">
               <span>{product.brand}</span>
               <span className={hasStock ? 'text-green-500 animate-pulse' : 'text-red-500'}>
                 {hasStock ? 'In Stock' : 'Sold Out'}
               </span>
             </div>
             
-            <h3 className="text-sm font-semibold text-white group-hover:text-primary transition-colors line-clamp-2 h-10">
+            <h3 className="text-sm font-semibold text-textPrimary group-hover:text-primary transition-colors line-clamp-2 h-10">
               {product.title}
             </h3>
 
@@ -125,16 +125,16 @@ const ProductCard = ({ product }) => {
                 <FiStar className="fill-current" />
                 <span className="font-bold text-xs ml-0.5">{product.rating}</span>
               </div>
-              <span className="text-[10px] text-gray-500 font-medium">({product.reviewsCount} reviews)</span>
+              <span className="text-[10px] text-textSecondary font-medium">({product.reviewsCount} reviews)</span>
             </div>
           </div>
 
           {/* Pricing area */}
-          <div className="pt-2 border-t border-white/5 space-y-3">
+          <div className="pt-2 border-t border-borderColor space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-extrabold text-white group-hover:text-primary transition-colors duration-300">₹{product.price.toLocaleString('en-IN')}</span>
+              <span className="text-lg font-extrabold text-textPrimary group-hover:text-primary transition-colors duration-300">₹{product.price.toLocaleString('en-IN')}</span>
               {product.mrp > product.price && (
-                <span className="text-xs text-gray-500 line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+                <span className="text-xs text-textSecondary line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
               )}
             </div>
 
@@ -145,7 +145,7 @@ const ProductCard = ({ product }) => {
                 whileTap={{ scale: 0.96 }}
                 onClick={(e) => { e.stopPropagation(); if (hasStock) addToCart(product, 1); }}
                 disabled={!hasStock}
-                className="card-action-btn py-2 border border-white/10 hover:border-primary/40 rounded-lg text-xs font-semibold text-gray-300 hover:text-primary transition-all flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="card-action-btn py-2 border border-borderColor hover:border-primary/40 rounded-lg text-xs font-semibold text-textSecondary hover:text-primary transition-all flex items-center justify-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <FiShoppingCart size={13} />
                 <span>Add Cart</span>
@@ -180,42 +180,42 @@ const ProductCard = ({ product }) => {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 30 }}
               transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-              className="glass-card max-w-2xl w-full rounded-2xl border border-white/10 overflow-hidden relative"
+              className="glass-card max-w-2xl w-full rounded-2xl border border-borderColor overflow-hidden relative"
             >
               
               <button 
                 onClick={() => setIsQuickViewOpen(false)}
-                className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 rounded-full border border-white/10 text-white hover:text-primary transition-all z-10"
+                className="absolute top-4 right-4 p-2 bg-cardBg hover:bg-surface rounded-full border border-borderColor text-textSecondary hover:text-primary transition-all z-10"
               >
                 <FiX size={18} />
               </button>
 
               <div className="grid grid-cols-1 md:grid-cols-2">
-                <img src={product.image} alt={product.title} className="w-full h-64 md:h-full object-cover bg-black/30" />
+                <img src={product.image} alt={product.title} className="w-full h-64 md:h-full object-cover bg-surface" />
                 
                 <div className="p-6 flex flex-col justify-between space-y-4">
                   <div>
                     <span className="text-[10px] text-primary uppercase font-bold tracking-widest">{product.brand}</span>
-                    <h2 className="text-lg font-bold text-white mt-1 leading-tight">{product.title}</h2>
-                    <p className="text-xs text-gray-400 mt-2 line-clamp-3 leading-relaxed">{product.description}</p>
+                    <h2 className="text-lg font-bold text-textPrimary mt-1 leading-tight">{product.title}</h2>
+                    <p className="text-xs text-textSecondary mt-2 line-clamp-3 leading-relaxed">{product.description}</p>
                     
                     <div className="flex items-center gap-2 mt-3">
-                      <span className="text-xl font-black text-white">₹{product.price.toLocaleString('en-IN')}</span>
+                      <span className="text-xl font-black text-textPrimary">₹{product.price.toLocaleString('en-IN')}</span>
                       {product.mrp > product.price && (
-                        <span className="text-xs text-gray-500 line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+                        <span className="text-xs text-textSecondary line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
                       )}
                     </div>
                   </div>
 
-                  <div className="space-y-2 pt-4 border-t border-white/5">
-                    <p className="text-[10px] text-gray-400 font-semibold">{product.delivery}</p>
+                  <div className="space-y-2 pt-4 border-t border-borderColor">
+                    <p className="text-[10px] text-textSecondary font-semibold">{product.delivery}</p>
                     <div className="grid grid-cols-2 gap-2">
                       <motion.button 
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => { addToCart(product, 1); setIsQuickViewOpen(false); }}
                         disabled={!hasStock}
-                        className="py-2.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-white hover:border-primary/50 hover:text-primary transition-all disabled:opacity-40"
+                        className="py-2.5 bg-surface border border-borderColor rounded-lg text-xs font-bold text-textPrimary hover:border-primary/50 hover:text-primary transition-all disabled:opacity-40"
                       >
                         Add To Cart
                       </motion.button>
