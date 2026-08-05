@@ -5,11 +5,15 @@
 import User from '../models/User.js';
 
 /**
- * Find a user by email address.
+ * Find a user by email address and optional role filter.
  * By default does NOT include password. Pass `includePassword: true` for auth flows.
  */
-export const findByEmail = async (email, includePassword = false) => {
-  const query = User.findOne({ email: email.toLowerCase().trim() });
+export const findByEmail = async (email, role = null, includePassword = false) => {
+  const filter = { email: email.toLowerCase().trim() };
+  if (role) {
+    filter.role = Array.isArray(role) ? { $in: role } : role;
+  }
+  const query = User.findOne(filter);
   if (includePassword) query.select('+password');
   return query.lean(false); // Keep Mongoose document (needed for instance methods)
 };
@@ -86,8 +90,12 @@ export const markVerified = async (id) => {
 };
 
 /**
- * Find user by email with OTP fields included (for password reset).
+ * Find user by email with OTP fields included (for password reset), with optional role filter.
  */
-export const findByEmailWithOtp = async (email) => {
-  return User.findOne({ email: email.toLowerCase().trim() }).select('+otp.code +otp.expiresAt');
+export const findByEmailWithOtp = async (email, role = null) => {
+  const filter = { email: email.toLowerCase().trim() };
+  if (role) {
+    filter.role = Array.isArray(role) ? { $in: role } : role;
+  }
+  return User.findOne(filter).select('+otp.code +otp.expiresAt');
 };

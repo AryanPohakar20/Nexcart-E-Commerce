@@ -7,8 +7,11 @@ import NexCartLogo from '../../components/NexCartLogo';
 import ThemeToggle from '../../components/ThemeToggle';
 
 const BecomeSeller = () => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, user } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  const userName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user?.username || user?.email?.split('@')[0] || 'User');
+  const userInitial = (userName.trim()[0] || 'U').toUpperCase();
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#070B12] text-gray-900 dark:text-white relative overflow-hidden flex flex-col">
@@ -17,9 +20,21 @@ const BecomeSeller = () => {
         <NexCartLogo />
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Link to="/login" className="text-sm font-semibold hover:text-primary transition-colors">
-            Login
-          </Link>
+          {user ? (
+            <Link to="/profile" className="flex items-center gap-2 p-0.5 rounded-full border border-primary/50 hover:border-primary transition-all" title={userName}>
+              {user.avatar ? (
+                <img src={user.avatar} alt={userName} className="w-8 h-8 rounded-full object-cover" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-amber-400 text-black font-black flex items-center justify-center text-xs">
+                  {userInitial}
+                </div>
+              )}
+            </Link>
+          ) : (
+            <Link to="/login" className="text-sm font-semibold hover:text-primary transition-colors">
+              Login
+            </Link>
+          )}
         </div>
       </nav>
 

@@ -2,8 +2,16 @@
 // MongoDB connection module using Mongoose.
 // Handles initial connection, graceful failure, and reconnection events.
 
+import dns from 'node:dns';
 import mongoose from 'mongoose';
 import logger from '../utils/logger.js';
+
+// Configure DNS resolvers to bypass local ISP DNS SRV lookup failures on Windows
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch {
+  // Fallback to default system DNS if setServers is restricted
+}
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 5000;
