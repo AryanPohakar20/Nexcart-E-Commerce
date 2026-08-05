@@ -108,16 +108,14 @@ export const AppProvider = ({ children }) => {
       root.classList.remove('light');
       body.classList.add('dark');
       body.classList.remove('light');
-      body.style.backgroundColor = '#070B12';
-      body.style.color = '#FFFFFF';
     } else {
       root.classList.remove('dark');
       root.classList.add('light');
       body.classList.remove('dark');
       body.classList.add('light');
-      body.style.backgroundColor = '#F8FAFC';
-      body.style.color = '#111827';
     }
+    body.style.backgroundColor = 'var(--bg-primary)';
+    body.style.color = 'var(--text-primary)';
   }, [theme]);
 
   const toggleTheme = () => {

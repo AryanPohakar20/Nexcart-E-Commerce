@@ -3,25 +3,61 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Light Theme */
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F8FAFC;
+    --card-bg: #FFFFFF;
+    --surface: #F1F5F9;
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+    --border-color: #E5E7EB;
+    --button-primary: #FFC107;
+    --button-secondary: #00CFFF;
+    --accent: #FFC107;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .dark {
+    /* Dark Theme */
+    --bg-primary: #070B12;
+    --bg-secondary: #121212;
+    --card-bg: #202020;
+    --surface: #0A0A0A;
+    --text-primary: #FFFFFF;
+    --text-secondary: #9CA3AF;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --button-primary: #FFC107;
+    --button-secondary: #00CFFF;
+    --accent: #FFC107;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  }
+
   /* Smooth scrolling & global theme transitions across the whole page */
   html {
     scroll-behavior: smooth;
   }
 
   *, *::before, *::after {
-    transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease, box-shadow 300ms ease;
+    transition: background-color 250ms ease, border-color 250ms ease, color 250ms ease, box-shadow 250ms ease;
   }
 
   html.dark body, body.dark {
-    background-color: #070B12;
-    background-image: radial-gradient(circle at 50% 0%, #161616 0%, #070B12 100%);
-    color: #FFFFFF;
+    background-color: var(--bg-primary);
+    background-image: radial-gradient(circle at 50% 0%, #161616 0%, var(--bg-primary) 100%);
+    color: var(--text-primary);
   }
 
   html.light body, body.light {
-    background-color: #F8FAFC !important;
+    background-color: var(--bg-primary) !important;
     background-image: none !important;
-    color: #111827 !important;
+    color: var(--text-primary) !important;
   }
 
   /* Custom Premium Scrollbar */
