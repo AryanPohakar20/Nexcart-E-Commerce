@@ -273,10 +273,6 @@ const SellerOrders = () => {
           </div>
         </div>
       )}
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* ── 5. Order Details Modal ──────────────────────────────────────────── */}
       <OrderDetailsModal

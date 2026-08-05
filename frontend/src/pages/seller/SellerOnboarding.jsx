@@ -174,16 +174,16 @@ const SellerOnboarding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#070B12] text-gray-900 dark:text-white flex flex-col relative overflow-hidden">
-      <nav className="flex justify-between items-center p-6 lg:px-12 relative z-10 border-b border-gray-200 dark:border-white/5 bg-white/50 dark:bg-[#0c111d]/50 backdrop-blur-xl">
+    <div className="min-h-screen bg-bgPrimary text-textPrimary flex flex-col relative overflow-hidden transition-colors duration-250">
+      <nav className="flex justify-between items-center p-6 lg:px-12 relative z-10 border-b border-borderColor bg-surface/50 backdrop-blur-xl">
         <NexCartLogo />
-        <div className="text-xs font-bold text-gray-500 tracking-widest uppercase">Seller Onboarding</div>
+        <div className="text-xs font-bold text-textSecondary tracking-widest uppercase">Seller Onboarding</div>
       </nav>
 
       <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
         <div className="w-full max-w-2xl mb-8">
           <div className="flex justify-between items-center relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200 dark:bg-white/10 -z-10 rounded-full overflow-hidden">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface border border-borderColor -z-10 rounded-full overflow-hidden">
               <motion.div
                 className="h-full bg-primary"
                 initial={{ width: '0%' }}
@@ -197,14 +197,14 @@ const SellerOnboarding = () => {
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                     currentStep >= step.id
                       ? 'bg-primary text-black shadow-[0_0_15px_rgba(255,193,7,0.4)]'
-                      : 'bg-gray-200 dark:bg-[#1a2235] text-gray-400'
+                      : 'bg-surface text-textSecondary border border-borderColor'
                   }`}
                 >
                   {step.id}
                 </div>
                 <span
                   className={`text-[10px] uppercase tracking-wider font-bold ${
-                    currentStep >= step.id ? 'text-primary' : 'text-gray-500'
+                    currentStep >= step.id ? 'text-primary' : 'text-textSecondary'
                   }`}
                 >
                   {step.title}
@@ -215,7 +215,7 @@ const SellerOnboarding = () => {
         </div>
 
         <div className="w-full max-w-xl">
-          <div className="glass-card p-8 rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl relative overflow-hidden">
+          <div className="bg-cardBg p-8 rounded-3xl border border-borderColor shadow-2xl relative overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentStep}
