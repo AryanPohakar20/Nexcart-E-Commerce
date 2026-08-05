@@ -12,6 +12,7 @@ const fileFilter = (req, file, cb) => {
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'text/plain',
+    'application/json',
   ];
 
   const ext = file.originalname.toLowerCase();
@@ -19,12 +20,13 @@ const fileFilter = (req, file, cb) => {
     allowedMimeTypes.includes(file.mimetype) ||
     ext.endsWith('.csv') ||
     ext.endsWith('.xlsx') ||
-    ext.endsWith('.xls')
+    ext.endsWith('.xls') ||
+    ext.endsWith('.json')
   ) {
     cb(null, true);
   } else {
     cb(
-      new ApiError(400, 'Unsupported file format. Please upload a .csv, .xlsx, or .xls file.'),
+      new ApiError(400, 'Unsupported file format. Please upload a .csv, .xlsx, .xls, or .json file.'),
       false
     );
   }
