@@ -4,6 +4,9 @@ const REQUIRED_VARS = [
   'JWT_SECRET',
   'JWT_EXPIRES_IN',
   'CLIENT_URL',
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
 ];
 
 const validateEnv = () => {
@@ -11,15 +14,15 @@ const validateEnv = () => {
 
   if (missing.length > 0) {
     console.error(
-      `\n❌ Missing required environment variables:\n   ${missing.join('\n   ')}\n\n` +
-      `   Please copy .env.example to .env and fill in all values.\n`
+      `\nMissing required environment variables:\n   ${missing.join('\n   ')}\n\n` +
+        '   Please copy .env.example to .env and fill in all values.\n'
     );
     process.exit(1);
   }
 
   if (!process.env.EMAIL || !process.env.EMAIL_PASSWORD) {
     console.warn(
-      '\n⚠️ EMAIL / EMAIL_PASSWORD not set in .env — transactional emails will log to console in dev mode.\n'
+      '\nEMAIL / EMAIL_PASSWORD not set in .env - transactional emails will log to console in dev mode.\n'
     );
   }
 
@@ -29,7 +32,7 @@ const validateEnv = () => {
     !process.env.CLOUDINARY_API_SECRET
   ) {
     console.warn(
-      '\n⚠️ CLOUDINARY credentials not fully set in .env — document uploads will return mock URLs in dev mode.\n'
+      '\nCLOUDINARY credentials not fully set in .env - document uploads will return mock URLs in dev mode.\n'
     );
   }
 };

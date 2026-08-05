@@ -23,10 +23,15 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:')
+      ) {
         callback(null, true);
       } else {
-        callback(null, allowedOrigins);
+        callback(new Error(`Origin ${origin} is not allowed by CORS`));
       }
     },
     credentials: true,
@@ -39,6 +44,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
+<<<<<<< HEAD
 app.get('/api/health', (req, res) => {
   const dbConnected = globalThis.__dbConnected === true;
 
@@ -53,12 +59,10 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+=======
+>>>>>>> 059c255642e76f5ef48c7f7de605a736d8915c9b
 app.use('/api', apiRouter);
-
-// 404 Handler
 app.use(notFoundHandler);
-
-// Centralized Error Handler
 app.use(errorHandler);
 
 export default app;

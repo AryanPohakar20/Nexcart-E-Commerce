@@ -26,11 +26,16 @@ const handleCastError = (err) =>
   new AppError(`Invalid ${err.path}: ${err.value}`, 400);
 
 /**
- * Handle Mongoose duplicate key error (e.g., duplicate email).
+ * Handle Mongoose duplicate key error (e.g., duplicate email/role or username).
  */
 const handleDuplicateKeyError = (err) => {
-  const field = Object.keys(err.keyValue)[0];
-  const value = err.keyValue[field];
+  const fields = Object.keys(err.keyValue || {});
+  if (fields.includes('email') && fields.includes('role')) {
+    const roleName = err.keyValue['role'] === 'seller' ? 'seller' : 'user';
+    return new AppError(`An account with email "${err.keyValue.email}" already exists for ${roleName}s.`, 409);
+  }
+  const field = fields[0] || 'field';
+  const value = err.keyValue ? err.keyValue[field] : '';
   return new AppError(`"${value}" is already registered. Please use a different ${field}.`, 409);
 };
 

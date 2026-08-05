@@ -4,7 +4,6 @@ import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { AppContext } from '../context/AppContext';
-import { FiCheckCircle, FiInfo, FiAlertCircle } from 'react-icons/fi';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -17,7 +16,6 @@ const ScrollToTop = () => {
 };
 
 const RootLayout = () => {
-  const { toasts } = useContext(AppContext);
   const location = useLocation();
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
@@ -57,7 +55,7 @@ const RootLayout = () => {
 
   if (isAuthPage) {
     return (
-      <div className="min-h-screen bg-[#070B12] text-white selection:bg-primary selection:text-black relative overflow-x-hidden mesh-gradient-bg">
+      <div className="min-h-screen bg-bgPrimary text-textPrimary selection:bg-primary selection:text-black relative overflow-x-hidden mesh-gradient-bg transition-colors duration-250">
         <ScrollToTop />
         
         {/* Top Scroll Progress Bar */}
@@ -82,49 +80,12 @@ const RootLayout = () => {
         <main className="min-h-screen w-full flex flex-col justify-between">
           <Outlet />
         </main>
-
-        {/* Toast Alert System Stack (Top-Right) */}
-        <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
-          <AnimatePresence>
-            {toasts.map((toast) => (
-              <motion.div
-                key={toast.id}
-                initial={{ opacity: 0, x: 50, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 50, scale: 0.95 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className={`pointer-events-auto flex flex-col p-4 rounded-xl border glass-card shadow-2xl transition-all relative overflow-hidden ${
-                  toast.type === 'error'
-                    ? 'border-red-500/30 text-red-400'
-                    : toast.type === 'info'
-                    ? 'border-accentBlue/30 text-accentBlue'
-                    : 'border-primary/30 text-primary'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {toast.type === 'error' && <FiAlertCircle className="text-xl flex-shrink-0" />}
-                  {toast.type === 'info' && <FiInfo className="text-xl flex-shrink-0" />}
-                  {toast.type === 'success' && <FiCheckCircle className="text-xl flex-shrink-0" />}
-                  <span className="text-sm font-medium text-white">{toast.message}</span>
-                </div>
-                <motion.div 
-                  initial={{ width: '100%' }}
-                  animate={{ width: '0%' }}
-                  transition={{ duration: 3.0, ease: 'linear' }}
-                  className={`absolute bottom-0 left-0 h-[2px] ${
-                    toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-accentBlue' : 'bg-primary'
-                  }`}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-black transition-colors duration-400 relative overflow-x-hidden mesh-gradient-bg">
+    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-black transition-colors duration-250 relative overflow-x-hidden bg-bgPrimary">
       {/* Scroll manager */}
       <ScrollToTop />
       
@@ -199,42 +160,6 @@ const RootLayout = () => {
       {/* Footer */}
       <Footer />
 
-      {/* Toast Alert System Stack (Top-Right) */}
-      <div className="fixed top-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
-        <AnimatePresence>
-          {toasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, x: 50, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 50, scale: 0.95 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className={`pointer-events-auto flex flex-col p-4 rounded-xl border glass-card shadow-2xl transition-all relative overflow-hidden ${
-                toast.type === 'error'
-                  ? 'border-red-500/30 text-red-400'
-                  : toast.type === 'info'
-                  ? 'border-accentBlue/30 text-accentBlue'
-                  : 'border-primary/30 text-primary'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {toast.type === 'error' && <FiAlertCircle className="text-xl flex-shrink-0" />}
-                {toast.type === 'info' && <FiInfo className="text-xl flex-shrink-0" />}
-                {toast.type === 'success' && <FiCheckCircle className="text-xl flex-shrink-0" />}
-                <span className="text-sm font-medium text-white">{toast.message}</span>
-              </div>
-              <motion.div 
-                initial={{ width: '100%' }}
-                animate={{ width: '0%' }}
-                transition={{ duration: 3.0, ease: 'linear' }}
-                className={`absolute bottom-0 left-0 h-[2px] ${
-                  toast.type === 'error' ? 'bg-red-500' : toast.type === 'info' ? 'bg-accentBlue' : 'bg-primary'
-                }`}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
     </div>
   );
 };

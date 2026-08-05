@@ -7,19 +7,34 @@ import NexCartLogo from '../../components/NexCartLogo';
 import ThemeToggle from '../../components/ThemeToggle';
 
 const BecomeSeller = () => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const userName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user?.username || user?.email?.split('@')[0] || 'User');
+  const userInitial = (userName.trim()[0] || 'U').toUpperCase();
+
   return (
-    <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#070B12] text-gray-900 dark:text-white relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-bgPrimary text-textPrimary relative overflow-hidden flex flex-col transition-colors duration-250">
       {/* Navbar */}
       <nav className="flex justify-between items-center p-6 lg:px-12 relative z-10">
         <NexCartLogo />
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Link to="/login" className="text-sm font-semibold hover:text-primary transition-colors">
-            Login
-          </Link>
+          {user ? (
+            <Link to="/profile" className="flex items-center gap-2 p-0.5 rounded-full border border-primary/50 hover:border-primary transition-all" title={userName}>
+              {user.avatar ? (
+                <img src={user.avatar} alt={userName} className="w-8 h-8 rounded-full object-cover" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-amber-400 text-black font-black flex items-center justify-center text-xs">
+                  {userInitial}
+                </div>
+              )}
+            </Link>
+          ) : (
+            <Link to="/login" className="text-sm font-semibold text-textSecondary hover:text-primary transition-colors">
+              Login
+            </Link>
+          )}
         </div>
       </nav>
 
@@ -40,7 +55,7 @@ const BecomeSeller = () => {
               Millions of Buyers
             </span>
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+          <p className="text-textSecondary text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
             Join the NexCart Marketplace. Open your online shop in 5 minutes, list your items, and start earning money today.
           </p>
 
@@ -66,13 +81,13 @@ const BecomeSeller = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
-              className="glass-card p-8 rounded-3xl border border-gray-200 dark:border-white/10 text-left"
+              className="bg-cardBg p-8 rounded-3xl border border-borderColor text-left"
             >
               <div className="w-12 h-12 rounded-2xl bg-primary/20 text-primary flex items-center justify-center text-2xl mb-6">
                 {feature.icon}
               </div>
               <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+              <p className="text-textSecondary text-sm leading-relaxed">{feature.desc}</p>
             </motion.div>
           ))}
         </div>
