@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import * as orderRepo from '../repositories/orderRepository.js';
 import * as productRepo from '../repositories/productRepository.js';
 import User from '../models/User.js';
+import Seller from '../models/Seller.js';
+import Order from '../models/Order.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ORDER_STATUS } from '../constants/orderStatus.js';
 
@@ -699,5 +701,96 @@ export const getSellerOrderDetails = async (orderId, sellerId) => {
     trackingNumber: order.tracking?.trackingNumber || null,
     customerNotes: order.orderNotes || null,
     timeline,
+  };
+};
+
+/**
+ * Update the status of a seller's order with transition constraints and timeline tracking.
+ * @param {string} orderId - MongoDB ID of the target order
+ * @param {string} sellerUserId - Authenticated seller's User ID
+ * @param {string} status - Target status
+ */
+export const updateSellerOrderStatus = async (orderId, sellerUserId, status) => {
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw new ApiError(400, 'Invalid order id.');
+  }
+
+  // 1. Resolve seller profile (referencing the Seller model's ObjectId)
+  const sellerProfile = await Seller.findOne({ userId: sellerUserId });
+  if (!sellerProfile) {
+    throw new ApiError(404, 'Order not found');
+  }
+  const sellerId = sellerProfile._id;
+
+  // 2. Fetch the order ensuring it belongs to this seller
+  const order = await Order.findOne({ _id: orderId, seller: sellerId })
+    .populate('customer', 'firstName lastName')
+    .populate('seller', 'shopName profile');
+
+  if (!order) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  // 3. Reject duplicate status updates
+  if (order.orderStatus === status) {
+    throw new ApiError(409, `Order is already in '${status}' status.`);
+  }
+
+  // 4. Enforce valid status transitions
+  const ALLOWED_TRANSITIONS = {
+    'Pending': 'Confirmed',
+    'Confirmed': 'Packed',
+    'Packed': 'Shipped',
+    'Shipped': 'Out For Delivery',
+    'Out For Delivery': 'Delivered'
+  };
+
+  if (ALLOWED_TRANSITIONS[order.orderStatus] !== status) {
+    throw new ApiError(
+      409,
+      `Invalid status transition. Cannot update order status from '${order.orderStatus}' to '${status}'.`
+    );
+  }
+
+  const previousStatus = order.orderStatus;
+  const TRANSITION_MESSAGES = {
+    'Confirmed': 'Seller confirmed the order.',
+    'Packed': 'Seller packed the order.',
+    'Shipped': 'Seller shipped the order.',
+    'Out For Delivery': 'Seller marked the order as out for delivery.',
+    'Delivered': 'Seller delivered the order.'
+  };
+
+  // 5. Update orderStatus and add timeline entry
+  order.orderStatus = status;
+  order.timeline.push({
+    status: status,
+    title: status,
+    description: TRANSITION_MESSAGES[status] || `Seller marked the order as ${status}.`,
+    updatedBy: 'Seller',
+    timestamp: new Date(),
+    message: TRANSITION_MESSAGES[status] || `Seller marked the order as ${status}.`
+  });
+
+  // Save the updated order
+  await order.save();
+
+  // 6. Return formatted, sanitized payload
+  return {
+    orderId: order._id,
+    orderNumber: order.orderNumber,
+    updatedStatus: order.orderStatus,
+    previousStatus: previousStatus,
+    updatedTimeline: order.timeline.map((event) => ({
+      status: event.status,
+      updatedBy: event.updatedBy || 'Seller',
+      timestamp: event.timestamp,
+      message: event.description || event.title || event.message || '',
+    })),
+    updatedTimestamp: order.updatedAt,
+    customerName: order.customer
+      ? `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
+      : 'Unknown Customer',
+    sellerShopName: order.seller?.profile?.shopName || order.seller?.shopName || 'Nexcart Seller',
   };
 };

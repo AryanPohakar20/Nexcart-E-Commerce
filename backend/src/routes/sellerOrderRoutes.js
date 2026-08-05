@@ -1,6 +1,6 @@
 import express from 'express';
-import { getSellerOrders, getSellerOrderDetails } from '../controllers/orderController.js';
-import { validateSellerOrderListing, validateOrderId } from '../validations/orderValidation.js';
+import { getSellerOrders, getSellerOrderDetails, updateSellerOrderStatus } from '../controllers/orderController.js';
+import { validateSellerOrderListing, validateOrderId, validateSellerOrderStatusUpdate } from '../validations/orderValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 
@@ -15,5 +15,8 @@ router.get('/', validateSellerOrderListing, getSellerOrders);
 
 // Retrieve details for a specific order belonging to the seller
 router.get('/:orderId', validateOrderId, getSellerOrderDetails);
+
+// Update status for a specific order belonging to the seller
+router.patch('/:orderId/status', validateSellerOrderStatusUpdate, updateSellerOrderStatus);
 
 export default router;

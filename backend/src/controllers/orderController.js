@@ -72,3 +72,16 @@ export const getSellerOrderDetails = asyncHandler(async (req, res) => {
 
   return successResponse(res, 'Seller order details fetched successfully.', { order });
 });
+
+/**
+ * Handle seller request to update the status of an order they own.
+ */
+export const updateSellerOrderStatus = asyncHandler(async (req, res) => {
+  const sellerUserId = req.user._id;
+  const { orderId } = req.params;
+  const { status } = req.body;
+
+  const updatedOrder = await orderService.updateSellerOrderStatus(orderId, sellerUserId, status);
+
+  return successResponse(res, 'Order status updated successfully.', { order: updatedOrder });
+});

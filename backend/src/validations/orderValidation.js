@@ -259,3 +259,31 @@ export const validateSellerOrderListing = [
     next();
   },
 ];
+
+export const validateSellerOrderStatusUpdate = [
+  param('orderId')
+    .isMongoId()
+    .withMessage('Invalid order id.'),
+
+  body('status')
+    .exists()
+    .withMessage('Status is required')
+    .isString()
+    .withMessage('Status must be a string')
+    .trim()
+    .isIn(['Confirmed', 'Packed', 'Shipped', 'Out For Delivery', 'Delivered'])
+    .withMessage('Status must be one of: Confirmed, Packed, Shipped, Out For Delivery, Delivered'),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const paramError = errors.array().find((err) => err.path === 'orderId');
+      if (paramError) {
+        throw new ApiError(400, 'Invalid order id.');
+      }
+      const errorMessages = errors.array().map((err) => err.msg);
+      throw new ApiError(400, 'Validation failed', errorMessages);
+    }
+    next();
+  },
+];

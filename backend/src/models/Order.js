@@ -134,10 +134,18 @@ const orderTimelineEventSchema = new mongoose.Schema(
     },
     title: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     description: {
+      type: String,
+      trim: true,
+    },
+    updatedBy: {
+      type: String,
+      default: 'Seller',
+    },
+    message: {
       type: String,
       trim: true,
     },
@@ -351,11 +359,15 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: [
         ...ALL_ORDER_STATUSES,
+        'Confirmed',
+        'Packed',
+        'Out For Delivery',
         'pending',
         'confirmed',
         'processing',
         'packed',
         'shipped',
+        'out for delivery',
         'delivered',
         'cancelled',
         'returned',
