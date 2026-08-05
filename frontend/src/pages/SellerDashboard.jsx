@@ -25,7 +25,7 @@ const SellerDashboard = () => {
   return (
     <div className="space-y-8 text-left">
       {/* ── 1. Top Welcome Banner & Quick Action Center ─────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-cardBg via-secondaryBg to-cardBg border border-white/10 p-6 md:p-8 rounded-3xl shadow-card-hover flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="relative overflow-hidden bg-gradient-to-r from-cardBg via-secondaryBg to-cardBg border border-borderColor p-6 md:p-8 rounded-3xl shadow-card-hover flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         {/* Glow Accent */}
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-10 -top-10 w-64 h-64 bg-accentBlue/10 rounded-full blur-3xl pointer-events-none" />
@@ -36,15 +36,15 @@ const SellerDashboard = () => {
               <FiShield size={12} />
               <span>Verified Seller Studio</span>
             </span>
-            <span className="bg-white/5 border border-white/10 text-gray-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
+            <span className="bg-surface border border-borderColor text-textSecondary text-[10px] font-bold px-2 py-0.5 rounded-full">
               Hybrid Marketplace Model
             </span>
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-black text-textPrimary tracking-tight">
             Welcome back, <span className="text-primary">{settings.displayName || 'Seller'}</span>!
           </h1>
-          <p className="text-xs md:text-sm text-gray-400 font-medium">
+          <p className="text-xs md:text-sm text-textSecondary font-medium">
             Manage your peer-to-peer second-hand listings and retail store inventory from a single, streamlined workspace.
           </p>
         </div>
@@ -60,7 +60,7 @@ const SellerDashboard = () => {
           </button>
           <button
             onClick={() => navigate('/seller/orders')}
-            className="flex-1 md:flex-none px-5 py-3 rounded-2xl font-bold bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2 text-xs"
+            className="flex-1 md:flex-none px-5 py-3 rounded-2xl font-bold bg-surface border border-borderColor text-textPrimary hover:bg-bgSecondary transition-all flex items-center justify-center gap-2 text-xs"
           >
             <FiShoppingBag size={16} />
             <span>Manage Orders</span>
@@ -120,14 +120,14 @@ const SellerDashboard = () => {
           <RevenueChart title="Revenue & Sales Trajectory" />
 
           {/* Recent Orders Overview */}
-          <div className="bg-cardBg/90 backdrop-blur-sm border border-white/5 rounded-3xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+          <div className="bg-cardBg border border-borderColor rounded-3xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-borderColor pb-4">
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <h3 className="text-sm font-bold text-textPrimary uppercase tracking-wider flex items-center gap-2">
                   <FiShoppingBag className="text-primary" />
                   <span>Recent Customer Orders</span>
                 </h3>
-                <p className="text-xs text-gray-400 mt-0.5">Live orders requiring fulfillment or dispatch</p>
+                <p className="text-xs text-textSecondary mt-0.5">Live orders requiring fulfillment or dispatch</p>
               </div>
               <button
                 onClick={() => navigate('/seller/orders')}
@@ -141,7 +141,7 @@ const SellerDashboard = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left border-collapse">
                 <thead>
-                  <tr className="text-gray-400 font-bold border-b border-white/5 uppercase text-[10px] tracking-wider">
+                  <tr className="text-textSecondary font-bold border-b border-borderColor uppercase text-[10px] tracking-wider">
                     <th className="pb-3">Order ID</th>
                     <th className="pb-3">Buyer</th>
                     <th className="pb-3">Primary Item</th>
@@ -150,51 +150,51 @@ const SellerDashboard = () => {
                     <th className="pb-3 text-right">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-borderColor">
                   {recentOrders.map((ord) => (
                     <tr
                       key={ord.id}
                       onClick={() => setSelectedOrder(ord)}
-                      className="hover:bg-white/5 transition-colors cursor-pointer group"
+                      className="hover:bg-surface transition-colors cursor-pointer group"
                     >
-                      <td className="py-3.5 font-bold text-white group-hover:text-primary transition-colors">
+                      <td className="py-3.5 font-bold text-textPrimary group-hover:text-primary transition-colors">
                         {ord.id}
                       </td>
-                      <td className="py-3.5 text-gray-300 font-medium">
+                      <td className="py-3.5 text-textSecondary font-medium">
                         <div className="flex items-center gap-2">
                           <img
                             src={ord.customer?.avatar}
                             alt={ord.customer?.name}
-                            className="w-6 h-6 rounded-full object-cover border border-white/10"
+                            className="w-6 h-6 rounded-full object-cover border border-borderColor"
                           />
                           <span>{ord.customer?.name}</span>
                         </div>
                       </td>
-                      <td className="py-3.5 text-gray-300 font-medium max-w-[180px] truncate">
+                      <td className="py-3.5 text-textSecondary font-medium max-w-[180px] truncate">
                         {ord.items[0]?.title}
                       </td>
-                      <td className="py-3.5 text-gray-400">
+                      <td className="py-3.5 text-textSecondary">
                         {ord.deliveryType.includes('Meetup') ? (
                           <span className="text-primary font-bold">Meetup</span>
                         ) : (
                           <span className="text-accentBlue font-bold">Courier</span>
                         )}
                       </td>
-                      <td className="py-3.5 font-black text-white">
+                      <td className="py-3.5 font-black text-textPrimary">
                         ₹{ord.totalAmount.toLocaleString('en-IN')}
                       </td>
                       <td className="py-3.5 text-right">
                         <span
                           className={`px-2 py-0.5 rounded-full font-bold uppercase text-[9px] tracking-wider border ${
                             ord.status === 'Delivered'
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                               : ord.status === 'Shipped'
-                              ? 'bg-accentBlue/10 text-accentBlue border-accentBlue/20'
+                              ? 'bg-accentBlue/10 text-blue-600 dark:text-accentBlue border-accentBlue/20'
                               : ord.status === 'Processing'
                               ? 'bg-primary/10 text-primary border-primary/20'
                               : ord.status === 'Cancelled'
-                              ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                              : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                              ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                              : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20'
                           }`}
                         >
                           {ord.status}
@@ -211,9 +211,9 @@ const SellerDashboard = () => {
         {/* Right Column: Inventory Watch & Marketplace Selling Guide (1 Col) */}
         <div className="space-y-6">
           {/* Inventory Health Widget */}
-          <div className="bg-cardBg/90 backdrop-blur-sm border border-white/5 rounded-3xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <div className="bg-cardBg border border-borderColor rounded-3xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-borderColor pb-3">
+              <h3 className="text-xs font-bold text-textPrimary uppercase tracking-wider flex items-center gap-2">
                 <FiAlertTriangle className="text-amber-400" />
                 <span>Inventory Alerts</span>
               </h3>
@@ -230,23 +230,23 @@ const SellerDashboard = () => {
                 {lowStockItems.slice(0, 3).map((item) => (
                   <div
                     key={item.id}
-                    className="p-3 bg-black/40 border border-white/5 rounded-2xl flex items-center justify-between gap-3"
+                    className="p-3 bg-surface border border-borderColor rounded-2xl flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-2.5 overflow-hidden">
                       <img
                         src={item.image}
                         alt={item.title}
-                        className="w-10 h-10 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                        className="w-10 h-10 rounded-xl object-cover border border-borderColor flex-shrink-0"
                       />
                       <div className="overflow-hidden">
-                        <h4 className="text-white font-bold text-xs truncate">{item.title}</h4>
-                        <span className="text-[10px] text-gray-400 capitalize">{item.category}</span>
+                        <h4 className="text-textPrimary font-bold text-xs truncate">{item.title}</h4>
+                        <span className="text-[10px] text-textSecondary capitalize">{item.category}</span>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <span
                         className={`text-xs font-black ${
-                          item.stock === 0 ? 'text-red-400' : 'text-amber-400'
+                          item.stock === 0 ? 'text-red-500' : 'text-amber-600 dark:text-amber-400'
                         }`}
                       >
                         {item.stock === 0 ? 'Sold Out' : `${item.stock} left`}
@@ -256,7 +256,7 @@ const SellerDashboard = () => {
                 ))}
               </div>
             ) : (
-              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 text-emerald-400">
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 text-emerald-600 dark:text-emerald-400">
                 <FiCheckCircle size={18} />
                 <p className="text-xs font-medium">All active catalog listings have healthy stock!</p>
               </div>
@@ -271,22 +271,22 @@ const SellerDashboard = () => {
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="bg-black/40 border border-white/5 p-3 rounded-2xl space-y-1">
-                <div className="flex items-center justify-between font-bold text-white">
+              <div className="bg-surface border border-borderColor p-3 rounded-2xl space-y-1">
+                <div className="flex items-center justify-between font-bold text-textPrimary">
                   <span>C2C Individual Mode</span>
-                  <span className="text-primary text-[10px]">0% Listing Fee</span>
+                  <span className="text-primary text-[10px] font-black">0% Listing Fee</span>
                 </div>
-                <p className="text-[11px] text-gray-400 leading-relaxed">
+                <p className="text-[11px] text-textSecondary leading-relaxed">
                   List electronics, furniture & fashion second-hand. Add condition notes, bill/box status, and enable direct buyer meetups.
                 </p>
               </div>
 
-              <div className="bg-black/40 border border-white/5 p-3 rounded-2xl space-y-1">
-                <div className="flex items-center justify-between font-bold text-white">
+              <div className="bg-surface border border-borderColor p-3 rounded-2xl space-y-1">
+                <div className="flex items-center justify-between font-bold text-textPrimary">
                   <span>Small Business Mode</span>
-                  <span className="text-accentBlue text-[10px]">Bulk Dispatch</span>
+                  <span className="text-accentBlue text-[10px] font-black">Bulk Dispatch</span>
                 </div>
-                <p className="text-[11px] text-gray-400 leading-relaxed">
+                <p className="text-[11px] text-textSecondary leading-relaxed">
                   Manage inventory SKU counts, provide warranty assurances, and unlock wholesale bulk discount tags.
                 </p>
               </div>
@@ -294,7 +294,7 @@ const SellerDashboard = () => {
 
             <button
               onClick={() => navigate('/seller/settings')}
-              className="w-full py-2.5 rounded-xl font-bold bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-xs"
+              className="w-full py-2.5 rounded-xl font-bold bg-surface border border-borderColor text-textPrimary hover:bg-bgSecondary transition-all text-xs"
             >
               Configure Studio Preferences
             </button>
