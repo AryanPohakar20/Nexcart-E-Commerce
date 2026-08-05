@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { FiMapPin, FiAlignLeft, FiGlobe, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
+import { FiMapPin, FiAlignLeft, FiGlobe, FiArrowRight, FiArrowLeft, FiUser, FiBriefcase, FiCheckCircle } from 'react-icons/fi';
 
 const Step2Profile = ({ onNext, onBack, initialData = {} }) => {
   const [formData, setFormData] = useState({
+    sellerType: initialData.sellerType || 'c2c',
     displayName: initialData.displayName || '',
     bio: initialData.bio || '',
     languagePreference: initialData.languagePreference || 'English',
@@ -14,11 +15,16 @@ const Step2Profile = ({ onNext, onBack, initialData = {} }) => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  const handleTypeSelect = (type) => {
+    setFormData({ ...formData, sellerType: type });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onNext({
+      sellerType: formData.sellerType,
       displayName: formData.displayName,
-      bio: formData.bio,
+      bio: formData.sellerType === 'business' ? formData.bio : '',
       languagePreference: formData.languagePreference,
       address: {
         city: formData.city,
@@ -36,22 +42,80 @@ const Step2Profile = ({ onNext, onBack, initialData = {} }) => {
         <p className="text-sm text-gray-500 mt-2">Tell buyers a bit about yourself and your store.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Display Name</label>
-          <div className="relative">
-            <FiGlobe className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input type="text" name="displayName" value={formData.displayName} onChange={handleChange} required className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white" />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Seller Type Selection */}
+        <div className="grid grid-cols-2 gap-4">
+          <div 
+            onClick={() => handleTypeSelect('c2c')}
+            className={`cursor-pointer rounded-2xl p-4 border transition-all ${
+              formData.sellerType === 'c2c'
+                ? 'border-primary bg-primary/10 shadow-yellow-glow'
+                : 'border-white/10 bg-black/40 hover:border-white/20'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className={`p-2 rounded-xl ${formData.sellerType === 'c2c' ? 'bg-primary text-black' : 'bg-white/10 text-gray-400'}`}>
+                <FiUser size={20} />
+              </div>
+              {formData.sellerType === 'c2c' && <FiCheckCircle className="text-primary" size={20} />}
+            </div>
+            <h3 className={`font-bold text-sm ${formData.sellerType === 'c2c' ? 'text-white' : 'text-gray-400'}`}>C2C Seller</h3>
+            <p className="text-[10px] text-gray-500 mt-1">Individual selling second-hand or pre-owned items.</p>
+          </div>
+
+          <div 
+            onClick={() => handleTypeSelect('business')}
+            className={`cursor-pointer rounded-2xl p-4 border transition-all ${
+              formData.sellerType === 'business'
+                ? 'border-primary bg-primary/10 shadow-yellow-glow'
+                : 'border-white/10 bg-black/40 hover:border-white/20'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className={`p-2 rounded-xl ${formData.sellerType === 'business' ? 'bg-primary text-black' : 'bg-white/10 text-gray-400'}`}>
+                <FiBriefcase size={20} />
+              </div>
+              {formData.sellerType === 'business' && <FiCheckCircle className="text-primary" size={20} />}
+            </div>
+            <h3 className={`font-bold text-sm ${formData.sellerType === 'business' ? 'text-white' : 'text-gray-400'}`}>Small Business</h3>
+            <p className="text-[10px] text-gray-500 mt-1">Retail store, boutique, or bulk seller.</p>
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Short Bio</label>
+          <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+            {formData.sellerType === 'business' ? 'Business Name' : 'Your Name'}
+          </label>
           <div className="relative">
-            <FiAlignLeft className="absolute left-3.5 top-4 text-gray-400" />
-            <textarea name="bio" value={formData.bio} onChange={handleChange} rows="3" className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white resize-none" />
+            <FiGlobe className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input 
+              type="text" 
+              name="displayName" 
+              value={formData.displayName} 
+              onChange={handleChange} 
+              required 
+              placeholder={formData.sellerType === 'business' ? "e.g. Minimalist Home Store" : "e.g. Aryan Pohakar"}
+              className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white" 
+            />
           </div>
         </div>
+
+        {formData.sellerType === 'business' && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Business Description</label>
+            <div className="relative">
+              <FiAlignLeft className="absolute left-3.5 top-4 text-gray-400" />
+              <textarea 
+                name="bio" 
+                value={formData.bio} 
+                onChange={handleChange} 
+                rows="3" 
+                placeholder="Tell buyers about your products and store..."
+                className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white resize-none" 
+              />
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">

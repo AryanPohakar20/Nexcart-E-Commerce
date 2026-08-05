@@ -1,27 +1,29 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as authService from '../services/authService.js';
 
+const buildMockSeller = (email = 'srushtisalunke41@gmail.com') => ({
+  _id: 'mock_seller_123',
+  firstName: 'Srushti',
+  lastName: 'Salunke',
+  username: 'srushti',
+  email,
+  phone: '1234567890',
+  role: 'seller',
+  isVerified: false,
+});
+
 export const registerSeller = asyncHandler(async (req, res) => {
   if (process.env.MOCK_DB === 'true') {
-    const mockUser = {
-      _id: 'mock_seller_123',
-      firstName: req.body.firstName || 'Srushti',
-      lastName: req.body.lastName || 'Salunke',
-      username: req.body.username || 'srushti',
-      email: req.body.email || 'srushtisalunke41@gmail.com',
-      phone: req.body.phone || '1234567890',
-      role: 'seller',
-      isVerified: false,
-    };
+    const user = buildMockSeller(req.body.email);
     return res.status(201).json({
       success: true,
       message: 'Seller registered successfully (Mock Mode)',
       token: 'mock_token_123',
-      user: mockUser,
+      user,
       data: {
         accessToken: 'mock_token_123',
         refreshToken: 'mock_token_123',
-        user: mockUser,
+        user,
       },
     });
   }
@@ -43,25 +45,16 @@ export const registerSeller = asyncHandler(async (req, res) => {
 
 export const loginSeller = asyncHandler(async (req, res) => {
   if (process.env.MOCK_DB === 'true') {
-    const mockUser = {
-      _id: 'mock_seller_123',
-      firstName: 'Srushti',
-      lastName: 'Salunke',
-      username: 'srushti',
-      email: req.body.email || 'srushtisalunke41@gmail.com',
-      phone: '1234567890',
-      role: 'seller',
-      isVerified: false,
-    };
+    const user = buildMockSeller(req.body.email);
     return res.status(200).json({
       success: true,
       message: 'Login successful (Mock Mode)',
       token: 'mock_token_123',
-      user: mockUser,
+      user,
       data: {
         accessToken: 'mock_token_123',
         refreshToken: 'mock_token_123',
-        user: mockUser,
+        user,
       },
     });
   }
@@ -84,22 +77,13 @@ export const loginSeller = asyncHandler(async (req, res) => {
 
 export const getCurrentSeller = asyncHandler(async (req, res) => {
   if (process.env.MOCK_DB === 'true') {
-    const mockUser = {
-      _id: 'mock_seller_123',
-      firstName: 'Srushti',
-      lastName: 'Salunke',
-      username: 'srushti',
-      email: 'srushtisalunke41@gmail.com',
-      phone: '1234567890',
-      role: 'seller',
-      isVerified: false,
-    };
+    const user = buildMockSeller();
     return res.status(200).json({
       success: true,
       message: 'Seller details fetched successfully (Mock Mode)',
-      user: mockUser,
+      user,
       data: {
-        user: mockUser,
+        user,
       },
     });
   }
@@ -114,14 +98,18 @@ export const getCurrentSeller = asyncHandler(async (req, res) => {
   });
 });
 
-export const logoutSeller = asyncHandler(async (req, res) => {
+export const logoutUser = asyncHandler(async (req, res) => {
   res.clearCookie('token');
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
 
   res.status(200).json({
     success: true,
     message: 'Logged out successfully',
   });
 });
+
+export const logoutSeller = logoutUser;
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { user, token } = await authService.registerUserService(req.body);
@@ -168,8 +156,9 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-  await authService.forgotPassword(email);
+  const { email, role } = req.body;
+  await authService.forgotPassword(email, role);
+
   res.status(200).json({
     success: true,
     message: 'If an account exists, a 6-digit OTP has been sent.',
@@ -177,8 +166,9 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 });
 
 export const verifyOtp = asyncHandler(async (req, res) => {
-  const { email, otp, purpose } = req.body;
-  const result = await authService.verifyOtp(email, otp, purpose);
+  const { email, otp, purpose, role } = req.body;
+  const result = await authService.verifyOtp(email, otp, purpose, role);
+
   res.status(200).json({
     success: true,
     message: 'OTP verified successfully.',
@@ -187,8 +177,9 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
-  const { email, otp, newPassword } = req.body;
-  await authService.resetPassword(email, otp, newPassword);
+  const { email, otp, newPassword, role } = req.body;
+  await authService.resetPassword(email, otp, newPassword, role);
+
   res.status(200).json({
     success: true,
     message: 'Password reset successful. Please log in with your new password.',

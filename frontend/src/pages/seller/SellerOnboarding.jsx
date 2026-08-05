@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../../context/AppContext';
@@ -17,7 +17,7 @@ const steps = [
   { id: 2, title: 'Profile' },
   { id: 3, title: 'Identity' },
   { id: 4, title: 'Payment' },
-  { id: 5, title: 'Agreement' }
+  { id: 5, title: 'Agreement' },
 ];
 
 const SellerOnboarding = () => {
@@ -29,6 +29,43 @@ const SellerOnboarding = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sellerData, setSellerData] = useState({});
 
+  useEffect(() => {
+    if (!localStorage.getItem('accessToken')) return;
+
+    const fetchStatus = async () => {
+      try {
+        const res = await sellerAuthService.getProfile();
+        if (res.success && res.data?.seller) {
+          const seller = res.data.seller;
+          const previousData = {
+            ...seller.accountInfo,
+            ...seller.profile,
+          };
+          setSellerData(previousData);
+
+          if (seller.onboardingStep) {
+            const nextStep = seller.onboardingStep + 1;
+            setCurrentStep(nextStep > 5 ? 5 : nextStep);
+          }
+        }
+      } catch {
+        console.log('No existing seller profile found, starting fresh.');
+      }
+    };
+
+    fetchStatus();
+  }, []);
+
+  const ensureSellerEntry = async () => {
+    try {
+      await sellerAuthService.createSellerEntry();
+    } catch (error) {
+      if (error?.statusCode !== 409 && error?.message !== 'Seller profile already exists.') {
+        throw error;
+      }
+    }
+  };
+
   const handleNext = async (data) => {
     try {
       const updatedData = { ...sellerData, ...data };
@@ -36,10 +73,14 @@ const SellerOnboarding = () => {
 
       if (currentStep === 1) {
         setIsSubmitting(true);
-        const username = updatedData.username || (updatedData.email ? updatedData.email.split('@')[0] : `seller_${Date.now()}`);
-        
+
         try {
-          const res = await sellerRegister(
+          const username =
+            updatedData.username ||
+            `${(updatedData.firstName || '').trim()}${(updatedData.lastName || '').trim()}`.toLowerCase() ||
+            updatedData.email?.split('@')[0];
+
+          const registerResult = await sellerRegister(
             updatedData.firstName,
             updatedData.lastName,
             updatedData.email,
@@ -47,77 +88,83 @@ const SellerOnboarding = () => {
             updatedData.phone,
             username
           );
-          
-          if (!res.success) {
-            // Attempt login if user/email already exists
-            const loginRes = await sellerLogin(updatedData.email, updatedData.password);
-            if (!loginRes.success) {
-              throw new Error(res.message || loginRes.message || 'Registration failed');
+
+          if (!registerResult.success) {
+            const loginResult = await sellerLogin(updatedData.email, updatedData.password);
+            if (!loginResult.success) {
+              throw new Error(registerResult.message || loginResult.message || 'Registration failed');
             }
           }
-        } catch (apiError) {
-          console.warn('Backend seller registration error, attempting seller login fallback:', apiError);
-          try {
-            const loginRes = await sellerLogin(updatedData.email, updatedData.password);
-            if (!loginRes.success) {
-              throw apiError;
-            }
-          } catch (loginErr) {
-            throw apiError;
-          }
+
+          await ensureSellerEntry();
+
+          await sellerAuthService.saveStep1({
+            displayName: `${updatedData.firstName} ${updatedData.lastName}`.trim(),
+            businessType: updatedData.businessType || '',
+            phone: updatedData.phone,
+            email: updatedData.email,
+          });
+        } finally {
+          setIsSubmitting(false);
         }
-        
-        setIsSubmitting(false);
+
         setCurrentStep(2);
       } else if (currentStep === 2) {
         setIsSubmitting(true);
         try {
-          await sellerAuthService.updateProfile(data);
-        } catch (apiError) {
-          console.warn('Update seller profile API failed:', apiError);
+          await sellerAuthService.updateProfile({
+            shopName: data.displayName || '',
+            description: data.bio || '',
+            address: data.address?.pickupAddress || '',
+            city: data.address?.city || '',
+            state: data.address?.state || '',
+            pincode: data.address?.pincode || '',
+          });
+        } finally {
+          setIsSubmitting(false);
         }
-        setIsSubmitting(false);
         setCurrentStep(3);
       } else if (currentStep === 3) {
         setIsSubmitting(true);
         try {
-          const formData = new FormData();
-          formData.append('idType', data.idType);
-          if (data.frontImage) {
-            formData.append('frontImage', data.frontImage);
-          }
-          if (data.backImage) {
-            formData.append('backImage', data.backImage);
-          }
-          await sellerAuthService.uploadIdentity(formData);
-        } catch (apiError) {
-          console.warn('Upload identity API failed:', apiError);
+          await sellerAuthService.uploadIdentity({
+            idType: data.idType,
+            aadhaarNumber: data.aadhaarNumber,
+            pan: data.pan,
+            gst: data.gst,
+            frontImage: data.frontImage,
+            backImage: data.backImage,
+          });
+        } finally {
+          setIsSubmitting(false);
         }
-        setIsSubmitting(false);
         setCurrentStep(4);
       } else if (currentStep === 4) {
         setIsSubmitting(true);
         try {
-          await sellerAuthService.submitPayment(data);
-        } catch (apiError) {
-          console.warn('Submit payment API failed:', apiError);
+          await sellerAuthService.submitPayment({
+            accountHolder: data.bank?.accountHolder || '',
+            accountNumber: data.bank?.accountNumber || '',
+            ifsc: data.bank?.ifsc || '',
+            upiId: data.upiId || '',
+          });
+        } finally {
+          setIsSubmitting(false);
         }
-        setIsSubmitting(false);
         setCurrentStep(5);
       } else if (currentStep === 5) {
         setIsSubmitting(true);
         try {
           await sellerAuthService.agreeTerms();
-        } catch (apiError) {
-          console.warn('Agree terms API failed:', apiError);
+        } finally {
+          setIsSubmitting(false);
         }
-        setIsSubmitting(false);
         showToast('Registration complete! Verification pending.', 'success');
         navigate('/seller/verification-status');
       }
     } catch (error) {
       setIsSubmitting(false);
-      const errorMessage = typeof error === 'string' ? error : (error?.message || error?.error || 'An error occurred. Please try again.');
+      const errorMessage = typeof error === 'string' ? error : error?.message || error?.error || 'An error occurred. Please try again.';
       showToast(errorMessage, 'error');
     }
   };
@@ -128,40 +175,38 @@ const SellerOnboarding = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#070B12] text-gray-900 dark:text-white flex flex-col relative overflow-hidden">
-      {/* Navbar */}
       <nav className="flex justify-between items-center p-6 lg:px-12 relative z-10 border-b border-gray-200 dark:border-white/5 bg-white/50 dark:bg-[#0c111d]/50 backdrop-blur-xl">
         <NexCartLogo />
-        <div className="text-xs font-bold text-gray-500 tracking-widest uppercase">
-          Seller Onboarding
-        </div>
+        <div className="text-xs font-bold text-gray-500 tracking-widest uppercase">Seller Onboarding</div>
       </nav>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-        
-        {/* Stepper Progress */}
         <div className="w-full max-w-2xl mb-8">
           <div className="flex justify-between items-center relative">
             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200 dark:bg-white/10 -z-10 rounded-full overflow-hidden">
-              <motion.div 
+              <motion.div
                 className="h-full bg-primary"
                 initial={{ width: '0%' }}
                 animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
               />
             </div>
             {steps.map((step) => (
               <div key={step.id} className="flex flex-col items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                  currentStep >= step.id 
-                    ? 'bg-primary text-black shadow-[0_0_15px_rgba(255,193,7,0.4)]' 
-                    : 'bg-gray-200 dark:bg-[#1a2235] text-gray-400'
-                }`}>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                    currentStep >= step.id
+                      ? 'bg-primary text-black shadow-[0_0_15px_rgba(255,193,7,0.4)]'
+                      : 'bg-gray-200 dark:bg-[#1a2235] text-gray-400'
+                  }`}
+                >
                   {step.id}
                 </div>
-                <span className={`text-[10px] uppercase tracking-wider font-bold ${
-                  currentStep >= step.id ? 'text-primary' : 'text-gray-500'
-                }`}>
+                <span
+                  className={`text-[10px] uppercase tracking-wider font-bold ${
+                    currentStep >= step.id ? 'text-primary' : 'text-gray-500'
+                  }`}
+                >
                   {step.title}
                 </span>
               </div>
@@ -169,7 +214,6 @@ const SellerOnboarding = () => {
           </div>
         </div>
 
-        {/* Step Container */}
         <div className="w-full max-w-xl">
           <div className="glass-card p-8 rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl relative overflow-hidden">
             <AnimatePresence mode="wait">
@@ -189,10 +233,8 @@ const SellerOnboarding = () => {
             </AnimatePresence>
           </div>
         </div>
-
       </main>
 
-      {/* Decorative Background Elements */}
       <div className="fixed top-[10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
     </div>
   );

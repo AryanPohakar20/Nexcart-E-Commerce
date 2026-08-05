@@ -191,6 +191,34 @@ const ProductDetails = () => {
               )}
             </div>
 
+            {/* Seller Information Card */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img 
+                  src={product.seller?.sellerType === 'business' ? product.seller.profile?.logo?.url || 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100&q=80' : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80'}
+                  alt="Seller"
+                  className="w-12 h-12 rounded-full object-cover border border-primary/20"
+                />
+                <div>
+                  <h4 className="font-bold text-white text-sm">
+                    {product.seller?.sellerType === 'business' ? (product.seller.profile?.shopName || 'Aryan Fashion Store') : (product.seller?.accountInfo?.displayName || 'Aryan Pohakar')}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold uppercase tracking-wider">
+                      {product.seller?.sellerType === 'business' ? 'Small Business' : 'Individual Seller'}
+                    </span>
+                    <span className="text-xs text-gray-500 font-bold flex items-center gap-1">
+                      <FiStar className="text-primary fill-current" /> 4.9
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Trust Score</p>
+                <p className="text-sm font-black text-emerald-400">98%</p>
+              </div>
+            </div>
+
             {/* Delivery estimates details */}
             <div className="bg-white/5 border border-white/5 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-center gap-2.5 text-xs text-gray-300">

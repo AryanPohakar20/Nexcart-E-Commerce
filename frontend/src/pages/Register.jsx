@@ -64,7 +64,7 @@ const ConfettiBurst = () => {
 };
 
 const Register = () => {
-  const { loginUser, showToast } = useContext(AppContext);
+  const { showToast } = useContext(AppContext);
   const navigate = useNavigate();
 
   // Form states
@@ -79,7 +79,6 @@ const Register = () => {
     agreeTerms: false
   });
 
-  const [role, setRole] = useState('customer'); // customer, seller
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -316,8 +315,7 @@ const Register = () => {
     showToast(`Connecting to ${provider}...`, 'info');
     setTimeout(() => {
       setIsSubmitting(false);
-      loginUser(`user@${provider.toLowerCase()}.com`, 'social123', role);
-      showToast(`Authenticated via ${provider}!`, 'success');
+      showToast(`Connecting via ${provider}!`, 'success');
       navigate('/otp-verification?email=' + encodeURIComponent(`user@${provider.toLowerCase()}.com`));
     }, 900);
   };
@@ -596,25 +594,6 @@ const Register = () => {
               <p className="text-xs sm:text-sm text-gray-500 dark:text-[#AAB4C5] max-w-xs mx-auto">
                 Create your NexCart account and start your premium shopping experience.
               </p>
-            </div>
-
-            {/* Account Type Selector Tabs */}
-            <div className="mb-5 p-1 rounded-xl bg-gray-100 dark:bg-black/40 border border-gray-200 dark:border-white/10 grid grid-cols-2 gap-1 text-[11px] font-bold uppercase tracking-wider">
-              {['customer', 'seller'].map((r) => (
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  type="button"
-                  key={r}
-                  onClick={() => setRole(r)}
-                  className={`py-2 rounded-lg transition-all duration-200 ${
-                    role === r
-                      ? 'bg-gradient-to-r from-primary to-amber-500 text-black shadow-yellow-glow font-black'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {r === 'customer' ? 'Customer Account' : 'Seller Account'}
-                </motion.button>
-              ))}
             </div>
 
             {/* Register Form with Staggered Entrance */}
