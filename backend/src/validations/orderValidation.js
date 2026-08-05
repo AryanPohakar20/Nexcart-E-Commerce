@@ -1,5 +1,6 @@
 import { body, query, param, validationResult } from 'express-validator';
 import { ApiError } from '../utils/ApiError.js';
+import Order from '../models/Order.js';
 
 export const validateOrderPlacement = [
   body('items')
@@ -287,3 +288,57 @@ export const validateSellerOrderStatusUpdate = [
     next();
   },
 ];
+
+export const validateOrderAnalytics = [
+  query('dateFrom')
+    .optional()
+    .isISO8601()
+    .withMessage('dateFrom must be a valid ISO 8601 date (e.g. YYYY-MM-DD)'),
+
+  query('dateTo')
+    .optional()
+    .isISO8601()
+    .withMessage('dateTo must be a valid ISO 8601 date (e.g. YYYY-MM-DD)'),
+
+  query('orderStatus')
+    .optional()
+    .custom((value) => {
+      const allowed = Order.schema.path('orderStatus').enumValues;
+      const match = allowed.find((s) => s.toLowerCase() === value.toLowerCase());
+      if (!match) {
+        throw new Error(`orderStatus must be one of: ${allowed.join(', ')}`);
+      }
+      return true;
+    }),
+
+  query('paymentStatus')
+    .optional()
+    .custom((value) => {
+      const allowed = Order.schema.path('paymentInfo.status').enumValues;
+      const match = allowed.find((s) => s.toLowerCase() === value.toLowerCase());
+      if (!match) {
+        throw new Error(`paymentStatus must be one of: ${allowed.join(', ')}`);
+      }
+      return true;
+    }),
+
+  query('sellerId')
+    .optional()
+    .isMongoId()
+    .withMessage('sellerId must be a valid MongoDB ObjectId'),
+
+  query('trendType')
+    .optional()
+    .isIn(['daily', 'weekly', 'monthly'])
+    .withMessage('trendType must be one of: daily, weekly, monthly'),
+
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map((err) => err.msg);
+      throw new ApiError(400, 'Validation failed', errorMessages);
+    }
+    next();
+  },
+];
+

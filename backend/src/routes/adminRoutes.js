@@ -60,6 +60,7 @@ import {
 
   // Orders
   getOrders,
+  getOrderAnalytics,
   getOrder,
   updateOrderStatus,
   cancelOrder,
@@ -113,6 +114,7 @@ import {
   updateAdminPassword,
 } from '../controllers/adminController.js';
 import { importUpload } from '../middlewares/importUpload.js';
+import { validateOrderAnalytics } from '../validations/orderValidation.js';
 
 const router = Router();
 
@@ -187,6 +189,7 @@ router.delete('/categories/:id',           requirePermission('categories', 'dele
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(   '/orders',                   requirePermission('orders', 'read'),   getOrders);
+router.get(   '/orders/analytics',         requirePermission('orders', 'read'),   validateOrderAnalytics, getOrderAnalytics);
 router.get(   '/orders/:orderId',          requirePermission('orders', 'read'),   getOrder);
 router.patch( '/orders/:orderId/status',   requirePermission('orders', 'update'), updateOrderStatus);
 router.patch( '/orders/:id/cancel',        requirePermission('orders', 'update'), cancelOrder);
