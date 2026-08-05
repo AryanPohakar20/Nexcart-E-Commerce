@@ -99,8 +99,31 @@ export const updateUser = asyncHandler(async (req, res) => {
 
 // DELETE /api/admin/users/:id  (soft delete)
 export const deleteUser = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to delete users.');
+  }
+
   const user = await adminUserService.deleteUser(req.params.id, req.user, getIp(req));
   return successResponse(res, 'User deleted successfully.', { user });
+});
+
+// PATCH /api/admin/users/:id/status
+export const updateUserStatus = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to change user status.');
+  }
+
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status || !['suspended', 'active'].includes(status.toLowerCase())) {
+    throw new ApiError(400, 'Invalid status value. Allowed values: suspended, active');
+  }
+
+  const user = await adminUserService.updateUserStatus(id, status, req.user, getIp(req));
+  return successResponse(res, 'User status updated successfully.', { user });
 });
 
 // PATCH /api/admin/users/:id/suspend

@@ -78,7 +78,7 @@ export const softDeleteUser = async (id, adminId) => {
     id,
     { $set: { isDeleted: true, deletedAt: new Date(), deletedBy: adminId, status: 'Deleted' } },
     { new: true }
-  ).select('-password -refreshToken -otp').lean();
+  ).select('-password -refreshToken -otp.code -otp.expiresAt').lean();
 };
 
 // ─── Counts / Aggregations ────────────────────────────────────────────────────

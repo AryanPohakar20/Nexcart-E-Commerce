@@ -23,6 +23,7 @@ import {
   activateUser,
   blockUser,
   unblockUser,
+  updateUserStatus,
 
   // Seller Management
   getSellers,
@@ -139,6 +140,7 @@ router.get(   '/users/:id',          requirePermission('users', 'read'),    getU
 router.put(   '/users/:id',          requirePermission('users', 'update'),  updateUser);
 router.delete('/users/:id',          requirePermission('users', 'delete'),  deleteUser);
 
+router.patch('/users/:id/status',    requirePermission('users', 'update'),  updateUserStatus);
 router.patch('/users/:id/suspend',   requirePermission('users', 'suspend'), suspendUser);
 router.patch('/users/:id/activate',  requirePermission('users', 'update'),  activateUser);
 router.patch('/users/:id/block',     requirePermission('users', 'suspend'), blockUser);

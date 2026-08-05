@@ -112,8 +112,38 @@ export const deleteUser = async (id, admin, ipAddress) => {
   if (user.role === 'admin') throw new ApiError(403, 'Cannot delete an admin account.');
   if (user.isDeleted) throw new ApiError(400, 'User is already deleted.');
 
+  // Safety check: Prevent admin from deleting their own active session/account or the root admin
+  if (user._id.toString() === admin._id.toString() || user.email === 'admin@nexcart.in') {
+    throw new ApiError(403, 'Forbidden: You cannot delete your own active session or the root admin account.');
+  }
+
   const updated = await adminUserRepo.softDeleteUser(id, admin._id);
   const name = `${user.firstName} ${user.lastName}`.trim();
   audit(admin, 'DELETE_USER', `${name} (${user._id})`, user._id, 'Soft deleted by admin.', ipAddress);
+  return updated;
+};
+
+// ─── Update User Status ────────────────────────────────────────────────────────
+
+export const updateUserStatus = async (id, status, admin, ipAddress) => {
+  const user = await adminUserRepo.findUserById(id);
+  if (!user) throw new ApiError(404, 'User not found.');
+
+  // Safety check: Prevent admin from suspending/reactivating their own active session/account or the root admin
+  if (user._id.toString() === admin._id.toString() || user.email === 'admin@nexcart.in') {
+    throw new ApiError(403, 'Forbidden: You cannot suspend or reactivate your own active session or the root admin account.');
+  }
+
+  const targetStatus = status.toLowerCase() === 'active' ? 'Active' : 'Suspended';
+
+  let updated;
+  if (targetStatus === 'Active') {
+    updated = await adminUserRepo.activateUser(id);
+  } else {
+    updated = await adminUserRepo.suspendUser(id, 'Suspended by admin');
+  }
+
+  const name = `${user.firstName} ${user.lastName}`.trim();
+  audit(admin, targetStatus === 'Active' ? 'ACTIVATE_USER' : 'SUSPEND_USER', `${name} (${user._id})`, user._id, `Status set to ${targetStatus}`, ipAddress);
   return updated;
 };

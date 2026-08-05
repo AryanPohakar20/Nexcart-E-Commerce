@@ -40,6 +40,10 @@ const adminService = {
     const response = await axiosInstance.delete(`/admin/users/${id}`);
     return response.data;
   },
+  updateUserStatus: async (id, status) => {
+    const response = await axiosInstance.patch(`/admin/users/${id}/status`, { status });
+    return response.data;
+  },
   suspendUser: async (id, reason) => {
     const response = await axiosInstance.patch(`/admin/users/${id}/suspend`, { reason });
     return response.data;

@@ -68,32 +68,48 @@ const AdminUsers = () => {
     if (action === 'view') setDrawerUser(user);
     else if (action === 'suspend') {
       setConfirmDialog({
-        open: true, title: 'Suspend User', message: `Suspend ${user.firstName}? They won't be able to login.`, type: 'warning',
+        open: true, title: 'Suspend Account', message: `Are you sure you want to suspend the account of ${user.firstName} ${user.lastName}? They won't be able to login.`, type: 'warning', confirmLabel: 'Suspend',
         onConfirm: async () => {
-          await adminService.suspendUser(user._id, 'Suspended by admin');
-          setConfirmDialog({ open: false });
-          fetchUsers();
+          try {
+            await adminService.updateUserStatus(user._id, 'suspended');
+            setConfirmDialog({ open: false });
+            fetchUsers();
+          } catch (error) {
+            console.error('Error suspending user:', error);
+          }
         }
       });
     } else if (action === 'block') {
       setConfirmDialog({
         open: true, title: 'Block User', message: `Permanently block ${user.firstName}?`, type: 'danger',
         onConfirm: async () => {
-          await adminService.blockUser(user._id, 'Blocked by admin');
-          setConfirmDialog({ open: false });
-          fetchUsers();
+          try {
+            await adminService.blockUser(user._id, 'Blocked by admin');
+            setConfirmDialog({ open: false });
+            fetchUsers();
+          } catch (error) {
+            console.error('Error blocking user:', error);
+          }
         }
       });
     } else if (action === 'activate') {
-      await adminService.activateUser(user._id);
-      fetchUsers();
+      try {
+        await adminService.updateUserStatus(user._id, 'active');
+        fetchUsers();
+      } catch (error) {
+        console.error('Error activating user:', error);
+      }
     } else if (action === 'delete') {
       setConfirmDialog({
-        open: true, title: 'Delete User', message: `Permanently delete ${user.firstName}? This cannot be undone.`, type: 'danger', confirmLabel: 'Delete',
+        open: true, title: 'Delete Account', message: 'Are you sure you want to permanently delete this user? This action cannot be undone.', type: 'danger', confirmLabel: 'Delete',
         onConfirm: async () => {
-          await adminService.deleteUser(user._id);
-          setConfirmDialog({ open: false });
-          fetchUsers();
+          try {
+            await adminService.deleteUser(user._id);
+            setConfirmDialog({ open: false });
+            fetchUsers();
+          } catch (error) {
+            console.error('Error deleting user:', error);
+          }
         }
       });
     }
@@ -104,17 +120,17 @@ const AdminUsers = () => {
     { label: 'Edit User', icon: FiEdit2, onClick: () => {} },
     { type: 'divider' },
     ...(user.status?.toLowerCase() === 'active' ? [
-      { label: 'Suspend', icon: FiPauseCircle, onClick: () => handleAction('suspend', user), warning: true },
+      { label: 'Suspend Account', icon: FiPauseCircle, onClick: () => handleAction('suspend', user), warning: true },
       { label: 'Block', icon: FiSlash, onClick: () => handleAction('block', user), danger: true },
     ] : [
-      { label: 'Activate', icon: FiCheckCircle, onClick: () => handleAction('activate', user), success: true },
+      { label: 'Reactivate Account', icon: FiCheckCircle, onClick: () => handleAction('activate', user), success: true },
     ]),
     { type: 'divider' },
     { label: 'Reset Password', icon: FiKey, onClick: () => {} },
     { label: 'View Activity', icon: FiActivity, onClick: () => {} },
     { label: 'View Audit History', icon: FiClock, onClick: () => {} },
     { type: 'divider' },
-    { label: 'Delete User', icon: FiTrash2, onClick: () => handleAction('delete', user), danger: true },
+    { label: 'Delete Account', icon: FiTrash2, onClick: () => handleAction('delete', user), danger: true },
   ];
 
   return (
@@ -209,7 +225,7 @@ const AdminUsers = () => {
                     <td className="p-4 text-gray-400">{user.email}</td>
                     <td className="p-4 text-gray-400 hidden lg:table-cell">{user.phone}</td>
                     <td className="p-4"><StatusBadge status={user.role} /></td>
-                    <td className="p-4"><StatusBadge status={user.status} /></td>
+                    <td className="p-4"><StatusBadge status={user.status?.toLowerCase()} /></td>
                     <td className="p-4 text-gray-500 hidden md:table-cell">{new Date(user.createdAt).toLocaleDateString()}</td>
                     <td className="p-4 text-right">
                       <ActionDropdown actions={getActions(user)} />
@@ -257,7 +273,7 @@ const AdminUsers = () => {
                   <h4 className="text-lg font-bold text-white">{drawerUser.firstName} {drawerUser.lastName}</h4>
                   <div className="flex items-center justify-center gap-2 mt-2">
                     <StatusBadge status={drawerUser.role} size="md" />
-                    <StatusBadge status={drawerUser.status} size="md" />
+                    <StatusBadge status={drawerUser.status?.toLowerCase()} size="md" />
                   </div>
                   {(drawerUser.isVerified || drawerUser.profileCompleted) && (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-cyan-400 mt-2">
