@@ -44,7 +44,7 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
   const totalPeriodOrders = data.reduce((acc, curr) => acc + curr.orders, 0);
 
   return (
-    <div className={`bg-cardBg/90 backdrop-blur-sm border border-white/5 p-6 rounded-3xl space-y-6 ${className}`}>
+    <div className={`bg-cardBg border border-borderColor p-6 rounded-3xl space-y-6 ${className}`}>
       {/* Chart Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -52,15 +52,15 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
             <span className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
               <FiTrendingUp size={16} />
             </span>
-            <h3 className="text-base font-bold text-white tracking-tight">{title}</h3>
+            <h3 className="text-base font-bold text-textPrimary tracking-tight">{title}</h3>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-textSecondary mt-1">
             Total for period: <span className="text-primary font-bold">₹{totalPeriodRevenue.toLocaleString('en-IN')}</span> across {totalPeriodOrders} orders
           </p>
         </div>
 
         {/* Timeframe Switcher */}
-        <div className="flex items-center bg-black/40 border border-white/10 p-1 rounded-xl self-start sm:self-auto text-xs">
+        <div className="flex items-center bg-surface border border-borderColor p-1 rounded-xl self-start sm:self-auto text-xs">
           {[
             { key: '7D', label: 'Last 7 Days' },
             { key: '30D', label: 'Last 30 Days' },
@@ -72,7 +72,7 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
               className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
                 timeframe === t.key
                   ? 'bg-primary text-black shadow-yellow-glow'
-                  : 'text-gray-400 hover:text-white'
+                  : 'text-textSecondary hover:text-textPrimary hover:bg-surface'
               }`}
             >
               {t.label}
@@ -82,13 +82,13 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
       </div>
 
       {/* Interactive Bar & Curve Chart Visualizer */}
-      <div className="relative h-64 sm:h-72 pt-8 pb-4 flex items-end justify-between gap-2 sm:gap-4 border-b border-white/5">
+      <div className="relative h-64 sm:h-72 pt-8 pb-4 flex items-end justify-between gap-2 sm:gap-4 border-b border-borderColor">
         {/* Background Grid Lines */}
-        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
-          <div className="border-b border-white border-dashed w-full" />
-          <div className="border-b border-white border-dashed w-full" />
-          <div className="border-b border-white border-dashed w-full" />
-          <div className="border-b border-white border-dashed w-full" />
+        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
+          <div className="border-b border-borderColor border-dashed w-full" />
+          <div className="border-b border-borderColor border-dashed w-full" />
+          <div className="border-b border-borderColor border-dashed w-full" />
+          <div className="border-b border-borderColor border-dashed w-full" />
         </div>
 
         {data.map((item, index) => {
@@ -105,16 +105,16 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
               {/* Tooltip */}
               <div
                 className={`
-                  absolute -top-12 z-20 bg-secondaryBg border border-primary/30 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-card-hover whitespace-nowrap pointer-events-none transition-all duration-200
+                  absolute -top-12 z-20 bg-secondaryBg border border-borderColor text-textPrimary text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-card-hover whitespace-nowrap pointer-events-none transition-all duration-200
                   ${isHovered ? 'opacity-100 scale-100 -translate-y-1' : 'opacity-0 scale-95 pointer-events-none'}
                 `}
               >
                 <div className="text-primary">₹{item.revenue.toLocaleString('en-IN')}</div>
-                <div className="text-[9px] text-gray-400 font-medium">{item.orders} orders</div>
+                <div className="text-[9px] text-textSecondary font-medium">{item.orders} orders</div>
               </div>
 
               {/* Bar Fill with Motion */}
-              <div className="w-full max-w-[48px] bg-white/5 rounded-t-xl overflow-hidden relative flex items-end h-full">
+              <div className="w-full max-w-[48px] bg-surface rounded-t-xl overflow-hidden relative flex items-end h-full">
                 <motion.div
                   initial={{ height: 0 }}
                   animate={{ height: `${heightPercent}%` }}
@@ -129,7 +129,7 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
               </div>
 
               {/* Label */}
-              <span className="text-[11px] font-semibold text-gray-400 mt-2 truncate w-full text-center group-hover:text-white transition-colors">
+              <span className="text-[11px] font-semibold text-textSecondary mt-2 truncate w-full text-center group-hover:text-textPrimary transition-colors">
                 {item.label}
               </span>
             </div>
@@ -139,26 +139,26 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
 
       {/* Footer Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-        <div className="bg-black/30 border border-white/5 p-3 rounded-2xl">
-          <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Peak Period</span>
-          <span className="text-sm font-black text-white mt-0.5 block">
+        <div className="bg-surface border border-borderColor p-3 rounded-2xl">
+          <span className="text-[10px] uppercase font-bold text-textSecondary tracking-wider block">Peak Period</span>
+          <span className="text-sm font-black text-textPrimary mt-0.5 block">
             ₹{maxRevenue.toLocaleString('en-IN')}
           </span>
         </div>
-        <div className="bg-black/30 border border-white/5 p-3 rounded-2xl">
-          <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Avg per Entry</span>
-          <span className="text-sm font-black text-emerald-400 mt-0.5 block">
+        <div className="bg-surface border border-borderColor p-3 rounded-2xl">
+          <span className="text-[10px] uppercase font-bold text-textSecondary tracking-wider block">Avg per Entry</span>
+          <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">
             ₹{Math.round(totalPeriodRevenue / data.length).toLocaleString('en-IN')}
           </span>
         </div>
-        <div className="bg-black/30 border border-white/5 p-3 rounded-2xl">
-          <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Total Volume</span>
-          <span className="text-sm font-black text-accentBlue mt-0.5 block">
+        <div className="bg-surface border border-borderColor p-3 rounded-2xl">
+          <span className="text-[10px] uppercase font-bold text-textSecondary tracking-wider block">Total Volume</span>
+          <span className="text-sm font-black text-blue-600 dark:text-accentBlue mt-0.5 block">
             {totalPeriodOrders} Units
           </span>
         </div>
-        <div className="bg-black/30 border border-white/5 p-3 rounded-2xl">
-          <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block">Growth Velocity</span>
+        <div className="bg-surface border border-borderColor p-3 rounded-2xl">
+          <span className="text-[10px] uppercase font-bold text-textSecondary tracking-wider block">Growth Velocity</span>
           <span className="text-sm font-black text-primary mt-0.5 block">
             +24.6% YoY
           </span>
