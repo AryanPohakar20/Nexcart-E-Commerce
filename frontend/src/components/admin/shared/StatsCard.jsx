@@ -79,7 +79,7 @@ const StatsCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
       className={`
-        relative overflow-hidden bg-[#1A1A1A] border border-white/5 rounded-2xl p-5
+        relative overflow-hidden bg-cardBg border border-borderColor rounded-2xl p-5
         transition-all duration-300 cursor-default group
         ${c.glow} ${c.border}
       `}
@@ -107,13 +107,13 @@ const StatsCard = ({
 
         {/* Value */}
         <div className="mb-1">
-          <span className="text-2xl font-black text-white tracking-tight">
+          <span className="text-2xl font-black text-textPrimary tracking-tight">
             {prefix}{formatValue(value)}{suffix}
           </span>
         </div>
 
         {/* Label */}
-        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">{label}</p>
+        <p className="text-xs text-textSecondary font-semibold uppercase tracking-wider">{label}</p>
 
         {/* Trend label */}
         {trendLabel && (

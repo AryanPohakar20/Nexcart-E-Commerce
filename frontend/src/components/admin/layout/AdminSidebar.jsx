@@ -55,7 +55,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
   const sidebarContent = (isMobile = false) => (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className={`flex items-center ${collapsed && !isMobile ? 'justify-center' : 'justify-between'} px-4 py-5 border-b border-white/5`}>
+      <div className={`flex items-center ${collapsed && !isMobile ? 'justify-center' : 'justify-between'} px-4 py-5 border-b border-borderColor`}>
         {(!collapsed || isMobile) && (
           <div
             className="flex items-center gap-2.5 cursor-pointer"
@@ -64,7 +64,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
             <img src={logo} alt="NexCart" className="w-8 h-8 rounded-lg object-cover" />
             <div>
               <span className="text-sm font-black tracking-wider text-yellow-400">NEX</span>
-              <span className="text-sm font-black tracking-wider text-white">CART</span>
+              <span className="text-sm font-black tracking-wider text-textPrimary">CART</span>
               <span className="ml-1.5 bg-yellow-500/15 border border-yellow-500/20 text-yellow-400 text-[9px] uppercase font-black tracking-widest px-1.5 py-0.5 rounded-md">Admin</span>
             </div>
           </div>
@@ -73,14 +73,14 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
           <img src={logo} alt="NexCart" className="w-8 h-8 rounded-lg object-cover cursor-pointer" onClick={() => navigate('/')} />
         )}
         {isMobile && (
-          <button onClick={onMobileClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/5">
+          <button onClick={onMobileClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-textSecondary hover:text-textPrimary hover:bg-surface">
             <FiX size={18} />
           </button>
         )}
         {!isMobile && (
           <button
             onClick={onToggle}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-textSecondary hover:text-textPrimary hover:bg-surface transition-all"
           >
             {collapsed ? <FiChevronRight size={14} /> : <FiChevronLeft size={14} />}
           </button>
@@ -92,12 +92,12 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
         {NAV_SECTIONS.map((section) => (
           <div key={section.id} className="mb-2">
             {(!collapsed || isMobile) && (
-              <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 px-3 py-2 mb-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-textSecondary px-3 py-2 mb-1">
                 {section.label}
               </p>
             )}
             {collapsed && !isMobile && (
-              <div className="h-px bg-white/5 mx-2 my-2" />
+              <div className="h-px bg-borderColor mx-2 my-2" />
             )}
             {section.items.map((item) => {
               const Icon = item.icon;
@@ -112,7 +112,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
                     transition-all duration-200 group
                     ${isActive
                       ? 'bg-yellow-500 text-black shadow-[0_0_15px_rgba(255,193,7,0.3)]'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      : 'text-textSecondary hover:text-textPrimary hover:bg-surface'
                     }
                     ${collapsed && !isMobile ? 'justify-center' : ''}
                   `}
@@ -133,7 +133,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
                       )}
                       {/* Tooltip for collapsed */}
                       {collapsed && !isMobile && (
-                        <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-[#2A2A2A] border border-white/10 rounded-lg text-xs font-semibold text-white whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 z-50 transition-opacity">
+                        <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-cardBg border border-borderColor rounded-lg text-xs font-semibold text-textPrimary whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 z-50 transition-opacity">
                           {item.name}
                           {item.badge && <span className="ml-2 text-yellow-400">({item.badge})</span>}
                         </div>
@@ -148,7 +148,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
       </div>
 
       {/* Footer */}
-      <div className={`px-3 py-3 border-t border-white/5 space-y-1`}>
+      <div className={`px-3 py-3 border-t border-borderColor space-y-1`}>
         {/* Admin profile */}
         {(!collapsed || isMobile) && user && (
           <NavLink
@@ -156,7 +156,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
             onClick={isMobile ? onMobileClose : undefined}
             className={({ isActive }) => `
               flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all
-              ${isActive ? 'bg-yellow-500 text-black' : 'text-gray-400 hover:text-white hover:bg-white/5'}
+              ${isActive ? 'bg-yellow-500 text-black' : 'text-textSecondary hover:text-textPrimary hover:bg-surface'}
             `}
           >
             {({ isActive }) => (
@@ -164,11 +164,11 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
                 <img
                   src={user.avatar || `https://i.pravatar.cc/150?u=${user.email}`}
                   alt={user.name}
-                  className="w-7 h-7 rounded-full object-cover border border-white/10"
+                  className="w-7 h-7 rounded-full object-cover border border-borderColor"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-bold truncate ${isActive ? 'text-black' : 'text-white'}`}>{user.name || 'Administrator'}</p>
-                  <p className={`text-[10px] truncate ${isActive ? 'text-black/70' : 'text-gray-500'}`}>System Root</p>
+                  <p className={`text-xs font-bold truncate ${isActive ? 'text-black' : 'text-textPrimary'}`}>{user.name || 'Administrator'}</p>
+                  <p className={`text-[10px] truncate ${isActive ? 'text-black/70' : 'text-textSecondary'}`}>System Root</p>
                 </div>
               </>
             )}
@@ -176,7 +176,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
         )}
         {(collapsed && !isMobile) && (
           <NavLink to="/admin/profile" title="Admin Profile"
-            className={({ isActive }) => `flex justify-center items-center p-2.5 rounded-xl transition-all ${isActive ? 'bg-yellow-500 text-black' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            className={({ isActive }) => `flex justify-center items-center p-2.5 rounded-xl transition-all ${isActive ? 'bg-yellow-500 text-black' : 'text-textSecondary hover:bg-surface hover:text-textPrimary'}`}
           >
             <FiUser size={18} />
           </NavLink>
@@ -185,7 +185,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
         {/* Storefront link */}
         <button
           onClick={() => navigate('/')}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:text-white hover:bg-white/5 transition-all ${collapsed && !isMobile ? 'justify-center' : ''}`}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-textSecondary hover:text-textPrimary hover:bg-surface transition-all ${collapsed && !isMobile ? 'justify-center' : ''}`}
         >
           <FiArrowLeft size={16} className="flex-shrink-0" />
           {(!collapsed || isMobile) && <span>Storefront</span>}
@@ -209,7 +209,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
       <motion.aside
         animate={{ width: collapsed ? 72 : 240 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="hidden md:flex flex-col bg-[#111111] border-r border-white/5 h-screen sticky top-0 overflow-hidden flex-shrink-0"
+        className="hidden md:flex flex-col bg-secondaryBg border-r border-borderColor h-screen sticky top-0 overflow-hidden flex-shrink-0"
       >
         {sidebarContent(false)}
       </motion.aside>
@@ -230,7 +230,7 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed left-0 top-0 bottom-0 w-64 bg-[#111111] border-r border-white/5 z-50 md:hidden"
+              className="fixed left-0 top-0 bottom-0 w-64 bg-secondaryBg border-r border-borderColor z-50 md:hidden"
             >
               {sidebarContent(true)}
             </motion.aside>

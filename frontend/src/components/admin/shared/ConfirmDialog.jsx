@@ -72,12 +72,12 @@ const ConfirmDialog = ({
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md bg-[#1E1E1E] border border-white/10 rounded-2xl p-6 shadow-2xl"
+            className="relative w-full max-w-md bg-cardBg border border-borderColor rounded-2xl p-6 shadow-2xl"
           >
             {/* Close */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/5"
+              className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-lg text-textSecondary hover:text-textPrimary hover:bg-surface"
             >
               <FiX size={16} />
             </button>
@@ -87,13 +87,13 @@ const ConfirmDialog = ({
               <Icon size={24} className={tc.iconColor} />
             </div>
 
-            <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-            <p className="text-sm text-gray-400 mb-6">{message}</p>
+            <h3 className="text-lg font-bold text-textPrimary mb-2">{title}</h3>
+            <p className="text-sm text-textSecondary mb-6">{message}</p>
 
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-300 bg-white/5 hover:bg-white/10 border border-white/5 transition-all"
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-textSecondary bg-surface hover:bg-surface border border-borderColor transition-all"
               >
                 {cancelLabel}
               </button>

@@ -19,7 +19,7 @@ const ActionDropdown = ({ actions = [], trigger }) => {
       {/* Trigger */}
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/8 transition-all"
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-textSecondary hover:text-textPrimary hover:bg-surface transition-all"
       >
         {trigger || <FiMoreVertical size={16} />}
       </button>
@@ -32,11 +32,11 @@ const ActionDropdown = ({ actions = [], trigger }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-9 z-50 min-w-[180px] bg-[#252525] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+            className="absolute right-0 top-9 z-50 min-w-[180px] bg-cardBg border border-borderColor rounded-xl shadow-2xl overflow-hidden"
           >
             {actions.map((action, i) => {
               if (action.type === 'divider') {
-                return <div key={i} className="h-px bg-white/5 my-1" />;
+                return <div key={i} className="h-px bg-borderColor my-1" />;
               }
               const Icon = action.icon;
               return (
@@ -57,7 +57,7 @@ const ActionDropdown = ({ actions = [], trigger }) => {
                       ? 'text-yellow-400 hover:bg-yellow-500/10'
                       : action.success
                       ? 'text-emerald-400 hover:bg-emerald-500/10'
-                      : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                      : 'text-textSecondary hover:bg-surface hover:text-textPrimary'
                     }
                   `}
                 >

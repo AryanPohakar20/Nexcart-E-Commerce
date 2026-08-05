@@ -16,7 +16,7 @@ const TableToolbar = ({
   children,
 }) => {
   return (
-    <div className="px-4 py-3 border-b border-white/5 space-y-3">
+    <div className="px-4 py-3 border-b border-borderColor space-y-3">
       {/* Top row */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Search */}
@@ -40,7 +40,7 @@ const TableToolbar = ({
           {onExport && (
             <button
               onClick={onExport}
-              className="flex items-center gap-2 h-9 px-3 text-xs font-semibold text-gray-400 bg-white/5 hover:bg-white/10 border border-white/8 hover:border-white/15 rounded-xl transition-all"
+              className="flex items-center gap-2 h-9 px-3 text-xs font-semibold text-textSecondary bg-surface hover:bg-surface border border-borderColor hover:border-borderColor rounded-xl transition-all"
             >
               <FiDownload size={14} />
               Export
@@ -65,7 +65,7 @@ const TableToolbar = ({
       {selectedCount > 0 && bulkActions && (
         <div className="flex items-center gap-3 bg-yellow-500/5 border border-yellow-500/20 rounded-xl px-4 py-2.5 animate-in slide-in-from-top duration-200">
           <span className="text-xs font-bold text-yellow-400">{selectedCount} selected</span>
-          <div className="w-px h-4 bg-white/10" />
+          <div className="w-px h-4 bg-borderColor" />
           {bulkActions.map((action, i) => {
             const Icon = action.icon;
             return (
@@ -77,7 +77,7 @@ const TableToolbar = ({
                     ? 'text-red-400 hover:bg-red-500/10'
                     : action.success
                     ? 'text-emerald-400 hover:bg-emerald-500/10'
-                    : 'text-gray-300 hover:bg-white/8'
+                    : 'text-textSecondary hover:bg-surface'
                   }`}
               >
                 {Icon && <Icon size={13} />}

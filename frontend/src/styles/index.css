@@ -19,6 +19,14 @@
     --warning: #F59E0B;
     --danger: #EF4444;
     --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    /* Chart SVG token */
+    --chart-grid-stroke: rgba(0, 0, 0, 0.07);
+    --chart-label-fill: #6B7280;
+    --chart-tooltip-bg: #F3F4F6;
+    --chart-tooltip-border: #D1D5DB;
+    --chart-tooltip-text: #111827;
+    --chart-point-stroke: #FFFFFF;
+    --chart-ring-bg: #E5E7EB;
   }
 
   .dark {
@@ -37,6 +45,14 @@
     --warning: #F59E0B;
     --danger: #EF4444;
     --shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    /* Chart SVG tokens */
+    --chart-grid-stroke: rgba(255, 255, 255, 0.05);
+    --chart-label-fill: rgba(255, 255, 255, 0.3);
+    --chart-tooltip-bg: #2A2A2A;
+    --chart-tooltip-border: rgba(255, 255, 255, 0.15);
+    --chart-tooltip-text: #FFFFFF;
+    --chart-point-stroke: #1A1A1A;
+    --chart-ring-bg: #1F1F1F;
   }
 
   /* Smooth scrolling & global theme transitions across the whole page */
@@ -367,6 +383,72 @@
   color: #111827 !important;
 }
 
+/* ─── Admin Dashboard: Dark Hex Backgrounds → Light Mode ────────────────────
+   The Admin module uses hardcoded dark hex colors that bypass the CSS variable
+   system. These overrides map every admin dark surface to a light equivalent
+   when the .light class is active on the html/body element.               */
+
+/* Main admin surfaces: cards, tables, sidebars, modals, drawers, dropdowns */
+.light .bg-\[#0D0D0D\],
+.light .bg-\[#111111\],
+.light .bg-\[#141414\],
+.light .bg-\[#1A1A1A\],
+.light .bg-\[#1C1C1C\],
+.light .bg-\[#1E1E1E\],
+.light .bg-\[#181818\],
+.light .bg-\[#252525\],
+.light .bg-\[#2A2A2A\],
+.light .bg-\[#111\] {
+  background-color: #FFFFFF !important;
+}
+
+/* Topbar: semi-transparent dark → semi-transparent white */
+.light .bg-\[#111111\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Subtle white-alpha surfaces used inside admin cards and drawers */
+.light .bg-white\/3 {
+  background-color: #F3F4F6 !important;
+}
+.light .bg-white\/2 {
+  background-color: #F9FAFB !important;
+}
+.light .bg-white\/8 {
+  background-color: #F3F4F6 !important;
+}
+
+/* Border utility variants not yet covered by global overrides */
+.light .border-white\/8 {
+  border-color: #E5E7EB !important;
+}
+
+/* Table row dividers — rgba(255,255,255,0.03) is invisible on white */
+.light .divide-white\/3 > * + *,
+.light .divide-white\/5 > * + * {
+  border-color: #E5E7EB !important;
+}
+
+/* ─── Admin Area: Hover State Fixes ─────────────────────────────────────────
+   Scoped to .admin-area (set on AdminLayout root div).
+   In dark mode, hover:text-white and hover:bg-white/* look correct.
+   In light mode, white text on a near-white background is invisible.
+   These rules override only within the admin section.                     */
+
+.light .admin-area .hover\:text-white:hover {
+  color: #111827 !important;
+}
+
+.light .admin-area .hover\:bg-white\/2:hover,
+.light .admin-area .hover\:bg-white\/3:hover,
+.light .admin-area .hover\:bg-white\/4:hover,
+.light .admin-area .hover\:bg-white\/5:hover,
+.light .admin-area .hover\:bg-white\/8:hover,
+.light .admin-area .hover\:bg-white\/10:hover,
+.light .admin-area .hover\:bg-white\/15:hover {
+  background-color: #F3F4F6 !important;
+}
+
 /* Keyframes for Smooth Micro-Animations */
 @keyframes shimmerSlide {
   0% { transform: translateX(-100%) skewX(-12deg); }
@@ -564,4 +646,121 @@ html:not(.dark) .mesh-gradient-bg {
 .img-premium-zoom:hover {
   transform: scale(1.06);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPLETE THEME AUDIT — PHASE 2
+   All remaining hardcoded colors that survived the Phase 1 sweep.
+   Grouped by area so future contributors know where each rule comes from.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. Opacity-modifier hex backgrounds (Cart, Wishlist) ───────────────
+   Tailwind generates a *separate* class for every opacity variant, e.g.
+   bg-[#0c111d]/40 → .bg-\[#0c111d\]\/40. The base-hex rule above only
+   covers the un-modified class. These cover all opacity variants found
+   in Cart.jsx and Wishlist.jsx which combine glass-card + dark hex/40.  */
+
+.light .bg-\[#0c111d\]\/40,
+.light .bg-\[#0c111d\]\/30,
+.light .bg-\[#0c111d\]\/20 {
+  background-color: #FFFFFF !important;
+}
+
+.light .bg-\[#0E1420\]\/60,
+.light .bg-\[#0E1420\]\/40,
+.light .bg-\[#0E1420\]\/30 {
+  background-color: #FFFFFF !important;
+}
+
+.light .bg-\[#0b101d\]\/40,
+.light .bg-\[#0b101d\]\/80,
+.light .bg-\[#070B12\]\/40,
+.light .bg-\[#070B12\]\/80 {
+  background-color: rgba(241, 245, 249, 0.9) !important;
+}
+
+/* ─── 2. SVG Chart Theme Classes ─────────────────────────────────────────
+   DashboardChart.jsx and AdminDashboard.jsx use inline SVG with hardcoded
+   dark colors (e.g. fill="rgba(255,255,255,0.3)" for axis labels).
+   CSS class selectors override SVG *presentation attributes* because the
+   CSS specificity of a class selector > SVG attribute specificity.      */
+
+.chart-grid-line {
+  stroke: var(--chart-grid-stroke) !important;
+}
+
+.chart-axis-label {
+  fill: var(--chart-label-fill) !important;
+}
+
+.chart-tooltip-bg {
+  fill: var(--chart-tooltip-bg) !important;
+  stroke: var(--chart-tooltip-border) !important;
+}
+
+.chart-tooltip-text {
+  fill: var(--chart-tooltip-text) !important;
+}
+
+.chart-point-stroke {
+  stroke: var(--chart-point-stroke) !important;
+}
+
+.chart-ring-bg {
+  stroke: var(--chart-ring-bg) !important;
+}
+
+/* ─── 3. White-alpha opacity variants ────────────────────────────────────
+   Catch-all for bg-white/N classes used as subtle layer overlays.       */
+
+.light .bg-white\/15 {
+  background-color: #E5E7EB !important;
+}
+.light .bg-white\/20,
+.light .bg-white\/25,
+.light .bg-white\/30 {
+  background-color: #D1D5DB !important;
+}
+
+/* ─── 4. Global hover states for non-admin storefront/seller areas ───────
+   Admin hover states are scoped to .admin-area to avoid leaking.
+   These handle the same patterns outside that scope.                     */
+
+.light .hover\:bg-white\/5:hover,
+.light .hover\:bg-white\/8:hover,
+.light .hover\:bg-white\/10:hover,
+.light .hover\:bg-white\/\[0\.04\]:hover,
+.light .hover\:bg-white\/\[0\.08\]:hover {
+  background-color: #F3F4F6 !important;
+}
+
+.light .hover\:text-white:hover {
+  color: #111827 !important;
+}
+
+/* ─── 5. Extended border/divide alpha variants ───────────────────────────
+   Catch any border or divider still rendering near-invisible white lines. */
+
+.light .border-white\/3 {
+  border-color: #E5E7EB !important;
+}
+.light .border-white\/25,
+.light .border-white\/30 {
+  border-color: #D1D5DB !important;
+}
+.light .divide-white\/10 > * + * {
+  border-color: #E5E7EB !important;
+}
+
+/* ─── 6. NexCartLogo light-mode border ──────────────────────────────────
+   NexCartLogo.jsx uses 'border-gray-200 bg-white p-1' for light variant
+   which is correct — keep it as-is. No override needed.                  */
+
+/* ─── 7. AdminDashboard legacy: bg-cardBg cards still use text-white ─────
+   The global .light .text-white rule (line ≈206) already handles this.  */
+
+/* ─── 8. ProtectedRoute loading screen ──────────────────────────────────
+   Uses dark: prefix — already handled by darkMode: 'class'. ✓           */
+
+/* ─── 9. Categories page card footer ────────────────────────────────────
+   categories.jsx bg-[#202020] card header → already in Phase 1 list. ✓  */
 
