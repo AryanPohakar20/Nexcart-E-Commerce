@@ -288,9 +288,9 @@
 
 /* Light Theme Footers */
 .light footer {
-  background-color: #FFFFFF !important;
-  color: #4B5563 !important;
-  border-color: #E5E7EB !important;
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-color) !important;
 }
 
 .light footer a {
@@ -519,6 +519,13 @@ input[type="number"] {
   background: linear-gradient(-45deg, #070b12, #0b101d, #0d1527, #070b12);
   background-size: 300% 300%;
   animation: slow-bg-mesh 18s ease infinite;
+}
+
+/* Light mode: override animated dark gradient with plain light background */
+.light .mesh-gradient-bg,
+html:not(.dark) .mesh-gradient-bg {
+  background: var(--bg-primary) !important;
+  animation: none !important;
 }
 
 /* Floating labels css inputs framework */

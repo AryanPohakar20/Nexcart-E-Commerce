@@ -55,7 +55,7 @@ const RootLayout = () => {
 
   if (isAuthPage) {
     return (
-      <div className="min-h-screen bg-[#070B12] text-white selection:bg-primary selection:text-black relative overflow-x-hidden mesh-gradient-bg">
+      <div className="min-h-screen bg-bgPrimary text-textPrimary selection:bg-primary selection:text-black relative overflow-x-hidden mesh-gradient-bg transition-colors duration-250">
         <ScrollToTop />
         
         {/* Top Scroll Progress Bar */}
@@ -85,7 +85,7 @@ const RootLayout = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-black transition-colors duration-400 relative overflow-x-hidden mesh-gradient-bg">
+    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-black transition-colors duration-250 relative overflow-x-hidden bg-bgPrimary">
       {/* Scroll manager */}
       <ScrollToTop />
       
