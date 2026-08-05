@@ -187,8 +187,8 @@ router.delete('/categories/:id',           requirePermission('categories', 'dele
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(   '/orders',                   requirePermission('orders', 'read'),   getOrders);
-router.get(   '/orders/:id',               requirePermission('orders', 'read'),   getOrder);
-router.patch( '/orders/:id/status',        requirePermission('orders', 'update'), updateOrderStatus);
+router.get(   '/orders/:orderId',          requirePermission('orders', 'read'),   getOrder);
+router.patch( '/orders/:orderId/status',   requirePermission('orders', 'update'), updateOrderStatus);
 router.patch( '/orders/:id/cancel',        requirePermission('orders', 'update'), cancelOrder);
 
 // ═══════════════════════════════════════════════════════════════════════════════
