@@ -38,8 +38,8 @@ const NotificationCard = ({ notification, onDismiss, onClick, index = 0 }) => {
       onClick={onClick}
       className={`
         relative flex gap-3 p-4 rounded-xl border cursor-pointer transition-all
-        ${read ? 'bg-white/2 border-white/5 opacity-70' : `bg-[#1E1E1E] border-white/8 ${priorityMap[priority] || ''}`}
-        hover:bg-white/5 hover:border-white/15 group
+        ${read ? 'bg-surface border-borderColor opacity-70' : `bg-cardBg border-borderColor ${priorityMap[priority] || ''}`}
+        hover:bg-surface hover:border-borderColor group
       `}
     >
       {/* Icon */}
@@ -50,10 +50,10 @@ const NotificationCard = ({ notification, onDismiss, onClick, index = 0 }) => {
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <h5 className={`text-sm font-bold ${read ? 'text-gray-400' : 'text-white'} truncate`}>{title}</h5>
-          <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0">{displayTime}</span>
+          <h5 className={`text-sm font-bold ${read ? 'text-textSecondary' : 'text-textPrimary'} truncate`}>{title}</h5>
+          <span className="text-[10px] text-textSecondary whitespace-nowrap flex-shrink-0">{displayTime}</span>
         </div>
-        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{message}</p>
+        <p className="text-xs text-textSecondary mt-0.5 line-clamp-2">{message}</p>
       </div>
 
       {/* Unread dot */}
@@ -65,7 +65,7 @@ const NotificationCard = ({ notification, onDismiss, onClick, index = 0 }) => {
       {onDismiss && (
         <button
           onClick={(e) => { e.stopPropagation(); onDismiss(notification._id || notification.id); }}
-          className="opacity-0 group-hover:opacity-100 absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-all"
+          className="opacity-0 group-hover:opacity-100 absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-lg text-textSecondary hover:text-textPrimary hover:bg-surface transition-all"
         >
           <FiX size={12} />
         </button>

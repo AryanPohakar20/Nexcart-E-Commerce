@@ -110,11 +110,11 @@ const Home = () => {
   return (
     <div className="space-y-16">
       
-      {/* 1. Hero Slider Module — intentionally kept dark (cinematic banner) */}
+      {/* 1. Hero Slider Module */}
       <section 
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-white/5 shadow-2xl bg-black/40"
+        className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-borderColor shadow-2xl bg-cardBg"
       >
         {/* Floating background gradient colors */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -194,8 +194,8 @@ const Home = () => {
                 transition={{ duration: 0.6, ease: 'easeInOut' }}
                 className="absolute inset-0 flex items-center"
               >
-                {/* Background Image overlay — always dark for cinematic look */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0B0B0B] via-[#0B0B0B]/80 to-transparent z-10" />
+                {/* Background Image overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-bgPrimary via-bgPrimary/80 to-transparent z-10" />
                 <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
                 
                 {/* Slide Content */}

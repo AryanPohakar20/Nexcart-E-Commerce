@@ -5,7 +5,7 @@ const Timeline = ({ events = [] }) => {
   return (
     <div className="relative">
       {/* Vertical line */}
-      <div className="absolute left-5 top-2 bottom-2 w-px bg-white/8" />
+      <div className="absolute left-5 top-2 bottom-2 w-px bg-borderColor" />
 
       <div className="space-y-4">
         {events.map((event, i) => {
@@ -39,17 +39,17 @@ const Timeline = ({ events = [] }) => {
 
               {/* Content */}
               <div className="flex-1 pb-4">
-                <div className="bg-[#1E1E1E] border border-white/5 rounded-xl p-3.5 hover:border-white/10 transition-colors">
+                <div className="bg-cardBg border border-borderColor rounded-xl p-3.5 hover:border-borderColor transition-colors">
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <p className="text-sm font-bold text-white">{event.event || event.action}</p>
-                    <span className="text-[10px] text-gray-500 whitespace-nowrap">{event.time || event.timestamp}</span>
+                    <p className="text-sm font-bold text-textPrimary">{event.event || event.action}</p>
+                    <span className="text-[10px] text-textSecondary whitespace-nowrap">{event.time || event.timestamp}</span>
                   </div>
-                  {event.detail && <p className="text-xs text-gray-400">{event.detail}</p>}
-                  {event.remarks && <p className="text-xs text-gray-500 mt-1 italic">"{event.remarks}"</p>}
+                  {event.detail && <p className="text-xs text-textSecondary">{event.detail}</p>}
+                  {event.remarks && <p className="text-xs text-textSecondary mt-1 italic">"{event.remarks}"</p>}
                   {event.target && (
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-gray-600">Target:</span>
-                      <span className="text-xs text-gray-400">{event.target}</span>
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-textSecondary">Target:</span>
+                      <span className="text-xs text-textSecondary">{event.target}</span>
                     </div>
                   )}
                 </div>

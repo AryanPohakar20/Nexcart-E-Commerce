@@ -24,29 +24,29 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-8 text-left">
       {/* Header */}
-      <div className="border-b border-white/5 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="border-b border-borderColor pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Root Administrator Terminal</h1>
-          <p className="text-xs text-gray-500 mt-1">Global settings, database aggregates, and access controls.</p>
+          <h1 className="text-2xl font-black text-textPrimary tracking-tight">Root Administrator Terminal</h1>
+          <p className="text-xs text-textSecondary mt-1">Global settings, database aggregates, and access controls.</p>
         </div>
 
         {/* Tab triggers */}
-        <div className="flex bg-white/5 border border-white/5 rounded-xl p-1 text-xs">
+        <div className="flex bg-surface border border-borderColor rounded-xl p-1 text-xs">
           <button 
             onClick={() => setActiveTab('dashboard')}
-            className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'dashboard' ? 'bg-accentBlue text-black' : 'text-gray-400 hover:text-white'}`}
+            className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'dashboard' ? 'bg-accentBlue text-black' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             Overview
           </button>
           <button 
             onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'users' ? 'bg-accentBlue text-black' : 'text-gray-400 hover:text-white'}`}
+            className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'users' ? 'bg-accentBlue text-black' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             Accounts
           </button>
           <button 
             onClick={() => setActiveTab('categories')}
-            className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'categories' ? 'bg-accentBlue text-black' : 'text-gray-400 hover:text-white'}`}
+            className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'categories' ? 'bg-accentBlue text-black' : 'text-textSecondary hover:text-textPrimary'}`}
           >
             Categories
           </button>
@@ -59,39 +59,39 @@ const AdminDashboard = () => {
           
           {/* Main metrics summary grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="bg-cardBg border border-white/5 p-5 rounded-3xl space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
+            <div className="bg-cardBg border border-borderColor p-5 rounded-3xl space-y-3">
+              <div className="flex items-center justify-between text-xs text-textSecondary font-bold uppercase tracking-wider">
                 <span>Active Users</span>
                 <FiUsers className="text-accentBlue text-base" />
               </div>
-              <p className="text-2xl font-black text-white">{ADMIN_STATS.totalUsers}</p>
+              <p className="text-2xl font-black text-textPrimary">{ADMIN_STATS.totalUsers}</p>
               <span className="text-[10px] text-green-400 font-bold">+43 new registered today</span>
             </div>
 
-            <div className="bg-cardBg border border-white/5 p-5 rounded-3xl space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
+            <div className="bg-cardBg border border-borderColor p-5 rounded-3xl space-y-3">
+              <div className="flex items-center justify-between text-xs text-textSecondary font-bold uppercase tracking-wider">
                 <span>System Products</span>
                 <FiBox className="text-accentBlue text-base" />
               </div>
-              <p className="text-2xl font-black text-white">{ADMIN_STATS.totalProducts}</p>
+              <p className="text-2xl font-black text-textPrimary">{ADMIN_STATS.totalProducts}</p>
               <span className="text-[10px] text-accentBlue font-bold">13 catalog collections</span>
             </div>
 
-            <div className="bg-cardBg border border-white/5 p-5 rounded-3xl space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
+            <div className="bg-cardBg border border-borderColor p-5 rounded-3xl space-y-3">
+              <div className="flex items-center justify-between text-xs text-textSecondary font-bold uppercase tracking-wider">
                 <span>Total Orders</span>
                 <FiTrendingUp className="text-accentBlue text-base" />
               </div>
-              <p className="text-2xl font-black text-white">{ADMIN_STATS.totalOrders}</p>
+              <p className="text-2xl font-black text-textPrimary">{ADMIN_STATS.totalOrders}</p>
               <span className="text-[10px] text-green-400 font-bold">+18 completed hours ago</span>
             </div>
 
-            <div className="bg-cardBg border border-white/5 p-5 rounded-3xl space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
+            <div className="bg-cardBg border border-borderColor p-5 rounded-3xl space-y-3">
+              <div className="flex items-center justify-between text-xs text-textSecondary font-bold uppercase tracking-wider">
                 <span>Category Count</span>
                 <FiSettings className="text-accentBlue text-base" />
               </div>
-              <p className="text-2xl font-black text-white">{ADMIN_STATS.totalCategories}</p>
+              <p className="text-2xl font-black text-textPrimary">{ADMIN_STATS.totalCategories}</p>
               <span className="text-[10px] text-yellow-500 font-bold">All sectors operational</span>
             </div>
           </div>
@@ -100,8 +100,8 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             {/* SVG Pie share */}
-            <div className="lg:col-span-2 bg-cardBg border border-white/5 p-6 rounded-3xl space-y-6">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+            <div className="lg:col-span-2 bg-cardBg border border-borderColor p-6 rounded-3xl space-y-6">
+              <h3 className="text-xs font-bold text-textPrimary uppercase tracking-wider flex items-center gap-1.5">
                 <FiActivity className="text-accentBlue" />
                 <span>Sector Sales Distribution</span>
               </h3>
@@ -109,7 +109,7 @@ const AdminDashboard = () => {
               <div className="flex flex-col sm:flex-row items-center gap-8 justify-around pt-4">
                 {/* SVG circular pie display */}
                 <svg className="w-40 h-40 transform -rotate-90 select-none">
-                  <circle cx="80" cy="80" r="60" fill="transparent" stroke="#1F1F1F" strokeWidth="24" />
+                  <circle cx="80" cy="80" r="60" fill="transparent" stroke="var(--chart-ring-bg)" strokeWidth="24" />
                   {/* Mobiles: 38% */}
                   <circle cx="80" cy="80" r="60" fill="transparent" stroke="#00C2FF" strokeWidth="24" strokeDasharray="376.8" strokeDashoffset="143.1" />
                   {/* Laptops: 24% */}
@@ -121,8 +121,8 @@ const AdminDashboard = () => {
                   {ADMIN_STATS.categoryShare.map((share, idx) => (
                     <div key={share.name} className="flex items-center gap-3">
                       <div className={`w-3 h-3 rounded-full ${idx === 0 ? 'bg-accentBlue' : idx === 1 ? 'bg-primary' : 'bg-gray-600'}`} />
-                      <div className="w-24 font-bold text-white">{share.name}</div>
-                      <span className="text-gray-500 font-extrabold">{share.percentage}% share</span>
+                      <div className="w-24 font-bold text-textPrimary">{share.name}</div>
+                      <span className="text-textSecondary font-extrabold">{share.percentage}% share</span>
                     </div>
                   ))}
                 </div>
@@ -130,15 +130,15 @@ const AdminDashboard = () => {
             </div>
 
             {/* Quick logs */}
-            <div className="lg:col-span-1 bg-cardBg border border-white/5 p-6 rounded-3xl space-y-4">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Audit Operations</h3>
-              <div className="space-y-3 text-xs text-gray-400 font-medium">
-                <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                  <p className="text-white font-bold">API Server Status</p>
+            <div className="lg:col-span-1 bg-cardBg border border-borderColor p-6 rounded-3xl space-y-4">
+              <h3 className="text-xs font-bold text-textPrimary uppercase tracking-wider">Audit Operations</h3>
+              <div className="space-y-3 text-xs text-textSecondary font-medium">
+                <div className="p-3 bg-surface rounded-xl border border-borderColor">
+                  <p className="text-textPrimary font-bold">API Server Status</p>
                   <p className="text-[10px] text-green-400 mt-0.5">Online | Ping: 42ms</p>
                 </div>
-                <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                  <p className="text-white font-bold">CDN caching</p>
+                <div className="p-3 bg-surface rounded-xl border border-borderColor">
+                  <p className="text-textPrimary font-bold">CDN caching</p>
                   <p className="text-[10px] text-primary mt-0.5">Enabled | Hit rate: 94.2%</p>
                 </div>
               </div>
@@ -150,11 +150,11 @@ const AdminDashboard = () => {
       )}
 
       {activeTab === 'users' && (
-        <div className="bg-cardBg border border-white/5 rounded-3xl overflow-hidden">
+        <div className="bg-cardBg border border-borderColor rounded-3xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse">
               <thead>
-                <tr className="bg-white/5 text-gray-400 uppercase font-extrabold tracking-wider border-b border-white/5">
+                <tr className="bg-surface text-textSecondary uppercase font-extrabold tracking-wider border-b border-borderColor">
                   <th className="p-4">Account name</th>
                   <th className="p-4">Email</th>
                   <th className="p-4">System Role</th>
@@ -163,13 +163,13 @@ const AdminDashboard = () => {
                   <th className="p-4 text-right">Access Controls</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-borderColor">
                 {usersList.map((user) => (
-                  <tr key={user.email} className="hover:bg-white/5 transition-colors">
-                    <td className="p-4 font-bold text-white">{user.name}</td>
-                    <td className="p-4 text-gray-300 font-medium">{user.email}</td>
-                    <td className="p-4 text-gray-300 font-medium">{user.role}</td>
-                    <td className="p-4 text-gray-500">{user.date}</td>
+                  <tr key={user.email} className="hover:bg-surface transition-colors">
+                    <td className="p-4 font-bold text-textPrimary">{user.name}</td>
+                    <td className="p-4 text-textSecondary font-medium">{user.email}</td>
+                    <td className="p-4 text-textSecondary font-medium">{user.role}</td>
+                    <td className="p-4 text-textSecondary">{user.date}</td>
                     <td className="p-4">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider ${user.active ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
                         {user.active ? 'Active' : 'Suspended'}
@@ -194,13 +194,13 @@ const AdminDashboard = () => {
       {activeTab === 'categories' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {CATEGORIES.map((cat) => (
-            <div key={cat.id} className="bg-cardBg border border-white/5 p-5 rounded-3xl text-xs space-y-3 relative overflow-hidden">
-              <span className="text-[10px] text-gray-500 font-bold uppercase">Sector</span>
-              <h4 className="font-extrabold text-white text-sm">{cat.name}</h4>
-              <div className="flex justify-between items-center text-gray-400 font-bold border-t border-white/5 pt-3">
+            <div key={cat.id} className="bg-cardBg border border-borderColor p-5 rounded-3xl text-xs space-y-3 relative overflow-hidden">
+              <span className="text-[10px] text-textSecondary font-bold uppercase">Sector</span>
+              <h4 className="font-extrabold text-textPrimary text-sm">{cat.name}</h4>
+              <div className="flex justify-between items-center text-textSecondary font-bold border-t border-borderColor pt-3">
                 <div>
-                  <p className="text-[9px] text-gray-500 uppercase font-bold">Listings</p>
-                  <p className="text-white text-xs">{cat.count} active</p>
+                  <p className="text-[9px] text-textSecondary uppercase font-bold">Listings</p>
+                  <p className="text-textPrimary text-xs">{cat.count} active</p>
                 </div>
               </div>
             </div>

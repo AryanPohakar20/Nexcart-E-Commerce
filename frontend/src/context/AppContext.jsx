@@ -106,13 +106,9 @@ export const AppProvider = ({ children }) => {
     if (theme === 'dark') {
       root.classList.add('dark');
       root.classList.remove('light');
-      body.classList.add('dark');
-      body.classList.remove('light');
     } else {
       root.classList.remove('dark');
       root.classList.add('light');
-      body.classList.remove('dark');
-      body.classList.add('light');
     }
     body.style.backgroundColor = 'var(--bg-primary)';
     body.style.color = 'var(--text-primary)';
