@@ -540,7 +540,6 @@ orderSchema.pre('save', function (next) {
 });
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
-orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ orderId: 1, isDeleted: 1 });
 orderSchema.index({ customer: 1, createdAt: -1 });
 orderSchema.index({ seller: 1, createdAt: -1 });
