@@ -53,31 +53,31 @@ const SellerStatsCard = ({
     yellow: {
       border: 'hover:border-primary/40',
       bg: 'bg-primary/10',
-      text: 'text-primary',
+      text: 'text-primary-dark dark:text-primary',
       glow: 'group-hover:shadow-[0_0_20px_rgba(255,193,7,0.15)]',
     },
     green: {
       border: 'hover:border-emerald-500/40',
       bg: 'bg-emerald-500/10',
-      text: 'text-emerald-400',
+      text: 'text-emerald-600 dark:text-emerald-400',
       glow: 'group-hover:shadow-[0_0_20px_rgba(16,185,129,0.15)]',
     },
     blue: {
       border: 'hover:border-accentBlue/40',
       bg: 'bg-accentBlue/10',
-      text: 'text-accentBlue',
+      text: 'text-blue-600 dark:text-accentBlue',
       glow: 'group-hover:shadow-[0_0_20px_rgba(0,207,255,0.15)]',
     },
     purple: {
       border: 'hover:border-purple-500/40',
       bg: 'bg-purple-500/10',
-      text: 'text-purple-400',
+      text: 'text-purple-600 dark:text-purple-400',
       glow: 'group-hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]',
     },
     amber: {
       border: 'hover:border-amber-500/40',
       bg: 'bg-amber-500/10',
-      text: 'text-amber-400',
+      text: 'text-amber-600 dark:text-amber-400',
       glow: 'group-hover:shadow-[0_0_20px_rgba(245,158,11,0.15)]',
     },
   };
@@ -90,36 +90,36 @@ const SellerStatsCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={`
-        group relative bg-cardBg/90 backdrop-blur-sm border border-white/5 
+        group relative bg-cardBg border border-borderColor 
         ${style.border} ${style.glow}
         p-5 md:p-6 rounded-3xl transition-all duration-300 flex flex-col justify-between
       `}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
+          <span className="text-xs font-semibold text-textSecondary uppercase tracking-wider block">
             {title}
           </span>
-          <div className="text-2xl md:text-3xl font-black text-white mt-1.5 tracking-tight flex items-baseline">
+          <div className="text-2xl md:text-3xl font-black text-textPrimary mt-1.5 tracking-tight flex items-baseline">
             <CountUp to={value} prefix={prefix} suffix={suffix} formatter={formatter} />
           </div>
         </div>
 
         {Icon && (
-          <div className={`p-3 rounded-2xl ${style.bg} ${style.text} border border-white/5 transition-transform duration-300 group-hover:scale-110`}>
+          <div className={`p-3 rounded-2xl ${style.bg} ${style.text} border border-borderColor transition-transform duration-300 group-hover:scale-110`}>
             <Icon size={20} />
           </div>
         )}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs">
+      <div className="mt-4 pt-3 border-t border-borderColor flex items-center justify-between text-xs">
         {change !== undefined && (
-          <span className={`font-bold flex items-center gap-1 ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+          <span className={`font-bold flex items-center gap-1 ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
             <span>{isPositive ? '↑' : '↓'} {change}</span>
           </span>
         )}
         {subtitle && (
-          <span className="text-gray-400 text-[11px] font-medium truncate">
+          <span className="text-textSecondary text-[11px] font-medium truncate">
             {subtitle}
           </span>
         )}

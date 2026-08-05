@@ -12,6 +12,7 @@ import {
 
 import { getSellerDisplayName, getSellerAvatar } from '../utils/sellerHelpers';
 import SellerBadge from '../components/seller/SellerBadge';
+import ThemeToggle from '../components/ThemeToggle';
 
 const SellerHeader = ({ onOpenSidebar }) => {
   const { user } = useContext(AppContext);
@@ -21,19 +22,19 @@ const SellerHeader = ({ onOpenSidebar }) => {
   const avatar = getSellerAvatar({ profile: { logo: { url: settings.avatar } }, userId: { avatar: user?.avatar } });
 
   return (
-    <header className="h-20 bg-secondaryBg/80 backdrop-blur-md border-b border-white/5 px-6 flex items-center justify-between sticky top-0 z-30">
+    <header className="h-20 bg-secondaryBg/80 backdrop-blur-md border-b border-borderColor px-6 flex items-center justify-between sticky top-0 z-30">
       <div className="flex items-center gap-4">
         <button
-          className="md:hidden text-white hover:text-primary p-2 rounded-xl bg-white/5"
+          className="md:hidden text-textPrimary hover:text-primary p-2 rounded-xl bg-surface"
           onClick={onOpenSidebar}
         >
           <FiMenu size={20} />
         </button>
         <div>
-          <h1 className="text-lg font-black hidden md:block text-white tracking-tight">
+          <h1 className="text-lg font-black hidden md:block text-textPrimary tracking-tight">
             NexCart <span className="text-primary">Seller Studio</span>
           </h1>
-          <p className="text-[11px] text-gray-400 hidden md:block">
+          <p className="text-[11px] text-textSecondary hidden md:block">
             {settings.sellerType === 'business' ? 'Retail & Small Business Commerce' : 'Peer-to-Peer C2C Marketplace'}
           </p>
         </div>
@@ -41,23 +42,26 @@ const SellerHeader = ({ onOpenSidebar }) => {
 
       {/* Seller Header Indicators */}
       <div className="flex items-center gap-3">
+        {/* Clean Theme Toggle */}
+        <ThemeToggle className="mr-2" />
+
         {/* Marketplace Mode Pill */}
-        <div className="hidden sm:flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full text-xs">
+        <div className="hidden sm:flex items-center gap-2 bg-surface border border-borderColor px-3 py-1.5 rounded-full text-xs">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-gray-300 font-bold text-[11px]">
+          <span className="text-textSecondary font-bold text-[11px]">
             {settings.sellerType === 'business' ? 'Retail Storefront' : 'C2C Mode (OLX Model)'}
           </span>
         </div>
 
         {/* User Profile Pill */}
-        <div className="flex items-center gap-3 bg-white/5 rounded-full px-3.5 py-1.5 border border-white/5 shadow-card-hover">
+        <div className="flex items-center gap-3 bg-surface rounded-full px-3.5 py-1.5 border border-borderColor shadow-card-hover">
           <img 
             src={avatar} 
             alt={displayName} 
             className="w-8 h-8 rounded-full object-cover border border-primary/40"
           />
           <div className="hidden sm:block text-left">
-            <p className="text-xs font-bold leading-tight text-white">{displayName}</p>
+            <p className="text-xs font-bold leading-tight text-textPrimary">{displayName}</p>
             <div className="mt-1">
               <SellerBadge sellerType={settings.sellerType} />
             </div>
@@ -66,6 +70,7 @@ const SellerHeader = ({ onOpenSidebar }) => {
       </div>
     </header>
   );
+
 };
 
 const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) => {
@@ -84,7 +89,7 @@ const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) =>
 
   return (
     <aside className={`
-      fixed inset-y-0 left-0 z-40 w-64 bg-secondaryBg border-r border-white/5 p-6 flex flex-col justify-between
+      fixed inset-y-0 left-0 z-40 w-64 bg-secondaryBg border-r border-borderColor p-6 flex flex-col justify-between
       transition-transform duration-300 md:translate-x-0 md:static
       ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
     `}>
@@ -93,10 +98,10 @@ const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) =>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
             <img src={logo} alt="Logo" className="w-8 h-8 rounded object-cover border border-primary/20" />
-            <span className="text-xl font-bold tracking-wider text-primary">NEX<span className="text-white">CART</span></span>
+            <span className="text-xl font-bold tracking-wider text-primary">NEX<span className="text-textPrimary">CART</span></span>
             <span className="bg-primary/10 border border-primary/20 text-primary text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">Studio</span>
           </div>
-          <button className="md:hidden text-white hover:text-primary" onClick={onCloseSidebar}>
+          <button className="md:hidden text-textPrimary hover:text-primary" onClick={onCloseSidebar}>
             <FiX size={24} />
           </button>
         </div>
@@ -114,7 +119,7 @@ const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) =>
                   flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold transition-all text-xs
                   ${isActive 
                     ? 'bg-primary text-black shadow-yellow-glow' 
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'}
+                    : 'text-textSecondary hover:text-textPrimary hover:bg-surface'}
                 `}
               >
                 <div className="flex items-center gap-3">
@@ -122,7 +127,7 @@ const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) =>
                   <span>{item.name}</span>
                 </div>
                 {item.badge !== undefined && item.badge !== null && item.badge !== 0 && (
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${item.badgeColor || 'bg-white/10 text-white'}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${item.badgeColor || 'bg-surface text-textPrimary border border-borderColor'}`}>
                     {item.badge}
                   </span>
                 )}
@@ -133,10 +138,10 @@ const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) =>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col gap-2 pt-6 border-t border-white/5 text-xs font-bold">
+      <div className="flex flex-col gap-2 pt-6 border-t border-borderColor text-xs font-bold">
         <button 
           onClick={() => navigate('/')}
-          className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+          className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-textSecondary hover:text-textPrimary hover:bg-surface transition-all"
         >
           <FiArrowLeft size={16} />
           <span>Switch to Buyer Store</span>
@@ -164,7 +169,7 @@ const SellerLayoutContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-darkBg text-white flex">
+    <div className="min-h-screen bg-darkBg text-textPrimary flex">
       {/* Sidebar Navigation */}
       <SellerNavigationSidebar
         isSidebarOpen={isSidebarOpen}
@@ -218,7 +223,7 @@ const SellerLayout = () => {
 
   if (isCheckingSeller) {
     return (
-      <div className="min-h-screen bg-darkBg text-white flex items-center justify-center">
+      <div className="min-h-screen bg-darkBg text-textPrimary flex items-center justify-center">
         <div className="text-primary font-bold animate-pulse text-sm">Launching Seller Studio Workspace...</div>
       </div>
     );
