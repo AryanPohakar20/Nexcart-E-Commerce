@@ -22,10 +22,59 @@ const notificationSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    notificationType: {
+      type: String,
+      enum: ['Promotion', 'Offer', 'Discount', 'Recommendation', 'Announcement', 'Order Update', 'System Alert', 'Custom'],
+      default: 'Announcement',
+      index: true,
+    },
+    targetAudience: {
+      type: String,
+      trim: true,
+      default: 'all',
+      index: true,
+    },
     priority: {
       type: String,
       enum: ['low', 'normal', 'high', 'critical'],
       default: 'normal',
+      index: true,
+    },
+    publishStatus: {
+      type: String,
+      enum: ['draft', 'scheduled', 'published', 'unpublished'],
+      default: 'published',
+      index: true,
+    },
+    scheduledAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    expiresAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    publishedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    image: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    actionUrl: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
       index: true,
     },
     read: {
@@ -64,6 +113,9 @@ const notificationSchema = new mongoose.Schema(
 );
 
 notificationSchema.index({ recipientRole: 1, read: 1, createdAt: -1 });
+notificationSchema.index({ publishStatus: 1, createdAt: -1 });
+notificationSchema.index({ notificationType: 1, createdAt: -1 });
+notificationSchema.index({ createdBy: 1, createdAt: -1 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 export default Notification;

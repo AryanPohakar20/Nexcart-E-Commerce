@@ -8,7 +8,6 @@ import validateEnv from './config/env.js';
 import connectDB from './config/db.js';
 import app from './app.js';
 import logger from './utils/logger.js';
-import '../src/notifications/events/notificationEventManager.js';
 
 // ─── Validate Environment ─────────────────────────────────────────────────────
 validateEnv();
