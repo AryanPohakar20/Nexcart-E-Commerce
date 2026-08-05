@@ -1,6 +1,7 @@
 // src/config/db.js
 // MongoDB connection module using Mongoose.
-// Handles initial connection, graceful failure, and reconnect
+// Handles initial connection, graceful failure, and reconnection events.
+
 import dns from 'node:dns';
 import mongoose from 'mongoose';
 import logger from '../utils/logger.js';
@@ -67,4 +68,4 @@ const connectDB = async (retryCount = 0) => {
   }
 };
 
-export default connectDB
+export default connectDB;

@@ -23,13 +23,12 @@ import {
 
 const Login = () => {
   const { showToast, theme } = useContext(AppContext);
-  const { login, sellerLogin } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('customer'); // customer, seller, admin
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -100,9 +99,7 @@ const Login = () => {
     setErrors({});
 
     try {
-      const result = role === 'seller'
-        ? await sellerLogin(email, password)
-        : await login(email, password);
+      const result = await login(email, password);
       
       if (result.success) {
         setIsSuccess(true);
@@ -111,7 +108,7 @@ const Login = () => {
         
         setTimeout(() => {
           const userRole = (result.user?.role || '').toLowerCase();
-          if (userRole === 'seller' || userRole === 'marketplaceseller') navigate('/seller/dashboard');
+          if (userRole === 'seller' || userRole === 'marketplace_seller') navigate('/seller/dashboard');
           else if (userRole === 'admin') navigate('/admin/dashboard');
           else navigate('/');
         }, 800);
@@ -359,26 +356,8 @@ const Login = () => {
                 <span className="inline-block animate-bounce origin-bottom-right">👋</span>
               </h2>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-[#AAB4C5]">
-                Sign in to continue shopping
+                Sign in to access your NexCart account
               </p>
-            </div>
-
-            {/* Role Switcher Tabs */}
-            <div className="mb-6 p-1 rounded-xl bg-gray-100 dark:bg-black/40 border border-gray-200 dark:border-white/10 grid grid-cols-3 gap-1 text-[11px] font-bold uppercase tracking-wider">
-              {['customer', 'seller', 'admin'].map((r) => (
-                <button
-                  type="button"
-                  key={r}
-                  onClick={() => setRole(r)}
-                  className={`py-2 rounded-lg transition-all duration-200 ${
-                    role === r
-                      ? 'bg-gradient-to-r from-primary to-amber-500 text-black shadow-yellow-glow font-black'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {r}
-                </button>
-              ))}
             </div>
 
             {/* Login Form */}

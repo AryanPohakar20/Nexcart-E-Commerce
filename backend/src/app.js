@@ -23,10 +23,15 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:')
+      ) {
         callback(null, true);
       } else {
-        callback(null, allowedOrigins);
+        callback(new Error(`Origin ${origin} is not allowed by CORS`));
       }
     },
     credentials: true,
@@ -54,11 +59,7 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api', apiRouter);
-
-// 404 Handler
 app.use(notFoundHandler);
-
-// Centralized Error Handler
 app.use(errorHandler);
 
 export default app;
