@@ -44,6 +44,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> e8d0900ced9bf7a4719054ff92c4de298e6e9b9c
 app.get('/api/health', (req, res) => {
   const dbConnected = globalThis.__dbConnected === true;
 
@@ -58,6 +62,11 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> 059c255642e76f5ef48c7f7de605a736d8915c9b
+>>>>>>> e8d0900ced9bf7a4719054ff92c4de298e6e9b9c
 app.use('/api', apiRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);

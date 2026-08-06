@@ -38,4 +38,4 @@ dist-ssr/
 .env.staging
 
 # graph
-graphify-out/
+graphify-out/ 

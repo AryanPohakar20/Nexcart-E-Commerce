@@ -1,10 +1,20 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+import notificationRoutes from '../notifications/routes/notificationRoutes.js';
+=======
+>>>>>>> e8d0900ced9bf7a4719054ff92c4de298e6e9b9c
 import sellerRoutes from './sellerRoutes.js';
 import profileRoutes from './profileRoutes.js';
 import addressRoutes from './addressRoutes.js';
 import adminRoutes from './adminRoutes.js';
+<<<<<<< HEAD
+=======
+>>>>>>> 059c255642e76f5ef48c7f7de605a736d8915c9b
+>>>>>>> e8d0900ced9bf7a4719054ff92c4de298e6e9b9c
 
 import {
   registerUser,
