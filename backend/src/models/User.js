@@ -22,7 +22,7 @@ const settingsSchema = new mongoose.Schema(
       showPhone: { type: Boolean, default: false },
     },
     language: { type: String, default: 'en' },
-    theme: { type: String, enum: ['light', 'dark'], default: 'light' },
+    theme: { type: String, enum: ['light', 'dark', 'system'], default: 'light' },
   },
   { _id: false }
 );
@@ -152,7 +152,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Active', 'Suspended', 'Deleted'],
+      enum: ['Active', 'Suspended', 'Deleted', 'Blocked', 'active', 'suspended', 'deleted', 'blocked'],
       default: 'Active',
     },
     lastLogin: {
@@ -224,6 +224,18 @@ userSchema.index({ createdAt: -1 });
 userSchema.pre('validate', function (next) {
   if (this.role && typeof this.role === 'string') {
     this.role = this.role.toLowerCase();
+  }
+
+  if (this.status && typeof this.status === 'string') {
+    const lower = this.status.toLowerCase();
+    if (lower === 'active') this.status = 'Active';
+    else if (lower === 'suspended') this.status = 'Suspended';
+    else if (lower === 'deleted') this.status = 'Deleted';
+    else if (lower === 'blocked') this.status = 'Blocked';
+  }
+
+  if (this.settings && this.settings.theme && typeof this.settings.theme === 'string') {
+    this.settings.theme = this.settings.theme.toLowerCase();
   }
 
   if ((!this.username || !this.username.trim()) && this.email) {

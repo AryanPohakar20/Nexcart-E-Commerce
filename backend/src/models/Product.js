@@ -5,11 +5,12 @@ import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema(
   {
-    name: {
+    // CORE PRODUCT INFORMATION
+    title: {
       type: String,
-      required: [true, 'Product name is required'],
+      required: [true, 'Product title is required'],
       trim: true,
-      maxlength: [250, 'Product name cannot exceed 250 characters'],
+      maxlength: [250, 'Product title cannot exceed 250 characters'],
     },
     slug: {
       type: String,
@@ -18,20 +19,17 @@ const productSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    sku: {
+    shortDescription: {
       type: String,
       trim: true,
-      uppercase: true,
-      default: function () {
-        return `SKU-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
-      },
+      default: '',
     },
     description: {
       type: String,
       trim: true,
       default: '',
     },
-    shortDescription: {
+    brand: {
       type: String,
       trim: true,
       default: '',
@@ -40,6 +38,11 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
       required: [true, 'Category is required'],
+    },
+    subCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      default: null,
     },
     seller: {
       type: mongoose.Schema.Types.ObjectId,
@@ -51,36 +54,155 @@ const productSchema = new mongoose.Schema(
       enum: ['individual', 'business', 'seller', 'marketplace_seller'],
       default: 'seller',
     },
+    sku: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: function () {
+        return `SKU-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
+      },
+    },
+    barcode: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
+
+    // PRICING
     price: {
       type: Number,
       required: [true, 'Price is required'],
       min: [0, 'Price cannot be negative'],
     },
-    compareAtPrice: {
+    mrp: {
       type: Number,
-      min: [0, 'Compare price cannot be negative'],
+      min: [0, 'MRP cannot be negative'],
       default: null,
     },
-    costPrice: {
+    discountPercentage: {
       type: Number,
-      min: [0, 'Cost price cannot be negative'],
-      default: null,
+      min: [0, 'Discount cannot be negative'],
+      max: [100, 'Discount cannot exceed 100%'],
+      default: 0,
     },
+    currency: {
+      type: String,
+      default: 'INR',
+    },
+    taxIncluded: {
+      type: Boolean,
+      default: true,
+    },
+    taxPercentage: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    allowNegotiation: {
+      type: Boolean,
+      default: false,
+    },
+    priceHistory: [
+      {
+        price: Number,
+        date: { type: Date, default: Date.now },
+      },
+    ],
+
+    // INVENTORY
     stock: {
       type: Number,
       required: [true, 'Stock quantity is required'],
       min: [0, 'Stock cannot be negative'],
       default: 0,
     },
+    reservedStock: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    soldQuantity: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    minimumStock: {
+      type: Number,
+      min: 0,
+      default: 5,
+    },
+    inventoryStatus: {
+      type: String,
+      enum: ['Available', 'Out Of Stock', 'Reserved', 'Sold', 'Expired'],
+      default: 'Available',
+    },
+
+    // MEDIA
+    images: [
+      {
+        url: { type: String, required: true },
+        publicId: { type: String, default: null },
+        alt: { type: String, default: '' },
+        isPrimary: { type: Boolean, default: false },
+        displayOrder: { type: Number, default: 0 },
+      },
+    ],
+
+    // SPECIFICATIONS
+    specifications: [
+      {
+        name: { type: String, trim: true, required: true },
+        value: { type: String, trim: true, required: true },
+        unit: { type: String, trim: true, default: '' },
+        group: { type: String, trim: true, default: 'General' },
+      },
+    ],
+
+    // DELIVERY
+    delivery: {
+      shippingType: { type: String, default: 'Standard' },
+      deliveryCharge: { type: Number, min: 0, default: 0 },
+      estimatedDays: { type: Number, min: 1, default: 5 },
+      freeDelivery: { type: Boolean, default: false },
+      cashOnDelivery: { type: Boolean, default: false },
+      returnAvailable: { type: Boolean, default: false },
+      returnWindow: { type: Number, min: 0, default: 0 },
+    },
+
+    // PRODUCT CONDITION
     condition: {
       type: String,
-      enum: ['new', 'refurbished', 'used'],
-      default: 'new',
+      enum: ['New', 'Like New', 'Excellent', 'Good', 'Fair', 'Refurbished', 'Used'],
+      default: 'New',
     },
+    purchaseYear: { type: Number, default: null },
+    usageDuration: { type: String, default: '' },
+    originalBillAvailable: { type: Boolean, default: false },
+    warrantyAvailable: { type: Boolean, default: false },
+    warrantyRemaining: { type: String, default: '' },
+
+    // MARKETPLACE INFORMATION
+    sellerDisplayName: { type: String, default: '' },
+    sellerVerified: { type: Boolean, default: false },
+    trustScoreSnapshot: { type: Number, default: 0 },
+
+    // STATISTICS
+    views: { type: Number, default: 0 },
+    wishlistCount: { type: Number, default: 0 },
+    cartCount: { type: Number, default: 0 },
+    purchaseCount: { type: Number, default: 0 },
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
+    reviewCount: { type: Number, default: 0, min: 0 },
+
+    // STATUS
     status: {
       type: String,
-      enum: ['Pending', 'Approved', 'Rejected', 'Hidden', 'Inactive', 'Deleted'],
-      default: 'Approved',
+      enum: ['Draft', 'Pending Approval', 'Active', 'Hidden', 'Sold', 'Expired', 'Rejected', 'Deleted'],
+      default: 'Active',
     },
     approvalStatus: {
       type: String,
@@ -93,50 +215,25 @@ const productSchema = new mongoose.Schema(
       reviewedAt: { type: Date, default: null },
       adminNotes: { type: String, default: '' },
     },
-    images: [
-      {
-        public_id: { type: String, default: null },
-        url: { type: String, required: true },
-      },
-    ],
-    thumbnail: {
-      type: String,
-      default: null,
-    },
-    featured: {
-      type: Boolean,
-      default: false,
-    },
-    tags: {
-      type: [String],
-      default: [],
-    },
-    attributes: [
-      {
-        name: { type: String, trim: true },
-        value: { type: String, trim: true },
-      },
-    ],
-    ratings: {
-      average: { type: Number, default: 0, min: 0, max: 5 },
-      count: { type: Number, default: 0, min: 0 },
-    },
-    views: {
-      type: Number,
-      default: 0,
-    },
-    wishlistCount: {
-      type: Number,
-      default: 0,
-    },
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
-    deletedAt: {
-      type: Date,
-      default: null,
-    },
+
+    // SEO
+    metaTitle: { type: String, default: '' },
+    metaDescription: { type: String, default: '' },
+    searchKeywords: { type: [String], default: [] },
+
+    // FEATURE FLAGS
+    featured: { type: Boolean, default: false },
+    recommended: { type: Boolean, default: false },
+    trending: { type: Boolean, default: false },
+    boosted: { type: Boolean, default: false },
+    flashSale: { type: Boolean, default: false },
+
+    // AUDIT
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
   },
   {
     timestamps: true,
@@ -146,16 +243,15 @@ const productSchema = new mongoose.Schema(
 );
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
-productSchema.index({ status: 1, isDeleted: 1 });
-productSchema.index({ approvalStatus: 1, isDeleted: 1 });
+productSchema.index({ slug: 1 });
+productSchema.index({ title: 'text', description: 'text', tags: 'text' });
 productSchema.index({ category: 1, status: 1 });
 productSchema.index({ seller: 1, status: 1 });
-productSchema.index({ slug: 1, isDeleted: 1 });
+productSchema.index({ status: 1, isDeleted: 1 });
 productSchema.index({ sku: 1 });
-productSchema.index({ featured: 1, status: 1 });
+productSchema.index({ tags: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ createdAt: -1 });
-productSchema.index({ name: 'text', description: 'text', tags: 'text' });
 
 const Product = mongoose.model('Product', productSchema);
 export default Product;

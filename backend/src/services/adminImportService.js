@@ -13,9 +13,43 @@ import * as auditLogRepo from '../repositories/auditLogRepository.js';
 import { ApiError } from '../utils/ApiError.js';
 
 /**
- * Parse buffer to array of row objects (supports CSV and Excel).
+ * Parse buffer to array of row objects (supports CSV, Excel, and JSON).
  */
 const parseBufferToRows = async (buffer, mimetype, originalName = '') => {
+  const isJSON =
+    mimetype === 'application/json' ||
+    originalName.toLowerCase().endsWith('.json');
+
+  if (isJSON) {
+    try {
+      const content = JSON.parse(buffer.toString('utf-8'));
+      let rawArray = [];
+      if (Array.isArray(content)) {
+        rawArray = content;
+      } else if (content && typeof content === 'object') {
+        const firstArrayKey = Object.keys(content).find((k) => Array.isArray(content[k]));
+        if (firstArrayKey) {
+          rawArray = content[firstArrayKey];
+        } else {
+          rawArray = [content];
+        }
+      }
+
+      // Normalize keys to lowercase for uniform handling
+      return rawArray.map((item) => {
+        if (!item || typeof item !== 'object') return {};
+        const normalized = {};
+        Object.keys(item).forEach((k) => {
+          normalized[k.trim().toLowerCase()] = item[k];
+          normalized[k] = item[k]; // Keep original key as well
+        });
+        return normalized;
+      });
+    } catch (err) {
+      throw new ApiError(400, `Failed to parse JSON file: ${err.message}`);
+    }
+  }
+
   const isExcel =
     mimetype === 'application/vnd.ms-excel' ||
     mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
@@ -206,17 +240,31 @@ export const executeImport = async (type, rows = [], adminUser, ip) => {
       operations.push({
         insertOne: {
           document: {
-            name,
+            title: name,
             slug,
             sku,
             price,
+            mrp: price,
             stock,
+            inventoryStatus: stock > 0 ? 'Available' : 'Out Of Stock',
             category: defaultCategory._id,
             seller: defaultSeller?._id || adminUser._id,
-            status: 'Approved',
+            status: 'Active',
             approvalStatus: 'Approved',
-            images: [{ url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80' }],
-            thumbnail: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+            images: [
+              {
+                url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+                isPrimary: true,
+                alt: name
+              }
+            ],
+            delivery: {
+              shippingType: 'Standard',
+              deliveryCharge: 0,
+              estimatedDays: 5,
+              freeDelivery: true
+            },
+            specifications: []
           },
         },
       });

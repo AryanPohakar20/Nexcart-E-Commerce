@@ -6,6 +6,7 @@ import * as auditLogRepo from '../repositories/auditLogRepository.js';
 import { ApiError } from '../utils/ApiError.js';
 import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import { buildProductFilter } from '../utils/buildFilter.js';
+import { toProductDTO, toProductDTOList } from '../mappers/productMapper.js';
 
 /**
  * List products with filtering, pagination, and sorting.
@@ -28,7 +29,7 @@ export const listProducts = async (query = {}) => {
   });
 
   const pagination = buildPaginationMeta(total, page, limit);
-  return { products, pagination };
+  return { products: toProductDTOList(products), pagination, rawTotal: total };
 };
 
 /**
@@ -39,7 +40,7 @@ export const getProduct = async (id) => {
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
-  return product;
+  return toProductDTO(product);
 };
 
 /**

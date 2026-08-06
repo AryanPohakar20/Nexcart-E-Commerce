@@ -142,38 +142,151 @@ const AdminCSVImport = () => {
             >
               <input
                 type="file"
-                accept=".csv, .xlsx"
+                accept=".csv, .xlsx, .xls, .json"
                 onChange={handleFileDrop}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
               <FiUploadCloud size={48} className="mx-auto text-yellow-400 mb-3 animate-bounce" />
-              <h3 className="text-base font-bold text-white mb-1">Drag and drop your spreadsheet here</h3>
-              <p className="text-xs text-gray-400">Supports standard .csv and .xlsx archives</p>
+              <h3 className="text-base font-bold text-white mb-1">Drag and drop your dataset here</h3>
+              <p className="text-xs text-gray-400">Supports standard .csv, .xlsx, and .json archives</p>
               <button className="mt-4 px-4 py-2 bg-yellow-500 text-black text-xs font-bold rounded-xl pointer-events-none">
                 Browse Files
               </button>
             </div>
 
-            <div className="flex items-center justify-between bg-white/3 border border-white/5 rounded-xl p-4 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/3 border border-white/5 rounded-xl p-4 text-xs">
               <div>
                 <p className="font-bold text-white">Need schema guidelines?</p>
-                <p className="text-gray-500">Headers expected: Name/Title, Category, Price, Stock/Quantity, SKU</p>
+                <p className="text-gray-500 mt-1">
+                  {selectedType === 'products' && 'Expected fields: name, category, price, stock, sku, description (name, category, price are required)'}
+                  {selectedType === 'users' && 'Expected fields: email, firstName, lastName, phone, role (email, firstName are required)'}
+                  {selectedType === 'inventory' && 'Expected fields: name, price, stock (name, stock are required)'}
+                </p>
               </div>
-              <button
-                onClick={() => {
-                  const csvContent = "data:text/csv;charset=utf-8,name,category,price,stock,sku,description\nQuantum Earbuds,Electronics,2999,50,QE-100,Premium wireless earbuds\nGaming Mouse,Gaming,1499,30,GM-200,High precision gaming mouse";
-                  const encodedUri = encodeURI(csvContent);
-                  const link = document.createElement("a");
-                  link.setAttribute("href", encodedUri);
-                  link.setAttribute("download", `sample_${selectedType}.csv`);
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-yellow-400 border border-yellow-500/20 rounded-lg font-bold"
-              >
-                <FiDownload size={13} /> Download Template
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => {
+                    const csvTemplates = {
+                      products: "name,category,price,stock,sku,description\nQuantum Earbuds,Electronics,2999,50,QE-100,Premium wireless earbuds\nGaming Mouse,Gaming,1499,30,GM-200,High precision gaming mouse",
+                      users: "email,firstName,lastName,phone,role\njohn.doe@example.com,John,Doe,9876543210,customer\njane.smith@example.com,Jane,Smith,9876543211,seller",
+                      inventory: "name,price,stock\nQuantum Earbuds,2999,60\nGaming Mouse,1499,45"
+                    };
+                    const csvContent = csvTemplates[selectedType] || csvTemplates.products;
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `sample_${selectedType}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 rounded-lg font-bold transition-all"
+                >
+                  <FiDownload size={13} /> CSV Template
+                </button>
+                <button
+                  onClick={() => {
+                    const jsonTemplates = {
+                      products: [
+                        { name: "Quantum Earbuds", category: "Electronics", price: 2999, stock: 50, sku: "QE-100", description: "Premium wireless earbuds" },
+                        { name: "Gaming Mouse", category: "Gaming", price: 1499, stock: 30, sku: "GM-200", description: "High precision gaming mouse" }
+                      ],
+                      users: [
+                        { email: "john.doe@example.com", firstName: "John", lastName: "Doe", phone: "9876543210", role: "customer" },
+                        { email: "jane.smith@example.com", firstName: "Jane", lastName: "Smith", phone: "9876543211", role: "seller" }
+                      ],
+                      inventory: [
+                        { name: "Quantum Earbuds", price: 2999, stock: 60 },
+                        { name: "Gaming Mouse", price: 1499, stock: 45 }
+                      ]
+                    };
+                    const sample = jsonTemplates[selectedType] || jsonTemplates.products;
+                    const blob = new Blob([JSON.stringify(sample, null, 2)], { type: 'application/json;charset=utf-8;' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `sample_${selectedType}.json`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 rounded-lg font-bold transition-all"
+                >
+                  <FiDownload size={13} /> JSON Sample
+                </button>
+                <button
+                  onClick={() => {
+                    const jsonSchemas = {
+                      products: {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "title": "Product Catalog Ingestion Schema",
+                        "type": "array",
+                        "description": "JSON array of products to import into Nexcart",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": { "type": "string", "description": "Product name or title" },
+                            "category": { "type": "string", "description": "Product category name" },
+                            "price": { "type": "number", "minimum": 0, "description": "Unit price in INR" },
+                            "stock": { "type": "integer", "minimum": 0, "description": "Available stock quantity" },
+                            "sku": { "type": "string", "description": "Unique SKU code" },
+                            "description": { "type": "string", "description": "Long-form product description" }
+                          },
+                          "required": ["name", "category", "price"]
+                        }
+                      },
+                      users: {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "title": "Customer Account Ingestion Schema",
+                        "type": "array",
+                        "description": "JSON array of users/customers to register in Nexcart",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "email": { "type": "string", "format": "email", "description": "Valid email address" },
+                            "firstName": { "type": "string", "description": "User's first name" },
+                            "lastName": { "type": "string", "description": "User's last name" },
+                            "phone": { "type": "string", "description": "Contact phone number" },
+                            "role": { "type": "string", "enum": ["customer", "seller", "admin"], "description": "Account role on the platform" }
+                          },
+                          "required": ["email", "firstName"]
+                        }
+                      },
+                      inventory: {
+                        "$schema": "http://json-schema.org/draft-07/schema#",
+                        "title": "Stock & Inventory Ingestion Schema",
+                        "type": "array",
+                        "description": "JSON array of inventory updates for Nexcart",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "name": { "type": "string", "description": "Item name, title or SKU code to update" },
+                            "price": { "type": "number", "minimum": 0, "description": "Updated item price" },
+                            "stock": { "type": "integer", "minimum": 0, "description": "Updated stock quantity" }
+                          },
+                          "required": ["name", "stock"]
+                        }
+                      }
+                    };
+                    const schema = jsonSchemas[selectedType] || jsonSchemas.products;
+                    const blob = new Blob([JSON.stringify(schema, null, 2)], { type: 'application/json;charset=utf-8;' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `schema_${selectedType}.json`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/20 hover:border-yellow-500/40 rounded-lg font-bold transition-all"
+                >
+                  <FiDownload size={13} /> JSON Schema
+                </button>
+              </div>
             </div>
           </div>
         )}
