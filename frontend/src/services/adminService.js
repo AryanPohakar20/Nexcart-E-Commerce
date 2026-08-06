@@ -60,6 +60,19 @@ const adminService = {
     const response = await axiosInstance.patch(`/admin/users/${id}/unblock`);
     return response.data;
   },
+  bulkSuspendUsers: async (userIds) => {
+    const response = await axiosInstance.patch('/admin/users/bulk/suspend', { userIds });
+    return response.data;
+  },
+  bulkActivateUsers: async (userIds) => {
+    const response = await axiosInstance.patch('/admin/users/bulk/activate', { userIds });
+    return response.data;
+  },
+  bulkDeleteUsers: async (userIds) => {
+    const response = await axiosInstance.delete('/admin/users/bulk/delete', { data: { userIds } });
+    return response.data;
+  },
+
 
   // ─── Seller Management ──────────────────────────────────────────────────
   getSellers: async (params = {}) => {

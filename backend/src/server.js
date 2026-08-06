@@ -1,5 +1,6 @@
 // src/server.js
-// Application entry point.
+// Application entry point (reloaded for bulk admin user routes).
+
 // Loads environment variables, validates them, connects to MongoDB, then starts HTTP server.
 // Also handles graceful shutdown on SIGTERM/SIGINT and uncaught exceptions.
 

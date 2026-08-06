@@ -3,11 +3,13 @@
 // Calls adminUserRepository — never touches the model directly.
 // Also emits an AuditLog entry for every mutating action.
 
+import mongoose from 'mongoose';
 import * as adminUserRepo  from '../repositories/adminUserRepository.js';
 import * as auditLogRepo   from '../repositories/auditLogRepository.js';
 import { buildUserFilter } from '../utils/buildFilter.js';
 import { parsePagination  } from '../utils/pagination.js';
 import { ApiError }         from '../utils/ApiError.js';
+
 
 // ─── Helper: emit audit log ───────────────────────────────────────────────────
 
@@ -147,3 +149,45 @@ export const updateUserStatus = async (id, status, admin, ipAddress) => {
   audit(admin, targetStatus === 'Active' ? 'ACTIVATE_USER' : 'SUSPEND_USER', `${name} (${user._id})`, user._id, `Status set to ${targetStatus}`, ipAddress);
   return updated;
 };
+
+// ─── Bulk Operations ──────────────────────────────────────────────────────────
+
+const filterValidTargetIds = (userIds, currentAdminId) => {
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    throw new ApiError(400, 'Please provide an array of user IDs.');
+  }
+  const validIds = userIds.filter((id) => {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) return false;
+    if (id.toString() === currentAdminId.toString()) return false;
+    return true;
+  });
+  if (validIds.length === 0) {
+    throw new ApiError(400, 'No valid target users selected (Admin accounts cannot be modified).');
+  }
+  return validIds;
+};
+
+export const bulkSuspendUsers = async (userIds, admin, ipAddress) => {
+  const validUserIds = filterValidTargetIds(userIds, admin._id);
+  const result = await adminUserRepo.bulkSuspendUsers(validUserIds);
+  const count = result.modifiedCount || 0;
+  audit(admin, 'BULK_SUSPEND_USERS', `${count} users suspended`, null, `IDs: ${validUserIds.join(', ')}`, ipAddress);
+  return { count };
+};
+
+export const bulkActivateUsers = async (userIds, admin, ipAddress) => {
+  const validUserIds = filterValidTargetIds(userIds, admin._id);
+  const result = await adminUserRepo.bulkActivateUsers(validUserIds);
+  const count = result.modifiedCount || 0;
+  audit(admin, 'BULK_ACTIVATE_USERS', `${count} users activated`, null, `IDs: ${validUserIds.join(', ')}`, ipAddress);
+  return { count };
+};
+
+export const bulkDeleteUsers = async (userIds, admin, ipAddress) => {
+  const validUserIds = filterValidTargetIds(userIds, admin._id);
+  const result = await adminUserRepo.bulkDeleteUsers(validUserIds, admin._id);
+  const count = result.modifiedCount || 0;
+  audit(admin, 'BULK_DELETE_USERS', `${count} users deleted`, null, `IDs: ${validUserIds.join(', ')}`, ipAddress);
+  return { count };
+};
+

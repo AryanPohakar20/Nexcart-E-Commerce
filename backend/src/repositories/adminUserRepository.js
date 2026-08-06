@@ -122,3 +122,27 @@ export const getRecentUsers = async (limit = 5) => {
     .limit(limit)
     .lean();
 };
+
+// ─── Bulk Operations ──────────────────────────────────────────────────────────
+
+export const bulkSuspendUsers = async (validUserIds) => {
+  return User.updateMany(
+    { _id: { $in: validUserIds }, role: { $nin: ['admin', 'super_admin'] }, isDeleted: { $ne: true } },
+    { $set: { status: 'Suspended' } }
+  );
+};
+
+export const bulkActivateUsers = async (validUserIds) => {
+  return User.updateMany(
+    { _id: { $in: validUserIds }, role: { $nin: ['admin', 'super_admin'] }, isDeleted: { $ne: true } },
+    { $set: { status: 'Active', isBlocked: false } }
+  );
+};
+
+export const bulkDeleteUsers = async (validUserIds, adminId) => {
+  return User.updateMany(
+    { _id: { $in: validUserIds }, role: { $nin: ['admin', 'super_admin'] }, isDeleted: { $ne: true } },
+    { $set: { isDeleted: true, deletedAt: new Date(), deletedBy: adminId, status: 'Deleted' } }
+  );
+};
+
