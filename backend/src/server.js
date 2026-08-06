@@ -19,6 +19,8 @@ const startServer = async () => {
   try {
     await connectDB();
 
+
+
     const server = app.listen(PORT, () => {
       logger.info(`🚀 NexCart Backend running on http://localhost:${PORT}`);
       logger.info(`📌 Environment: ${process.env.NODE_ENV}`);

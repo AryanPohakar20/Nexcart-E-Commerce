@@ -380,6 +380,10 @@ const orderSchema = new mongoose.Schema(
     tracking: trackingInfoSchema,
     cancellation: cancellationInfoSchema,
     returnDetails: returnInfoSchema,
+    returnRequested: {
+      type: Boolean,
+      default: false,
+    },
     orderNotes: {
       type: String,
       trim: true,

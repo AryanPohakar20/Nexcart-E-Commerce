@@ -3,6 +3,8 @@ import { placeOrder, getOrderDetails, getCustomerOrders, cancelOrder } from '../
 import { validateOrderPlacement, validateCustomerOrderListing, validateOrderId, validateOrderCancellation } from '../validations/orderValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
+import { requestReturn } from '../controllers/returnController.js';
+import { validateReturnRequest } from '../validations/returnValidation.js';
 
 const router = express.Router();
 
@@ -40,6 +42,15 @@ router.patch(
   authorize('customer'),
   validateOrderCancellation,
   cancelOrder
+);
+
+// Authenticated customers can request return of eligible orders
+router.post(
+  '/:orderId/return',
+  authenticate,
+  authorize('customer'),
+  validateReturnRequest,
+  requestReturn
 );
 
 export default router;

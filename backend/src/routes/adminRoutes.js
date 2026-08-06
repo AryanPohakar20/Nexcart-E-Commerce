@@ -115,6 +115,8 @@ import {
 } from '../controllers/adminController.js';
 import { importUpload } from '../middlewares/importUpload.js';
 import { validateOrderAnalytics } from '../validations/orderValidation.js';
+import { listReturns, getReturnDetails, reviewReturn } from '../controllers/returnController.js';
+import { validateAdminReturnListing, validateReturnId, validateReturnReview } from '../validations/returnValidation.js';
 
 const router = Router();
 
@@ -278,6 +280,14 @@ router.get('/export/:entity', requirePermission('export', 'export'), exportData)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get('/roles-permissions', getRolesAndPermissions);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RETURNS & REFUNDS MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/returns', requirePermission('orders', 'read'), validateAdminReturnListing, listReturns);
+router.get('/returns/:returnId', requirePermission('orders', 'read'), validateReturnId, getReturnDetails);
+router.patch('/returns/:returnId', requirePermission('orders', 'update'), validateReturnReview, reviewReturn);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ADMIN PROFILE & CREDENTIALS
