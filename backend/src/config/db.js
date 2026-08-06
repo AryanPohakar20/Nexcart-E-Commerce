@@ -1,17 +1,10 @@
 // src/config/db.js
 // MongoDB connection module using Mongoose.
-<<<<<<< HEAD
 // Handles initial connection, graceful failure, and reconnection events.
 
-import dns from 'node:dns';
-import mongoose from 'mongoose';
-import logger from '../utils/logger.js';
-=======
-// Handles initial connection, graceful failure, and reconnect
 import dns from "node:dns";
 import mongoose from "mongoose";
 import logger from "../utils/logger.js";
->>>>>>> e8d0900ced9bf7a4719054ff92c4de298e6e9b9c
 
 // Configure DNS resolvers to bypass local ISP DNS SRV lookup failures on Windows
 try {
@@ -79,8 +72,4 @@ const connectDB = async (retryCount = 0) => {
   }
 };
 
-<<<<<<< HEAD
 export default connectDB;
-=======
-export default connectDB;
->>>>>>> e8d0900ced9bf7a4719054ff92c4de298e6e9b9c
