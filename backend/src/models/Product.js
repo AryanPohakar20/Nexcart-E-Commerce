@@ -1,6 +1,3 @@
-// src/models/Product.js
-// Complete Product schema with full lifecycle moderation, inventory tracking, and search indexing.
-
 import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema(
@@ -19,40 +16,71 @@ const productSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    shortDescription: {
-      type: String,
-      trim: true,
-      default: '',
-    },
     description: {
       type: String,
+      required: [true, 'Description is required'],
       trim: true,
-      default: '',
     },
     brand: {
       type: String,
+      required: [true, 'Brand is required'],
       trim: true,
-      default: '',
     },
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Category',
+      type: String,
       required: [true, 'Category is required'],
+      trim: true,
     },
-    subCategory: {
+    sellerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Category',
-      default: null,
-    },
-    seller: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Seller',
-      required: [true, 'Seller is required'],
+      ref: 'User', // Usually Seller or User
+      required: [true, 'Seller ID is required'],
     },
     sellerType: {
       type: String,
       enum: ['individual', 'business', 'seller', 'marketplace_seller'],
       default: 'seller',
+    },
+    condition: {
+      type: String,
+      enum: ['New', 'Like New', 'Excellent', 'Good', 'Fair', 'Refurbished', 'Used'],
+      required: [true, 'Product condition is required'],
+      default: 'New',
+    },
+    status: {
+      type: String,
+      enum: ['Draft', 'Pending Approval', 'Active', 'Hidden', 'Sold', 'Expired', 'Rejected', 'Deleted'],
+      required: [true, 'Status is required'],
+      default: 'Active',
+    },
+    visibility: {
+      type: Boolean,
+      default: true,
+    },
+    
+    // PRICING
+    price: {
+      type: Number,
+      required: [true, 'Price is required'],
+      min: [0, 'Price cannot be negative'],
+    },
+    mrp: {
+      type: Number,
+      required: [true, 'MRP is required'],
+      min: [0, 'MRP cannot be negative'],
+    },
+    discount: {
+      type: Number,
+      min: [0, 'Discount cannot be negative'],
+      default: 0,
+    },
+    
+    // INVENTORY
+    stock: {
+      type: Number,
+      required: [true, 'Stock quantity is required'],
+      min: [0, 'Stock cannot be negative'],
+      default: 0,
     },
     sku: {
       type: String,
@@ -62,178 +90,72 @@ const productSchema = new mongoose.Schema(
         return `SKU-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
       },
     },
-    barcode: {
-      type: String,
-      trim: true,
-      default: null,
-    },
     tags: {
       type: [String],
       default: [],
     },
 
-    // PRICING
-    price: {
-      type: Number,
-      required: [true, 'Price is required'],
-      min: [0, 'Price cannot be negative'],
-    },
-    mrp: {
-      type: Number,
-      min: [0, 'MRP cannot be negative'],
-      default: null,
-    },
-    discountPercentage: {
-      type: Number,
-      min: [0, 'Discount cannot be negative'],
-      max: [100, 'Discount cannot exceed 100%'],
-      default: 0,
-    },
-    currency: {
-      type: String,
-      default: 'INR',
-    },
-    taxIncluded: {
-      type: Boolean,
-      default: true,
-    },
-    taxPercentage: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-    allowNegotiation: {
-      type: Boolean,
-      default: false,
-    },
-    priceHistory: [
-      {
-        price: Number,
-        date: { type: Date, default: Date.now },
-      },
-    ],
-
-    // INVENTORY
-    stock: {
-      type: Number,
-      required: [true, 'Stock quantity is required'],
-      min: [0, 'Stock cannot be negative'],
-      default: 0,
-    },
-    reservedStock: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-    soldQuantity: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-    minimumStock: {
-      type: Number,
-      min: 0,
-      default: 5,
-    },
-    inventoryStatus: {
-      type: String,
-      enum: ['Available', 'Out Of Stock', 'Reserved', 'Sold', 'Expired'],
-      default: 'Available',
-    },
-
     // MEDIA
-    images: [
-      {
-        url: { type: String, required: true },
-        publicId: { type: String, default: null },
-        alt: { type: String, default: '' },
-        isPrimary: { type: Boolean, default: false },
-        displayOrder: { type: Number, default: 0 },
-      },
-    ],
+    images: {
+      type: [
+        {
+          url: { type: String, required: true },
+          publicId: { type: String, default: null },
+          alt: { type: String, default: '' },
+          isPrimary: { type: Boolean, default: false },
+          displayOrder: { type: Number, default: 0 },
+        }
+      ],
+      validate: [
+        {
+          validator: function(val) {
+            return val && val.length > 0;
+          },
+          message: 'At least one image is required'
+        }
+      ]
+    },
 
     // SPECIFICATIONS
-    specifications: [
-      {
-        name: { type: String, trim: true, required: true },
-        value: { type: String, trim: true, required: true },
-        unit: { type: String, trim: true, default: '' },
-        group: { type: String, trim: true, default: 'General' },
-      },
-    ],
+    specs: {
+      type: [
+        {
+          key: { type: String, trim: true, required: true },
+          val: { type: String, trim: true, required: true },
+        }
+      ],
+      default: [],
+    },
 
     // DELIVERY
     delivery: {
-      shippingType: { type: String, default: 'Standard' },
-      deliveryCharge: { type: Number, min: 0, default: 0 },
-      estimatedDays: { type: Number, min: 1, default: 5 },
-      freeDelivery: { type: Boolean, default: false },
-      cashOnDelivery: { type: Boolean, default: false },
-      returnAvailable: { type: Boolean, default: false },
-      returnWindow: { type: Number, min: 0, default: 0 },
+      type: String,
+      default: 'Free Express Delivery by Tomorrow'
     },
 
-    // PRODUCT CONDITION
-    condition: {
-      type: String,
-      enum: ['New', 'Like New', 'Excellent', 'Good', 'Fair', 'Refurbished', 'Used'],
-      default: 'New',
-    },
+    // PRODUCT CONDITION (Optional fields)
     purchaseYear: { type: Number, default: null },
     usageDuration: { type: String, default: '' },
     originalBillAvailable: { type: Boolean, default: false },
     warrantyAvailable: { type: Boolean, default: false },
     warrantyRemaining: { type: String, default: '' },
 
-    // MARKETPLACE INFORMATION
-    sellerDisplayName: { type: String, default: '' },
-    sellerVerified: { type: Boolean, default: false },
-    trustScoreSnapshot: { type: Number, default: 0 },
-
-    // STATISTICS
+    // PRODUCT STATISTICS
+    rating: { type: Number, default: 0, min: 0, max: 5 },
+    reviewsCount: { type: Number, default: 0, min: 0 },
     views: { type: Number, default: 0 },
     wishlistCount: { type: Number, default: 0 },
-    cartCount: { type: Number, default: 0 },
     purchaseCount: { type: Number, default: 0 },
-    averageRating: { type: Number, default: 0, min: 0, max: 5 },
-    reviewCount: { type: Number, default: 0, min: 0 },
 
-    // STATUS
-    status: {
-      type: String,
-      enum: ['Draft', 'Pending Approval', 'Active', 'Hidden', 'Sold', 'Expired', 'Rejected', 'Deleted'],
-      default: 'Active',
-    },
-    approvalStatus: {
-      type: String,
-      enum: ['Pending', 'Approved', 'Rejected'],
-      default: 'Approved',
-    },
-    moderation: {
-      reason: { type: String, default: '' },
-      reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-      reviewedAt: { type: Date, default: null },
-      adminNotes: { type: String, default: '' },
-    },
+    // STATUS MODERATION
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    approvedAt: { type: Date, default: null },
+    rejectedReason: { type: String, default: '' },
 
-    // SEO
-    metaTitle: { type: String, default: '' },
-    metaDescription: { type: String, default: '' },
-    searchKeywords: { type: [String], default: [] },
-
-    // FEATURE FLAGS
-    featured: { type: Boolean, default: false },
-    recommended: { type: Boolean, default: false },
-    trending: { type: Boolean, default: false },
-    boosted: { type: Boolean, default: false },
-    flashSale: { type: Boolean, default: false },
-
-    // AUDIT
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    // SOFT DELETE
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
   {
     timestamps: true,
@@ -242,16 +164,72 @@ const productSchema = new mongoose.Schema(
   }
 );
 
+// Virtual for backward compatibility and frontend requirement
+productSchema.virtual('image').get(function () {
+  if (this.images && this.images.length > 0) {
+    const primary = this.images.find(img => img.isPrimary);
+    return primary ? primary.url : this.images[0].url;
+  }
+  return null;
+});
+
+// JSON Transformation for frontend
+productSchema.set('toJSON', {
+  virtuals: true,
+  transform: function (doc, ret) {
+    return {
+      id: ret._id,
+      title: ret.title,
+      description: ret.description,
+      brand: ret.brand,
+      category: ret.category,
+      price: ret.price,
+      mrp: ret.mrp,
+      rating: ret.rating,
+      reviewsCount: ret.reviewsCount,
+      image: ret.image, // from virtual
+      delivery: ret.delivery,
+      stock: ret.stock,
+      discount: ret.discount,
+      specs: ret.specs
+    };
+  }
+});
+
+// Import Transformation Layer
+productSchema.statics.importData = function (data) {
+  const title = data.name || data.title || 'Untitled Product';
+  const slugBase = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  return {
+    title,
+    slug: data.slug || `${slugBase}-${Date.now().toString(36)}-${Math.floor(Math.random() * 1000)}`,
+    description: data.description || title,
+    price: data.price || 0,
+    mrp: data.mrp || (data.price ? data.price * 1.2 : 0), // sensible default
+    discount: data.discount || 0,
+    category: data.category || 'Uncategorized',
+    stock: data.stock || 0,
+    brand: data.brand || 'Generic',
+    sellerId: data.sellerId || data.seller || new mongoose.Types.ObjectId(),
+    condition: data.condition || 'New',
+    status: data.status || 'Active',
+    visibility: data.visibility !== undefined ? data.visibility : true,
+    sku: data.sku || `SKU-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`,
+    tags: data.tags || [],
+    delivery: typeof data.delivery === 'string' ? data.delivery : 'Free Express Delivery by Tomorrow',
+    images: data.image ? [{ url: data.image, isPrimary: true }] : (data.images && data.images.length > 0 ? data.images : [{ url: 'https://via.placeholder.com/150', isPrimary: true }]),
+    specs: data.specs || []
+  };
+};
+
 // ─── Indexes ──────────────────────────────────────────────────────────────────
-productSchema.index({ slug: 1 });
 productSchema.index({ title: 'text', description: 'text', tags: 'text' });
-productSchema.index({ category: 1, status: 1 });
-productSchema.index({ seller: 1, status: 1 });
-productSchema.index({ status: 1, isDeleted: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ brand: 1 });
+productSchema.index({ sellerId: 1 });
+productSchema.index({ status: 1 });
 productSchema.index({ sku: 1 });
 productSchema.index({ tags: 1 });
-productSchema.index({ price: 1 });
-productSchema.index({ createdAt: -1 });
 
 const Product = mongoose.model('Product', productSchema);
 export default Product;

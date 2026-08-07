@@ -228,44 +228,15 @@ export const executeImport = async (type, rows = [], adminUser, ip) => {
 
     for (const item of validItems) {
       const raw = item.raw || item;
-      const name = item.name || raw.name;
-      const slug = slugify(`${name}-${Date.now()}-${Math.floor(Math.random() * 1000)}`, {
-        lower: true,
-        strict: true,
+      const productDoc = Product.importData({
+        ...raw,
+        sellerId: defaultSeller?._id || adminUser._id,
+        category: raw.category || defaultCategory.name || 'General'
       });
-      const price = Number(item.price || raw.price || 0);
-      const stock = Number(item.stock || raw.stock || 0);
-      const sku = item.sku || raw.sku || `SKU-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
 
       operations.push({
         insertOne: {
-          document: {
-            title: name,
-            slug,
-            sku,
-            price,
-            mrp: price,
-            stock,
-            inventoryStatus: stock > 0 ? 'Available' : 'Out Of Stock',
-            category: defaultCategory._id,
-            seller: defaultSeller?._id || adminUser._id,
-            status: 'Active',
-            approvalStatus: 'Approved',
-            images: [
-              {
-                url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
-                isPrimary: true,
-                alt: name
-              }
-            ],
-            delivery: {
-              shippingType: 'Standard',
-              deliveryCharge: 0,
-              estimatedDays: 5,
-              freeDelivery: true
-            },
-            specifications: []
-          },
+          document: productDoc,
         },
       });
     }
