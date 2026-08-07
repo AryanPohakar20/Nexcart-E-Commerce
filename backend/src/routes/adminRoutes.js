@@ -24,6 +24,10 @@ import {
   blockUser,
   unblockUser,
   updateUserStatus,
+  bulkSuspendUsers,
+  bulkActivateUsers,
+  bulkDeleteUsers,
+
 
   // Seller Management
   getSellers,
@@ -136,7 +140,16 @@ router.get('/dashboard/pending-verifications', getPendingVerifications);
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(   '/users',              requirePermission('users', 'read'),    getUsers);
+router.patch( '/users/bulk/suspend',  requirePermission('users', 'suspend'), bulkSuspendUsers);
+router.post(  '/users/bulk/suspend',  requirePermission('users', 'suspend'), bulkSuspendUsers);
+router.patch( '/users/bulk/activate', requirePermission('users', 'update'),  bulkActivateUsers);
+router.post(  '/users/bulk/activate', requirePermission('users', 'update'),  bulkActivateUsers);
+router.delete('/users/bulk/delete',   requirePermission('users', 'delete'),  bulkDeleteUsers);
+router.post(  '/users/bulk/delete',   requirePermission('users', 'delete'),  bulkDeleteUsers);
+
 router.get(   '/users/:id',          requirePermission('users', 'read'),    getUser);
+
+
 router.put(   '/users/:id',          requirePermission('users', 'update'),  updateUser);
 router.delete('/users/:id',          requirePermission('users', 'delete'),  deleteUser);
 

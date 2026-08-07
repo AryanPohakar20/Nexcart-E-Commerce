@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiUsers, FiEye, FiEdit2, FiPauseCircle, FiSlash, FiCheckCircle,
@@ -11,11 +11,13 @@ import TableToolbar from '../../components/admin/shared/TableToolbar';
 import Pagination from '../../components/admin/shared/Pagination';
 import ConfirmDialog from '../../components/admin/shared/ConfirmDialog';
 import adminService from '../../services/adminService';
+import { AppContext } from '../../context/AppContext';
 
 const ROLE_OPTIONS = ['All Roles', 'customer', 'seller', 'marketplace_seller'];
 const STATUS_OPTIONS = ['All Status', 'active', 'suspended', 'blocked'];
 
 const AdminUsers = () => {
+  const { showToast } = useContext(AppContext) || {};
   const [users, setUsers] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -28,6 +30,7 @@ const AdminUsers = () => {
   const [page, setPage] = useState(1);
   const [drawerUser, setDrawerUser] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false });
+  const [actionLoading, setActionLoading] = useState(false);
   const perPage = 10;
 
   const fetchUsers = async () => {
@@ -55,13 +58,116 @@ const AdminUsers = () => {
     fetchUsers();
   }, [page, search, roleFilter, statusFilter]);
 
+  const isAllSelected = useMemo(() => {
+    return users.length > 0 && users.every((u) => selected.includes(u._id));
+  }, [users, selected]);
+
   const toggleSelectAll = () => {
-    if (selected.length === users.length) setSelected([]);
-    else setSelected(users.map((u) => u._id));
+    if (isAllSelected) {
+      const pageUserIds = users.map((u) => u._id);
+      setSelected((prev) => prev.filter((id) => !pageUserIds.includes(id)));
+    } else {
+      const pageUserIds = users.map((u) => u._id);
+      setSelected((prev) => Array.from(new Set([...prev, ...pageUserIds])));
+    }
   };
 
   const toggleSelect = (id) => {
     setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  };
+
+  const handleBulkSuspend = () => {
+    if (selected.length === 0) return;
+    const count = selected.length;
+    setConfirmDialog({
+      open: true,
+      title: 'Bulk Suspend Users',
+      message: `Suspend ${count} selected user${count > 1 ? 's' : ''}?`,
+      type: 'warning',
+      confirmLabel: 'Suspend',
+      onConfirm: async () => {
+        try {
+          setActionLoading(true);
+          const res = await adminService.bulkSuspendUsers(selected);
+          const updatedCount = res?.data?.count ?? count;
+          if (showToast) showToast(`${updatedCount} user${updatedCount !== 1 ? 's' : ''} suspended successfully.`, 'success');
+          setSelected([]);
+          setConfirmDialog({ open: false });
+          fetchUsers();
+        } catch (error) {
+          console.error('Error suspending users:', error);
+          if (showToast) showToast(error.response?.data?.message || 'Failed to suspend users', 'error');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleBulkActivate = () => {
+    if (selected.length === 0) return;
+    const count = selected.length;
+    setConfirmDialog({
+      open: true,
+      title: 'Bulk Activate Users',
+      message: `Activate ${count} selected user${count > 1 ? 's' : ''}?`,
+      type: 'info',
+      confirmLabel: 'Activate',
+      onConfirm: async () => {
+        try {
+          setActionLoading(true);
+          const res = await adminService.bulkActivateUsers(selected);
+          const updatedCount = res?.data?.count ?? count;
+          if (showToast) showToast(`${updatedCount} user${updatedCount !== 1 ? 's' : ''} activated successfully.`, 'success');
+          setSelected([]);
+          setConfirmDialog({ open: false });
+          fetchUsers();
+        } catch (error) {
+          console.error('Error activating users:', error);
+          if (showToast) showToast(error.response?.data?.message || 'Failed to activate users', 'error');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleBulkDelete = () => {
+    if (selected.length === 0) return;
+    const count = selected.length;
+    setConfirmDialog({
+      open: true,
+      title: 'Bulk Delete Users',
+      message: `Delete ${count} selected user${count > 1 ? 's' : ''}?`,
+      type: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        try {
+          setActionLoading(true);
+          const res = await adminService.bulkDeleteUsers(selected);
+          const updatedCount = res?.data?.count ?? count;
+          if (showToast) showToast(`${updatedCount} user${updatedCount !== 1 ? 's' : ''} deleted successfully.`, 'success');
+          setSelected([]);
+          setConfirmDialog({ open: false });
+          fetchUsers();
+        } catch (error) {
+          console.error('Error deleting users:', error);
+          if (showToast) showToast(error.response?.data?.message || 'Failed to delete users', 'error');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleExport = async () => {
+    try {
+      await adminService.exportData('users', 'csv');
+      if (showToast) showToast('Users exported successfully.', 'success');
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      if (showToast) showToast('Failed to export users.', 'error');
+    }
   };
 
   const handleAction = async (action, user) => {
@@ -71,11 +177,16 @@ const AdminUsers = () => {
         open: true, title: 'Suspend Account', message: `Are you sure you want to suspend the account of ${user.firstName} ${user.lastName}? They won't be able to login.`, type: 'warning', confirmLabel: 'Suspend',
         onConfirm: async () => {
           try {
+            setActionLoading(true);
             await adminService.updateUserStatus(user._id, 'suspended');
+            if (showToast) showToast(`User ${user.firstName} ${user.lastName} suspended successfully.`, 'success');
             setConfirmDialog({ open: false });
             fetchUsers();
           } catch (error) {
             console.error('Error suspending user:', error);
+            if (showToast) showToast(error.response?.data?.message || 'Failed to suspend user', 'error');
+          } finally {
+            setActionLoading(false);
           }
         }
       });
@@ -84,31 +195,43 @@ const AdminUsers = () => {
         open: true, title: 'Block User', message: `Permanently block ${user.firstName}?`, type: 'danger',
         onConfirm: async () => {
           try {
+            setActionLoading(true);
             await adminService.blockUser(user._id, 'Blocked by admin');
+            if (showToast) showToast(`User ${user.firstName} blocked successfully.`, 'success');
             setConfirmDialog({ open: false });
             fetchUsers();
           } catch (error) {
             console.error('Error blocking user:', error);
+            if (showToast) showToast(error.response?.data?.message || 'Failed to block user', 'error');
+          } finally {
+            setActionLoading(false);
           }
         }
       });
     } else if (action === 'activate') {
       try {
         await adminService.updateUserStatus(user._id, 'active');
+        if (showToast) showToast(`User ${user.firstName} ${user.lastName} activated successfully.`, 'success');
         fetchUsers();
       } catch (error) {
         console.error('Error activating user:', error);
+        if (showToast) showToast(error.response?.data?.message || 'Failed to activate user', 'error');
       }
     } else if (action === 'delete') {
       setConfirmDialog({
         open: true, title: 'Delete Account', message: 'Are you sure you want to permanently delete this user? This action cannot be undone.', type: 'danger', confirmLabel: 'Delete',
         onConfirm: async () => {
           try {
+            setActionLoading(true);
             await adminService.deleteUser(user._id);
+            if (showToast) showToast('User deleted successfully.', 'success');
             setConfirmDialog({ open: false });
             fetchUsers();
           } catch (error) {
             console.error('Error deleting user:', error);
+            if (showToast) showToast(error.response?.data?.message || 'Failed to delete user', 'error');
+          } finally {
+            setActionLoading(false);
           }
         }
       });
@@ -149,7 +272,7 @@ const AdminUsers = () => {
           onSearchClear={() => setSearch('')}
           searchPlaceholder="Search users..."
           selectedCount={selected.length}
-          onExport={() => {}}
+          onExport={handleExport}
           onCreate={() => {}}
           createLabel="Add User"
           filters={
@@ -163,10 +286,10 @@ const AdminUsers = () => {
             </>
           }
           bulkActions={[
-            { label: 'Suspend', icon: FiPauseCircle, onClick: () => {}, warning: true },
-            { label: 'Activate', icon: FiCheckCircle, onClick: () => {}, success: true },
-            { label: 'Export', icon: FiDownload, onClick: () => {} },
-            { label: 'Delete', icon: FiTrash2, onClick: () => {}, danger: true },
+            { label: 'Suspend', icon: FiPauseCircle, onClick: handleBulkSuspend, warning: true },
+            { label: 'Activate', icon: FiCheckCircle, onClick: handleBulkActivate, success: true },
+            { label: 'Export', icon: FiDownload, onClick: handleExport },
+            { label: 'Delete', icon: FiTrash2, onClick: handleBulkDelete, danger: true },
           ]}
         />
 
@@ -176,7 +299,7 @@ const AdminUsers = () => {
             <thead>
               <tr className="bg-white/3 border-b border-white/5 text-gray-500 uppercase tracking-wider font-bold">
                 <th className="p-4 w-10">
-                  <input type="checkbox" checked={users.length > 0 && selected.length === users.length} onChange={toggleSelectAll} className="w-3.5 h-3.5 rounded accent-yellow-500" />
+                  <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} className="w-3.5 h-3.5 rounded accent-yellow-500" />
                 </th>
                 <th className="p-4">User</th>
                 <th className="p-4">Email</th>
@@ -340,9 +463,12 @@ const AdminUsers = () => {
         message={confirmDialog.message}
         type={confirmDialog.type}
         confirmLabel={confirmDialog.confirmLabel}
+        loading={actionLoading}
       />
     </div>
   );
 };
 
+
 export default AdminUsers;
+

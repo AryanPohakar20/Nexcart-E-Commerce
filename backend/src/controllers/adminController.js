@@ -150,6 +150,43 @@ export const unblockUser = asyncHandler(async (req, res) => {
   return successResponse(res, 'User unblocked successfully.', { user });
 });
 
+// PATCH /api/admin/users/bulk/suspend
+export const bulkSuspendUsers = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to suspend users.');
+  }
+
+  const { userIds } = req.body;
+  const { count } = await adminUserService.bulkSuspendUsers(userIds, req.user, getIp(req));
+  return successResponse(res, `${count} users suspended successfully.`, { count });
+});
+
+// PATCH /api/admin/users/bulk/activate
+export const bulkActivateUsers = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to activate users.');
+  }
+
+  const { userIds } = req.body;
+  const { count } = await adminUserService.bulkActivateUsers(userIds, req.user, getIp(req));
+  return successResponse(res, `${count} users activated successfully.`, { count });
+});
+
+// DELETE /api/admin/users/bulk/delete
+export const bulkDeleteUsers = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to delete users.');
+  }
+
+  const { userIds } = req.body;
+  const { count } = await adminUserService.bulkDeleteUsers(userIds, req.user, getIp(req));
+  return successResponse(res, `${count} users deleted successfully.`, { count });
+});
+
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // SELLER MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════════
