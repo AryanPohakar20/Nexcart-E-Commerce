@@ -174,6 +174,7 @@ export const searchProducts = async (filters) => {
             },
           },
         });
+
       }
     }
 

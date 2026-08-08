@@ -80,7 +80,7 @@ export const countFeatured = async () => {
  */
 export const findTrending = async (limit = 10, skip = 0) => {
   return Product.find({ isTrending: true })
-    .sort({ reviewCount: -1, rating: -1, createdAt: -1 })
+    .sort({ reviewsCount: -1, rating: -1, createdAt: -1 })
     .skip(skip)
     .limit(limit);
 };

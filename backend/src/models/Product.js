@@ -57,7 +57,7 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    
+
     // PRICING
     price: {
       type: Number,
@@ -74,7 +74,7 @@ const productSchema = new mongoose.Schema(
       min: [0, 'Discount cannot be negative'],
       default: 0,
     },
-    
+
     // INVENTORY
     stock: {
       type: Number,
@@ -156,6 +156,10 @@ const productSchema = new mongoose.Schema(
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+
+    // MARKETPLACE FLAGS (from manjusha-product — needed by productService queries)
+    isFeatured: { type: Boolean, default: false },
+    isTrending: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -230,6 +234,11 @@ productSchema.index({ sellerId: 1 });
 productSchema.index({ status: 1 });
 productSchema.index({ sku: 1 });
 productSchema.index({ tags: 1 });
+productSchema.index({ isFeatured: 1 });
+productSchema.index({ isTrending: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ rating: 1 });
+productSchema.index({ createdAt: -1 });
 
 const Product = mongoose.model('Product', productSchema);
 export default Product;
