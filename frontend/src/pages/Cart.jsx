@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
@@ -7,7 +7,8 @@ import {
   FiHeart, FiInbox, FiTruck, FiShield, FiPercent, FiArrowRight, 
   FiHelpCircle, FiCreditCard, FiAlertTriangle 
 } from 'react-icons/fi';
-import { PRODUCTS, COUPONS } from '../constants/dummyData';
+import { COUPONS } from '../constants/dummyData';
+import productService from '../services/productService';
 
 const Cart = () => {
   const { 
@@ -115,8 +116,24 @@ const Cart = () => {
     }
   };
 
-  // Recommended Products logic (exclude items already in cart)
-  const recommendedProducts = PRODUCTS.filter(
+  // Live Recommended Products from MongoDB (exclude items already in cart)
+  const [recommendedProductsList, setRecommendedProductsList] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    productService.getFeaturedProducts({ limit: 8 })
+      .then((res) => {
+        if (res?.data?.products && isMounted) {
+          setRecommendedProductsList(res.data.products);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const recommendedProducts = recommendedProductsList.filter(
     (prod) => !cart.some((item) => item.product.id === prod.id)
   ).slice(0, 4);
 

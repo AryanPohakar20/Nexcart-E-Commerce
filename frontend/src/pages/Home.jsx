@@ -2,13 +2,20 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
-import { CATEGORIES, BRANDS, PRODUCTS, COUPONS, TESTIMONIALS } from '../constants/dummyData';
+import { BRANDS, COUPONS, TESTIMONIALS, CATEGORIES as DEFAULT_CATEGORIES } from '../constants/dummyData';
 import { FiChevronLeft, FiChevronRight, FiClock, FiStar, FiPercent, FiCopy, FiCheck, FiArrowRight, FiShoppingCart, FiHeart } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
+import productService from '../services/productService';
 
 const Home = () => {
   const { addToCart, showToast } = useContext(AppContext);
   const navigate = useNavigate();
+
+  // Dynamic MongoDB state
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [trendingProducts, setTrendingProducts] = useState([]);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [loading, setLoading] = useState(true);
 
   // Mouse position for Hero parallax
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -45,7 +52,7 @@ const Home = () => {
       } 
     }
   };
-  
+
   // Hero Slider State
   const [currentSlide, setCurrentSlide] = useState(0);
   const heroSlides = [
@@ -54,7 +61,7 @@ const Home = () => {
       subtitle: 'SONY WH-1000XM5',
       desc: 'Industry-leading noise cancelling wireless headphones with dual processor controls and 30 hours battery backup.',
       image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=1200&q=80',
-      actionUrl: '/product/p2',
+      actionUrl: '/products?category=audio',
       badge: 'FLAT 29% OFF'
     },
     {
@@ -62,7 +69,7 @@ const Home = () => {
       subtitle: 'iPhone 15 Pro Max',
       desc: 'Featuring the groundbreaking A17 Pro chip, a customizable Action button, and a pro-level triple camera system.',
       image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=1200&q=80',
-      actionUrl: '/product/p1',
+      actionUrl: '/products?category=mobile-phones',
       badge: 'LIMITED STOCK'
     },
     {
@@ -70,10 +77,57 @@ const Home = () => {
       subtitle: 'MacBook Pro 16"',
       desc: 'Unleash extreme speeds with the Apple M3 Max processor, 36GB memory, and liquid Retina HDR screen.',
       image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1200&q=80',
-      actionUrl: '/product/p3',
+      actionUrl: '/products?category=laptops-computers',
       badge: 'PRE-ORDER NOW'
     }
   ];
+
+  // Fetch real data from MongoDB
+  useEffect(() => {
+    let isMounted = true;
+    const fetchHomeData = async () => {
+      setLoading(true);
+      try {
+        const [featRes, trendRes, catRes] = await Promise.all([
+          productService.getFeaturedProducts({ limit: 6 }).catch(() => null),
+          productService.getTrendingProducts({ limit: 8 }).catch(() => null),
+          productService.getCategories().catch(() => null),
+        ]);
+
+        if (isMounted) {
+          if (featRes?.data?.products && featRes.data.products.length > 0) {
+            setFeaturedProducts(featRes.data.products);
+          }
+          if (trendRes?.data?.products && trendRes.data.products.length > 0) {
+            setTrendingProducts(trendRes.data.products);
+          }
+          if (catRes?.data?.categories && catRes.data.categories.length > 0) {
+            // Format categories to match UI expectation
+            const formattedCats = catRes.data.categories.map((c) => {
+              const matchedDefault = DEFAULT_CATEGORIES.find(
+                (dc) => dc.name.toLowerCase() === c.name.toLowerCase() || dc.id === c.slug
+              );
+              return {
+                id: c.slug || c._id,
+                name: c.name,
+                image: c.image || matchedDefault?.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&q=80',
+              };
+            });
+            setCategories(formattedCats);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load homepage products:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchHomeData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Countdown timer for Flash Sale
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 34, seconds: 12 });
@@ -106,6 +160,9 @@ const Home = () => {
     showToast(`Coupon ${code} copied to clipboard!`);
     setTimeout(() => setCopiedCoupon(null), 3000);
   };
+
+  const flashDeals = featuredProducts.length >= 2 ? featuredProducts.slice(0, 2) : trendingProducts.slice(0, 2);
+  const trendingList = trendingProducts.length > 0 ? trendingProducts.slice(0, 8) : featuredProducts.slice(0, 8);
 
   return (
     <div className="space-y-16">
@@ -198,45 +255,45 @@ const Home = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-bgPrimary via-bgPrimary/80 to-transparent z-10" />
                 <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
                 
-                {/* Slide Content */}
+                {/* Hero Slide details */}
                 <motion.div 
                   variants={staggerContainer}
                   initial="hidden"
                   animate="visible"
-                  className="relative z-20 max-w-lg px-8 md:px-16 space-y-4 md:space-y-6 text-left"
-                  style={{ x: mousePos.x * 0.1, y: mousePos.y * 0.1 }}
+                  className="relative z-20 max-w-xl p-6 md:p-12 space-y-4"
                 >
                   <motion.span 
                     variants={staggerItem}
-                    className="inline-block bg-primary/20 border border-primary/40 text-primary text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded"
+                    className="inline-block px-3 py-1 bg-primary text-black text-xs font-black uppercase rounded shadow-lg tracking-wider badge-glow"
                   >
                     {slide.badge}
                   </motion.span>
-
-                  <motion.div 
+                  <motion.h1 
                     variants={staggerItem}
-                    className="space-y-2"
+                    className="text-2xl sm:text-3xl md:text-5xl font-black text-textPrimary tracking-tight leading-tight"
                   >
-                    <h3 className="text-sm font-semibold uppercase tracking-widest text-accentBlue leading-none">{slide.subtitle}</h3>
-                    {/* Hero title always white — sits on dark overlay */}
-                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">{slide.title}</h1>
-                  </motion.div>
-
+                    {slide.title}
+                  </motion.h1>
+                  <motion.h2 
+                    variants={staggerItem}
+                    className="text-primary font-bold text-sm md:text-lg tracking-wide uppercase"
+                  >
+                    {slide.subtitle}
+                  </motion.h2>
                   <motion.p 
                     variants={staggerItem}
-                    className="text-xs md:text-sm text-gray-400 leading-relaxed font-medium"
+                    className="text-xs sm:text-sm text-textSecondary leading-relaxed line-clamp-2 max-w-md"
                   >
                     {slide.desc}
                   </motion.p>
-
                   <motion.button 
                     variants={staggerItem}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => navigate(slide.actionUrl)}
-                    className="btn-glow-yellow text-xs font-bold px-6 py-3 flex items-center gap-1.5 btn-premium-interactive"
+                    className="btn-glow-yellow text-xs font-extrabold flex items-center gap-2 !py-3 !px-6 text-black btn-premium-interactive"
                   >
-                    <span>Shop This Deal</span>
+                    <span>Shop Now</span>
                     <FiArrowRight />
                   </motion.button>
                 </motion.div>
@@ -281,7 +338,7 @@ const Home = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary tracking-tight">Featured Categories</h2>
-            <p className="text-xs text-textSecondary mt-1">Discover items curated across major domains.</p>
+            <p className="text-xs text-textSecondary mt-1">Discover items curated across major domains in MongoDB.</p>
           </div>
           <Link to="/products" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
             <span>Explore All</span>
@@ -290,9 +347,9 @@ const Home = () => {
         </div>
 
         <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-thin">
-          {CATEGORIES.map((cat, i) => (
+          {categories.map((cat, i) => (
             <motion.div
-              key={cat.id}
+              key={cat.id || i}
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -360,7 +417,7 @@ const Home = () => {
 
         {/* Best deals preview grid */}
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {PRODUCTS.slice(0, 2).map((prod) => (
+          {flashDeals.map((prod) => (
             <ProductCard key={prod.id} product={prod} />
           ))}
         </div>
@@ -405,13 +462,19 @@ const Home = () => {
 
       {/* 5. Trending & Recommended Items */}
       <section className="space-y-6">
-        <div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Trending Collections</h2>
-          <p className="text-xs text-textSecondary mt-1">Best-rated products by shoppers worldwide.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Trending Collections</h2>
+            <p className="text-xs text-textSecondary mt-1">Real-time best rated and highly reviewed products from MongoDB.</p>
+          </div>
+          <Link to="/products?sort=popular" className="text-xs text-primary font-bold hover:underline flex items-center gap-1">
+            <span>View Catalog</span>
+            <FiArrowRight />
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {PRODUCTS.slice(2, 6).map((prod) => (
+          {trendingList.map((prod) => (
             <ProductCard key={prod.id} product={prod} />
           ))}
         </div>

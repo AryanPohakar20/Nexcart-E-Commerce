@@ -6,12 +6,23 @@ import * as productService from '../services/productService.js';
 import { successResponse } from '../utils/ApiResponse.js';
 
 /**
- * Handle GET /api/search
- * Search products by keyword, category, brand, price, condition, location with sorting & pagination.
+ * Handle GET /api/products and GET /api/search
+ * Search & filter products by keyword, category, brand, price, rating, stock with sorting & pagination.
  */
 export const searchProducts = asyncHandler(async (req, res) => {
   const result = await productService.searchProducts(req.query);
-  return successResponse(res, 'Search results fetched successfully', result);
+  return successResponse(res, 'Products fetched successfully', result);
+});
+
+export const getAllProducts = searchProducts;
+
+/**
+ * Handle GET /api/products/:id
+ * Fetch single product by MongoDB ID, custom ID (e.g. PROD-MOB-0001), or slug.
+ */
+export const getProductById = asyncHandler(async (req, res) => {
+  const product = await productService.getProductById(req.params.id);
+  return successResponse(res, 'Product fetched successfully', { product });
 });
 
 /**
