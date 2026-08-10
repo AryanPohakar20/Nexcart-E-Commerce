@@ -45,6 +45,10 @@ import AdminAuditLogs from "../pages/admin/AdminAuditLogs";
 import AdminAnalytics from "../pages/admin/AdminAnalytics";
 import AdminSettings from "../pages/admin/AdminSettings";
 import AdminProfile from "../pages/admin/AdminProfile";
+import AdminNotifications from "../pages/admin/AdminNotifications";
+import AdminNotificationCreate from "../pages/admin/AdminNotificationCreate";
+import AdminNotificationEdit from "../pages/admin/AdminNotificationEdit";
+import AdminNotificationDetails from "../pages/admin/AdminNotificationDetails";
 
 // Authentication imports
 import Login from "../pages/Login";
@@ -201,13 +205,17 @@ const AppRoutes = () => {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
             <AdminLayout />
           </ProtectedRoute>
         }
       >
         <Route index element={<AdminOverview />} />
         <Route path="dashboard" element={<AdminOverview />} />
+        <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="notifications/new" element={<AdminNotificationCreate />} />
+        <Route path="notifications/:id" element={<AdminNotificationDetails />} />
+        <Route path="notifications/:id/edit" element={<AdminNotificationEdit />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="sellers" element={<AdminSellers />} />
         <Route path="products" element={<AdminProducts />} />

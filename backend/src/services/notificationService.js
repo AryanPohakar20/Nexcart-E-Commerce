@@ -136,6 +136,27 @@ const buildFilter = (queryParams = {}) => {
     filter.read = String(queryParams.read) === 'true';
   }
 
+  if (queryParams.startDate || queryParams.endDate) {
+    filter.createdAt = {};
+
+    if (queryParams.startDate) {
+      const startDate = new Date(queryParams.startDate);
+      if (Number.isNaN(startDate.getTime())) {
+        throw new ApiError(400, 'startDate must be a valid date.');
+      }
+      filter.createdAt.$gte = startDate;
+    }
+
+    if (queryParams.endDate) {
+      const endDate = new Date(queryParams.endDate);
+      if (Number.isNaN(endDate.getTime())) {
+        throw new ApiError(400, 'endDate must be a valid date.');
+      }
+      endDate.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = endDate;
+    }
+  }
+
   if (search) {
     filter.$or = [
       { title: { $regex: search, $options: 'i' } },

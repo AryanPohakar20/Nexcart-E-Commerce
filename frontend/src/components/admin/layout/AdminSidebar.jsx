@@ -37,6 +37,7 @@ const NAV_SECTIONS = [
       { name: 'Reports', path: '/admin/reports', icon: FiFileText },
       { name: 'CSV Import', path: '/admin/csv-import', icon: FiUploadCloud },
       { name: 'Audit Logs', path: '/admin/audit-logs', icon: FiActivity },
+      { name: 'Notifications', path: '/admin/notifications', icon: FiBell },
     ]
   },
   {
