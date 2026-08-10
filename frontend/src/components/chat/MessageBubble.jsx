@@ -11,6 +11,7 @@ const MessageBubble = ({
   product,
   onAcceptOffer,
   onDeclineOffer,
+  onCounterOffer,
   onConfirmMeetup,
   onOpenLocation
 }) => {
@@ -61,16 +62,22 @@ const MessageBubble = ({
 
             {/* Offer Status & Interactive Actions */}
             {message.offerDetails?.status === 'pending' && !isSent && (
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
                 <button
-                  onClick={() => onAcceptOffer(message.id, message.offerDetails?.amount)}
-                  className="flex-1 py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                  onClick={() => onAcceptOffer(message.id, message.offerDetails?.amount, message.offerDetails?.offerId)}
+                  className="flex-1 min-w-[90px] py-2 px-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
                 >
-                  <FiCheckSquare className="text-sm" /> Accept Offer
+                  <FiCheckSquare className="text-sm" /> Accept
                 </button>
                 <button
-                  onClick={() => onDeclineOffer(message.id)}
-                  className="flex-1 py-2 px-3 bg-gray-200 dark:bg-white/10 hover:bg-red-500 hover:text-white text-gray-700 dark:text-gray-300 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1"
+                  onClick={() => onCounterOffer && onCounterOffer(message)}
+                  className="flex-1 min-w-[90px] py-2 px-2.5 bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                >
+                  <FiDollarSign className="text-sm" /> Counter
+                </button>
+                <button
+                  onClick={() => onDeclineOffer(message.id, message.offerDetails?.offerId)}
+                  className="flex-1 min-w-[70px] py-2 px-2.5 bg-gray-200 dark:bg-white/10 hover:bg-red-500 hover:text-white text-gray-700 dark:text-gray-300 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1"
                 >
                   <FiXCircle className="text-sm" /> Decline
                 </button>
@@ -83,9 +90,15 @@ const MessageBubble = ({
               </div>
             )}
 
-            {message.offerDetails?.status === 'declined' && (
+            {(message.offerDetails?.status === 'declined' || message.offerDetails?.status === 'rejected') && (
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 text-red-500 border border-red-500/20 text-xs font-bold">
                 <FiXCircle className="text-sm" /> Offer Declined
+              </div>
+            )}
+
+            {message.offerDetails?.status === 'countered' && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold">
+                <FiDollarSign className="text-sm" /> Offer Countered
               </div>
             )}
           </div>

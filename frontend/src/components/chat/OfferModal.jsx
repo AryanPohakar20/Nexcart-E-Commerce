@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiDollarSign, FiX, FiCheck, FiInfo, FiTag } from 'react-icons/fi';
 
-const OfferModal = ({ isOpen, onClose, onSubmitOffer, product }) => {
+const OfferModal = ({ isOpen, onClose, onSubmitOffer, product, initialPrice, isCounter = false }) => {
   const [offerPrice, setOfferPrice] = useState(
-    Math.round(product.price * 0.9) || product.price
+    initialPrice || Math.round(product.price * 0.9) || product.price
   );
   const [note, setNote] = useState('');
 
@@ -39,9 +39,11 @@ const OfferModal = ({ isOpen, onClose, onSubmitOffer, product }) => {
             </div>
             <div>
               <h3 className="font-bold text-base text-gray-900 dark:text-white">
-                Make a Price Offer
+                {isCounter ? 'Make a Counter Offer' : 'Make a Price Offer'}
               </h3>
-              <p className="text-xs text-gray-500">Negotiate directly with seller</p>
+              <p className="text-xs text-gray-500">
+                {isCounter ? 'Propose a new counter price' : 'Negotiate directly with seller'}
+              </p>
             </div>
           </div>
           <button

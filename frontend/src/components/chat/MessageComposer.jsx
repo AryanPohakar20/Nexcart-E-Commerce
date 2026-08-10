@@ -8,7 +8,7 @@ import { AI_QUICK_REPLIES } from '../../constants/chatData';
 
 const EMOJI_LIST = ['😊', '👍', '🔥', '❤️', '🤝', '🙌', '💯', '💰', '📍', '🚀', '✅', '📦', '📱', '💬', '⭐'];
 
-const MessageComposer = ({ onSendMessage, isBlocked }) => {
+const MessageComposer = ({ onSendMessage, onTyping, onStopTyping, isBlocked }) => {
   const [inputText, setInputText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -17,6 +17,17 @@ const MessageComposer = ({ onSendMessage, isBlocked }) => {
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimerRef = useRef(null);
+
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
+    if (onTyping) onTyping();
+
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => {
+      if (onStopTyping) onStopTyping();
+    }, 1500);
+  };
 
   // Handle Quick AI Chip Click
   const handleChipClick = (chipText) => {
@@ -63,6 +74,9 @@ const MessageComposer = ({ onSendMessage, isBlocked }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isBlocked) return;
+
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    if (onStopTyping) onStopTyping();
 
     if (imagePreview) {
       onSendMessage({
@@ -208,7 +222,7 @@ const MessageComposer = ({ onSendMessage, isBlocked }) => {
             <input
               type="text"
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Write a message or negotiate price..."
               className="w-full pl-4 pr-10 py-3 text-xs sm:text-sm rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200/80 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary transition-all shadow-inner"
             />

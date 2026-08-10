@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiShield, FiInfo, FiX, FiMessageSquare, FiLock, 
-  FiCheckCircle, FiDollarSign, FiCalendar, FiMapPin, FiZap
+  FiCheckCircle, FiDollarSign, FiCalendar, FiMapPin, FiZap,
+  FiArrowDown
 } from 'react-icons/fi';
 import ChatHeader from './ChatHeader';
 import MessageBubble from './MessageBubble';
@@ -10,10 +11,14 @@ import MessageComposer from './MessageComposer';
 
 const ChatWindow = ({
   conversation,
+  isTyping: isTypingProp = false,
   onBack,
   onSendMessage,
+  onTyping,
+  onStopTyping,
   onAcceptOffer,
   onDeclineOffer,
+  onCounterOffer,
   onConfirmMeetup,
   onOpenOfferModal,
   onOpenMeetupModal,
@@ -25,29 +30,119 @@ const ChatWindow = ({
   isBlocked
 }) => {
   const [showSafetyBanner, setShowSafetyBanner] = useState(true);
-  const [isTyping, setIsTyping] = useState(false);
+  const [showNewMessageButton, setShowNewMessageButton] = useState(false);
+  const isTyping = isTypingProp;
+
+  const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to bottom of chat
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Boolean ref tracking auto-scroll eligibility based on user scroll boundary
+  const shouldAutoScroll = useRef(true);
+
+  // Persistent refs for conversation identity, message history, and viewport measurements
+  const prevConvIdRef = useRef(null);
+  const prevMessagesRef = useRef([]);
+  const prevScrollHeightRef = useRef(0);
+  const prevScrollTopRef = useRef(0);
+  const userJustSentRef = useRef(false);
+
+  // Container-only scroll function. Replaced scrollIntoView to prevent page-level scroll jumping.
+  const scrollToBottom = (behavior = 'smooth') => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    if (behavior === 'smooth') {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
+
+    setShowNewMessageButton(false);
+    shouldAutoScroll.current = true;
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [conversation?.messages, isTyping]);
+  // Detect whether user is near bottom (<100px) on every scroll event and update shouldAutoScroll.current
+  const handleScroll = () => {
+    const container = chatContainerRef.current;
+    if (!container) return;
 
-  // Simulate typing indicator when new message is sent by current user
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    const isNearBottom = distanceFromBottom < 100;
+
+    shouldAutoScroll.current = isNearBottom;
+    prevScrollTopRef.current = container.scrollTop;
+
+    // Automatically hide floating button when user scrolls back near the bottom
+    if (isNearBottom && showNewMessageButton) {
+      setShowNewMessageButton(false);
+    }
+  };
+
+  // Scroll to bottom ONCE when opening a conversation for the first time
+  useEffect(() => {
+    if (!conversation) return;
+    const currentConvId = conversation.id;
+
+    if (currentConvId !== prevConvIdRef.current) {
+      scrollToBottom('auto');
+      prevConvIdRef.current = currentConvId;
+      prevMessagesRef.current = conversation.messages || [];
+      shouldAutoScroll.current = true;
+    }
+  }, [conversation?.id]);
+
+  // Handle message updates without unconditional scrolling or layout jumps
+  useLayoutEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container || !conversation) return;
+
+    const currentMessages = conversation.messages || [];
+    const prevMessages = prevMessagesRef.current;
+
+    // Process message changes for the current active conversation
+    if (conversation.id === prevConvIdRef.current && currentMessages !== prevMessages) {
+      const isPrepended = 
+        prevMessages.length > 0 && 
+        currentMessages.length > prevMessages.length && 
+        currentMessages[0]?.id !== prevMessages[0]?.id;
+
+      if (isPrepended) {
+        // Loading older messages: preserve exact viewport scroll position
+        const deltaHeight = container.scrollHeight - prevScrollHeightRef.current;
+        container.scrollTop = prevScrollTopRef.current + deltaHeight;
+      } else if (currentMessages.length > prevMessages.length) {
+        const lastMsg = currentMessages[currentMessages.length - 1];
+        const isUserSent = lastMsg?.senderId === 'current-user' || userJustSentRef.current;
+
+        if (isUserSent) {
+          // User sent a message -> scroll to bottom
+          scrollToBottom('smooth');
+          userJustSentRef.current = false;
+        } else {
+          // Incoming message -> scroll ONLY if user is already near bottom
+          if (shouldAutoScroll.current) {
+            scrollToBottom('smooth');
+          } else {
+            // Preserve current scroll position & show new message badge
+            setShowNewMessageButton(true);
+          }
+        }
+      }
+
+      prevMessagesRef.current = currentMessages;
+    }
+
+    prevScrollHeightRef.current = container.scrollHeight;
+    prevScrollTopRef.current = container.scrollTop;
+  }, [conversation?.messages]);
+
+  // Wrapper for sending message
   const handleSendWrapper = (msgData) => {
+    userJustSentRef.current = true;
     onSendMessage(msgData);
-    
-    // Simulate seller/buyer typing back after 1.5s
-    setTimeout(() => {
-      setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-      }, 2500);
-    }, 1200);
   };
 
   // If no conversation is active / selected
@@ -136,7 +231,11 @@ const ChatWindow = ({
       </AnimatePresence>
 
       {/* 3. Messages Stream Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+      <div 
+        ref={chatContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar relative"
+      >
         
         {/* Encrypted Safety Header Badge */}
         <div className="flex justify-center my-2">
@@ -161,6 +260,7 @@ const ChatWindow = ({
             product={product}
             onAcceptOffer={onAcceptOffer}
             onDeclineOffer={onDeclineOffer}
+            onCounterOffer={onCounterOffer}
             onConfirmMeetup={onConfirmMeetup}
             onOpenLocation={onOpenLocationModal}
           />
@@ -186,9 +286,28 @@ const ChatWindow = ({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Floating "New Messages ↓" Button */}
+      <AnimatePresence>
+        {showNewMessageButton && (
+          <motion.button
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => scrollToBottom('smooth')}
+            className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-full shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all cursor-pointer backdrop-blur-md border border-white/20 active:scale-95 select-none"
+          >
+            <span>New Messages</span>
+            <FiArrowDown className="text-sm animate-bounce" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* 4. Message Composer */}
       <MessageComposer
         onSendMessage={handleSendWrapper}
+        onTyping={onTyping}
+        onStopTyping={onStopTyping}
         isBlocked={isBlocked}
       />
     </div>
