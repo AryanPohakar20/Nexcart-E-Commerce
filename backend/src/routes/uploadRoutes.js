@@ -1,20 +1,11 @@
 import express from 'express';
-import { uploadAadhaar } from '../controllers/uploadController.js';
-import { authenticate } from '../middlewares/authenticate.js';
-import { authorize } from '../middlewares/authorize.js';
+import { authenticateUser } from '../middlewares/authMiddleware.js';
 import { upload } from '../middlewares/upload.js';
+import { uploadFiles } from '../controllers/uploadController.js';
 
 const router = express.Router();
 
-router.post(
-  '/',
-  authenticate,
-  authorize('seller'),
-  upload.fields([
-    { name: 'frontImage', maxCount: 1 },
-    { name: 'backImage', maxCount: 1 },
-  ]),
-  uploadAadhaar
-);
+// Upload route with auth protection and Multer array middleware (up to 5 files per request)
+router.post('/', authenticateUser, upload.array('files', 5), uploadFiles);
 
 export default router;
