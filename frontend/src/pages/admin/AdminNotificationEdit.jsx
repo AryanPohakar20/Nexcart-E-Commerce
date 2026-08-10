@@ -57,6 +57,8 @@ const AdminNotificationEdit = () => {
     expiresAt: notification.expiresAt ? new Date(notification.expiresAt).toISOString().slice(0, 16) : '',
     image: notification.image || '',
     actionUrl: notification.actionUrl || notification.link || '',
+    actionText: notification.actionText || '',
+    category: notification.category || 'general',
   } : {};
 
   return (

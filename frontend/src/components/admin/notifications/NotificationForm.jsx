@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiUploadCloud, FiX, FiImage, FiClock, FiLink2, FiInfo } from 'react-icons/fi';
+import { FiUploadCloud, FiX, FiImage, FiClock, FiLink2, FiInfo, FiUsers, FiSearch } from 'react-icons/fi';
 import StatusBadge from '../shared/StatusBadge';
+import adminService from '../../../services/adminService';
 
 const defaultValues = {
   title: '',
@@ -10,16 +11,18 @@ const defaultValues = {
   notificationType: 'Announcement',
   targetAudience: 'all',
   priority: 'normal',
-  publishStatus: 'draft',
+  publishStatus: 'published',
   scheduledAt: '',
   expiresAt: '',
   image: '',
   actionUrl: '',
+  actionText: '',
 };
 
-const notificationTypes = ['Promotion', 'Offer', 'Discount', 'Recommendation', 'Announcement', 'Order Update', 'System Alert', 'Custom'];
+const notificationTypes = ['Promotion', 'Offer', 'Discount', 'Recommendation', 'Announcement', 'Order Update', 'System Alert', 'Custom', 'Success', 'Warning', 'Error', 'Information', 'Security Alert', 'Maintenance', 'System Update'];
 const priorityOptions = ['low', 'normal', 'high', 'critical'];
 const publishOptions = ['draft', 'scheduled', 'published', 'unpublished'];
+const AUDIENCE_OPTIONS = ['all', 'all customers', 'all sellers', 'admins', 'customers', 'sellers', 'specific users'];
 
 const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -27,6 +30,15 @@ const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
   reader.onerror = reject;
   reader.readAsDataURL(file);
 });
+
+const isValidInternalActionUrl = (value) => {
+  const url = String(value || '').trim();
+  if (!url) return true;
+  if (!url.startsWith('/') || url.startsWith('//')) return false;
+  if (url.includes('://') || url.includes('..') || /[\s<>"'\\]/.test(url)) return false;
+  if (/(?:javascript|vbscript|data|mailto):/i.test(url)) return false;
+  return true;
+};
 
 const NotificationForm = ({
   mode = 'create',
@@ -44,6 +56,10 @@ const NotificationForm = ({
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(mergedValues.image || '');
   const [localErrors, setLocalErrors] = useState({});
+  const [recipientUsers, setRecipientUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userOptions, setUserOptions] = useState([]);
+  const [userSearch, setUserSearch] = useState('');
 
   useEffect(() => {
     setValues(mergedValues);
@@ -51,10 +67,42 @@ const NotificationForm = ({
     setSelectedFile(null);
   }, [mergedValues]);
 
+  const loadUserOptions = async () => {
+    try {
+      setUsersLoading(true);
+      const res = await adminService.getUsers({ role: 'customer', status: 'Active', page: 1, limit: 200 });
+      const users = res?.data?.users || [];
+      setUserOptions(users.filter((user) => !['admin', 'super_admin', 'moderator', 'support_staff'].includes(user.role)));
+    } catch {
+      setUserOptions([]);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (mode === 'create') {
+      loadUserOptions();
+    }
+  }, [mode]);
+
   const handleChange = (field, fieldValue) => {
     setValues((prev) => ({ ...prev, [field]: fieldValue }));
     setLocalErrors((prev) => ({ ...prev, [field]: '' }));
   };
+
+  const toggleRecipient = (userId) => {
+    setRecipientUsers((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
+  };
+
+  const filteredUserOptions = useMemo(() => {
+    const term = userSearch.trim().toLowerCase();
+    if (!term) return userOptions;
+    return userOptions.filter((user) => {
+      const name = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
+      return name.includes(term) || (user.email || '').toLowerCase().includes(term);
+    });
+  }, [userOptions, userSearch]);
 
   const validate = () => {
     const nextErrors = {};
@@ -67,6 +115,10 @@ const NotificationForm = ({
     if (!values.targetAudience.trim()) nextErrors.targetAudience = 'Target audience is required.';
     if (!values.priority) nextErrors.priority = 'Priority is required.';
     if (!values.publishStatus) nextErrors.publishStatus = 'Publish status is required.';
+
+    if (values.targetAudience === 'specific users' && recipientUsers.length === 0) {
+      nextErrors.recipientUsers = 'Select at least one user when targeting specific users.';
+    }
 
     if (values.scheduledAt && values.expiresAt) {
       const scheduled = new Date(values.scheduledAt);
@@ -82,8 +134,8 @@ const NotificationForm = ({
       nextErrors.image = 'Image must be smaller than 5 MB.';
     }
 
-    if (values.actionUrl && !/^https?:\/\//i.test(values.actionUrl)) {
-      nextErrors.actionUrl = 'Action URL must start with http:// or https://.';
+    if (!isValidInternalActionUrl(values.actionUrl)) {
+      nextErrors.actionUrl = 'Action URL must be an internal route such as /promotion, /products/123, or /orders/123.';
     }
 
     if (values.publishStatus === 'scheduled' && !values.scheduledAt) {
@@ -119,8 +171,13 @@ const NotificationForm = ({
     event.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) return;
+    if (submitting) return;
 
     const payload = { ...values };
+    if (recipientUsers.length > 0) {
+      payload.targetAudience = 'specific users';
+      payload.recipientUsers = recipientUsers;
+    }
     if (selectedFile) {
       payload.image = await readFileAsDataUrl(selectedFile);
     }
@@ -137,6 +194,10 @@ const NotificationForm = ({
       </div>
     );
   }
+
+  const selectedUsers = recipientUsers
+    .map((id) => userOptions.find((user) => user._id === id))
+    .filter(Boolean);
 
   return (
     <motion.form
@@ -218,12 +279,7 @@ const NotificationForm = ({
                 placeholder="all customers"
               />
               <datalist id="notification-target-audience">
-                <option value="all" />
-                <option value="all customers" />
-                <option value="all sellers" />
-                <option value="admins" />
-                <option value="customers" />
-                <option value="sellers" />
+                {AUDIENCE_OPTIONS.map((option) => <option key={option} value={option} />)}
               </datalist>
               {fieldError('targetAudience') && <span className="text-xs text-red-400">{fieldError('targetAudience')}</span>}
             </label>
@@ -241,6 +297,83 @@ const NotificationForm = ({
             </label>
           </div>
 
+          {values.targetAudience === 'specific users' && mode === 'create' && (
+            <div className="rounded-2xl border border-white/10 bg-white/3 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-400 inline-flex items-center gap-2">
+                  <FiUsers className="text-yellow-400" /> Specific Users ({recipientUsers.length} selected)
+                </span>
+                {usersLoading && <span className="text-[11px] text-gray-500">Loading users...</span>}
+              </div>
+
+              <div className="relative">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Search customers by name or email..."
+                  className="w-full h-10 pl-9 pr-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50 text-sm"
+                />
+              </div>
+
+              {selectedUsers.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedUsers.map((user) => (
+                    <span key={user._id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-[11px] font-semibold text-yellow-300">
+                      {user.firstName} {user.lastName}
+                      <button type="button" onClick={() => toggleRecipient(user._id)} className="hover:text-white"><FiX size={12} /></button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="max-h-44 overflow-y-auto space-y-1 rounded-xl border border-white/5 bg-black/20 p-2">
+                {filteredUserOptions.length === 0 ? (
+                  <p className="text-xs text-gray-500 p-3 text-center">{usersLoading ? 'Loading...' : 'No customers found.'}</p>
+                ) : (
+                  filteredUserOptions.map((user) => {
+                    const selected = recipientUsers.includes(user._id);
+                    return (
+                      <label key={user._id} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition text-sm ${selected ? 'bg-yellow-500/10 border border-yellow-500/20' : 'border border-transparent hover:bg-white/5'}`}>
+                        <input type="checkbox" checked={selected} onChange={() => toggleRecipient(user._id)} className="accent-yellow-500" />
+                        <span className="text-white font-medium">{user.firstName} {user.lastName}</span>
+                        <span className="text-[11px] text-gray-500 truncate">{user.email}</span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+              {fieldError('recipientUsers') && <span className="text-xs text-red-400">{fieldError('recipientUsers')}</span>}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="space-y-2">
+              <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">Action URL (internal route)</span>
+              <div className="relative">
+                <FiLink2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  value={values.actionUrl}
+                  onChange={(e) => handleChange('actionUrl', e.target.value)}
+                  className="w-full h-11 pl-10 pr-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
+                  placeholder="/promotion"
+                />
+              </div>
+              {fieldError('actionUrl') && <span className="text-xs text-red-400">{fieldError('actionUrl')}</span>}
+            </label>
+
+            <label className="space-y-2">
+              <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">Action Button Text (optional)</span>
+              <input
+                value={values.actionText}
+                onChange={(e) => handleChange('actionText', e.target.value)}
+                className="w-full h-11 px-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
+                placeholder="e.g. View Sale"
+              />
+              {fieldError('actionText') && <span className="text-xs text-red-400">{fieldError('actionText')}</span>}
+            </label>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="space-y-2">
               <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">Publish Status</span>
@@ -255,22 +388,6 @@ const NotificationForm = ({
             </label>
 
             <label className="space-y-2">
-              <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">Action URL</span>
-              <div className="relative">
-                <FiLink2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input
-                  value={values.actionUrl}
-                  onChange={(e) => handleChange('actionUrl', e.target.value)}
-                  className="w-full h-11 pl-10 pr-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
-                  placeholder="https://example.com/promotion"
-                />
-              </div>
-              {fieldError('actionUrl') && <span className="text-xs text-red-400">{fieldError('actionUrl')}</span>}
-            </label>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="space-y-2">
               <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">Scheduled Date</span>
               <div className="relative">
                 <FiClock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -283,21 +400,21 @@ const NotificationForm = ({
               </div>
               {fieldError('scheduledAt') && <span className="text-xs text-red-400">{fieldError('scheduledAt')}</span>}
             </label>
-
-            <label className="space-y-2">
-              <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">Expiration Date</span>
-              <div className="relative">
-                <FiClock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input
-                  type="datetime-local"
-                  value={values.expiresAt}
-                  onChange={(e) => handleChange('expiresAt', e.target.value)}
-                  className="w-full h-11 pl-10 pr-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
-                />
-              </div>
-              {fieldError('expiresAt') && <span className="text-xs text-red-400">{fieldError('expiresAt')}</span>}
-            </label>
           </div>
+
+          <label className="space-y-2 block">
+            <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">Expiration Date</span>
+            <div className="relative">
+              <FiClock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input
+                type="datetime-local"
+                value={values.expiresAt}
+                onChange={(e) => handleChange('expiresAt', e.target.value)}
+                className="w-full h-11 pl-10 pr-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
+              />
+            </div>
+            {fieldError('expiresAt') && <span className="text-xs text-red-400">{fieldError('expiresAt')}</span>}
+          </label>
         </div>
 
         <div className="space-y-4">
@@ -347,8 +464,8 @@ const NotificationForm = ({
               <FiInfo />
               Notes
             </div>
-            <p>Publish and unpublish are also available from the details page and list actions.</p>
-            <p>Image upload is stored as a string payload because the backend accepts the image field directly.</p>
+            <p>Action URLs must be internal routes such as /promotion, /products/123, /orders/123, /account, or /notifications — never a full domain.</p>
+            <p>Published notifications appear instantly in the target users' notification panel.</p>
           </div>
         </div>
       </div>

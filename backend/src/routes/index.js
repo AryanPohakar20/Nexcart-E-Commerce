@@ -5,6 +5,7 @@ import sellerRoutes from './sellerRoutes.js';
 import profileRoutes from './profileRoutes.js';
 import addressRoutes from './addressRoutes.js';
 import adminRoutes from './adminRoutes.js';
+import notificationRoutes from './notificationRoutes.js';
 
 import {
   registerUser,
@@ -60,6 +61,7 @@ router.post('/auth/reset-password', resetPassword);
 
 router.use('/profile', profileRoutes);
 router.use('/address', addressRoutes);
+router.use('/notifications', notificationRoutes);
 router.use('/admin', adminRoutes);
 
 export default router;

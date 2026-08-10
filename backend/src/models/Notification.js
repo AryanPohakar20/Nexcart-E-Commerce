@@ -24,9 +24,40 @@ const notificationSchema = new mongoose.Schema(
     },
     notificationType: {
       type: String,
-      enum: ['Promotion', 'Offer', 'Discount', 'Recommendation', 'Announcement', 'Order Update', 'System Alert', 'Custom'],
+      enum: [
+        'Success',
+        'Warning',
+        'Error',
+        'Information',
+        'Announcement',
+        'Promotion',
+        'Offer',
+        'Discount',
+        'Recommendation',
+        'Order Update',
+        'Security Alert',
+        'Maintenance',
+        'System Alert',
+        'System Update',
+        'Custom',
+      ],
       default: 'Announcement',
       index: true,
+    },
+    category: {
+      type: String,
+      trim: true,
+      default: 'general',
+    },
+    actionText: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    icon: {
+      type: String,
+      trim: true,
+      default: '',
     },
     targetAudience: {
       type: String,
@@ -96,6 +127,7 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null,
+      index: true,
     },
     link: {
       type: String,
@@ -113,6 +145,7 @@ const notificationSchema = new mongoose.Schema(
 );
 
 notificationSchema.index({ recipientRole: 1, read: 1, createdAt: -1 });
+notificationSchema.index({ recipientUser: 1, read: 1, createdAt: -1 });
 notificationSchema.index({ publishStatus: 1, createdAt: -1 });
 notificationSchema.index({ notificationType: 1, createdAt: -1 });
 notificationSchema.index({ createdBy: 1, createdAt: -1 });

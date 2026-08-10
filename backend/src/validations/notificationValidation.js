@@ -1,5 +1,6 @@
 import { body, param, validationResult } from 'express-validator';
 import { ApiError } from '../utils/ApiError.js';
+import { INTERNAL_ACTION_ROUTES, NOTIFICATION_TYPES } from '../services/notificationService.js';
 
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
@@ -10,8 +11,24 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-const notificationTypeValues = ['Promotion', 'Offer', 'Discount', 'Recommendation', 'Announcement', 'Order Update', 'System Alert', 'Custom'];
+const notificationTypeValues = NOTIFICATION_TYPES;
 const publishStatusValues = ['draft', 'scheduled', 'published', 'unpublished'];
+
+const validateInternalActionUrl = (value) => {
+  if (value === undefined || value === null || value === '') return true;
+
+  const url = String(value).trim();
+  if (!url.startsWith('/') || url.startsWith('//')) {
+    throw new Error('Action URL must be an internal application route (e.g. /promotion, /products/123, /orders/123, /account, /notifications)');
+  }
+  if (url.includes('://') || url.includes('..') || /[\s<>"'\\]/.test(url) || /(?:javascript|vbscript|data|mailto):/i.test(url)) {
+    throw new Error('Action URL must be a safe internal application route');
+  }
+  if (!INTERNAL_ACTION_ROUTES.some((route) => url === route || url.startsWith(route))) {
+    throw new Error('Action URL is not a valid internal application route');
+  }
+  return true;
+};
 
 const validateScheduleWindow = (value, { req }) => {
   if (req.body.scheduledAt && req.body.expiresAt) {
@@ -89,7 +106,43 @@ export const validateNotificationCreate = [
     .withMessage('Action URL must be a string')
     .trim()
     .isLength({ max: 2048 })
-    .withMessage('Action URL must not exceed 2048 characters'),
+    .withMessage('Action URL must not exceed 2048 characters')
+    .custom(validateInternalActionUrl),
+  body('actionText')
+    .optional({ nullable: true })
+    .isString()
+    .withMessage('Action text must be a string')
+    .trim()
+    .isLength({ max: 60 })
+    .withMessage('Action text must not exceed 60 characters'),
+  body('category')
+    .optional({ nullable: true })
+    .isString()
+    .withMessage('Category must be a string')
+    .trim()
+    .isLength({ max: 60 })
+    .withMessage('Category must not exceed 60 characters'),
+  body('icon')
+    .optional({ nullable: true })
+    .isString()
+    .withMessage('Icon must be a string')
+    .trim()
+    .isLength({ max: 60 })
+    .withMessage('Icon must not exceed 60 characters'),
+  body('recipientUser')
+    .optional({ nullable: true })
+    .isMongoId()
+    .withMessage('recipientUser must be a valid MongoDB ObjectId'),
+  body('recipientUsers')
+    .optional({ nullable: true })
+    .isArray()
+    .withMessage('recipientUsers must be an array of user ids')
+    .custom((value) => {
+      if (!value.every((id) => /^[a-f\d]{24}$/i.test(String(id)))) {
+        throw new Error('recipientUsers must contain valid MongoDB ObjectIds');
+      }
+      return true;
+    }),
   body('metadata').optional({ nullable: true }).isObject().withMessage('metadata must be an object'),
   handleValidationErrors,
 ];
@@ -140,7 +193,29 @@ export const validateNotificationUpdate = [
     .withMessage('Action URL must be a string')
     .trim()
     .isLength({ max: 2048 })
-    .withMessage('Action URL must not exceed 2048 characters'),
+    .withMessage('Action URL must not exceed 2048 characters')
+    .custom(validateInternalActionUrl),
+  body('actionText')
+    .optional({ nullable: true })
+    .isString()
+    .withMessage('Action text must be a string')
+    .trim()
+    .isLength({ max: 60 })
+    .withMessage('Action text must not exceed 60 characters'),
+  body('category')
+    .optional({ nullable: true })
+    .isString()
+    .withMessage('Category must be a string')
+    .trim()
+    .isLength({ max: 60 })
+    .withMessage('Category must not exceed 60 characters'),
+  body('icon')
+    .optional({ nullable: true })
+    .isString()
+    .withMessage('Icon must be a string')
+    .trim()
+    .isLength({ max: 60 })
+    .withMessage('Icon must not exceed 60 characters'),
   body('metadata').optional({ nullable: true }).isObject().withMessage('metadata must be an object'),
   handleValidationErrors,
 ];

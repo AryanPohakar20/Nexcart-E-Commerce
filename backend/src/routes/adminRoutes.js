@@ -119,6 +119,7 @@ import {
   updateAdminPassword,
 } from '../controllers/adminController.js';
 import { importUpload } from '../middlewares/importUpload.js';
+import { validateNotificationCreate, validateNotificationUpdate } from '../validations/notificationValidation.js';
 
 const router = Router();
 
@@ -252,10 +253,10 @@ router.get('/analytics', requirePermission('analytics', 'read'), getMarketplaceA
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(   '/notifications',              authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), getNotifications);
-router.post(  '/notifications',              authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), createNotification);
+router.post(  '/notifications',              authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), validateNotificationCreate, createNotification);
 router.get(   '/notifications/unread-count',  authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), getUnreadNotificationsCount);
 router.get(   '/notifications/:id',           authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), getNotificationById);
-router.put(   '/notifications/:id',           authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), updateNotification);
+router.put(   '/notifications/:id',           authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), validateNotificationUpdate, updateNotification);
 router.patch( '/notifications/:id/publish',   authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), publishNotification);
 router.patch( '/notifications/:id/unpublish', authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), unpublishNotification);
 router.patch( '/notifications/:id/read',      authorize(ROLES.ADMIN, ROLES.SUPER_ADMIN), markNotificationRead);

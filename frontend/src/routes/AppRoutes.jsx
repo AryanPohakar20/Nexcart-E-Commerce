@@ -12,6 +12,7 @@ import Products from "../pages/Products";
 import ProductDetails from "../pages/ProductDetails";
 import Category from "../pages/Category";
 import Categories from "../pages/Categories";
+import Promotion from "../pages/Promotion";
 import OrderSuccess from "../pages/OrderSuccess";
 import Search from "../pages/Search";
 import Wishlist from "../pages/Wishlist";
@@ -95,6 +96,7 @@ const AppRoutes = () => {
       <Route path="/" element={<RootLayout />}>
         <Route index element={<Home />} />
         <Route path="products" element={<Products />} />
+        <Route path="promotion" element={<Promotion />} />
         <Route path="product/:id" element={<ProductDetails />} />
         <Route path="category/:id" element={<Category />} />
         <Route path="categories" element={<Categories />} />

@@ -3,6 +3,7 @@ import { PRODUCTS, COUPONS } from '../constants/dummyData';
 import profileService from '../services/profileService';
 import addressService from '../services/addressService';
 import authService from '../services/authService';
+import notificationService from '../services/notificationService';
 import { AuthContext } from './AuthContext';
 
 export const AppContext = createContext();
@@ -44,10 +45,7 @@ export const AppProvider = ({ children }) => {
     },
   ]);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [notifications, setNotifications] = useState([
-    { id: 'n-1', title: 'Order Delivered!', message: 'Your order ORD-98431 has been successfully delivered.', read: false, time: '2 days ago' },
-    { id: 'n-2', title: 'Welcome to NexCart', message: 'Shop limits-free! Explore premium dark layout and customized deals.', read: true, time: '5 days ago' },
-  ]);
+  const [notifications, setNotifications] = useState([]);
   const [toasts, setToasts] = useState([]);
   const [prevUser, setPrevUser] = useState(null);
 
@@ -58,6 +56,52 @@ export const AppProvider = ({ children }) => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, 3500);
   };
+
+  const relativeTime = (dateValue) => {
+    if (!dateValue) return '';
+    const diff = Date.now() - new Date(dateValue).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(dateValue).toLocaleDateString();
+  };
+
+  const mapNotification = (item) => ({
+    id: item._id,
+    _id: item._id,
+    title: item.title,
+    message: item.message,
+    read: Boolean(item.isRead ?? item.read),
+    time: relativeTime(item.createdAt),
+    actionUrl: item.actionUrl || item.link || '',
+    notificationType: item.notificationType || item.type || 'Information',
+  });
+
+  const loadNotifications = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const res = await notificationService.getNotifications({ page: 1, limit: 10, sort: 'createdAt:desc' });
+      if (res?.success) {
+        setNotifications((res.data?.notifications || []).map(mapNotification));
+      }
+    } catch {
+      // Silent — the notifications page surfaces API errors.
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadNotifications();
+    } else {
+      setNotifications([]);
+    }
+  }, [user?._id]);
 
   const logoutUser = async () => {
     try {
@@ -384,12 +428,22 @@ export const AppProvider = ({ children }) => {
     showToast('Coupon Removed', 'info');
   };
 
-  const markNotificationRead = (id) => {
+  const markNotificationRead = async (id) => {
     setNotifications((prev) => prev.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)));
+    try {
+      await notificationService.markAsRead(id);
+    } catch {
+      // Non-critical; state is already updated optimistically.
+    }
   };
 
-  const clearNotifications = () => {
-    setNotifications([]);
+  const clearNotifications = async () => {
+    try {
+      await notificationService.deleteReadNotifications();
+      setNotifications((prev) => prev.filter((notification) => !notification.read));
+    } catch {
+      // Non-critical.
+    }
   };
 
   return (
