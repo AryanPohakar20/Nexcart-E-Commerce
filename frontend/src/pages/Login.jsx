@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { AuthContext } from '../context/AuthContext';
+import { useGoogleLogin } from '@react-oauth/google';
+import appleSignin from 'react-apple-signin-auth';
 import NexCartLogo from '../components/NexCartLogo';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -23,7 +25,7 @@ import {
 
 const Login = () => {
   const { showToast, theme } = useContext(AppContext);
-  const { login } = useContext(AuthContext);
+  const { login, loginGoogle: authContextLoginGoogle, loginApple: authContextLoginApple } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Form states
@@ -127,26 +129,99 @@ const Login = () => {
     }
   };
 
-  const handleSocialLogin = (provider) => {
+  const handleGoogleSuccess = async (tokenResponse) => {
     setIsSubmitting(true);
-    showToast(`Connecting to ${provider}...`);
-    setTimeout(async () => {
-      // For now, simulated social login using the same endpoint logic or fallback
-      const mockEmail = `user@${provider.toLowerCase()}.com`;
-      const result = await login(mockEmail, 'social123');
-      
+    showToast('Authenticating with Google...');
+    try {
+      if (!tokenResponse?.access_token) {
+        throw new Error('No access_token returned by Google');
+      }
+      const result = await authContextLoginGoogle(tokenResponse.access_token);
       setIsSubmitting(false);
-      
+
       if (result.success) {
-        showToast(`Authenticated via ${provider}!`);
+        showToast('Google login successful!');
         const userRole = (result.user?.role || '').toLowerCase();
-        if (userRole === 'seller' || userRole === 'marketplaceseller') navigate('/seller/dashboard');
+        if (userRole === 'seller' || userRole === 'marketplace_seller') navigate('/seller/dashboard');
         else if (userRole === 'admin') navigate('/admin/dashboard');
         else navigate('/');
       } else {
-        showToast(`Authentication via ${provider} failed.`, 'error');
+        showToast(result.message || 'Google Sign-In could not be completed. Please try again.', 'error');
       }
-    }, 900);
+    } catch (err) {
+      setIsSubmitting(false);
+      showToast('Google Sign-In could not be completed. Please try again.', 'error');
+    }
+  };
+
+  const loginGoogle = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: (errorResponse) => {
+      setIsSubmitting(false);
+      showToast('Google Sign-In could not be completed. Please try again.', 'error');
+    },
+  });
+
+  const loginApple = async () => {
+    const clientId = import.meta.env.VITE_APPLE_CLIENT_ID;
+    const redirectURI = import.meta.env.VITE_APPLE_REDIRECT_URI;
+
+    if (!clientId || !redirectURI) {
+      showToast('Sign in with Apple is not available on this browser or device.', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    showToast('Authenticating with Apple...');
+    try {
+      const response = await appleSignin.signIn({
+        authOptions: {
+          clientId,
+          scope: 'email name',
+          redirectURI,
+          usePopup: true,
+        },
+      });
+
+      if (!response?.authorization?.id_token) {
+        throw new Error('Apple did not return an identity token');
+      }
+
+      const result = await authContextLoginApple(
+        response.authorization.id_token,
+        response.user
+      );
+
+      if (!result?.success) {
+        throw new Error(result?.message || 'Apple Sign-In could not be completed');
+      }
+
+      showToast('Apple login successful!');
+      const userRole = (result.user?.role || '').toLowerCase();
+      if (userRole === 'seller' || userRole === 'marketplace_seller') navigate('/seller/dashboard');
+      else if (userRole === 'admin') navigate('/admin/dashboard');
+      else navigate('/');
+    } catch (err) {
+      showToast('Sign in with Apple is available only on supported Apple devices or browsers.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSocialLogin = (provider) => {
+    if (provider === 'Google') {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (!clientId || clientId.trim() === '' || clientId.includes('YOUR_ACTUAL')) {
+        showToast('Google Sign-In could not be completed. Please configure VITE_GOOGLE_CLIENT_ID in frontend/.env', 'error');
+        return;
+      }
+      try {
+        loginGoogle();
+      } catch (err) {
+        showToast('Google Sign-In could not be completed. Please try again.', 'error');
+      }
+    }
+    if (provider === 'Apple') loginApple();
   };
 
   return (

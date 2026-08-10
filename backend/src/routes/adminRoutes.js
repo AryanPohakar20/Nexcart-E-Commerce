@@ -48,6 +48,7 @@ import {
   getProducts,
   getProduct,
   updateProduct,
+  updateProductStock,
   deleteProduct,
   restoreProduct,
   approveProduct,
@@ -179,6 +180,7 @@ router.patch('/sellers/:id/block',   requirePermission('sellers', 'suspend'), bl
 router.get(   '/products',                 requirePermission('products', 'read'),    getProducts);
 router.get(   '/products/:id',             requirePermission('products', 'read'),    getProduct);
 router.put(   '/products/:id',             requirePermission('products', 'update'),  updateProduct);
+router.patch( '/products/:id/stock',       requirePermission('products', 'update'),  updateProductStock);
 router.delete('/products/:id',             requirePermission('products', 'delete'),  deleteProduct);
 router.patch( '/products/:id/restore',     requirePermission('products', 'update'),  restoreProduct);
 router.patch( '/products/:id/approve',     requirePermission('products', 'approve'), approveProduct);

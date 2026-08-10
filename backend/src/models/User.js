@@ -94,14 +94,27 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
+      required: function() {
+        return this.provider === 'email';
+      },
       trim: true,
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: function() {
+        return this.provider === 'email';
+      },
       minlength: 6,
       select: false,
+    },
+    provider: {
+      type: String,
+      enum: ['email', 'google', 'apple'],
+      default: 'email',
+    },
+    providerId: {
+      type: String,
+      default: null,
     },
     role: {
       type: String,
@@ -246,7 +259,7 @@ userSchema.pre('validate', function (next) {
 });
 
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
 

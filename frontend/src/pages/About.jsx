@@ -38,7 +38,7 @@ const About = () => {
           <div className="bg-cardBg border border-white/5 p-6 rounded-3xl space-y-3">
             <FiTrendingUp className="text-primary text-2xl" />
             <h4 className="font-bold text-white text-sm">Seller Incubation</h4>
-            <p className="text-xs text-gray-400 leading-relaxed">We provide specialized charts, products logs, and analytics metrics to vendor members.</p>
+            <p className="text-xs text-gray-400 leading-relaxed">We provide specialized tools, product logs, and performance scorecards to vendor members.</p>
           </div>
 
           <div className="bg-cardBg border border-white/5 p-6 rounded-3xl space-y-3">

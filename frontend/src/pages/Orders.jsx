@@ -5,7 +5,7 @@ import { AppContext } from '../context/AppContext';
 import { FiShoppingBag, FiTruck, FiChevronRight } from 'react-icons/fi';
 
 const Orders = () => {
-  const { orders } = useContext(AppContext);
+  const { orders, formatPrice } = useContext(AppContext);
   const navigate = useNavigate();
 
   return (
@@ -63,7 +63,7 @@ const Orders = () => {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="text-gray-500 font-bold">Total Amount</p>
-                      <p className="font-extrabold text-white text-sm">₹{order.amount.toLocaleString('en-IN')}</p>
+                      <p className="font-extrabold text-white text-sm">{formatPrice(order.amount)}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest border ${
                       order.status === 'Delivered' 
@@ -85,7 +85,7 @@ const Orders = () => {
                       <div>
                         <h4 className="text-xs font-bold text-white line-clamp-1">{item.product.title}</h4>
                         <p className="text-[10px] text-gray-500 font-semibold mt-0.5">Brand: {item.product.brand} | Qty: {item.quantity}</p>
-                        <p className="text-xs font-extrabold text-white mt-1">₹{item.product.price.toLocaleString('en-IN')}</p>
+                        <p className="text-xs font-extrabold text-white mt-1">{formatPrice(item.product.price)}</p>
                       </div>
                     </div>
                   ))}

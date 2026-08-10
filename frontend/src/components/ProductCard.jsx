@@ -208,7 +208,9 @@ const ProductCard = ({ product }) => {
                   </div>
 
                   <div className="space-y-2 pt-4 border-t border-borderColor">
-                    <p className="text-[10px] text-textSecondary font-semibold">{product.delivery}</p>
+                    <p className="text-[10px] text-textSecondary font-semibold">
+                      {typeof product.delivery === 'string' ? product.delivery : (product.delivery?.shippingType || 'Standard Delivery')}
+                    </p>
                     <div className="grid grid-cols-2 gap-2">
                       <motion.button 
                         whileHover={{ scale: 1.03 }}

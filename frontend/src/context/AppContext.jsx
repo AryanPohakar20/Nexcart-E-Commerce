@@ -1,8 +1,10 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { PRODUCTS, COUPONS } from '../constants/dummyData';
+import { COUPONS } from '../constants/dummyData';
 import profileService from '../services/profileService';
 import addressService from '../services/addressService';
 import authService from '../services/authService';
+import chatService from '../services/chatService';
+import socketService from '../services/socketService';
 import { AuthContext } from './AuthContext';
 
 export const AppContext = createContext();
@@ -31,18 +33,7 @@ export const AppProvider = ({ children }) => {
   const [saveForLater, setSaveForLater] = useState(() => JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]'));
   const [comparedProducts, setComparedProducts] = useState([]);
   const [addresses, setAddresses] = useState([]);
-  const [orders, setOrders] = useState([
-    {
-      id: 'ORD-98431',
-      date: '2026-07-10',
-      items: [{ product: PRODUCTS[1], quantity: 1 }],
-      shippingAddress: 'Penthouse B, Skyview Heights, Hitec City, Hyderabad - 500081',
-      paymentMethod: 'UPI (GPay)',
-      amount: 24999,
-      status: 'Delivered',
-      deliveryEstimate: 'Delivered on 12th July 2026',
-    },
-  ]);
+  const [orders, setOrders] = useState([]);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [notifications, setNotifications] = useState([
     { id: 'n-1', title: 'Order Delivered!', message: 'Your order ORD-98431 has been successfully delivered.', read: false, time: '2 days ago' },
@@ -50,6 +41,40 @@ export const AppProvider = ({ children }) => {
   ]);
   const [toasts, setToasts] = useState([]);
   const [prevUser, setPrevUser] = useState(null);
+
+  // Chat Unread Count State
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  const fetchUnreadChatCount = async () => {
+    try {
+      const res = await chatService.getUnreadCount();
+      if (res.success) {
+        setUnreadChatCount(res.count);
+      }
+    } catch (error) {
+      console.error('Error fetching unread chat count:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      socketService.connect();
+      fetchUnreadChatCount();
+
+      const handleUnreadCountUpdate = (totalUnread) => {
+        setUnreadChatCount(totalUnread);
+      };
+
+      socketService.on('updateTotalUnreadCount', handleUnreadCountUpdate);
+
+      return () => {
+        socketService.off('updateTotalUnreadCount', handleUnreadCountUpdate);
+      };
+    } else {
+      socketService.disconnect();
+      setUnreadChatCount(0);
+    }
+  }, [user]);
 
   const showToast = (message, type = 'success') => {
     const id = Date.now();
@@ -430,6 +455,8 @@ export const AppProvider = ({ children }) => {
         removeCouponCode,
         markNotificationRead,
         clearNotifications,
+        unreadChatCount,
+        setUnreadChatCount,
       }}
     >
       {children}

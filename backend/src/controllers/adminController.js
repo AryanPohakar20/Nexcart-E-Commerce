@@ -305,6 +305,18 @@ export const updateProduct = asyncHandler(async (req, res) => {
   return successResponse(res, 'Product updated successfully.', { product });
 });
 
+// PATCH /api/admin/products/:id/stock
+export const updateProductStock = asyncHandler(async (req, res) => {
+  const { stock } = req.body;
+  const product = await adminProductService.updateStock(
+    req.params.id,
+    stock,
+    req.user,
+    getIp(req)
+  );
+  return successResponse(res, 'Product stock updated successfully.', { product });
+});
+
 // DELETE /api/admin/products/:id
 export const deleteProduct = asyncHandler(async (req, res) => {
   const product = await adminProductService.deleteProduct(

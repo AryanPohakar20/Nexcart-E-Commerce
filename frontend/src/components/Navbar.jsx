@@ -8,12 +8,13 @@ import { CATEGORIES } from '../constants/dummyData';
 import { getRoleConfig } from '../constants/navigationMenu';
 import { 
   FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, 
-  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid, FiSliders
+  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid, FiSliders,
+  FiMessageSquare
 } from 'react-icons/fi';
 
 const Navbar = () => {
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, logoutUser 
+    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, logoutUser, unreadChatCount 
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -300,6 +301,32 @@ const Navbar = () => {
                       className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-gradient-to-r from-primary to-amber-400 text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow"
                     >
                       {cartCount}
+                    </motion.span>
+                  )}
+                </Link>
+              </motion.div>
+            )}
+
+            {/* Messages Chat Icon */}
+            {user && (
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Link
+                  to="/messages"
+                  className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group block"
+                  aria-label="Messages"
+                  title="Messages"
+                >
+                  <FiMessageSquare className="text-lg sm:text-xl transition-transform" />
+                  {unreadChatCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-primary text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow"
+                    >
+                      {unreadChatCount}
                     </motion.span>
                   )}
                 </Link>

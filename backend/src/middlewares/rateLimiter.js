@@ -1,6 +1,5 @@
 // src/middlewares/rateLimiter.js
 // Express-rate-limit configuration.
-// Two limiters: a general API limiter and a tighter auth-specific limiter.
 
 import rateLimit from 'express-rate-limit';
 
@@ -12,7 +11,7 @@ import rateLimit from 'express-rate-limit';
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
-  standardHeaders: true,  // Sends RateLimit-* headers
+  standardHeaders: true, // Sends RateLimit-* headers
   legacyHeaders: false,
   message: {
     success: false,
@@ -37,6 +36,25 @@ export const authLimiter = rateLimit({
   message: {
     success: false,
     message: 'Too many authentication attempts. Please wait 15 minutes before trying again.',
+  },
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json(options.message);
+  },
+});
+
+/**
+ * Chat Rate Limiter
+ * Prevents spamming message sends or offer submissions.
+ * 120 requests per 1-minute window per IP.
+ */
+export const chatRateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many chat requests. Please slow down.',
   },
   handler: (req, res, next, options) => {
     res.status(options.statusCode).json(options.message);

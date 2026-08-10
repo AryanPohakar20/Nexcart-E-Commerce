@@ -23,6 +23,7 @@ import TrackOrder from "../pages/TrackOrder";
 import UserProfile from "../pages/UserProfile";
 import Addresses from "../pages/Addresses";
 import Notifications from "../pages/Notifications";
+import Messages from "../pages/Messages";
 
 // Dashboards & Seller Studio imports
 import SellerDashboard from "../pages/SellerDashboard";
@@ -158,6 +159,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <Notifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="messages"
+          element={
+            <ProtectedRoute>
+              <Messages />
             </ProtectedRoute>
           }
         />

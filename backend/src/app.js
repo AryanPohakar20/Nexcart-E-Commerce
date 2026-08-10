@@ -1,5 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
+// src/app.js - Forced Reload comment 4
 import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
@@ -10,7 +11,11 @@ import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  })
+);
 
 const allowedOrigins = [
   process.env.CLIENT_URL,

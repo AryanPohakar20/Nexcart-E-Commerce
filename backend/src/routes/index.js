@@ -1,10 +1,20 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+import chatRoutes from './chatRoutes.js';
 import sellerRoutes from './sellerRoutes.js';
 import profileRoutes from './profileRoutes.js';
 import addressRoutes from './addressRoutes.js';
 import adminRoutes from './adminRoutes.js';
+
+// ─── Marketplace Route Imports ────────────────────────────────────────────────
+import productRoutes from './productRoutes.js';
+import searchRoutes from './searchRoutes.js';
+import searchHistoryRoutes from './searchHistoryRoutes.js';
+import brandRoutes from './brandRoutes.js';
+import categoryRoutes from './categoryRoutes.js';
+import subcategoryRoutes from './subcategoryRoutes.js';
+import attributeRoutes from './attributeRoutes.js';
 
 import {
   registerUser,
@@ -17,6 +27,8 @@ import {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  loginWithGoogle,
+  loginWithApple,
 } from '../controllers/authController.js';
 import { getPublicProfile, updateStep3, updateStep4, updateStep5, getSellerStatus } from '../controllers/sellerController.js';
 import { validateRegistration, validateLogin } from '../validations/authValidation.js';
@@ -25,6 +37,10 @@ import { authorize } from '../middlewares/authorize.js';
 import { upload } from '../middlewares/upload.js';
 
 const router = Router();
+
+// ─── Messenger & Upload Routes ────────────────────────────────────────────────
+router.use('/chat', chatRoutes);
+router.use('/upload', uploadRoutes);
 
 router.use('/seller/auth', authRoutes);
 router.use('/seller/upload-aadhaar', uploadRoutes);
@@ -52,6 +68,8 @@ router.get('/search/seller/:slug', getPublicProfile);
 
 router.post('/auth/register', validateRegistration, registerUser);
 router.post('/auth/login', validateLogin, loginUser);
+router.post('/auth/login/google', loginWithGoogle);
+router.post('/auth/login/apple', loginWithApple);
 router.get('/auth/me', authenticate, getCurrentUser);
 router.post('/auth/logout', logoutUser);
 router.post('/auth/forgot-password', forgotPassword);
@@ -61,5 +79,16 @@ router.post('/auth/reset-password', resetPassword);
 router.use('/profile', profileRoutes);
 router.use('/address', addressRoutes);
 router.use('/admin', adminRoutes);
+
+// ─── Marketplace Routes ───────────────────────────────────────────────────────
+// NOTE: /search/history MUST be mounted before /search to avoid the /search
+// prefix intercepting /search/history requests.
+router.use('/search/history', searchHistoryRoutes);
+router.use('/search', searchRoutes);
+router.use('/products', productRoutes);
+router.use('/brands', brandRoutes);
+router.use('/categories', categoryRoutes);
+router.use('/subcategories', subcategoryRoutes);
+router.use('/attributes', attributeRoutes);
 
 export default router;

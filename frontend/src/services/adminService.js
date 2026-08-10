@@ -131,6 +131,10 @@ const adminService = {
     const response = await axiosInstance.put(`/admin/products/${id}`, data);
     return response.data;
   },
+  updateStock: async (id, stock) => {
+    const response = await axiosInstance.patch(`/admin/products/${id}/stock`, { stock });
+    return response.data;
+  },
   deleteProduct: async (id) => {
     const response = await axiosInstance.delete(`/admin/products/${id}`);
     return response.data;
