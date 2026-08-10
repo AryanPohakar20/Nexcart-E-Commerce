@@ -36,14 +36,31 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
+      required: function() {
+        return this.provider === 'email';
+      },
       trim: true,
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: function() {
+        return this.provider === 'email';
+      },
       minlength: 6,
       select: false,
+    },
+    provider: {
+      type: String,
+      enum: ['email', 'google', 'apple'],
+      default: 'email',
+    },
+    providerId: {
+      type: String,
+      default: null,
+    },
+    avatar: {
+      type: String,
+      default: null,
     },
     role: {
       type: String,
@@ -80,11 +97,12 @@ const userSchema = new mongoose.Schema(
 
 // Encrypt password before saving
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
+  if (!this.isModified('password') || !this.password) {
+    return next();
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
 // Compare password

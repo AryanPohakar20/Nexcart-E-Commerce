@@ -236,6 +236,48 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
   });
 });
 
+export const loginWithGoogle = asyncHandler(async (req, res) => {
+  const { accessToken } = req.body;
+  if (!accessToken) {
+    return res.status(400).json({ success: false, message: 'accessToken is required' });
+  }
+
+  const { user, token } = await authService.loginGoogleService(accessToken);
+
+  res.status(200).json({
+    success: true,
+    message: 'Google Login successful',
+    token,
+    user,
+    data: {
+      accessToken: token,
+      refreshToken: token,
+      user,
+    },
+  });
+});
+
+export const loginWithApple = asyncHandler(async (req, res) => {
+  const { identityToken, user: userPayload } = req.body;
+  if (!identityToken) {
+    return res.status(400).json({ success: false, message: 'identityToken is required' });
+  }
+
+  const { user, token } = await authService.loginAppleService(identityToken, userPayload);
+
+  res.status(200).json({
+    success: true,
+    message: 'Apple Login successful',
+    token,
+    user,
+    data: {
+      accessToken: token,
+      refreshToken: token,
+      user,
+    },
+  });
+});
+
 export const forgotPassword = asyncHandler(async (req, res) => {
   if (process.env.MOCK_DB === 'true') {
     return res.status(200).json({

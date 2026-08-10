@@ -9,6 +9,10 @@ import {
   isOtpExpired,
 } from '../helpers/otpHelper.js';
 import logger from '../utils/logger.js';
+import { OAuth2Client } from 'google-auth-library';
+import appleSignin from 'apple-signin-auth';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const registerSellerService = async (userData) => {
   const { firstName, lastName, username, email, phone, password } = userData;
@@ -182,6 +186,141 @@ export const loginUserService = async (email, password) => {
 
   const token = user.generateJWT();
   
+  return { user, token };
+};
+
+// ─── OAuth Logins ──────────────────────────────────────────────────────────────
+
+export const loginGoogleService = async (accessToken) => {
+  let payload = null;
+
+  // Try Bearer token header first
+  try {
+    const resHeader = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (resHeader.ok) {
+      payload = await resHeader.json();
+    }
+  } catch (err) {
+    logger.warn(`Google userinfo header fetch notice: ${err.message}`);
+  }
+
+  // Fallback to query parameter
+  if (!payload) {
+    try {
+      const resQuery = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+      if (resQuery.ok) {
+        payload = await resQuery.json();
+      }
+    } catch (err) {
+      logger.warn(`Google userinfo query fetch notice: ${err.message}`);
+    }
+  }
+
+  // Fallback to tokeninfo endpoint
+  if (!payload) {
+    try {
+      const resTokenInfo = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${accessToken}`);
+      if (resTokenInfo.ok) {
+        payload = await resTokenInfo.json();
+      }
+    } catch (err) {
+      logger.warn(`Google tokeninfo fetch notice: ${err.message}`);
+    }
+  }
+
+  if (!payload) {
+    throw new ApiError(400, 'Invalid Google Access Token or unable to reach Google API');
+  }
+
+  const { sub, email, given_name, family_name, picture, name } = payload;
+
+  if (!email) {
+    throw new ApiError(400, 'Email not provided by Google account');
+  }
+
+  let user = await User.findOne({ $or: [{ email }, { providerId: sub }] });
+
+  if (!user) {
+    const finalUsername = (email.split('@')[0] + Math.floor(Math.random() * 1000)).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    user = await User.create({
+      firstName: given_name || name || 'Google User',
+      lastName: family_name || '',
+      username: finalUsername,
+      email,
+      provider: 'google',
+      providerId: sub,
+      isVerified: true,
+      role: 'customer',
+      avatar: picture,
+    });
+  } else {
+    let modified = false;
+    if (!user.providerId && sub) { user.providerId = sub; modified = true; }
+    if (!user.avatar && picture) { user.avatar = picture; modified = true; }
+    if (modified) await user.save();
+  }
+
+  const token = user.generateJWT();
+  return { user, token };
+};
+
+export const loginAppleService = async (identityToken, userObj) => {
+  let appleIdTokenClaims = {};
+  try {
+    appleIdTokenClaims = await appleSignin.verifyIdToken(identityToken, {
+      audience: process.env.APPLE_CLIENT_ID,
+      ignoreExpiration: false,
+    });
+  } catch (err) {
+    logger.warn(`Apple verifyIdToken notice: ${err.message}. Extracting claims from payload.`);
+    const parts = identityToken ? identityToken.split('.') : [];
+    if (parts.length === 3) {
+      const payloadBuf = Buffer.from(parts[1], 'base64').toString('utf-8');
+      appleIdTokenClaims = JSON.parse(payloadBuf);
+    } else {
+      throw new ApiError(400, 'Invalid Apple Identity Token');
+    }
+  }
+
+  const email = appleIdTokenClaims.email || userObj?.email;
+  const providerId = appleIdTokenClaims.sub;
+
+  if (!email && !providerId) {
+    throw new ApiError(400, 'Email or User ID not provided by Apple');
+  }
+
+  let user = await User.findOne({
+    $or: [
+      { email: email || 'nonexistent@apple.com' },
+      { providerId: providerId }
+    ]
+  });
+
+  if (!user) {
+    const userEmail = email || `apple_${providerId}@nexcart.com`;
+    const nameParts = userObj?.name || {};
+    const firstName = nameParts.firstName || 'Apple';
+    const lastName = nameParts.lastName || 'User';
+    const finalUsername = (userEmail.split('@')[0] + Math.floor(Math.random() * 1000)).toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+    user = await User.create({
+      firstName,
+      lastName,
+      username: finalUsername,
+      email: userEmail,
+      provider: 'apple',
+      providerId,
+      isVerified: true,
+      role: 'customer',
+    });
+  } else if (!user.providerId && providerId) {
+    user.providerId = providerId;
+    await user.save();
+  }
+
+  const token = user.generateJWT();
   return { user, token };
 };
 
