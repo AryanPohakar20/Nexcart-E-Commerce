@@ -2,17 +2,20 @@ import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
+import { AuthContext } from '../context/AuthContext';
 import NexCartLogo from './NexCartLogo';
 import ThemeToggle from './ThemeToggle';
 import { CATEGORIES } from '../constants/dummyData';
 import { 
-  FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, FiMessageSquare,
+  FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, FiMessageSquare, FiBarChart2,
   FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid
 } from 'react-icons/fi';
 
 const Navbar = () => {
+  const { logout } = useContext(AuthContext);
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser 
+    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser, unreadChatCount,
+    currency, setCurrency, CURRENCIES
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -267,9 +270,11 @@ const Navbar = () => {
                 title="Messages"
               >
                 <FiMessageSquare className="text-lg sm:text-xl transition-transform" />
-                <span className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-amber-500 text-black text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-pulse">
-                  3
-                </span>
+                {unreadChatCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-amber-500 text-black text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-pulse">
+                    {unreadChatCount}
+                  </span>
+                )}
               </Link>
             </motion.div>
 
@@ -384,8 +389,8 @@ const Navbar = () => {
                   aria-label="User profile"
                 >
                   <img
-                    src={user.avatar}
-                    alt={user.name}
+                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.firstName || user.name || user.username || 'User')}&background=FFC107&color=000`}
+                    alt={user.firstName || user.name || user.username || 'User'}
                     className="w-7 sm:w-8 h-7 sm:h-8 rounded-full object-cover group-hover:scale-105 transition-transform"
                   />
                 </motion.button>
@@ -412,43 +417,29 @@ const Navbar = () => {
                     className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left"
                   >
                     <div className="flex items-center gap-3 border-b border-gray-200 dark:border-white/10 pb-3 mb-3">
-                      <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-primary" />
+                      <img
+                        src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.firstName || user.name || user.username || 'User')}&background=FFC107&color=000`}
+                        alt={user.firstName || user.name || user.username || 'User'}
+                        className="w-10 h-10 rounded-full object-cover border border-primary"
+                      />
                       <div>
-                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.name}</h4>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                          {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.name || user.username || 'User'}
+                        </h4>
                         <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
                         <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-primary/20 text-primary">
-                          {user.role} Account
+                          {user.role || 'Customer'} Account
                         </span>
                       </div>
                     </div>
 
-                    {/* Switch Role Quick Tester */}
-                    <div className="mb-3 space-y-1">
-                      <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider font-semibold">Switch View Mode</p>
-                      <div className="grid grid-cols-3 gap-1 text-[10px] font-bold uppercase">
-                        {['customer', 'seller', 'admin'].map(r => (
-                          <button
-                            key={r}
-                            onClick={() => switchRole(r)}
-                            className={`py-1 rounded border transition-all ${
-                              (user.role || '').toLowerCase() === r 
-                                ? 'bg-primary text-black border-primary font-black'
-                                : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:text-primary'
-                            }`}
-                          >
-                            {r}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1 text-xs border-t border-gray-200 dark:border-white/10 pt-2">
+                    <div className="space-y-1 text-xs pt-1">
                       <Link
                         to="/profile"
                         onClick={() => setIsProfileOpen(false)}
                         className="block px-3 py-2 rounded-lg hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-colors"
                       >
-                        My Profile
+                        My Profile & NexCart Details
                       </Link>
                       <Link
                         to="/orders"
@@ -465,8 +456,13 @@ const Navbar = () => {
                         Saved Addresses
                       </Link>
                       <button
-                        onClick={() => { logoutUser(); setIsProfileOpen(false); }}
-                        className="w-full text-left px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 font-bold transition-colors flex items-center justify-between"
+                        onClick={async () => {
+                          if (logout) await logout();
+                          if (logoutUser) logoutUser();
+                          setIsProfileOpen(false);
+                          navigate('/login');
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 font-bold transition-colors flex items-center justify-between mt-2 border-t border-gray-200 dark:border-white/10 pt-2"
                       >
                         <span>Logout</span>
                         <FiLogOut />
@@ -516,7 +512,7 @@ const Navbar = () => {
               className="flex items-center gap-1.5 font-medium hover:text-primary transition-colors"
             >
               <FiGlobe className="text-xs text-accentBlue" />
-              <span>{selectedLang}</span>
+              <span>{CURRENCIES[currency]?.label || 'EN / USD'}</span>
               <FiChevronDown className="text-[10px]" />
             </button>
 
@@ -529,13 +525,15 @@ const Navbar = () => {
                   transition={{ duration: 0.2 }}
                   className="absolute right-0 top-full mt-2 w-36 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-xl shadow-xl z-50 text-xs"
                 >
-                  {['EN / USD', 'IN / INR', 'EU / EUR', 'UK / GBP'].map(lang => (
+                  {Object.entries(CURRENCIES).map(([code, info]) => (
                     <button
-                      key={lang}
-                      onClick={() => { setSelectedLang(lang); setIsLanguageOpen(false); }}
-                      className="w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 transition-colors"
+                      key={code}
+                      onClick={() => { setCurrency(code); setIsLanguageOpen(false); }}
+                      className={`w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary transition-colors ${
+                        currency === code ? 'text-primary font-black bg-primary/10' : 'text-gray-700 dark:text-gray-300'
+                      }`}
                     >
-                      {lang}
+                      {info.label}
                     </button>
                   ))}
                 </motion.div>

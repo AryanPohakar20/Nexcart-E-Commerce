@@ -23,7 +23,8 @@ const Cart = () => {
     moveToSaveLater,
     moveToCartFromSaveLater,
     removeFromSaveLater,
-    showToast
+    showToast,
+    formatPrice
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -262,14 +263,14 @@ const Cart = () => {
                         {/* Prices */}
                         <div className="text-right min-w-[100px] space-y-1">
                           <p className="text-xs font-extrabold text-white">
-                            ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
+                            {formatPrice(item.product.price * item.quantity)}
                           </p>
                           <div className="flex items-center justify-end gap-1.5">
                             <span className="text-[10px] text-gray-500 line-through">
-                              ₹{(item.product.mrp * item.quantity).toLocaleString('en-IN')}
+                              {formatPrice(item.product.mrp * item.quantity)}
                             </span>
                             <span className="text-[9px] text-red-400 font-bold">
-                              Save ₹{((item.product.mrp - item.product.price) * item.quantity).toLocaleString('en-IN')}
+                              Save {formatPrice((item.product.mrp - item.product.price) * item.quantity)}
                             </span>
                           </div>
                         </div>
@@ -363,7 +364,7 @@ const Cart = () => {
                         <img src={item.product.image} alt={item.product.title} className="w-16 h-16 rounded-lg object-cover bg-black/10" />
                         <div className="flex-1 min-w-0 text-left space-y-1">
                           <h4 className="text-xs font-bold text-white line-clamp-1">{item.product.title}</h4>
-                          <p className="text-xs text-primary font-black">₹{item.product.price.toLocaleString('en-IN')}</p>
+                          <p className="text-xs text-primary font-black">{formatPrice(item.product.price)}</p>
                           <div className="flex items-center gap-3 pt-1.5">
                             <button 
                               onClick={() => moveToCartFromSaveLater(item.product)}
@@ -487,37 +488,37 @@ const Cart = () => {
               <div className="space-y-3 text-xs">
                 <div className="flex justify-between text-gray-400">
                   <span>Price ({cart.length} items)</span>
-                  <span className="text-white font-bold">₹{cartSubtotal.toLocaleString('en-IN')}</span>
+                  <span className="text-white font-bold">{formatPrice(cartSubtotal)}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>GST (12% standard)</span>
-                  <span className="text-white font-bold">₹{tax.toLocaleString('en-IN')}</span>
+                  <span className="text-white font-bold">{formatPrice(tax)}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Delivery Charges</span>
                   <span className={shippingFee === 0 ? 'text-green-500 font-extrabold' : 'text-white font-bold'}>
-                    {shippingFee === 0 ? 'FREE' : `₹${shippingFee}`}
+                    {shippingFee === 0 ? 'FREE' : formatPrice(shippingFee)}
                   </span>
                 </div>
 
                 {discount > 0 && (
                   <div className="flex justify-between text-green-500 font-semibold bg-green-500/10 p-2.5 rounded-xl border border-green-500/20">
                     <span>Coupon Discount</span>
-                    <span>-₹{discount.toLocaleString('en-IN')}</span>
+                    <span>-{formatPrice(discount)}</span>
                   </div>
                 )}
 
                 {/* Free Shipping Alert Threshold Indicator */}
                 {!isFreeShipping && cartSubtotal > 0 && (
                   <div className="text-[10px] text-primary bg-primary/10 border border-primary/20 p-2.5 rounded-xl text-center leading-relaxed">
-                    Add <strong>₹{(20000 - cartSubtotal).toLocaleString('en-IN')}</strong> more for <strong>FREE SHIPPING</strong>.
+                    Add <strong>{formatPrice(20000 - cartSubtotal)}</strong> more for <strong>FREE SHIPPING</strong>.
                   </div>
                 )}
 
                 <div className="flex justify-between pt-3 border-t border-white/5 text-sm font-bold text-white">
                   <span>Grand Total</span>
                   <span className="text-primary text-base font-black shadow-yellow-glow">
-                    ₹{grandTotal.toLocaleString('en-IN')}
+                    {formatPrice(grandTotal)}
                   </span>
                 </div>
               </div>
@@ -592,7 +593,7 @@ const Cart = () => {
                     >
                       {prod.title}
                     </h4>
-                    <p className="text-xs font-extrabold text-white">₹{prod.price.toLocaleString('en-IN')}</p>
+                    <p className="text-xs font-extrabold text-white">{formatPrice(prod.price)}</p>
                   </div>
                 </div>
                 <button 

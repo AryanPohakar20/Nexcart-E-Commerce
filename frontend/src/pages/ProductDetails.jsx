@@ -9,7 +9,7 @@ import ProductCard from '../components/ProductCard';
 const ProductDetails = () => {
   const id = useParams().id;
   const navigate = useNavigate();
-  const { addToCart, wishlist, toggleWishlist, toggleCompare, comparedProducts, showToast } = useContext(AppContext);
+  const { addToCart, wishlist, toggleWishlist, toggleCompare, comparedProducts, showToast, formatPrice } = useContext(AppContext);
 
   // Retrieve current product
   const product = useMemo(() => {
@@ -180,9 +180,9 @@ const ProductDetails = () => {
 
             {/* Pricing Section */}
             <div className="flex items-baseline gap-3 pt-2">
-              <span className="text-3xl font-black text-white">₹{product.price.toLocaleString('en-IN')}</span>
+              <span className="text-3xl font-black text-white">{formatPrice(product.price)}</span>
               {product.mrp > product.price && (
-                <span className="text-sm text-gray-500 line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+                <span className="text-sm text-gray-500 line-through">{formatPrice(product.mrp)}</span>
               )}
               {product.discount > 0 && (
                 <span className="text-xs text-primary font-bold bg-primary/10 border border-primary/20 px-2 py-0.5 rounded uppercase tracking-wider">

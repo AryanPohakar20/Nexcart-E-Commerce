@@ -1,11 +1,47 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { PRODUCTS, COUPONS } from '../constants/dummyData';
 import { AuthContext } from './AuthContext';
+import chatService from '../services/chatService';
+import socketService from '../services/socketService';
+
+export const CURRENCIES = {
+  USD: { code: 'USD', symbol: '$', rate: 1 / 85, locale: 'en-US', label: 'EN / USD' },
+  INR: { code: 'INR', symbol: '₹', rate: 1, locale: 'en-IN', label: 'IN / INR' },
+  EUR: { code: 'EUR', symbol: '€', rate: 1 / 92, locale: 'de-DE', label: 'EU / EUR' },
+  GBP: { code: 'GBP', symbol: '£', rate: 1 / 108, locale: 'en-GB', label: 'UK / GBP' },
+};
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
+
+  // Currency State
+  const [currency, setCurrencyState] = useState(() => {
+    return localStorage.getItem('nexcart-currency') || 'USD';
+  });
+
+  const setCurrency = (newCurrency) => {
+    if (CURRENCIES[newCurrency]) {
+      setCurrencyState(newCurrency);
+      localStorage.setItem('nexcart-currency', newCurrency);
+    }
+  };
+
+  const formatPrice = (amountInINR) => {
+    if (amountInINR === undefined || amountInINR === null || isNaN(amountInINR)) return '';
+    const current = CURRENCIES[currency] || CURRENCIES.USD;
+    const converted = Number(amountInINR) * current.rate;
+
+    if (current.code === 'INR') {
+      return `${current.symbol}${Math.round(converted).toLocaleString('en-IN')}`;
+    }
+
+    return `${current.symbol}${converted.toLocaleString(current.locale, {
+      minimumFractionDigits: converted < 10 ? 2 : 0,
+      maximumFractionDigits: 2,
+    })}`;
+  };
 
   // Theme State (Dark mode default, saved in Local Storage)
   const [theme, setTheme] = useState(() => {
@@ -77,6 +113,40 @@ export const AppProvider = ({ children }) => {
 
   // Toast System State
   const [toasts, setToasts] = useState([]);
+
+  // Chat Unread Count State
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  const fetchUnreadChatCount = async () => {
+    try {
+      const res = await chatService.getUnreadCount();
+      if (res.success) {
+        setUnreadChatCount(res.count);
+      }
+    } catch (error) {
+      console.error('Error fetching unread chat count:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      socketService.connect();
+      fetchUnreadChatCount();
+
+      const handleUnreadCountUpdate = (totalUnread) => {
+        setUnreadChatCount(totalUnread);
+      };
+
+      socketService.on('updateTotalUnreadCount', handleUnreadCountUpdate);
+
+      return () => {
+        socketService.off('updateTotalUnreadCount', handleUnreadCountUpdate);
+      };
+    } else {
+      socketService.disconnect();
+      setUnreadChatCount(0);
+    }
+  }, [user]);
 
   const showToast = (message, type = 'success') => {
     const id = Date.now();
@@ -344,6 +414,11 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider
       value={{
+        user,
+        currency,
+        setCurrency,
+        formatPrice,
+        CURRENCIES,
         theme,
         setTheme,
         toggleTheme,
@@ -374,7 +449,9 @@ export const AppProvider = ({ children }) => {
         applyCouponCode,
         removeCouponCode,
         markNotificationRead,
-        clearNotifications
+        clearNotifications,
+        unreadChatCount,
+        setUnreadChatCount
       }}
     >
       {children}

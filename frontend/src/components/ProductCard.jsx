@@ -5,7 +5,7 @@ import { AppContext } from '../context/AppContext';
 import { FiHeart, FiEye, FiActivity, FiShoppingCart, FiStar, FiX } from 'react-icons/fi';
 
 const ProductCard = ({ product }) => {
-  const { addToCart, wishlist, toggleWishlist, toggleCompare, comparedProducts } = useContext(AppContext);
+  const { addToCart, wishlist, toggleWishlist, toggleCompare, comparedProducts, formatPrice } = useContext(AppContext);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -132,9 +132,9 @@ const ProductCard = ({ product }) => {
           {/* Pricing area */}
           <div className="pt-2 border-t border-white/5 space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-extrabold text-white group-hover:text-primary transition-colors duration-300">₹{product.price.toLocaleString('en-IN')}</span>
+              <span className="text-lg font-extrabold text-white group-hover:text-primary transition-colors duration-300">{formatPrice(product.price)}</span>
               {product.mrp > product.price && (
-                <span className="text-xs text-gray-500 line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+                <span className="text-xs text-gray-500 line-through">{formatPrice(product.mrp)}</span>
               )}
             </div>
 
@@ -200,9 +200,9 @@ const ProductCard = ({ product }) => {
                     <p className="text-xs text-gray-400 mt-2 line-clamp-3 leading-relaxed">{product.description}</p>
                     
                     <div className="flex items-center gap-2 mt-3">
-                      <span className="text-xl font-black text-white">₹{product.price.toLocaleString('en-IN')}</span>
+                      <span className="text-xl font-black text-white">{formatPrice(product.price)}</span>
                       {product.mrp > product.price && (
-                        <span className="text-xs text-gray-500 line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+                        <span className="text-xs text-gray-500 line-through">{formatPrice(product.mrp)}</span>
                       )}
                     </div>
                   </div>

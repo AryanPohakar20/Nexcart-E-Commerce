@@ -6,7 +6,7 @@ import { FiMapPin, FiCreditCard, FiDollarSign, FiPlus, FiChevronRight, FiCheck }
 
 const Checkout = () => {
   const { 
-    cart, addresses, addAddress, appliedCoupon, clearCart, setOrders, showToast 
+    cart, addresses, addAddress, appliedCoupon, clearCart, setOrders, showToast, formatPrice 
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -404,7 +404,7 @@ const Checkout = () => {
                     <p className="font-bold text-white truncate">{item.product.title}</p>
                     <span className="text-[10px] text-gray-500">Qty: {item.quantity}</span>
                   </div>
-                  <span className="font-semibold text-gray-300">₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-gray-300">{formatPrice(item.product.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
@@ -413,25 +413,25 @@ const Checkout = () => {
             <div className="border-t border-white/5 pt-4 space-y-2 text-xs divide-y divide-white/5">
               <div className="flex justify-between py-1.5 text-gray-400">
                 <span>Subtotal</span>
-                <span className="text-white">₹{cartSubtotal.toLocaleString('en-IN')}</span>
+                <span className="text-white">{formatPrice(cartSubtotal)}</span>
               </div>
               <div className="flex justify-between py-1.5 text-gray-400">
                 <span>GST (12% standard)</span>
-                <span className="text-white">₹{tax.toLocaleString('en-IN')}</span>
+                <span className="text-white">{formatPrice(tax)}</span>
               </div>
               <div className="flex justify-between py-1.5 text-gray-400">
                 <span>Shipping fee</span>
-                <span>{shippingFee === 0 ? 'FREE' : `₹${shippingFee}`}</span>
+                <span>{shippingFee === 0 ? 'FREE' : formatPrice(shippingFee)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between py-1.5 text-green-500 font-semibold">
                   <span>Discount</span>
-                  <span>-₹{discount.toLocaleString('en-IN')}</span>
+                  <span>-{formatPrice(discount)}</span>
                 </div>
               )}
               <div className="flex justify-between py-3 text-sm font-bold text-white">
                 <span>Grand Total</span>
-                <span className="text-primary text-base">₹{grandTotal.toLocaleString('en-IN')}</span>
+                <span className="text-primary text-base">{formatPrice(grandTotal)}</span>
               </div>
             </div>
 

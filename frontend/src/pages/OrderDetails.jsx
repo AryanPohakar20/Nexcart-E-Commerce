@@ -6,7 +6,7 @@ import { FiChevronRight, FiFileText, FiMapPin, FiCreditCard, FiTruck } from 'rea
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { orders } = useContext(AppContext);
+  const { orders, formatPrice } = useContext(AppContext);
 
   const order = useMemo(() => {
     return orders.find(o => o.id === id) || orders[0];
@@ -52,7 +52,7 @@ const OrderDetails = () => {
                   <div className="flex-grow">
                     <h4 className="text-xs font-bold text-white line-clamp-1">{item.product.title}</h4>
                     <p className="text-[10px] text-gray-500 font-semibold mt-0.5">Brand: {item.product.brand} | Qty: {item.quantity}</p>
-                    <p className="text-xs font-extrabold text-white mt-1">₹{item.product.price.toLocaleString('en-IN')}</p>
+                    <p className="text-xs font-extrabold text-white mt-1">{formatPrice(item.product.price)}</p>
                   </div>
                 </div>
               ))}
@@ -93,25 +93,25 @@ const OrderDetails = () => {
             <div className="space-y-2 text-xs divide-y divide-white/5">
               <div className="flex justify-between py-1.5 text-gray-400">
                 <span>Subtotal</span>
-                <span className="text-white">₹{subtotal.toLocaleString('en-IN')}</span>
+                <span className="text-white">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between py-1.5 text-gray-400">
                 <span>GST (12%)</span>
-                <span className="text-white">₹{gst.toLocaleString('en-IN')}</span>
+                <span className="text-white">{formatPrice(gst)}</span>
               </div>
               <div className="flex justify-between py-1.5 text-gray-400">
                 <span>Shipping fee</span>
-                <span>{shipping === 0 ? 'FREE' : `₹${shipping}`}</span>
+                <span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between py-1.5 text-green-500 font-semibold">
                   <span>Discount Applied</span>
-                  <span>-₹{discount.toLocaleString('en-IN')}</span>
+                  <span>-{formatPrice(discount)}</span>
                 </div>
               )}
               <div className="flex justify-between py-3 text-sm font-bold text-white">
                 <span>Grand Total Paid</span>
-                <span className="text-primary text-base">₹{order.amount.toLocaleString('en-IN')}</span>
+                <span className="text-primary text-base">{formatPrice(order.amount)}</span>
               </div>
             </div>
 

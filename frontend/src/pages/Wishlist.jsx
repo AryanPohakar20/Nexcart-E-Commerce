@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fi';
 
 const Wishlist = () => {
-  const { wishlist, toggleWishlist, addToCart, showToast } = useContext(AppContext);
+  const { wishlist, toggleWishlist, addToCart, showToast, formatPrice } = useContext(AppContext);
   const navigate = useNavigate();
 
   const handleAddToCart = (product) => {
@@ -161,9 +161,9 @@ const Wishlist = () => {
                       </div>
 
                       <div className="flex items-baseline gap-2 pt-1">
-                        <span className="text-sm font-black text-white">₹{prod.price.toLocaleString('en-IN')}</span>
+                        <span className="text-sm font-black text-white">{formatPrice(prod.price)}</span>
                         {prod.mrp > prod.price && (
-                          <span className="text-[10px] text-gray-500 line-through">₹{prod.mrp.toLocaleString('en-IN')}</span>
+                          <span className="text-[10px] text-gray-500 line-through">{formatPrice(prod.mrp)}</span>
                         )}
                       </div>
                     </div>

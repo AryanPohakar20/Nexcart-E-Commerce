@@ -5,12 +5,19 @@ import { FiUser, FiMail, FiPhone, FiCalendar, FiEdit2, FiCheck } from 'react-ico
 
 const UserProfile = () => {
   const { user, setUser, showToast } = useContext(AppContext);
+  
+  const displayName = user?.firstName 
+    ? `${user.firstName} ${user.lastName || ''}`.trim() 
+    : user?.name || user?.username || 'NexCart User';
+
+  const avatarUrl = user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=FFC107&color=000`;
+
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    name: displayName,
     phone: user?.phone || '',
-    bio: user?.bio || '',
-    avatar: user?.avatar || ''
+    bio: user?.bio || 'NexCart Smart Shopper',
+    avatar: avatarUrl
   });
 
   const handleSave = (e) => {
@@ -28,8 +35,8 @@ const UserProfile = () => {
   return (
     <div className="space-y-8 text-left">
       <div className="border-b border-white/5 pb-6">
-        <h1 className="text-2xl font-black text-white tracking-tight">My Profile Profile</h1>
-        <p className="text-xs text-gray-500 mt-1">Manage user information, contact data, and vendor memberships.</p>
+        <h1 className="text-2xl font-black text-white tracking-tight">My NexCart Profile</h1>
+        <p className="text-xs text-gray-500 mt-1">Manage user information, authentication settings, and account details.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -37,28 +44,32 @@ const UserProfile = () => {
         {/* Left Column: Avatar & Summary Box */}
         <div className="lg:col-span-1 bg-cardBg border border-white/5 p-6 rounded-3xl flex flex-col items-center text-center space-y-4 h-fit">
           <motion.img 
-            src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&q=80'} 
+            src={avatarUrl} 
             alt="Avatar" 
             animate={{ scale: [1, 1.04, 1] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             className="w-24 h-24 rounded-full object-cover border-2 border-primary/40 shadow-yellow-glow"
           />
           <div>
-            <h2 className="text-base font-bold text-white">{user?.name}</h2>
+            <h2 className="text-base font-bold text-white">{displayName}</h2>
             <span className="text-[9px] font-extrabold uppercase tracking-widest bg-primary/10 border border-primary/20 text-primary px-2.5 py-0.5 rounded-full inline-block mt-1">
-              Member Level: Elite
+              Member Level: {user?.role === 'admin' ? 'Administrator' : user?.role === 'seller' ? 'Marketplace Seller' : 'Elite Customer'}
             </span>
           </div>
-          <p className="text-xs text-gray-400 leading-relaxed font-medium italic">"{user?.bio}"</p>
+          <p className="text-xs text-gray-400 leading-relaxed font-medium italic">"{user?.bio || 'Smart AI Shopper'}"</p>
           
           <div className="w-full border-t border-white/5 pt-4 text-xs space-y-2 text-gray-400">
             <div className="flex justify-between">
               <span>Account Role:</span>
-              <span className="text-white font-bold uppercase">{user?.role}</span>
+              <span className="text-white font-bold uppercase">{user?.role || 'Customer'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Login Provider:</span>
+              <span className="text-primary font-bold uppercase">{user?.provider || 'Google'}</span>
             </div>
             <div className="flex justify-between">
               <span>Joined on:</span>
-              <span className="text-white font-medium">{user?.joined || 'Jan 2026'}</span>
+              <span className="text-white font-medium">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Aug 2026'}</span>
             </div>
           </div>
         </div>
@@ -78,7 +89,7 @@ const UserProfile = () => {
           <form onSubmit={handleSave} className="space-y-4 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-500 mb-1 font-bold">Display Name</label>
+                <label className="block text-gray-500 mb-1 font-bold">Full Name</label>
                 <div className="relative">
                   <FiUser className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                   <input 
@@ -98,7 +109,7 @@ const UserProfile = () => {
                   <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                   <input 
                     type="email" 
-                    value={user?.email || 'aravind@nexcart.com'}
+                    value={user?.email || ''}
                     disabled
                     className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 pl-10 text-xs text-white opacity-40 cursor-not-allowed focus:outline-none"
                   />
