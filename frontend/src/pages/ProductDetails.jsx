@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
-import { FiStar, FiHeart, FiActivity, FiShoppingCart, FiTruck, FiShield, FiRefreshCw, FiChevronDown } from 'react-icons/fi';
+import { FiStar, FiHeart, FiActivity, FiShoppingCart, FiTruck, FiShield, FiRefreshCw, FiChevronDown, FiMessageSquare } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
 import productService from '../services/productService';
 
@@ -277,6 +277,20 @@ const ProductDetails = () => {
                 <p className="text-sm font-black text-emerald-400">98%</p>
               </div>
             </div>
+
+            {/* Chat with Seller Button */}
+            {product.seller && (
+              <button
+                onClick={() => {
+                  const sellerId = product.seller?._id || product.seller;
+                  navigate(`/messages?productId=${product.id}&sellerId=${sellerId}`);
+                }}
+                className="w-full mt-2 py-2.5 bg-primary/10 border border-primary/30 hover:bg-primary/20 hover:border-primary/50 text-primary rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
+              >
+                <FiMessageSquare className="text-lg" />
+                Chat with Seller
+              </button>
+            )}
 
             {/* Delivery estimates details */}
             <div className="bg-white/5 border border-white/5 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">

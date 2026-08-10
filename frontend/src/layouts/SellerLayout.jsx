@@ -7,7 +7,7 @@ import logo from '../assets/logo.jpg';
 import { 
   FiGrid, FiPackage, FiShoppingBag, FiBarChart2, FiDollarSign, 
   FiArchive, FiSettings, FiUser, FiArrowLeft, FiLogOut, FiMenu, FiX,
-  FiShield, FiTag, FiLayers, FiCheckCircle
+  FiShield, FiTag, FiLayers, FiCheckCircle, FiMessageSquare
 } from 'react-icons/fi';
 
 import { getSellerDisplayName, getSellerAvatar } from '../utils/sellerHelpers';
@@ -83,6 +83,7 @@ const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) =>
     { name: 'Orders Pipeline', path: '/seller/orders', icon: FiShoppingBag, badge: stats.processingOrdersCount, badgeColor: 'bg-primary text-black' },
     { name: 'Intelligence & Sales', path: '/seller/analytics', icon: FiBarChart2 },
     { name: 'Stock Inventory', path: '/seller/inventory', icon: FiArchive, badge: stats.lowStockCount > 0 ? `${stats.lowStockCount} low` : null, badgeColor: 'bg-amber-500 text-black' },
+    { name: 'Customer Messages', path: '/messages', icon: FiMessageSquare },
     { name: 'Studio Settings', path: '/seller/settings', icon: FiSettings },
     { name: 'Public Profile', path: '/seller/profile', icon: FiUser },
   ];
