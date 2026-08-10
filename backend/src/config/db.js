@@ -2,15 +2,15 @@
 // MongoDB connection module using Mongoose.
 // Handles initial connection, graceful failure, and reconnection events.
 
+import dns from 'node:dns';
 import mongoose from 'mongoose';
-import dns from 'dns';
 import logger from '../utils/logger.js';
 
-// Resolve SRV DNS issues on Windows networks
+// Configure DNS resolvers to bypass local ISP DNS SRV lookup failures on Windows
 try {
   dns.setServers(['8.8.8.8', '1.1.1.1']);
-} catch (e) {
-  // Ignore DNS set error if custom servers not allowed
+} catch {
+  // Fallback to default system DNS if setServers is restricted
 }
 
 const MAX_RETRIES = 3;
@@ -56,7 +56,6 @@ const connectDB = async (retryCount = 0) => {
 
     logger.error('Could not connect to MongoDB. Enabling MOCK DATABASE mode for development.');
     process.env.MOCK_DB = 'true';
-    mongoose.set('bufferCommands', false);
   }
 };
 

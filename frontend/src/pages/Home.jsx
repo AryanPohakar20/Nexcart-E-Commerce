@@ -2,13 +2,20 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
-import { CATEGORIES, BRANDS, PRODUCTS, COUPONS, TESTIMONIALS } from '../constants/dummyData';
+import { BRANDS, COUPONS, TESTIMONIALS } from '../constants/dummyData';
 import { FiChevronLeft, FiChevronRight, FiClock, FiStar, FiPercent, FiCopy, FiCheck, FiArrowRight, FiShoppingCart, FiHeart } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
+import productService from '../services/productService';
 
 const Home = () => {
   const { addToCart, showToast } = useContext(AppContext);
   const navigate = useNavigate();
+
+  // Dynamic MongoDB state
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [trendingProducts, setTrendingProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Mouse position for Hero parallax
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -45,7 +52,7 @@ const Home = () => {
       } 
     }
   };
-  
+
   // Hero Slider State
   const [currentSlide, setCurrentSlide] = useState(0);
   const heroSlides = [
@@ -54,7 +61,7 @@ const Home = () => {
       subtitle: 'SONY WH-1000XM5',
       desc: 'Industry-leading noise cancelling wireless headphones with dual processor controls and 30 hours battery backup.',
       image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=1200&q=80',
-      actionUrl: '/product/p2',
+      actionUrl: '/products?category=audio',
       badge: 'FLAT 29% OFF'
     },
     {
@@ -62,7 +69,7 @@ const Home = () => {
       subtitle: 'iPhone 15 Pro Max',
       desc: 'Featuring the groundbreaking A17 Pro chip, a customizable Action button, and a pro-level triple camera system.',
       image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=1200&q=80',
-      actionUrl: '/product/p1',
+      actionUrl: '/products?category=mobile-phones',
       badge: 'LIMITED STOCK'
     },
     {
@@ -70,10 +77,54 @@ const Home = () => {
       subtitle: 'MacBook Pro 16"',
       desc: 'Unleash extreme speeds with the Apple M3 Max processor, 36GB memory, and liquid Retina HDR screen.',
       image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1200&q=80',
-      actionUrl: '/product/p3',
+      actionUrl: '/products?category=laptops-computers',
       badge: 'PRE-ORDER NOW'
     }
   ];
+
+  // Fetch real data from MongoDB
+  useEffect(() => {
+    let isMounted = true;
+    const fetchHomeData = async () => {
+      setLoading(true);
+      try {
+        const [featRes, trendRes, catRes] = await Promise.all([
+          productService.getFeaturedProducts({ limit: 6 }).catch(() => null),
+          productService.getTrendingProducts({ limit: 8 }).catch(() => null),
+          productService.getCategories().catch(() => null),
+        ]);
+
+        if (isMounted) {
+          if (featRes?.data?.products && featRes.data.products.length > 0) {
+            setFeaturedProducts(featRes.data.products);
+          }
+          if (trendRes?.data?.products && trendRes.data.products.length > 0) {
+            setTrendingProducts(trendRes.data.products);
+          }
+          if (catRes?.data?.categories && catRes.data.categories.length > 0) {
+            // Format categories to match UI expectation
+            const formattedCats = catRes.data.categories.map((c) => {
+              return {
+                id: c.slug || c._id,
+                name: c.name,
+                image: c.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&q=80',
+              };
+            });
+            setCategories(formattedCats);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load homepage products:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchHomeData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Countdown timer for Flash Sale
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 34, seconds: 12 });
@@ -107,6 +158,9 @@ const Home = () => {
     setTimeout(() => setCopiedCoupon(null), 3000);
   };
 
+  const flashDeals = featuredProducts.length >= 2 ? featuredProducts.slice(0, 2) : trendingProducts.slice(0, 2);
+  const trendingList = trendingProducts.length > 0 ? trendingProducts.slice(0, 8) : featuredProducts.slice(0, 8);
+
   return (
     <div className="space-y-16">
       
@@ -114,7 +168,7 @@ const Home = () => {
       <section 
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-white/5 shadow-2xl bg-black/40"
+        className="relative w-full h-[380px] md:h-[500px] rounded-3xl overflow-hidden border border-borderColor shadow-2xl bg-cardBg"
       >
         {/* Floating background gradient colors */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -195,47 +249,48 @@ const Home = () => {
                 className="absolute inset-0 flex items-center"
               >
                 {/* Background Image overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0B0B0B] via-[#0B0B0B]/80 to-transparent z-10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-bgPrimary via-bgPrimary/80 to-transparent z-10" />
                 <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
                 
-                {/* Slide Content */}
+                {/* Hero Slide details */}
                 <motion.div 
                   variants={staggerContainer}
                   initial="hidden"
                   animate="visible"
-                  className="relative z-20 max-w-lg px-8 md:px-16 space-y-4 md:space-y-6 text-left"
-                  style={{ x: mousePos.x * 0.1, y: mousePos.y * 0.1 }}
+                  className="relative z-20 max-w-xl p-6 md:p-12 space-y-4"
                 >
                   <motion.span 
                     variants={staggerItem}
-                    className="inline-block bg-primary/20 border border-primary/40 text-primary text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded"
+                    className="inline-block px-3 py-1 bg-primary text-black text-xs font-black uppercase rounded shadow-lg tracking-wider badge-glow"
                   >
                     {slide.badge}
                   </motion.span>
-
-                  <motion.div 
+                  <motion.h1 
                     variants={staggerItem}
-                    className="space-y-2"
+                    className="text-2xl sm:text-3xl md:text-5xl font-black text-textPrimary tracking-tight leading-tight"
                   >
-                    <h3 className="text-sm font-semibold uppercase tracking-widest text-accentBlue leading-none">{slide.subtitle}</h3>
-                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">{slide.title}</h1>
-                  </motion.div>
-
+                    {slide.title}
+                  </motion.h1>
+                  <motion.h2 
+                    variants={staggerItem}
+                    className="text-primary font-bold text-sm md:text-lg tracking-wide uppercase"
+                  >
+                    {slide.subtitle}
+                  </motion.h2>
                   <motion.p 
                     variants={staggerItem}
-                    className="text-xs md:text-sm text-gray-400 leading-relaxed font-medium"
+                    className="text-xs sm:text-sm text-textSecondary leading-relaxed line-clamp-2 max-w-md"
                   >
                     {slide.desc}
                   </motion.p>
-
                   <motion.button 
                     variants={staggerItem}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => navigate(slide.actionUrl)}
-                    className="btn-glow-yellow text-xs font-bold px-6 py-3 flex items-center gap-1.5 btn-premium-interactive"
+                    className="btn-glow-yellow text-xs font-extrabold flex items-center gap-2 !py-3 !px-6 text-black btn-premium-interactive"
                   >
-                    <span>Shop This Deal</span>
+                    <span>Shop Now</span>
                     <FiArrowRight />
                   </motion.button>
                 </motion.div>
@@ -279,8 +334,8 @@ const Home = () => {
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">Featured Categories</h2>
-            <p className="text-xs text-gray-500 mt-1">Discover items curated across major domains.</p>
+            <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary tracking-tight">Featured Categories</h2>
+            <p className="text-xs text-textSecondary mt-1">Discover items curated across major domains in MongoDB.</p>
           </div>
           <Link to="/products" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
             <span>Explore All</span>
@@ -289,9 +344,9 @@ const Home = () => {
         </div>
 
         <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-thin">
-          {CATEGORIES.map((cat, i) => (
+          {categories.map((cat, i) => (
             <motion.div
-              key={cat.id}
+              key={cat.id || i}
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -302,10 +357,10 @@ const Home = () => {
                 to={`/category/${cat.id}`}
                 className="flex-shrink-0 flex flex-col items-center gap-3 group"
               >
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-white/5 group-hover:border-primary/60 group-hover:shadow-yellow-glow transition-all duration-300">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-borderColor group-hover:border-primary/60 group-hover:shadow-yellow-glow transition-all duration-300">
                   <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                 </div>
-                <span className="text-xs font-semibold text-gray-400 group-hover:text-white transition-all text-center">{cat.name}</span>
+                <span className="text-xs font-semibold text-textSecondary group-hover:text-primary transition-all text-center">{cat.name}</span>
               </Link>
             </motion.div>
           ))}
@@ -325,22 +380,22 @@ const Home = () => {
         >
           <div className="space-y-4">
             <span className="bg-primary/20 border border-primary/40 text-primary text-[10px] font-extrabold px-2.5 py-1 rounded tracking-wider uppercase">Flash Sale</span>
-            <h3 className="text-2xl font-black text-white">Deals of the Day</h3>
-            <p className="text-xs text-gray-400 leading-relaxed font-medium">Limited stocks on top items. Prices return to standard soon.</p>
+            <h3 className="text-2xl font-black text-textPrimary">Deals of the Day</h3>
+            <p className="text-xs text-textSecondary leading-relaxed font-medium">Limited stocks on top items. Prices return to standard soon.</p>
             
             {/* Clock Timer */}
             <div className="flex items-center gap-3 pt-2">
               <FiClock className="text-primary text-xl animate-spin" style={{ animationDuration: '10s' }} />
               <div className="flex gap-1.5 text-center font-mono">
-                <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
+                <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
                   {String(timeLeft.hours).padStart(2, '0')}
                 </div>
                 <span className="text-primary font-bold self-center">:</span>
-                <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
+                <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
                   {String(timeLeft.minutes).padStart(2, '0')}
                 </div>
                 <span className="text-primary font-bold self-center">:</span>
-                <div className="bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-sm font-bold text-white min-w-[36px]">
+                <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
                   {String(timeLeft.seconds).padStart(2, '0')}
                 </div>
               </div>
@@ -359,7 +414,7 @@ const Home = () => {
 
         {/* Best deals preview grid */}
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {PRODUCTS.slice(0, 2).map((prod) => (
+          {flashDeals.map((prod) => (
             <ProductCard key={prod.id} product={prod} />
           ))}
         </div>
@@ -368,8 +423,8 @@ const Home = () => {
       {/* 4. Coupons Drawer */}
       <section className="space-y-6">
         <div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">Super Saver Coupons</h2>
-          <p className="text-xs text-gray-500 mt-1">Click a coupon card to copy code and apply discounts during checkout.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Super Saver Coupons</h2>
+          <p className="text-xs text-textSecondary mt-1">Click a coupon card to copy code and apply discounts during checkout.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -379,20 +434,21 @@ const Home = () => {
               whileHover={{ y: -5, boxShadow: '0 0 25px rgba(255, 193, 7, 0.25)', borderColor: 'rgba(255, 193, 7, 0.4)' }}
               whileTap={{ scale: 0.98 }}
               onClick={() => copyCoupon(cp.code)}
-              className="bg-cardBg border border-white/5 p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 relative overflow-hidden group"
+              className="bg-cardBg border border-borderColor p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 relative overflow-hidden group"
             >
-              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-darkBg" />
-              <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-darkBg" />
+              {/* Ticket punch-holes — use bgPrimary to blend with page background */}
+              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-bgPrimary" />
+              <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-bgPrimary" />
               
               <div className="pl-4 space-y-1.5">
                 <span className="text-[10px] text-accentBlue font-bold uppercase tracking-wider">Coupon Code</span>
-                <h4 className="text-lg font-black text-white tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
-                <p className="text-[10px] text-gray-400">{cp.description}</p>
+                <h4 className="text-lg font-black text-textPrimary tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
+                <p className="text-[10px] text-textSecondary">{cp.description}</p>
               </div>
 
-              <div className="flex flex-col items-center gap-1 text-center bg-white/5 border border-white/5 p-2 rounded-lg pr-4">
+              <div className="flex flex-col items-center gap-1 text-center bg-surface border border-borderColor p-2 rounded-lg pr-4">
                 <FiPercent className="text-primary text-lg" />
-                <span className="text-[10px] font-bold text-gray-400">
+                <span className="text-[10px] font-bold text-textSecondary">
                   {copiedCoupon === cp.code ? 'Copied' : 'Copy'}
                 </span>
               </div>
@@ -403,13 +459,19 @@ const Home = () => {
 
       {/* 5. Trending & Recommended Items */}
       <section className="space-y-6">
-        <div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">Trending Collections</h2>
-          <p className="text-xs text-gray-500 mt-1">Best-rated products by shoppers worldwide.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Trending Collections</h2>
+            <p className="text-xs text-textSecondary mt-1">Real-time best rated and highly reviewed products from MongoDB.</p>
+          </div>
+          <Link to="/products?sort=popular" className="text-xs text-primary font-bold hover:underline flex items-center gap-1">
+            <span>View Catalog</span>
+            <FiArrowRight />
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {PRODUCTS.slice(2, 6).map((prod) => (
+          {trendingList.map((prod) => (
             <ProductCard key={prod.id} product={prod} />
           ))}
         </div>
@@ -418,8 +480,8 @@ const Home = () => {
       {/* 6. Popular Brands Banner */}
       <section className="space-y-6">
         <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">Shop By Brands</h2>
-          <p className="text-xs text-gray-500 mt-1">Explore authentic items from elite global suppliers.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Shop By Brands</h2>
+          <p className="text-xs text-textSecondary mt-1">Explore authentic items from elite global suppliers.</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 pt-4">
@@ -429,9 +491,14 @@ const Home = () => {
               whileHover={{ y: -5, borderColor: 'rgba(255, 193, 7, 0.4)' }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(`/products?brand=${br.name}`)}
-              className="bg-cardBg border border-white/5 p-6 rounded-2xl flex items-center justify-center h-24 cursor-pointer transition-all duration-300 group"
+              className="bg-cardBg border border-borderColor p-6 rounded-2xl flex flex-col items-center justify-center gap-2 h-24 cursor-pointer transition-all duration-300 group"
             >
-              <img src={br.logoUrl} alt={br.name} className="max-h-10 max-w-full object-contain filter invert opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
+              {/* Logo: invert only in dark mode so logos stay visible in both themes */}
+              <img
+                src={br.logoUrl}
+                alt={br.name}
+                className="max-h-8 max-w-full object-contain opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 dark:invert dark:brightness-200"
+              />
             </motion.div>
           ))}
         </div>
@@ -440,8 +507,8 @@ const Home = () => {
       {/* 7. Testimonials */}
       <section className="space-y-6">
         <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-white">NexCart Reviews</h2>
-          <p className="text-xs text-gray-500 mt-1">What our premium customers have to say.</p>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">NexCart Reviews</h2>
+          <p className="text-xs text-textSecondary mt-1">What our premium customers have to say.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -453,13 +520,13 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: idx * 0.1 }}
               whileHover={{ y: -4 }}
-              className="bg-cardBg border border-white/5 hover:border-primary/30 p-6 rounded-2xl space-y-4 transition-all duration-300"
+              className="bg-cardBg border border-borderColor hover:border-primary/30 p-6 rounded-2xl space-y-4 transition-all duration-300"
             >
               <div className="flex items-center gap-3">
                 <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover border border-primary/20" />
                 <div>
-                  <h4 className="text-xs font-bold text-white">{t.name}</h4>
-                  <span className="text-[10px] text-gray-500">{t.role}</span>
+                  <h4 className="text-xs font-bold text-textPrimary">{t.name}</h4>
+                  <span className="text-[10px] text-textSecondary">{t.role}</span>
                 </div>
               </div>
 
@@ -469,7 +536,7 @@ const Home = () => {
                 ))}
               </div>
 
-              <p className="text-xs text-gray-400 leading-relaxed font-medium italic">
+              <p className="text-xs text-textSecondary leading-relaxed font-medium italic">
                 "{t.comment}"
               </p>
             </motion.div>

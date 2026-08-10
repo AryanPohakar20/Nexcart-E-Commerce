@@ -2,20 +2,19 @@ import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
-import { AuthContext } from '../context/AuthContext';
 import NexCartLogo from './NexCartLogo';
 import ThemeToggle from './ThemeToggle';
 import { CATEGORIES } from '../constants/dummyData';
+import { getRoleConfig } from '../constants/navigationMenu';
 import { 
-  FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, FiMessageSquare, FiBarChart2,
-  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid
+  FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, 
+  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid, FiSliders,
+  FiMessageSquare
 } from 'react-icons/fi';
 
 const Navbar = () => {
-  const { logout } = useContext(AuthContext);
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, loginUser, logoutUser, unreadChatCount,
-    currency, setCurrency, CURRENCIES
+    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, logoutUser, unreadChatCount 
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -51,6 +50,13 @@ const Navbar = () => {
   const wishlistCount = wishlist.length;
   const unreadNotifications = notifications.filter(n => !n.read).length;
 
+  const userName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user?.username || user?.email?.split('@')[0] || 'User');
+  const userInitial = (userName.trim()[0] || 'U').toUpperCase();
+  const roleConfig = getRoleConfig(user?.role);
+  const isCustomerOrGuest = !user || (user.role || '').toLowerCase() === 'customer';
+  const isSeller = (user?.role || '').toLowerCase() === 'seller' || (user?.role || '').toLowerCase() === 'marketplace_seller';
+  const isAdmin = (user?.role || '').toLowerCase() === 'admin';
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -58,14 +64,6 @@ const Navbar = () => {
     } else {
       navigate('/products');
     }
-  };
-
-  const switchRole = (role) => {
-    loginUser(user?.email || 'user@nexcart.com', '123456', role);
-    setIsProfileOpen(false);
-    if (role === 'seller') navigate('/seller/dashboard');
-    else if (role === 'admin') navigate('/admin/dashboard');
-    else navigate('/');
   };
 
   return (
@@ -88,70 +86,67 @@ const Navbar = () => {
           <div className="flex items-center gap-3 flex-shrink-0">
             <motion.button 
               whileTap={{ scale: 0.9 }}
-              className="lg:hidden p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-all"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle navigation menu"
+              className="lg:hidden p-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 focus:outline-none"
+              aria-label="Toggle Menu"
             >
-              {isMobileMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
+              {isMobileMenuOpen ? <FiX className="text-xl" /> : <FiMenu className="text-xl" />}
             </motion.button>
-            
-            <Link to="/" className="flex items-center hover:opacity-95 transition-opacity py-1">
-              <motion.div
-                animate={{ y: [0, -3, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-                whileHover={{ scale: 1.05 }}
-              >
-                <NexCartLogo size="md" />
-              </motion.div>
-            </Link>
+
+            <NexCartLogo />
           </div>
 
-          {/* Center: Wide & Prominent Search Bar (Desktop & Tablet) */}
-          <div className="hidden md:block flex-1 max-w-2xl relative">
-            <motion.form 
-              animate={{ maxWidth: isSearchFocused ? '800px' : '640px' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              onSubmit={handleSearch} 
-              className="flex h-11 bg-gray-100/80 dark:bg-white/[0.06] rounded-full border border-gray-200 dark:border-white/10 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-visible transition-all shadow-inner items-center px-1.5 group/search w-full"
+          {/* Center: Omni-Search Bar (Interactive & Dynamic) */}
+          <div className="hidden lg:flex flex-1 max-w-2xl mx-auto relative">
+            <form 
+              onSubmit={handleSearch}
+              className={`w-full flex items-center h-11 bg-gray-50/80 dark:bg-white/5 border rounded-full transition-all duration-300 relative ${
+                isSearchFocused 
+                  ? 'border-primary shadow-yellow-glow bg-white dark:bg-black/80' 
+                  : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+              }`}
             >
-              {/* Inline Category Dropdown Selector */}
-              <div className="relative flex-shrink-0">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
+              
+              {/* Category Dropdown selector inside search */}
+              <div className="relative h-full flex items-center">
+                <button
                   type="button"
                   onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-white dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/10 hover:border-primary/50 transition-all"
+                  className="h-full px-4 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-primary flex items-center gap-1.5 border-r border-gray-200 dark:border-white/10 rounded-l-full bg-gray-100/50 dark:bg-white/[0.02]"
                 >
-                  <span>{selectedCategory === 'All' ? 'All' : selectedCategory}</span>
-                  <FiChevronDown className={`text-xs transition-transform duration-300 ${isCategoryOpen ? 'rotate-180 text-primary' : ''}`} />
-                </motion.button>
+                  <span className="truncate max-w-[90px]">{selectedCategory}</span>
+                  <FiChevronDown className={`text-xs transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
+                </button>
 
+                {/* Category Menu Popover */}
                 <AnimatePresence>
                   {isCategoryOpen && (
                     <motion.div 
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 mt-2 w-52 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl z-50"
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 top-full mt-2 w-48 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl z-50 text-xs"
                     >
                       <button
                         type="button"
                         onClick={() => { setSelectedCategory('All'); setIsCategoryOpen(false); }}
-                        className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
+                        className={`w-full text-left px-4 py-2 hover:bg-primary/10 hover:text-primary transition-colors ${
+                          selectedCategory === 'All' ? 'text-primary font-bold bg-primary/5' : 'text-gray-700 dark:text-gray-300'
+                        }`}
                       >
-                        <span>All Categories</span>
-                        {selectedCategory === 'All' && <FiCheckCircle className="text-primary" />}
+                        All Categories
                       </button>
-                      {CATEGORIES.map(cat => (
+                      {CATEGORIES.map((cat) => (
                         <button
                           key={cat.id}
                           type="button"
                           onClick={() => { setSelectedCategory(cat.name); setIsCategoryOpen(false); }}
-                          className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
+                          className={`w-full text-left px-4 py-2 hover:bg-primary/10 hover:text-primary transition-colors ${
+                            selectedCategory === cat.name ? 'text-primary font-bold bg-primary/5' : 'text-gray-700 dark:text-gray-300'
+                          }`}
                         >
-                          <span>{cat.name}</span>
-                          {selectedCategory === cat.name && <FiCheckCircle className="text-primary" />}
+                          {cat.name}
                         </button>
                       ))}
                     </motion.div>
@@ -159,43 +154,39 @@ const Navbar = () => {
                 </AnimatePresence>
               </div>
 
-              <input 
-                type="text" 
-                placeholder="Search AI recommendations, electronics, fashion..." 
+              {/* Input Area */}
+              <input
+                type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                className="flex-grow bg-transparent text-xs sm:text-sm px-3 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
+                placeholder="Search across 50,000+ luxury products, electronics & brands..."
+                className="w-full bg-transparent px-4 text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none"
               />
-              
-              <motion.button 
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
-                type="submit" 
-                className="w-9 h-9 bg-gradient-to-r from-primary to-amber-400 text-black hover:brightness-110 rounded-full transition-all flex items-center justify-center font-bold flex-shrink-0 shadow-sm"
-                aria-label="Search"
-              >
-                <FiSearch className="text-base stroke-[2.5] group-focus-within/search:rotate-12 transition-transform duration-300" />
-              </motion.button>
-            </motion.form>
 
-            {/* Premium Sliding Suggestions / Recent Searches Dropdown */}
+              {/* Search Button */}
+              <button
+                type="submit"
+                className="h-9 px-4 mr-1 rounded-full bg-primary hover:bg-primary/90 text-black font-bold flex items-center justify-center transition-all duration-300 shadow-sm"
+                aria-label="Submit search"
+              >
+                <FiSearch className="text-base" />
+              </button>
+            </form>
+
+            {/* Smart Suggestions on focus */}
             <AnimatePresence>
-              {isSearchFocused && (
+              {isSearchFocused && !searchQuery && (
                 <motion.div 
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left space-y-3"
+                  className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 z-40 text-left"
                 >
-                  <div className="flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                    <span>Recent Searches</span>
-                    <span className="cursor-pointer hover:text-primary transition-colors">Clear</span>
-                  </div>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Trending Searches</p>
                   <div className="flex flex-wrap gap-2">
-                    {['Smart Watch', 'Sony WH-1000XM5', 'Running Shoes', 'iPhone 15', 'MacBook Pro'].map(keyword => (
+                    {['iPhone 15 Pro Max', 'Sony WH-1000XM5', 'MacBook Air M3', 'Nike Air Max', 'Rolex Submariner'].map((keyword) => (
                       <button
                         key={keyword}
                         type="button"
@@ -214,97 +205,133 @@ const Navbar = () => {
             </AnimatePresence>
           </div>
 
-          {/* Right: Actions (Seller CTA, Theme, Wishlist, Cart, Notifications, Profile) */}
+          {/* Right: Actions (Role-aware actions, Theme, Wishlist/Cart/Dashboard, Notifications, Profile) */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
             
-            {/* Become Seller Button */}
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-              <Link
-                to="/seller/become-seller"
-                className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary hover:border-primary text-xs font-bold transition-all shadow-sm"
-              >
-                <FiBriefcase className="text-sm" />
-                <span>Become Seller</span>
-              </Link>
-            </motion.div>
+            {/* Role-Specific Action CTA */}
+            {isCustomerOrGuest && (
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                <Link
+                  to="/seller/become-seller"
+                  className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary hover:border-primary text-xs font-bold transition-all shadow-sm"
+                >
+                  <FiBriefcase className="text-sm" />
+                  <span>Become Seller</span>
+                </Link>
+              </motion.div>
+            )}
+
+            {isSeller && (
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                <Link
+                  to="/seller/dashboard"
+                  className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:border-emerald-500 text-xs font-bold transition-all shadow-sm"
+                >
+                  <FiGrid className="text-sm" />
+                  <span>Seller Portal</span>
+                </Link>
+              </motion.div>
+            )}
+
+            {isAdmin && (
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                <Link
+                  to="/admin/dashboard"
+                  className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-accentBlue/40 bg-accentBlue/10 hover:bg-accentBlue/20 text-accentBlue hover:border-accentBlue text-xs font-bold transition-all shadow-sm"
+                >
+                  <FiSliders className="text-sm" />
+                  <span>Admin Portal</span>
+                </Link>
+              </motion.div>
+            )}
 
             {/* Clean Theme Toggle */}
             <ThemeToggle />
 
-            {/* Wishlist Icon */}
-            <motion.div 
-              key={`wish-${wishlistCount}`}
-              animate={{ scale: [1, 1.25, 1], rotate: wishlistCount > 0 ? [0, 8, -8, 0] : 0 }}
-              transition={{ duration: 0.4 }}
-              whileHover={{ scale: 1.1, rotate: 6 }} 
-              whileTap={{ scale: 0.9 }}
-            >
-              <Link
-                to="/wishlist"
-                className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-red-500 hover:bg-red-500/10 transition-all group block"
-                aria-label="Wishlist"
-                title="Wishlist"
+            {/* Customer-only Wishlist Icon */}
+            {isCustomerOrGuest && (
+              <motion.div 
+                key={`wish-${wishlistCount}`}
+                animate={{ scale: [1, 1.25, 1], rotate: wishlistCount > 0 ? [0, 8, -8, 0] : 0 }}
+                transition={{ duration: 0.4 }}
+                whileHover={{ scale: 1.1, rotate: 6 }} 
+                whileTap={{ scale: 0.9 }}
               >
-                <FiHeart className="text-lg sm:text-xl transition-transform" />
-                {wishlistCount > 0 && (
-                  <motion.span 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-pulse"
-                  >
-                    {wishlistCount}
-                  </motion.span>
-                )}
-              </Link>
-            </motion.div>
+                <Link
+                  to="/wishlist"
+                  className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-red-500 hover:bg-red-500/10 transition-all group block"
+                  aria-label="Wishlist"
+                  title="Wishlist"
+                >
+                  <FiHeart className="text-lg sm:text-xl transition-transform" />
+                  {wishlistCount > 0 && (
+                    <motion.span 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-pulse"
+                    >
+                      {wishlistCount}
+                    </motion.span>
+                  )}
+                </Link>
+              </motion.div>
+            )}
 
-            {/* C2C Messages Icon */}
-            <motion.div 
-              whileHover={{ scale: 1.1 }} 
-              whileTap={{ scale: 0.9 }}
-            >
-              <Link
-                to="/messages"
-                className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-amber-500 hover:bg-amber-500/10 transition-all group block"
-                aria-label="C2C Marketplace Messages"
-                title="Messages"
+            {/* Customer-only Cart Icon */}
+            {isCustomerOrGuest && (
+              <motion.div 
+                key={`cart-${cartCount}`}
+                animate={{ scale: [1, 1.25, 1], y: cartCount > 0 ? [0, -6, 0] : 0 }}
+                transition={{ duration: 0.4 }}
+                whileHover={{ scale: 1.1 }} 
+                whileTap={{ scale: 0.9 }}
               >
-                <FiMessageSquare className="text-lg sm:text-xl transition-transform" />
-                {unreadChatCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-amber-500 text-black text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-pulse">
-                    {unreadChatCount}
-                  </span>
-                )}
-              </Link>
-            </motion.div>
+                <Link
+                  to="/cart"
+                  className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group block"
+                  aria-label="Shopping Cart"
+                  title="Shopping Cart"
+                >
+                  <FiShoppingCart className="text-lg sm:text-xl transition-transform" />
+                  {cartCount > 0 && (
+                    <motion.span 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [0.8, 1.25, 1] }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-gradient-to-r from-primary to-amber-400 text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow"
+                    >
+                      {cartCount}
+                    </motion.span>
+                  )}
+                </Link>
+              </motion.div>
+            )}
 
-            {/* Cart Icon */}
-            <motion.div 
-              key={`cart-${cartCount}`}
-              animate={{ scale: [1, 1.25, 1], y: cartCount > 0 ? [0, -6, 0] : 0 }}
-              transition={{ duration: 0.4 }}
-              whileHover={{ scale: 1.1 }} 
-              whileTap={{ scale: 0.9 }}
-            >
-              <Link
-                to="/cart"
-                className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group block"
-                aria-label="Shopping Cart"
-                title="Shopping Cart"
+            {/* Messages Chat Icon */}
+            {user && (
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
               >
-                <FiShoppingCart className="text-lg sm:text-xl transition-transform" />
-                {cartCount > 0 && (
-                  <motion.span 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: [0.8, 1.25, 1] }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-gradient-to-r from-primary to-amber-400 text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow"
-                  >
-                    {cartCount}
-                  </motion.span>
-                )}
-              </Link>
-            </motion.div>
+                <Link
+                  to="/messages"
+                  className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group block"
+                  aria-label="Messages"
+                  title="Messages"
+                >
+                  <FiMessageSquare className="text-lg sm:text-xl transition-transform" />
+                  {unreadChatCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-primary text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow"
+                    >
+                      {unreadChatCount}
+                    </motion.span>
+                  )}
+                </Link>
+              </motion.div>
+            )}
 
             {/* Notifications Icon */}
             <div className="relative">
@@ -378,21 +405,29 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
 
-            {/* User Profile Avatar */}
+            {/* User Profile Avatar & Dropdown Menu */}
             <div className="relative">
               {user ? (
                 <motion.button
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-2 p-0.5 rounded-full border-2 border-primary/60 hover:border-primary transition-all group focus:outline-none"
+                  className="flex items-center gap-2 p-0.5 rounded-full border-2 border-primary/60 hover:border-primary transition-all group focus:outline-none bg-primary/10"
                   aria-label="User profile"
+                  title={userName}
                 >
-                  <img
-                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.firstName || user.name || user.username || 'User')}&background=FFC107&color=000`}
-                    alt={user.firstName || user.name || user.username || 'User'}
-                    className="w-7 sm:w-8 h-7 sm:h-8 rounded-full object-cover group-hover:scale-105 transition-transform"
-                  />
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={userName}
+                      className="w-7 sm:w-8 h-7 sm:h-8 rounded-full object-cover group-hover:scale-105 transition-transform"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-gradient-to-tr from-primary to-amber-400 text-black font-extrabold flex items-center justify-center text-xs sm:text-sm shadow-sm border border-primary/40">
+                      {userInitial}
+                    </div>
+                  )}
                 </motion.button>
               ) : (
                 <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
@@ -406,7 +441,7 @@ const Navbar = () => {
                 </motion.div>
               )}
 
-              {/* User Profile Popover */}
+              {/* Redesigned Dynamic Role-Based Profile Popover */}
               <AnimatePresence>
                 {isProfileOpen && user && (
                   <motion.div 
@@ -414,59 +449,56 @@ const Navbar = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left"
+                    className="absolute right-0 top-full mt-3 w-72 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl p-4 z-50 text-left"
                   >
+                    {/* User Identity Header */}
                     <div className="flex items-center gap-3 border-b border-gray-200 dark:border-white/10 pb-3 mb-3">
-                      <img
-                        src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.firstName || user.name || user.username || 'User')}&background=FFC107&color=000`}
-                        alt={user.firstName || user.name || user.username || 'User'}
-                        className="w-10 h-10 rounded-full object-cover border border-primary"
-                      />
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                          {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.name || user.username || 'User'}
-                        </h4>
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={userName} className="w-11 h-11 rounded-full object-cover border-2 border-primary flex-shrink-0" />
+                      ) : (
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-primary to-amber-400 text-black font-black flex items-center justify-center text-base shadow-md border-2 border-primary flex-shrink-0">
+                          {userInitial}
+                        </div>
+                      )}
+                      <div className="overflow-hidden">
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{userName}</h4>
                         <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-primary/20 text-primary">
-                          {user.role || 'Customer'} Account
+                        <span className={`inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${roleConfig.badgeClass}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${roleConfig.dotColor}`} />
+                          {roleConfig.roleLabel}
                         </span>
                       </div>
                     </div>
 
-                    <div className="space-y-1 text-xs pt-1">
-                      <Link
-                        to="/profile"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="block px-3 py-2 rounded-lg hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-colors"
-                      >
-                        My Profile & NexCart Details
-                      </Link>
-                      <Link
-                        to="/orders"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="block px-3 py-2 rounded-lg hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-colors"
-                      >
-                        My Orders
-                      </Link>
-                      <Link
-                        to="/addresses"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="block px-3 py-2 rounded-lg hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-colors"
-                      >
-                        Saved Addresses
-                      </Link>
-                      <button
-                        onClick={async () => {
-                          if (logout) await logout();
-                          if (logoutUser) logoutUser();
-                          setIsProfileOpen(false);
-                          navigate('/login');
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-lg text-red-500 hover:bg-red-500/10 font-bold transition-colors flex items-center justify-between mt-2 border-t border-gray-200 dark:border-white/10 pt-2"
-                      >
-                        <span>Logout</span>
-                        <FiLogOut />
-                      </button>
+                    {/* Centralized Dynamic Role Menu */}
+                    <div className="space-y-1 text-xs">
+                      {roleConfig.menu.map((item) => {
+                        const IconComponent = item.icon;
+                        return (
+                          <Link
+                            key={item.name}
+                            to={item.path}
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-all group"
+                          >
+                            <IconComponent className="text-sm text-gray-400 group-hover:text-primary transition-colors flex-shrink-0" />
+                            <span className="truncate">{item.name}</span>
+                          </Link>
+                        );
+                      })}
+
+                      {/* Divider & Logout Action */}
+                      <div className="pt-2 mt-1 border-t border-gray-200 dark:border-white/10">
+                        <button
+                          onClick={() => { logoutUser(); setIsProfileOpen(false); }}
+                          className="w-full text-left px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-500/10 font-bold transition-all flex items-center justify-between group"
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <FiLogOut className="text-sm flex-shrink-0 group-hover:-translate-x-0.5 transition-transform" />
+                            <span>Logout</span>
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -512,7 +544,7 @@ const Navbar = () => {
               className="flex items-center gap-1.5 font-medium hover:text-primary transition-colors"
             >
               <FiGlobe className="text-xs text-accentBlue" />
-              <span>{CURRENCIES[currency]?.label || 'EN / USD'}</span>
+              <span>{selectedLang}</span>
               <FiChevronDown className="text-[10px]" />
             </button>
 
@@ -525,15 +557,13 @@ const Navbar = () => {
                   transition={{ duration: 0.2 }}
                   className="absolute right-0 top-full mt-2 w-36 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-xl shadow-xl z-50 text-xs"
                 >
-                  {Object.entries(CURRENCIES).map(([code, info]) => (
+                  {['EN / USD', 'IN / INR', 'EU / EUR', 'UK / GBP'].map(lang => (
                     <button
-                      key={code}
-                      onClick={() => { setCurrency(code); setIsLanguageOpen(false); }}
-                      className={`w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary transition-colors ${
-                        currency === code ? 'text-primary font-black bg-primary/10' : 'text-gray-700 dark:text-gray-300'
-                      }`}
+                      key={lang}
+                      onClick={() => { setSelectedLang(lang); setIsLanguageOpen(false); }}
+                      className="w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 transition-colors"
                     >
-                      {info.label}
+                      {lang}
                     </button>
                   ))}
                 </motion.div>
@@ -581,13 +611,67 @@ const Navbar = () => {
               <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
                 Categories
               </Link>
-              <Link to="/seller/become-seller" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-primary/10 border border-primary/30 text-primary font-bold">
-                Become Seller
-              </Link>
-              <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200 flex items-center justify-between">
-                <span>Wishlist</span>
-                <span className="text-primary font-extrabold">{wishlistCount}</span>
-              </Link>
+
+              {isCustomerOrGuest && (
+                <>
+                  <Link to="/seller/become-seller" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-primary/10 border border-primary/30 text-primary font-bold">
+                    Become Seller
+                  </Link>
+                  <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200 flex items-center justify-between">
+                    <span>Wishlist</span>
+                    <span className="text-primary font-extrabold">{wishlistCount}</span>
+                  </Link>
+                </>
+              )}
+
+              {isSeller && (
+                <>
+                  <Link to="/seller/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold">
+                    Seller Dashboard
+                  </Link>
+                  <Link to="/seller/products" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
+                    My Products
+                  </Link>
+                </>
+              )}
+
+              {isAdmin && (
+                <>
+                  <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-accentBlue/10 border border-accentBlue/30 text-accentBlue font-bold">
+                    Admin Dashboard
+                  </Link>
+                  <Link to="/admin/users" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
+                    Manage Users
+                  </Link>
+                </>
+              )}
+
+              {user ? (
+                <Link 
+                  to={isSeller ? "/seller/dashboard" : isAdmin ? "/admin/dashboard" : "/profile"} 
+                  onClick={() => setIsMobileMenuOpen(false)} 
+                  className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200 flex items-center gap-2 col-span-2 border border-gray-200 dark:border-white/10"
+                >
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={userName} className="w-6 h-6 rounded-full object-cover border border-primary" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-primary text-black font-bold flex items-center justify-center text-[10px]">
+                      {userInitial}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between w-full overflow-hidden">
+                    <span className="truncate">{userName}</span>
+                    <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${roleConfig.badgeClass}`}>
+                      {roleConfig.roleLabel}
+                    </span>
+                  </div>
+                </Link>
+              ) : (
+                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-primary text-black font-extrabold flex items-center gap-1.5 justify-center col-span-2 shadow-yellow-glow">
+                  <FiUser />
+                  <span>Login / Register</span>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

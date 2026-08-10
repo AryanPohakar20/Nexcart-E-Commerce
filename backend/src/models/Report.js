@@ -1,38 +1,82 @@
+// src/models/Report.js
+// Dispute & Incident model for the Marketplace Trust & Safety Center.
+
 import mongoose from 'mongoose';
 
 const reportSchema = new mongoose.Schema(
   {
-    reportedUser: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    reportId: {
+      type: String,
       required: true,
+      unique: true,
+      trim: true,
+    },
+    type: {
+      type: String,
+      required: true,
+      enum: ['counterfeit', 'payment', 'abuse', 'fraud', 'other'],
+      default: 'other',
       index: true,
     },
-    reportedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    target: {
+      type: String,
       required: true,
-      index: true,
+      trim: true,
     },
-    conversationId: {
+    targetType: {
+      type: String,
+      enum: ['Seller', 'Product', 'User', 'Order'],
+      default: 'Seller',
+    },
+    targetId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Conversation',
-      required: false,
+      default: null,
     },
     reason: {
       type: String,
       required: true,
       trim: true,
     },
-    description: {
+    reporter: {
       type: String,
-      default: '',
+      required: true,
       trim: true,
+    },
+    reporterId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    priority: {
+      type: String,
+      enum: ['low', 'medium', 'high', 'critical'],
+      default: 'medium',
+      index: true,
     },
     status: {
       type: String,
-      enum: ['pending', 'reviewed', 'resolved', 'dismissed'],
-      default: 'pending',
+      enum: ['open', 'resolved', 'dismissed'],
+      default: 'open',
+      index: true,
+    },
+    resolutionAction: {
+      type: String,
+      enum: ['dismiss', 'resolve', 'ban_entity', 'none'],
+      default: 'none',
+    },
+    adminRemarks: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    resolvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    resolvedAt: {
+      type: Date,
+      default: null,
     },
   },
   {
@@ -40,6 +84,7 @@ const reportSchema = new mongoose.Schema(
   }
 );
 
-const Report = mongoose.model('Report', reportSchema);
+reportSchema.index({ status: 1, priority: 1, createdAt: -1 });
 
+const Report = mongoose.model('Report', reportSchema);
 export default Report;

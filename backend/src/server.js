@@ -1,6 +1,7 @@
 // src/server.js
-// Application entry point.
-// Loads environment variables, validates them, connects to MongoDB, attaches Socket.IO, then starts HTTP server.
+// Application entry point (reloaded for bulk admin user routes).
+
+// Loads environment variables, validates them, connects to MongoDB, then starts HTTP server.
 // Also handles graceful shutdown on SIGTERM/SIGINT and uncaught exceptions.
 
 import 'dotenv/config'; // Load .env variables FIRST, before any other imports
@@ -8,8 +9,8 @@ import http from 'http';
 import validateEnv from './config/env.js';
 import connectDB from './config/db.js';
 import app from './app.js';
-import { initSocketServer } from './sockets/chatSocket.js';
 import logger from './utils/logger.js';
+import { initSocketServer } from './sockets/chatSocket.js';
 
 // ─── Validate Environment ─────────────────────────────────────────────────────
 validateEnv();
@@ -38,9 +39,10 @@ const startServer = async () => {
     app.set('io', io);
 
     const server = httpServer.listen(PORT, () => {
-      logger.info(`🚀 NexCart Messenger Backend running on http://localhost:${PORT}`);
+      logger.info(`🚀 NexCart Backend running on http://localhost:${PORT}`);
       logger.info(`⚡ Socket.IO real-time engine initialized`);
       logger.info(`📌 Environment: ${process.env.NODE_ENV}`);
+      logger.info(`🩺 Health check: http://localhost:${PORT}/api/health`);
     });
 
     // ─── Graceful Shutdown ────────────────────────────────────────────────────
@@ -60,6 +62,7 @@ const startServer = async () => {
 
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('SIGINT', () => shutdown('SIGINT'));
+
   } catch (error) {
     logger.error(`Server startup failed: ${error.message}`);
     process.exit(1);
@@ -67,6 +70,8 @@ const startServer = async () => {
 };
 
 // ─── Handle Uncaught Exceptions ───────────────────────────────────────────────
+// These indicate programming errors; log and exit so the process manager restarts cleanly.
+
 process.on('uncaughtException', (err) => {
   logger.error(`UNCAUGHT EXCEPTION: ${err.message}`, { stack: err.stack });
   process.exit(1);

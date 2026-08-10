@@ -1,8 +1,9 @@
-import React, { useContext, useState, useMemo } from 'react';
+import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { FiMapPin, FiCreditCard, FiDollarSign, FiPlus, FiChevronRight, FiCheck } from 'react-icons/fi';
+
 
 const Checkout = () => {
   const { 
@@ -12,16 +13,24 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   // Selected States
-  const [selectedAddrId, setSelectedAddrId] = useState(addresses[0]?.id || '');
+  const [selectedAddrId, setSelectedAddrId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('UPI'); // UPI, Card, COD
 
   // Add Address Form Toggle
   const [isAddAddrOpen, setIsAddAddrOpen] = useState(false);
-  const [newAddr, setNewAddr] = useState({ name: '', street: '', city: '', state: '', pin: '', phone: '' });
+  const [newAddr, setNewAddr] = useState({ fullName: '', addressLine1: '', addressLine2: '', city: '', state: '', postalCode: '', phone: '', type: 'Home' });
 
   // Input states for payments
   const [upiId, setUpiId] = useState('');
   const [cardDetails, setCardDetails] = useState({ number: '', expiry: '', cvv: '', name: '' });
+
+  // Auto-select default or first address when addresses list loads
+  useEffect(() => {
+    if (addresses.length > 0 && !selectedAddrId) {
+      const defaultAddr = addresses.find(a => a.isDefault);
+      setSelectedAddrId(defaultAddr?._id || addresses[0]?._id || '');
+    }
+  }, [addresses, selectedAddrId]);
 
   // Calculations
   const cartSubtotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
@@ -42,18 +51,18 @@ const Checkout = () => {
 
   // Selected Address text
   const selectedAddressText = useMemo(() => {
-    const selected = addresses.find(a => a.id === selectedAddrId);
+    const selected = addresses.find(a => a._id === selectedAddrId);
     if (selected) {
-      return `${selected.street}, ${selected.city}, ${selected.state} - ${selected.pin}`;
+      return `${selected.addressLine1}${selected.addressLine2 ? ', ' + selected.addressLine2 : ''}, ${selected.city}, ${selected.state} - ${selected.postalCode}`;
     }
     return '';
   }, [selectedAddrId, addresses]);
 
   const handleAddAddress = (e) => {
     e.preventDefault();
-    if (newAddr.name && newAddr.street && newAddr.city && newAddr.pin && newAddr.phone) {
+    if (newAddr.fullName && newAddr.addressLine1 && newAddr.city && newAddr.postalCode && newAddr.phone) {
       addAddress({ ...newAddr, isDefault: addresses.length === 0 });
-      setNewAddr({ name: '', street: '', city: '', state: '', pin: '', phone: '' });
+      setNewAddr({ fullName: '', addressLine1: '', addressLine2: '', city: '', state: '', postalCode: '', phone: '', type: 'Home' });
       setIsAddAddrOpen(false);
     }
   };
@@ -95,6 +104,7 @@ const Checkout = () => {
       navigate(`/order-success/${newOrder.id}`);
     }, 2000);
   };
+
 
   return (
     <div className="space-y-8">
@@ -170,21 +180,25 @@ const Checkout = () => {
             <div className="flex flex-col gap-3">
               {addresses.map((addr) => (
                 <motion.div 
-                  key={addr.id}
+                  key={addr._id}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  onClick={() => setSelectedAddrId(addr.id)}
+                  onClick={() => setSelectedAddrId(addr._id)}
                   className={`border rounded-2xl p-4 text-left cursor-pointer transition-all ${
-                    selectedAddrId === addr.id 
+                    selectedAddrId === addr._id 
                       ? 'border-primary bg-primary/5 shadow-yellow-glow' 
                       : 'border-white/5 bg-white/5 hover:border-white/20'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-xs text-white">{addr.name}</span>
+                    <span className="font-bold text-xs text-white">{addr.fullName}</span>
                     {addr.isDefault && <span className="bg-primary/20 text-primary border border-primary/20 text-[9px] uppercase font-extrabold tracking-wider px-1.5 rounded">Default</span>}
                   </div>
-                  <p className="text-xs text-gray-400 leading-relaxed font-medium">{addr.street}, {addr.city}, {addr.state} - {addr.pin}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed font-medium">
+                    {addr.addressLine1}
+                    {addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
+                    , {addr.city}, {addr.state} - {addr.postalCode}
+                  </p>
                   <p className="text-[10px] text-gray-500 font-bold mt-1">Phone: {addr.phone}</p>
                 </motion.div>
               ))}
@@ -205,22 +219,32 @@ const Checkout = () => {
                     <label className="block text-gray-500 mb-1 font-bold">Full Name</label>
                     <input 
                       type="text" 
-                      value={newAddr.name}
-                      onChange={(e) => setNewAddr(p => ({ ...p, name: e.target.value }))}
+                      value={newAddr.fullName}
+                      onChange={(e) => setNewAddr(p => ({ ...p, fullName: e.target.value }))}
                       className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
                       placeholder="Arjun Verma"
                       required
                     />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-gray-500 mb-1 font-bold">Street Address</label>
+                    <label className="block text-gray-500 mb-1 font-bold">Street Address Line 1</label>
                     <input 
                       type="text" 
-                      value={newAddr.street}
-                      onChange={(e) => setNewAddr(p => ({ ...p, street: e.target.value }))}
+                      value={newAddr.addressLine1}
+                      onChange={(e) => setNewAddr(p => ({ ...p, addressLine1: e.target.value }))}
                       className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
                       placeholder="Apt 203, Sky Villa"
                       required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-gray-500 mb-1 font-bold">Street Address Line 2 (Optional)</label>
+                    <input 
+                      type="text" 
+                      value={newAddr.addressLine2}
+                      onChange={(e) => setNewAddr(p => ({ ...p, addressLine2: e.target.value }))}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
+                      placeholder="Opposite Tech Park"
                     />
                   </div>
                   <div>
@@ -249,8 +273,8 @@ const Checkout = () => {
                     <label className="block text-gray-500 mb-1 font-bold">PIN Code</label>
                     <input 
                       type="text" 
-                      value={newAddr.pin}
-                      onChange={(e) => setNewAddr(p => ({ ...p, pin: e.target.value }))}
+                      value={newAddr.postalCode}
+                      onChange={(e) => setNewAddr(p => ({ ...p, postalCode: e.target.value }))}
                       className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary/50" 
                       placeholder="400001"
                       required
