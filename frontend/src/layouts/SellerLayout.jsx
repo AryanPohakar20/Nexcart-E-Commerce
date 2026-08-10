@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import logo from '../assets/logo.jpg';
 import { 
@@ -8,9 +8,10 @@ import {
 } from 'react-icons/fi';
 
 const SellerLayout = () => {
-  const { user, logoutUser, showToast } = useContext(AppContext);
+  const { user, logoutUser } = useContext(AppContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logoutUser();
@@ -21,11 +22,12 @@ const SellerLayout = () => {
     { name: 'Dashboard', path: '/seller/dashboard', icon: FiGrid },
     { name: 'Products', path: '/seller/products', icon: FiPackage },
     { name: 'Orders', path: '/seller/orders', icon: FiShoppingBag },
-    { name: 'Analytics', path: '/seller/analytics', icon: FiBarChart2 },
     { name: 'Inventory', path: '/seller/inventory', icon: FiArchive },
     { name: 'Settings', path: '/seller/settings', icon: FiSettings },
     { name: 'Profile', path: '/seller/profile', icon: FiUser },
   ];
+
+  const currentPathName = location.pathname.split('/').pop() || 'dashboard';
 
   return (
     <div className="min-h-screen bg-darkBg text-white flex">
@@ -99,7 +101,14 @@ const SellerLayout = () => {
             <button className="md:hidden text-white hover:text-primary" onClick={() => setIsSidebarOpen(true)}>
               <FiMenu size={24} />
             </button>
-            <h1 className="text-xl font-bold hidden md:block">Seller Management Studio</h1>
+            <div>
+              <h1 className="text-lg font-bold hidden md:block">Seller Management Studio</h1>
+              <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
+                <span className="cursor-pointer hover:text-primary" onClick={() => navigate('/seller/dashboard')}>Seller Studio</span>
+                <span>/</span>
+                <span className="text-primary font-bold uppercase">{currentPathName}</span>
+              </div>
+            </div>
           </div>
 
           {/* User Profile Summary */}

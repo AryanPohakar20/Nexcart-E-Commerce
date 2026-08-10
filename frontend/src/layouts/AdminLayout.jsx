@@ -1,9 +1,9 @@
 import React, { useState, useContext } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import logo from '../assets/logo.jpg';
 import { 
-  FiSliders, FiUsers, FiBox, FiTrendingUp, FiFolder, 
+  FiSliders, FiUsers, FiBox, FiTrendingUp, FiFolder, FiBarChart2,
   FiBookmark, FiFileText, FiSettings, FiArrowLeft, FiLogOut, FiMenu, FiX 
 } from 'react-icons/fi';
 
@@ -11,6 +11,7 @@ const AdminLayout = () => {
   const { user, logoutUser } = useContext(AppContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logoutUser();
@@ -27,6 +28,8 @@ const AdminLayout = () => {
     { name: 'Reports', path: '/admin/reports', icon: FiFileText },
     { name: 'Settings', path: '/admin/settings', icon: FiSettings },
   ];
+
+  const currentPathName = location.pathname.split('/').pop() || 'dashboard';
 
   return (
     <div className="min-h-screen bg-darkBg text-white flex">
@@ -100,7 +103,14 @@ const AdminLayout = () => {
             <button className="md:hidden text-white hover:text-primary" onClick={() => setIsSidebarOpen(true)}>
               <FiMenu size={24} />
             </button>
-            <h1 className="text-xl font-bold hidden md:block">Master Administrator Hub</h1>
+            <div>
+              <h1 className="text-lg font-bold hidden md:block">Master Administrator Hub</h1>
+              <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-medium">
+                <span className="cursor-pointer hover:text-accentBlue" onClick={() => navigate('/admin/dashboard')}>Admin Hub</span>
+                <span>/</span>
+                <span className="text-accentBlue font-bold uppercase">{currentPathName}</span>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 bg-white/5 rounded-full px-4 py-1.5 border border-white/5">

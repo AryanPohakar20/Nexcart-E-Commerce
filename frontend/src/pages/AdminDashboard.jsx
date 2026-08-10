@@ -1,213 +1,201 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { ADMIN_STATS, CATEGORIES } from '../constants/dummyData';
-import { FiSliders, FiUsers, FiBox, FiTrendingUp, FiSettings, FiCheckCircle, FiActivity, FiXCircle } from 'react-icons/fi';
+
+import {
+  ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip, CartesianGrid, Legend
+} from 'recharts';
+
+import {
+  FiSliders, FiUsers, FiBox, FiTrendingUp, FiSettings, FiCheckCircle, FiActivity,
+  FiXCircle, FiDollarSign, FiShield, FiDownload, FiFileText, FiRefreshCw, FiPieChart, FiUserCheck, FiUserX, FiAward
+} from 'react-icons/fi';
+
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
 
 const AdminDashboard = () => {
   const { showToast } = useContext(AppContext);
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, users, categories
+  const location = useLocation();
 
-  // Mock list of system users
-  const [usersList, setUsersList] = useState([
-    { name: 'Arjun Kapoor', email: 'arjun@gmail.com', role: 'Customer', active: true, date: '2026-07-18' },
-    { name: 'Megha Gupta', email: 'megha@seller.com', role: 'Seller', active: true, date: '2026-07-17' },
-    { name: 'Rahul Joshi', email: 'rahul@gmail.com', role: 'Customer', active: false, date: '2026-07-16' },
+  const getInitialTab = () => {
+    if (location.pathname.includes('/admin/overview')) return 'overview';
+    return 'overview';
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+
+  useEffect(() => {
+    setActiveTab(getInitialTab());
+  }, [location.pathname]);
+
+  // Admin Top Statistics State
+  const [adminStats, setAdminStats] = useState({
+    totalUsers: 12480,
+    buyersCount: 10600,
+    sellersCount: 1880,
+    totalProducts: 4850,
+    activeListings: 3920,
+    soldListings: 930,
+    revenue: 489200,
+    transactionsCount: 3840,
+    pendingReports: 4,
+    blockedUsers: 12,
+  });
+
+  // Recent Activity Feed State
+  const [recentActivities, setRecentActivities] = useState([
+    { id: 'act-1', type: 'user_registered', message: 'New customer account "Rohan Sharma" registered', time: '10 mins ago' },
+    { id: 'act-2', type: 'product_listed', message: 'Seller TechVault listed "MacBook Pro M3 Max"', time: '25 mins ago' },
+    { id: 'act-3', type: 'order_completed', message: 'Order #TXN-98421 completed ($1,299.00)', time: '1 hour ago' },
+    { id: 'act-4', type: 'listing_removed', message: 'Moderator removed flagged listing #PROD-88', time: '2 hours ago' },
+    { id: 'act-5', type: 'user_reported', message: 'User report submitted for improper listing price', time: '3 hours ago' },
   ]);
 
-  const toggleUserStatus = (email) => {
-    setUsersList(prev => 
-      prev.map(u => u.email === email ? { ...u, active: !u.active } : u)
-    );
-    showToast('User account status updated!');
+  // Platform Charts State
+  const [chartData, setChartData] = useState({
+    userGrowth: [
+      { period: 'Jan', buyers: 1200, sellers: 180, dau: 3400 },
+      { period: 'Feb', buyers: 1900, sellers: 260, dau: 4800 },
+      { period: 'Mar', buyers: 2700, sellers: 390, dau: 6900 },
+      { period: 'Apr', buyers: 3800, sellers: 520, dau: 8900 },
+      { period: 'May', buyers: 5200, sellers: 680, dau: 12400 },
+      { period: 'Jun', buyers: 6900, sellers: 890, dau: 16800 },
+    ],
+    revenueTrend: [
+      { day: 'Mon', revenue: 14200, orders: 128 },
+      { day: 'Tue', revenue: 19800, orders: 174 },
+      { day: 'Wed', revenue: 26400, orders: 230 },
+      { day: 'Thu', revenue: 22100, orders: 192 },
+      { day: 'Fri', revenue: 34500, orders: 298 },
+      { day: 'Sat', revenue: 41200, orders: 360 },
+      { day: 'Sun', revenue: 48900, orders: 420 },
+    ],
+    categoryDistribution: [
+      { name: 'Mobiles & Tech', value: 42 },
+      { name: 'Laptops & Computers', value: 24 },
+      { name: 'Audio & Accessories', value: 16 },
+      { name: 'Fashion & Sneakers', value: 12 },
+      { name: 'Home & Lifestyle', value: 6 },
+    ],
+  });
+
+  // Top Leaderboards State
+  const [topSellers, setTopSellers] = useState([
+    { id: 'ts-1', name: 'TechVault Outlet', revenue: 148900, sales: 142, rating: 4.9, listings: 38 },
+    { id: 'ts-2', name: 'Alex Rivera Mobiles', revenue: 98400, sales: 89, rating: 4.8, listings: 24 },
+    { id: 'ts-3', name: 'Sophia Chen Audio', revenue: 64200, sales: 74, rating: 5.0, listings: 18 },
+    { id: 'ts-4', name: 'Marcus Vance Laptops', revenue: 182000, sales: 62, rating: 4.9, listings: 15 },
+    { id: 'ts-5', name: 'UrbanSneakers Outlet', revenue: 42500, sales: 51, rating: 4.7, listings: 29 },
+  ]);
+
+  const [topProducts, setTopProducts] = useState([
+    { id: 'tp-1', title: 'Apple iPhone 15 Pro 256GB - Natural Titanium', views: 4820, sales: 64, revenue: 60800 },
+    { id: 'tp-2', title: 'Sony WH-1000XM5 Wireless Headphones', views: 3910, sales: 88, revenue: 24640 },
+    { id: 'tp-3', title: 'MacBook Pro 16" M3 Max (36GB RAM, 1TB SSD)', views: 2840, sales: 22, revenue: 52800 },
+    { id: 'tp-4', title: 'Nike Air Jordan 1 Retro High OG', views: 2150, sales: 42, revenue: 7980 },
+    { id: 'tp-5', title: 'Custom Gaming PC i7 14700K / RTX 4080', views: 1980, sales: 18, revenue: 33300 },
+  ]);
+
+  // Export Summary Report to CSV
+  const handleExportCSV = () => {
+    const csvRows = [
+      ['Metric', 'Value'],
+      ['Total Users', adminStats.totalUsers],
+      ['Buyers Count', adminStats.buyersCount],
+      ['Sellers Count', adminStats.sellersCount],
+      ['Total Products', adminStats.totalProducts],
+      ['Active Listings', adminStats.activeListings],
+      ['Sold Listings', adminStats.soldListings],
+      ['Total Revenue', `$${adminStats.revenue}`],
+      ['Transactions Count', adminStats.transactionsCount],
+      ['Pending Reports', adminStats.pendingReports],
+      ['Blocked Users', adminStats.blockedUsers],
+    ];
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.map((e) => e.join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `NexCart_Admin_Report_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Admin CSV report downloaded!', 'success');
   };
 
   return (
-    <div className="space-y-8 text-left">
-      {/* Header */}
-      <div className="border-b border-white/5 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-8 text-left max-w-[1440px] mx-auto px-2">
+      
+      {/* Top Header */}
+      <div className="border-b border-gray-200 dark:border-white/10 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Root Administrator Terminal</h1>
-          <p className="text-xs text-gray-500 mt-1">Global settings, database aggregates, and access controls.</p>
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+            <FiSliders className="text-blue-500" /> Root Administrator Hub
+          </h1>
+          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Global marketplace management, core services status, and administrative operations.
+          </p>
         </div>
 
-        {/* Tab triggers */}
-        <div className="flex bg-white/5 border border-white/5 rounded-xl p-1 text-xs">
-          <button 
-            onClick={() => setActiveTab('dashboard')}
-            className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'dashboard' ? 'bg-accentBlue text-black' : 'text-gray-400 hover:text-white'}`}
+        {/* Action Controls */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleExportCSV}
+            className="px-4 py-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
           >
-            Overview
-          </button>
-          <button 
-            onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'users' ? 'bg-accentBlue text-black' : 'text-gray-400 hover:text-white'}`}
-          >
-            Accounts
-          </button>
-          <button 
-            onClick={() => setActiveTab('categories')}
-            className={`px-4 py-2 rounded-lg font-bold transition-all ${activeTab === 'categories' ? 'bg-accentBlue text-black' : 'text-gray-400 hover:text-white'}`}
-          >
-            Categories
+            <FiDownload className="text-xs" /> Export CSV Report
           </button>
         </div>
       </div>
 
-      {/* Tabs panels */}
-      {activeTab === 'dashboard' && (
-        <div className="space-y-8">
-          
-          {/* Main metrics summary grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="bg-cardBg border border-white/5 p-5 rounded-3xl space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
-                <span>Active Users</span>
-                <FiUsers className="text-accentBlue text-base" />
-              </div>
-              <p className="text-2xl font-black text-white">{ADMIN_STATS.totalUsers}</p>
-              <span className="text-[10px] text-green-400 font-bold">+43 new registered today</span>
-            </div>
+      {/* ─── 1. TOP 10 STATISTICS CARDS GRID ───────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        <div className="p-4 rounded-3xl bg-white dark:bg-[#161618] border border-gray-200/80 dark:border-white/10 shadow-sm space-y-1">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Total Users</span>
+          <span className="text-2xl font-black text-gray-900 dark:text-white">{adminStats.totalUsers.toLocaleString()}</span>
+          <span className="text-[10px] text-blue-500 font-bold block">{adminStats.buyersCount} Buyers • {adminStats.sellersCount} Sellers</span>
+        </div>
 
-            <div className="bg-cardBg border border-white/5 p-5 rounded-3xl space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
-                <span>System Products</span>
-                <FiBox className="text-accentBlue text-base" />
-              </div>
-              <p className="text-2xl font-black text-white">{ADMIN_STATS.totalProducts}</p>
-              <span className="text-[10px] text-accentBlue font-bold">13 catalog collections</span>
-            </div>
+        <div className="p-4 rounded-3xl bg-white dark:bg-[#161618] border border-gray-200/80 dark:border-white/10 shadow-sm space-y-1">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Total Products</span>
+          <span className="text-2xl font-black text-gray-900 dark:text-white">{adminStats.totalProducts.toLocaleString()}</span>
+          <span className="text-[10px] text-emerald-500 font-bold block">{adminStats.activeListings} Active</span>
+        </div>
 
-            <div className="bg-cardBg border border-white/5 p-5 rounded-3xl space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
-                <span>Total Orders</span>
-                <FiTrendingUp className="text-accentBlue text-base" />
-              </div>
-              <p className="text-2xl font-black text-white">{ADMIN_STATS.totalOrders}</p>
-              <span className="text-[10px] text-green-400 font-bold">+18 completed hours ago</span>
-            </div>
+        <div className="p-4 rounded-3xl bg-white dark:bg-[#161618] border border-gray-200/80 dark:border-white/10 shadow-sm space-y-1">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Sold Listings</span>
+          <span className="text-2xl font-black text-gray-900 dark:text-white">{adminStats.soldListings.toLocaleString()}</span>
+          <span className="text-[10px] text-purple-400 font-bold block">Marketplace exchanges</span>
+        </div>
 
-            <div className="bg-cardBg border border-white/5 p-5 rounded-3xl space-y-3">
-              <div className="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
-                <span>Category Count</span>
-                <FiSettings className="text-accentBlue text-base" />
-              </div>
-              <p className="text-2xl font-black text-white">{ADMIN_STATS.totalCategories}</p>
-              <span className="text-[10px] text-yellow-500 font-bold">All sectors operational</span>
-            </div>
+        <div className="p-4 rounded-3xl bg-white dark:bg-[#161618] border border-gray-200/80 dark:border-white/10 shadow-sm space-y-1">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Total Revenue</span>
+          <span className="text-2xl font-black text-amber-500">${adminStats.revenue.toLocaleString()}</span>
+          <span className="text-[10px] text-amber-500 font-bold block">{adminStats.transactionsCount} Transactions</span>
+        </div>
+
+        <div className="p-4 rounded-3xl bg-white dark:bg-[#161618] border border-gray-200/80 dark:border-white/10 shadow-sm space-y-1">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Moderation</span>
+          <span className="text-2xl font-black text-red-500">{adminStats.pendingReports} Reports</span>
+          <span className="text-[10px] text-red-400 font-bold block">{adminStats.blockedUsers} Blocked Accounts</span>
+        </div>
+      </div>
+
+      {/* ─── SYSTEM OVERVIEW ──────────────────────────────────────────────── */}
+
+      {/* ─── TAB 2: SYSTEM OVERVIEW ──────────────────────────────────────────────── */}
+      {activeTab === 'overview' && (
+        <div className="p-8 rounded-3xl bg-white dark:bg-[#161618] border border-gray-200/80 dark:border-white/10 text-center space-y-4">
+          <div className="w-16 h-16 rounded-3xl bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto text-2xl">
+            <FiCheckCircle />
           </div>
-
-          {/* SVG Pie Chart / distribution & Action logs */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            {/* SVG Pie share */}
-            <div className="lg:col-span-2 bg-cardBg border border-white/5 p-6 rounded-3xl space-y-6">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                <FiActivity className="text-accentBlue" />
-                <span>Sector Sales Distribution</span>
-              </h3>
-
-              <div className="flex flex-col sm:flex-row items-center gap-8 justify-around pt-4">
-                {/* SVG circular pie display */}
-                <svg className="w-40 h-40 transform -rotate-90 select-none">
-                  <circle cx="80" cy="80" r="60" fill="transparent" stroke="#1F1F1F" strokeWidth="24" />
-                  {/* Mobiles: 38% */}
-                  <circle cx="80" cy="80" r="60" fill="transparent" stroke="#00C2FF" strokeWidth="24" strokeDasharray="376.8" strokeDashoffset="143.1" />
-                  {/* Laptops: 24% */}
-                  <circle cx="80" cy="80" r="60" fill="transparent" stroke="#FFC107" strokeWidth="24" strokeDasharray="376.8" strokeDashoffset="233.6" />
-                </svg>
-
-                {/* Legend logs */}
-                <div className="space-y-3 text-xs">
-                  {ADMIN_STATS.categoryShare.map((share, idx) => (
-                    <div key={share.name} className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${idx === 0 ? 'bg-accentBlue' : idx === 1 ? 'bg-primary' : 'bg-gray-600'}`} />
-                      <div className="w-24 font-bold text-white">{share.name}</div>
-                      <span className="text-gray-500 font-extrabold">{share.percentage}% share</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Quick logs */}
-            <div className="lg:col-span-1 bg-cardBg border border-white/5 p-6 rounded-3xl space-y-4">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Audit Operations</h3>
-              <div className="space-y-3 text-xs text-gray-400 font-medium">
-                <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                  <p className="text-white font-bold">API Server Status</p>
-                  <p className="text-[10px] text-green-400 mt-0.5">Online | Ping: 42ms</p>
-                </div>
-                <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                  <p className="text-white font-bold">CDN caching</p>
-                  <p className="text-[10px] text-primary mt-0.5">Enabled | Hit rate: 94.2%</p>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
+          <h3 className="font-bold text-lg text-gray-900 dark:text-white">NexCart Core Services Operational</h3>
+          <p className="text-xs text-gray-500 max-w-md mx-auto">
+            MongoDB database replica set, Socket.IO WebSocket cluster, and API gateways operating at peak performance.
+          </p>
         </div>
       )}
-
-      {activeTab === 'users' && (
-        <div className="bg-cardBg border border-white/5 rounded-3xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-white/5 text-gray-400 uppercase font-extrabold tracking-wider border-b border-white/5">
-                  <th className="p-4">Account name</th>
-                  <th className="p-4">Email</th>
-                  <th className="p-4">System Role</th>
-                  <th className="p-4">Joined Date</th>
-                  <th className="p-4">Operational Status</th>
-                  <th className="p-4 text-right">Access Controls</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {usersList.map((user) => (
-                  <tr key={user.email} className="hover:bg-white/5 transition-colors">
-                    <td className="p-4 font-bold text-white">{user.name}</td>
-                    <td className="p-4 text-gray-300 font-medium">{user.email}</td>
-                    <td className="p-4 text-gray-300 font-medium">{user.role}</td>
-                    <td className="p-4 text-gray-500">{user.date}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider ${user.active ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
-                        {user.active ? 'Active' : 'Suspended'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <button 
-                        onClick={() => toggleUserStatus(user.email)}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold ${user.active ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-green-500/10 text-green-400 hover:bg-green-500/20'}`}
-                      >
-                        {user.active ? 'Suspend Account' : 'Reactivate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'categories' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {CATEGORIES.map((cat) => (
-            <div key={cat.id} className="bg-cardBg border border-white/5 p-5 rounded-3xl text-xs space-y-3 relative overflow-hidden">
-              <span className="text-[10px] text-gray-500 font-bold uppercase">Sector</span>
-              <h4 className="font-extrabold text-white text-sm">{cat.name}</h4>
-              <div className="flex justify-between items-center text-gray-400 font-bold border-t border-white/5 pt-3">
-                <div>
-                  <p className="text-[9px] text-gray-500 uppercase font-bold">Listings</p>
-                  <p className="text-white text-xs">{cat.count} active</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
     </div>
   );
 };

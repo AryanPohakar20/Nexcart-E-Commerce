@@ -100,7 +100,6 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<SellerDashboard />} />
         <Route path="products" element={<SellerDashboard />} />
         <Route path="orders" element={<SellerDashboard />} />
-        <Route path="analytics" element={<SellerDashboard />} />
         <Route path="inventory" element={<SellerDashboard />} />
         <Route path="settings" element={<SellerDashboard />} />
         <Route path="profile" element={<SellerDashboard />} />
