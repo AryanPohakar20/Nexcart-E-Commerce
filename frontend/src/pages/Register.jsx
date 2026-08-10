@@ -2,6 +2,9 @@ import React, { useState, useContext, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
+import { AuthContext } from '../context/AuthContext';
+import { useGoogleLogin } from '@react-oauth/google';
+import appleSignin from 'react-apple-signin-auth';
 import authService from '../services/authService';
 import NexCartLogo from '../components/NexCartLogo';
 import ThemeToggle from '../components/ThemeToggle';
@@ -64,7 +67,8 @@ const ConfettiBurst = () => {
 };
 
 const Register = () => {
-  const { loginUser, showToast } = useContext(AppContext);
+  const { showToast } = useContext(AppContext);
+  const { loginGoogle: authContextLoginGoogle, loginApple: authContextLoginApple } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Form states
@@ -304,22 +308,111 @@ const Register = () => {
       }, 800);
     } catch (error) {
       setIsSubmitting(false);
-      const errMsg = (Array.isArray(error.errors) && error.errors.length > 0)
-        ? error.errors.map((e) => e.message).join(' | ')
-        : (error.message || 'Registration failed');
-      showToast(errMsg, 'error');
+      showToast('Registration failed. Please try again.', 'error');
+    }
+  };
+
+  const handleGoogleSuccess = async (tokenResponse) => {
+    console.log('[Google OAuth Register] Token Response received from Google:', tokenResponse);
+    setIsSubmitting(true);
+    showToast('Authenticating with Google...');
+    try {
+      if (!tokenResponse?.access_token) {
+        throw new Error('No access_token returned by Google');
+      }
+      const result = await authContextLoginGoogle(tokenResponse.access_token);
+      console.log('[Google OAuth Register] Backend verification result:', result);
+      setIsSubmitting(false);
+
+      if (result.success) {
+        showToast('Google login successful!');
+        const userRole = (result.user?.role || '').toLowerCase();
+        if (userRole === 'seller' || userRole === 'marketplaceseller') navigate('/seller/dashboard');
+        else if (userRole === 'admin') navigate('/admin/dashboard');
+        else navigate('/');
+      } else {
+        showToast(result.message || 'Google Sign-In could not be completed. Please try again.', 'error');
+      }
+    } catch (err) {
+      console.error('[Google OAuth Register] Verification error:', err);
+      setIsSubmitting(false);
+      showToast('Google Sign-In could not be completed. Please try again.', 'error');
+    }
+  };
+
+  const loginGoogle = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: (errorResponse) => {
+      console.error('[Google OAuth Register] Popup Error / Cancelled:', errorResponse);
+      setIsSubmitting(false);
+      showToast('Google Sign-In could not be completed. Please try again.', 'error');
+    },
+  });
+
+  const loginApple = async () => {
+    const clientId = import.meta.env.VITE_APPLE_CLIENT_ID;
+    const redirectURI = import.meta.env.VITE_APPLE_REDIRECT_URI;
+
+    if (!clientId || !redirectURI) {
+      showToast('Sign in with Apple is not available on this browser or device.', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    showToast('Authenticating with Apple...');
+    try {
+      const response = await appleSignin.signIn({
+        authOptions: {
+          clientId,
+          scope: 'email name',
+          redirectURI,
+          usePopup: true,
+        },
+      });
+
+      if (!response?.authorization?.id_token) {
+        throw new Error('Apple did not return an identity token');
+      }
+
+      const result = await authContextLoginApple(
+        response.authorization.id_token,
+        response.user
+      );
+
+      if (!result?.success) {
+        throw new Error(result?.message || 'Apple Sign-In could not be completed');
+      }
+
+      showToast('Apple login successful!');
+      const userRole = (result.user?.role || '').toLowerCase();
+      if (userRole === 'seller' || userRole === 'marketplaceseller') navigate('/seller/dashboard');
+      else if (userRole === 'admin') navigate('/admin/dashboard');
+      else navigate('/');
+    } catch (err) {
+      console.error('[Apple OAuth Register] Error:', err);
+      showToast('Sign in with Apple is available only on supported Apple devices or browsers.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleSocialSignup = (provider) => {
-    setIsSubmitting(true);
-    showToast(`Connecting to ${provider}...`, 'info');
-    setTimeout(() => {
-      setIsSubmitting(false);
-      loginUser(`user@${provider.toLowerCase()}.com`, 'social123', role);
-      showToast(`Authenticated via ${provider}!`, 'success');
-      navigate('/otp-verification?email=' + encodeURIComponent(`user@${provider.toLowerCase()}.com`));
-    }, 900);
+    console.log(`[Google OAuth Register] ${provider} button clicked.`);
+    if (provider === 'Google') {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      console.log('[Google OAuth Register] Loaded VITE_GOOGLE_CLIENT_ID:', clientId ? 'EXISTS' : 'NOT FOUND / EMPTY');
+      if (!clientId || clientId.trim() === '' || clientId.includes('YOUR_ACTUAL')) {
+        showToast('Google Sign-In could not be completed. Please configure VITE_GOOGLE_CLIENT_ID in frontend/.env', 'error');
+        return;
+      }
+      try {
+        loginGoogle();
+      } catch (err) {
+        console.error('[Google OAuth Register] Error launching Google Login:', err);
+        showToast('Google Sign-In could not be completed. Please try again.', 'error');
+      }
+    }
+    if (provider === 'Apple') loginApple();
   };
 
   return (
@@ -1161,7 +1254,7 @@ const Register = () => {
               variants={socialContainerVariants}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-3 gap-3"
+              className="grid grid-cols-2 gap-3"
             >
               {/* Google Button */}
               <motion.button
@@ -1196,22 +1289,6 @@ const Register = () => {
                   <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.13-1.96.99-3.12-1 .04-2.24.68-2.94 1.5-.62.72-1.16 1.88-1.01 3.01 1.12.09 2.29-.57 2.96-1.39z"/>
                 </svg>
                 <span className="hidden sm:inline">Apple</span>
-              </motion.button>
-
-              {/* GitHub Button */}
-              <motion.button
-                variants={socialItemVariants}
-                whileHover={{ y: -4, scale: 1.03, boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25)', borderColor: 'rgba(255, 193, 7, 0.5)' }}
-                whileTap={{ scale: 0.96 }}
-                type="button"
-                onClick={() => handleSocialSignup('GitHub')}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.08] transition-all text-xs font-semibold text-gray-800 dark:text-white group"
-                aria-label="Continue with GitHub"
-              >
-                <svg className="w-4 h-4 fill-current text-gray-900 dark:text-white group-hover:scale-115 group-hover:rotate-6 transition-transform duration-300" viewBox="0 0 24 24">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-                </svg>
-                <span className="hidden sm:inline">GitHub</span>
               </motion.button>
             </motion.div>
 

@@ -3,27 +3,29 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { AuthContext } from '../context/AuthContext';
+import { useGoogleLogin } from '@react-oauth/google';
+import appleSignin from 'react-apple-signin-auth';
 import NexCartLogo from '../components/NexCartLogo';
 import ThemeToggle from '../components/ThemeToggle';
 
-import { 
-  FiMail, 
-  FiLock, 
-  FiEye, 
-  FiEyeOff, 
-  FiCheck, 
-  FiArrowRight, 
-  FiZap, 
-  FiShield, 
-  FiCpu, 
-  FiAlertCircle, 
-  FiLoader, 
+import {
+  FiMail,
+  FiLock,
+  FiEye,
+  FiEyeOff,
+  FiCheck,
+  FiArrowRight,
+  FiZap,
+  FiShield,
+  FiCpu,
+  FiAlertCircle,
+  FiLoader,
   FiHelpCircle
 } from 'react-icons/fi';
 
 const Login = () => {
   const { showToast, theme } = useContext(AppContext);
-  const { login, sellerLogin } = useContext(AuthContext);
+  const { login, sellerLogin, loginGoogle: authContextLoginGoogle, loginApple: authContextLoginApple } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Form states
@@ -103,12 +105,12 @@ const Login = () => {
       const result = role === 'seller'
         ? await sellerLogin(email, password)
         : await login(email, password);
-      
+
       if (result.success) {
         setIsSuccess(true);
         setShowBecomeSeller(false);
         showToast('Login successful!');
-        
+
         setTimeout(() => {
           const userRole = (result.user?.role || '').toLowerCase();
           if (userRole === 'seller' || userRole === 'marketplaceseller') navigate('/seller/dashboard');
@@ -130,31 +132,170 @@ const Login = () => {
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    setIsSubmitting(true);
-    showToast(`Connecting to ${provider}...`);
-    setTimeout(async () => {
-      // For now, simulated social login using the same endpoint logic or fallback
-      const mockEmail = `user@${provider.toLowerCase()}.com`;
-      const result = await login(mockEmail, 'social123');
-      
-      setIsSubmitting(false);
-      
-      if (result.success) {
-        showToast(`Authenticated via ${provider}!`);
-        const userRole = (result.user?.role || '').toLowerCase();
-        if (userRole === 'seller' || userRole === 'marketplaceseller') navigate('/seller/dashboard');
-        else if (userRole === 'admin') navigate('/admin/dashboard');
-        else navigate('/');
-      } else {
-        showToast(`Authentication via ${provider} failed.`, 'error');
+  const handleGoogleSuccess = async (tokenResponse) => {
+    console.log('[Google OAuth] Google authentication successful');
+
+    try {
+      setIsSubmitting(true);
+      showToast('Authenticating with Google...');
+
+      if (!tokenResponse?.access_token) {
+        throw new Error('Google did not return an access token');
       }
-    }, 900);
+
+      const result = await authContextLoginGoogle(
+        tokenResponse.access_token
+      );
+
+      console.log('[Google OAuth] Backend response:', result);
+
+      if (!result?.success) {
+        throw new Error(
+          result?.message || 'Google Sign-In could not be completed'
+        );
+      }
+
+      showToast('Google login successful!');
+
+      const userRole = (result.user?.role || '').toLowerCase();
+
+      if (
+        userRole === 'seller' ||
+        userRole === 'marketplaceseller'
+      ) {
+        navigate('/seller/dashboard');
+      } else if (userRole === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
+
+    } catch (error) {
+      console.error('[Google OAuth] Error:', error);
+
+      showToast(
+        error?.message ||
+        'Google Sign-In could not be completed. Please try again.',
+        'error'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
+  const loginGoogle = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+
+    onError: (error) => {
+      console.error('[Google OAuth] Google login failed:', error);
+
+      setIsSubmitting(false);
+
+      showToast(
+        'Google Sign-In was cancelled or could not be completed.',
+        'error'
+      );
+    },
+
+    flow: 'implicit'
+  });
+
+  const loginApple = async () => {
+    const clientId = import.meta.env.VITE_APPLE_CLIENT_ID;
+    const redirectURI = import.meta.env.VITE_APPLE_REDIRECT_URI;
+
+    if (!clientId || !redirectURI) {
+      showToast('Sign in with Apple is not available on this browser or device.', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    showToast('Authenticating with Apple...');
+    try {
+      const response = await appleSignin.signIn({
+        authOptions: {
+          clientId,
+          scope: 'email name',
+          redirectURI,
+          usePopup: true,
+        },
+      });
+
+      if (!response?.authorization?.id_token) {
+        throw new Error('Apple did not return an identity token');
+      }
+
+      const result = await authContextLoginApple(
+        response.authorization.id_token,
+        response.user
+      );
+
+      if (!result?.success) {
+        throw new Error(result?.message || 'Apple Sign-In could not be completed');
+      }
+
+      showToast('Apple login successful!');
+      const userRole = (result.user?.role || '').toLowerCase();
+      if (userRole === 'seller' || userRole === 'marketplaceseller') navigate('/seller/dashboard');
+      else if (userRole === 'admin') navigate('/admin/dashboard');
+      else navigate('/');
+    } catch (err) {
+      console.error('[Apple OAuth] Error:', err);
+      showToast('Sign in with Apple is not available on this browser or device.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSocialLogin = (provider) => {
+    if (isSubmitting) return;
+
+    if (provider === 'Google') {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      const isConfigured = clientId && clientId.trim() !== '' && !clientId.includes('YOUR_ACTUAL');
+
+      console.log(
+        '[Google OAuth] Client ID loaded:',
+        isConfigured ? 'YES' : 'NO'
+      );
+
+      if (!isConfigured) {
+        showToast(
+          'Google Sign-In is not configured. Please check frontend/.env',
+          'error'
+        );
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+        loginGoogle();
+      } catch (error) {
+        console.error(
+          '[Google OAuth] Failed to open Google:',
+          error
+        );
+
+        setIsSubmitting(false);
+
+        showToast(
+          'Unable to open Google Sign-In. Please try again.',
+          'error'
+        );
+      }
+
+      return;
+    }
+
+    if (provider === 'Apple') {
+      loginApple();
+    }
   };
 
   return (
     <div className="relative min-h-screen w-full bg-[#F8F9FB] dark:bg-[#070B12] text-gray-900 dark:text-white flex flex-col justify-between overflow-hidden font-sans select-none transition-colors duration-400">
-      
+
       {/* Background Animated Elements & Ambient Glow Gradients */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-primary/15 rounded-full blur-[140px] animate-pulse" />
@@ -201,12 +342,12 @@ const Login = () => {
 
       {/* Main Split Layout Container */}
       <div className="relative z-10 flex-grow grid grid-cols-1 lg:grid-cols-12 min-h-screen w-full">
-        
+
         {/* ================= LEFT SIDE (60% Desktop Width) ================= */}
         <div className="lg:col-span-7 flex flex-col justify-between p-8 lg:p-16 relative overflow-hidden border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/5 bg-gradient-to-br from-[#FFFFFF] via-[#F1F5F9] to-[#F8F9FB] dark:from-[#070B12] dark:via-[#0b101d] dark:to-[#070B12] transition-colors duration-400">
-          
+
           {/* Top Brand Nav Header & Theme Toggle */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -228,9 +369,9 @@ const Login = () => {
 
           {/* Central Animated Visual Showcase & Tagline */}
           <div className="my-12 lg:my-auto max-w-xl space-y-8 text-left">
-            
+
             {/* AI Badge */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -253,14 +394,14 @@ const Login = () => {
                   LIMITS.
                 </span>
               </h1>
-              
+
               <p className="text-base sm:text-lg text-gray-600 dark:text-[#AAB4C5] font-light leading-relaxed max-w-lg">
                 Experience the future of smart shopping with AI-powered recommendations, secure checkout, and unlimited possibilities.
               </p>
             </motion.div>
 
             {/* Floating Abstract Cards Grid */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.4 }}
@@ -298,7 +439,7 @@ const Login = () => {
             </motion.div>
 
             {/* Left CTA Button */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
@@ -316,7 +457,7 @@ const Login = () => {
           </div>
 
           {/* Left Bottom Feature Pills */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
@@ -337,9 +478,9 @@ const Login = () => {
 
         {/* ================= RIGHT SIDE (40% Desktop Width) ================= */}
         <div className="lg:col-span-5 flex items-center justify-center p-6 sm:p-10 lg:p-12 relative">
-          
+
           {/* Centered Glass Login Card */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -370,11 +511,10 @@ const Login = () => {
                   type="button"
                   key={r}
                   onClick={() => setRole(r)}
-                  className={`py-2 rounded-lg transition-all duration-200 ${
-                    role === r
-                      ? 'bg-gradient-to-r from-primary to-amber-500 text-black shadow-yellow-glow font-black'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
-                  }`}
+                  className={`py-2 rounded-lg transition-all duration-200 ${role === r
+                    ? 'bg-gradient-to-r from-primary to-amber-500 text-black shadow-yellow-glow font-black'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
+                    }`}
                 >
                   {r}
                 </button>
@@ -383,7 +523,7 @@ const Login = () => {
 
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-              
+
               {/* Become Seller Prompt */}
               <AnimatePresence>
                 {showBecomeSeller && (
@@ -424,11 +564,10 @@ const Login = () => {
                     onBlur={() => handleBlur('email')}
                     placeholder="name@nexcart.com"
                     aria-invalid={!!errors.email}
-                    className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3.5 pl-11 pr-4 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 focus:outline-none ${
-                      errors.email && touched.email
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
-                        : 'border-gray-200 dark:border-white/10 hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-yellow-glow'
-                    }`}
+                    className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3.5 pl-11 pr-4 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 focus:outline-none ${errors.email && touched.email
+                      ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
+                      : 'border-gray-200 dark:border-white/10 hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-yellow-glow'
+                      }`}
                   />
                 </div>
                 {/* Error message */}
@@ -460,7 +599,7 @@ const Login = () => {
                     Forgot Password?
                   </Link>
                 </div>
-                
+
                 <div className="relative group/input">
                   <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-primary transition-colors">
                     <FiLock className="text-lg" />
@@ -473,11 +612,10 @@ const Login = () => {
                     onBlur={() => handleBlur('password')}
                     placeholder="••••••••"
                     aria-invalid={!!errors.password}
-                    className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3.5 pl-11 pr-11 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 focus:outline-none ${
-                      errors.password && touched.password
-                        ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
-                        : 'border-gray-200 dark:border-white/10 hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-yellow-glow'
-                    }`}
+                    className={`w-full bg-gray-50 dark:bg-black/50 border rounded-xl py-3.5 pl-11 pr-11 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-300 focus:outline-none ${errors.password && touched.password
+                      ? 'border-red-500/80 focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-shake'
+                      : 'border-gray-200 dark:border-white/10 hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary focus:shadow-yellow-glow'
+                      }`}
                   />
                   {/* Eye Toggle Button */}
                   <button
@@ -517,11 +655,10 @@ const Login = () => {
                       className="sr-only"
                     />
                     <div
-                      className={`w-5 h-5 rounded-md border transition-all flex items-center justify-center ${
-                        rememberMe
-                          ? 'bg-primary border-primary text-black shadow-yellow-glow'
-                          : 'bg-gray-100 dark:bg-black/40 border-gray-300 dark:border-white/20 group-hover:border-primary'
-                      }`}
+                      className={`w-5 h-5 rounded-md border transition-all flex items-center justify-center ${rememberMe
+                        ? 'bg-primary border-primary text-black shadow-yellow-glow'
+                        : 'bg-gray-100 dark:bg-black/40 border-gray-300 dark:border-white/20 group-hover:border-primary'
+                        }`}
                     >
                       {rememberMe && <FiCheck className="text-sm font-black stroke-[3]" />}
                     </div>
@@ -536,11 +673,10 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || isSuccess}
-                className={`w-full py-3.5 px-6 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-yellow-glow hover:shadow-yellow-glow-lg active:scale-[0.98] btn-premium-interactive ${
-                  isSuccess
-                    ? 'bg-emerald-400 text-black shadow-emerald-500/50'
-                    : 'bg-gradient-to-r from-primary via-amber-400 to-amber-500 text-black hover:brightness-110'
-                } disabled:opacity-80`}
+                className={`w-full py-3.5 px-6 rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-yellow-glow hover:shadow-yellow-glow-lg active:scale-[0.98] btn-premium-interactive ${isSuccess
+                  ? 'bg-emerald-400 text-black shadow-emerald-500/50'
+                  : 'bg-gradient-to-r from-primary via-amber-400 to-amber-500 text-black hover:brightness-110'
+                  } disabled:opacity-80`}
               >
                 {isSubmitting ? (
                   <>
@@ -573,7 +709,7 @@ const Login = () => {
             </div>
 
             {/* Social Login Buttons */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {/* Google Button */}
               <button
                 type="button"
@@ -598,22 +734,9 @@ const Login = () => {
                 aria-label="Continue with Apple"
               >
                 <svg className="w-4 h-4 fill-current text-gray-900 dark:text-white group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.13-1.96.99-3.12-1 .04-2.24.68-2.94 1.5-.62.72-1.16 1.88-1.01 3.01 1.12.09 2.29-.57 2.96-1.39z"/>
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.67-.82 1.13-1.96.99-3.12-1 .04-2.24.68-2.94 1.5-.62.72-1.16 1.88-1.01 3.01 1.12.09 2.29-.57 2.96-1.39z" />
                 </svg>
                 <span className="hidden sm:inline">Apple</span>
-              </button>
-
-              {/* GitHub Button */}
-              <button
-                type="button"
-                onClick={() => handleSocialLogin('GitHub')}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/25 hover:bg-gray-100 dark:hover:bg-white/[0.08] transition-all text-xs font-semibold text-gray-800 dark:text-white group"
-                aria-label="Continue with GitHub"
-              >
-                <svg className="w-4 h-4 fill-current text-gray-900 dark:text-white group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-                </svg>
-                <span className="hidden sm:inline">GitHub</span>
               </button>
             </div>
 

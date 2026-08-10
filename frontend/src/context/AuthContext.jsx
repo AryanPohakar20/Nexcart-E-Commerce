@@ -84,6 +84,52 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  const loginGoogle = async (googleAccessToken) => {
+    try {
+      const response = await authService.loginGoogle(googleAccessToken);
+      if (response.success && response.data) {
+        const { user, accessToken, refreshToken } = response.data;
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+        setUser(user);
+        setIsAuthenticated(true);
+        return { success: true, user };
+      }
+      return { success: false, message: response.message || 'Google Login failed' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'An error occurred during Google login',
+        errors: error.errors,
+      };
+    }
+  };
+
+  const loginApple = async (identityToken, userObj) => {
+    try {
+      const response = await authService.loginApple(identityToken, userObj);
+      if (response.success && response.data) {
+        const { user, accessToken, refreshToken } = response.data;
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+        setUser(user);
+        setIsAuthenticated(true);
+        return { success: true, user };
+      }
+      return { success: false, message: response.message || 'Apple Login failed' };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'An error occurred during Apple login',
+        errors: error.errors,
+      };
+    }
+  };
+
   const sellerRegister = async (firstName, lastName, email, password, phone, username) => {
     try {
       const response = await sellerAuthService.register(firstName, lastName, email, password, phone, username);
@@ -108,7 +154,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, sellerLogin, sellerRegister, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, sellerLogin, sellerRegister, loginGoogle, loginApple, logout }}>
       {children}
     </AuthContext.Provider>
   );

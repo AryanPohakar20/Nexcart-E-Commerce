@@ -75,6 +75,29 @@ const authService = {
       throw error.response?.data || error;
     }
   },
+
+  loginGoogle: async (googleAccessToken) => {
+    try {
+      const response = await axiosInstance.post('/auth/login/google', {
+        accessToken: googleAccessToken,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  loginApple: async (identityToken, userObj) => {
+    try {
+      const response = await axiosInstance.post('/auth/login/apple', {
+        identityToken,
+        user: userObj,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
 };
 
 export default authService;
