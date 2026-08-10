@@ -246,6 +246,49 @@ export const SellerProvider = ({ children }) => {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersError, setOrdersError] = useState(null);
 
+  // 4. Dashboard Stats & Analytics State
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    ordersCount: 0,
+    deliveredOrdersCount: 0,
+    processingOrdersCount: 0,
+    shippedOrdersCount: 0,
+    totalListings: 0,
+    activeListings: 0,
+    lowStockCount: 0,
+    outOfStockCount: 0,
+    totalViews: 0,
+    c2cCount: 0,
+    businessCount: 0,
+    totalInventoryValue: 0,
+    rating: 0,
+    reviewsCount: 0,
+  });
+  const [dashboardRecentOrders, setDashboardRecentOrders] = useState([]);
+  const [dashboardLowStockItems, setDashboardLowStockItems] = useState([]);
+  const [revenueChartData, setRevenueChartData] = useState([]);
+  const [growthText, setGrowthText] = useState('+0%');
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  const fetchDashboardSummary = useCallback(async (timeframe = '7D') => {
+    setDashboardLoading(true);
+    try {
+      const res = await sellerAuthService.getDashboardSummary(timeframe);
+      if (res?.data?.summary) {
+        const sum = res.data.summary;
+        if (sum.analytics) setStats(sum.analytics);
+        if (sum.recentOrders) setDashboardRecentOrders(sum.recentOrders);
+        if (sum.lowStockItems) setDashboardLowStockItems(sum.lowStockItems);
+        if (sum.analytics?.revenueChartData) setRevenueChartData(sum.analytics.revenueChartData);
+        if (sum.analytics?.growthText) setGrowthText(sum.analytics.growthText);
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard summary:', err);
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, []);
+
   const fetchSellerOrders = useCallback(async () => {
     setOrdersLoading(true);
     setOrdersError(null);
@@ -332,13 +375,14 @@ export const SellerProvider = ({ children }) => {
     localStorage.setItem('nexcart-seller-settings', JSON.stringify(settings));
   }, [settings]);
 
-  // Load seller orders on mount / user change
+  // Load seller orders and dashboard summary on mount / user change
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       fetchSellerOrders();
+      fetchDashboardSummary('7D');
     }
-  }, [user, fetchSellerOrders]);
+  }, [user, fetchSellerOrders, fetchDashboardSummary]);
 
   // Sync profile data from backend dashboard API
   useEffect(() => {
@@ -566,38 +610,7 @@ export const SellerProvider = ({ children }) => {
     }
   }, []);
 
-  // ─── Computed Dynamic Stats ───────────────────────────────────────────────
-
-  const stats = React.useMemo(() => {
-    const validOrders = orders.filter((o) => o.status !== 'Cancelled');
-    const totalRevenue = validOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-    const activeProducts = products.filter((p) => p.status === 'active');
-    const lowStockItems = products.filter((p) => p.status === 'active' && p.stock > 0 && p.stock <= 5);
-    const outOfStockItems = products.filter((p) => p.stock === 0);
-    const totalViews = products.reduce((sum, p) => sum + (p.views || 0), 0);
-    const c2cCount = products.filter((p) => p.sellerType === 'individual_c2c').length;
-    const businessCount = products.filter((p) => p.sellerType === 'business').length;
-    const totalInventoryValue = products.reduce((sum, p) => sum + p.price * p.stock, 0);
-
-    return {
-      totalRevenue,
-      ordersCount: orders.length,
-      deliveredOrdersCount: orders.filter((o) => o.status === 'Delivered').length,
-      processingOrdersCount: orders.filter((o) => o.status === 'Processing' || o.status === 'Pending').length,
-      shippedOrdersCount: orders.filter((o) => o.status === 'Shipped').length,
-      totalListings: products.length,
-      activeListings: activeProducts.length,
-      lowStockCount: lowStockItems.length,
-      outOfStockCount: outOfStockItems.length,
-      totalViews,
-      c2cCount,
-      businessCount,
-      totalInventoryValue,
-      rating: 4.9,
-      reviewsCount: 142,
-    };
-  }, [orders, products]);
-
+  // stats computation logic was removed to use backend aggregation in fetchDashboardSummary
   return (
     <SellerContext.Provider
       value={{
@@ -611,6 +624,12 @@ export const SellerProvider = ({ children }) => {
         ordersError,
         fetchSellerOrders,
         stats,
+        dashboardRecentOrders,
+        dashboardLowStockItems,
+        revenueChartData,
+        growthText,
+        dashboardLoading,
+        fetchDashboardSummary,
         // Product Actions
         addProduct,
         updateProduct,

@@ -176,9 +176,9 @@ const sellerAuthService = {
     }
   },
 
-  getDashboardSummary: async () => {
+  getDashboardSummary: async (timeframe = '7D') => {
     try {
-      const response = await axiosInstance.get('/seller/dashboard/summary');
+      const response = await axiosInstance.get(`/seller/dashboard/summary?timeframe=${timeframe}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

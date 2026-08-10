@@ -277,7 +277,8 @@ export const deleteStore = asyncHandler(async (req, res) => {
 // ─── GET /api/seller/dashboard/summary ───────────────────────────────────────
 
 export const getDashboardSummary = asyncHandler(async (req, res) => {
-  const summary = await sellerService.getDashboardSummary(req.user._id);
+  const { timeframe } = req.query;
+  const summary = await sellerService.getDashboardSummary(req.user._id, timeframe);
 
   res.status(200).json({
     success: true,
