@@ -35,14 +35,15 @@ export const executeBulkAction = async (targetEntity, action, ids = [], payload 
       throw new ApiError(400, `Unsupported product bulk action: ${action}`);
     }
   } else if (entity === 'users') {
+    const userFilter = { _id: { $in: ids }, role: { $nin: ['admin', 'super_admin'] }, _id: { $ne: adminUser._id } };
     if (action === 'activate') {
-      result = await User.updateMany({ _id: { $in: ids } }, { $set: { status: 'Active', isBlocked: false } });
+      result = await User.updateMany(userFilter, { $set: { status: 'Active', isBlocked: false } });
     } else if (action === 'suspend') {
-      result = await User.updateMany({ _id: { $in: ids } }, { $set: { status: 'Suspended' } });
+      result = await User.updateMany(userFilter, { $set: { status: 'Suspended' } });
     } else if (action === 'block') {
-      result = await User.updateMany({ _id: { $in: ids } }, { $set: { isBlocked: true } });
+      result = await User.updateMany(userFilter, { $set: { isBlocked: true } });
     } else if (action === 'delete') {
-      result = await User.updateMany({ _id: { $in: ids } }, { $set: { isDeleted: true, status: 'Deleted' } });
+      result = await User.updateMany(userFilter, { $set: { isDeleted: true, status: 'Deleted', deletedAt: new Date(), deletedBy: adminUser._id } });
     } else {
       throw new ApiError(400, `Unsupported user bulk action: ${action}`);
     }

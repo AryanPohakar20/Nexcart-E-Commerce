@@ -4,6 +4,7 @@
 // Also emits an AuditLog entry for every mutating action.
 
 import mongoose from 'mongoose';
+import User from '../models/User.js';
 import * as adminUserRepo  from '../repositories/adminUserRepository.js';
 import * as auditLogRepo   from '../repositories/auditLogRepository.js';
 import { buildUserFilter } from '../utils/buildFilter.js';
@@ -14,13 +15,16 @@ import { ApiError }         from '../utils/ApiError.js';
 // ─── Helper: emit audit log ───────────────────────────────────────────────────
 
 const audit = (admin, action, target, targetId, remarks = '', ipAddress = null, status = 'success') => {
+  const adminId = admin?._id || admin?.id;
+  if (!adminId) return Promise.resolve();
+  const adminName = admin ? `${admin.firstName || ''} ${admin.lastName || ''}`.trim() || admin.email || 'Admin' : 'Admin';
   return auditLogRepo.createLog({
-    admin:    admin._id,
-    adminName: `${admin.firstName} ${admin.lastName}`.trim(),
+    admin:    adminId,
+    adminName,
     action,
     module:   'Users',
     target,
-    targetId,
+    targetId: targetId && mongoose.Types.ObjectId.isValid(targetId) ? targetId : null,
     remarks,
     ipAddress,
     status,
@@ -106,35 +110,9 @@ export const unblockUser = async (id, admin, ipAddress) => {
   return updated;
 };
 
-// ─── Soft Delete ──────────────────────────────────────────────────────────────
-
-export const deleteUser = async (id, admin, ipAddress) => {
-  const user = await adminUserRepo.findUserById(id);
-  if (!user) throw new ApiError(404, 'User not found.');
-  if (user.role === 'admin') throw new ApiError(403, 'Cannot delete an admin account.');
-  if (user.isDeleted) throw new ApiError(400, 'User is already deleted.');
-
-  // Safety check: Prevent admin from deleting their own active session/account or the root admin
-  if (user._id.toString() === admin._id.toString() || user.email === 'admin@nexcart.in') {
-    throw new ApiError(403, 'Forbidden: You cannot delete your own active session or the root admin account.');
-  }
-
-  const updated = await adminUserRepo.softDeleteUser(id, admin._id);
-  const name = `${user.firstName} ${user.lastName}`.trim();
-  audit(admin, 'DELETE_USER', `${name} (${user._id})`, user._id, 'Soft deleted by admin.', ipAddress);
-  return updated;
-};
-
-// ─── Update User Status ────────────────────────────────────────────────────────
-
 export const updateUserStatus = async (id, status, admin, ipAddress) => {
   const user = await adminUserRepo.findUserById(id);
   if (!user) throw new ApiError(404, 'User not found.');
-
-  // Safety check: Prevent admin from suspending/reactivating their own active session/account or the root admin
-  if (user._id.toString() === admin._id.toString() || user.email === 'admin@nexcart.in') {
-    throw new ApiError(403, 'Forbidden: You cannot suspend or reactivate your own active session or the root admin account.');
-  }
 
   const targetStatus = status.toLowerCase() === 'active' ? 'Active' : 'Suspended';
 
@@ -152,42 +130,71 @@ export const updateUserStatus = async (id, status, admin, ipAddress) => {
 
 // ─── Bulk Operations ──────────────────────────────────────────────────────────
 
-const filterValidTargetIds = (userIds, currentAdminId) => {
+const filterValidTargetIds = async (userIds, admin) => {
   if (!Array.isArray(userIds) || userIds.length === 0) {
     throw new ApiError(400, 'Please provide an array of user IDs.');
   }
-  const validIds = userIds.filter((id) => {
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) return false;
-    if (id.toString() === currentAdminId.toString()) return false;
-    return true;
-  });
-  if (validIds.length === 0) {
-    throw new ApiError(400, 'No valid target users selected (Admin accounts cannot be modified).');
+  const validObjectIds = userIds.filter(
+    (id) => id && mongoose.Types.ObjectId.isValid(id)
+  );
+
+  if (validObjectIds.length === 0) {
+    throw new ApiError(400, 'No valid user IDs provided.');
   }
-  return validIds;
+
+  const adminId = admin?._id || admin?.id;
+  const orConditions = [{ role: { $in: ['admin', 'super_admin'] } }];
+  if (adminId && mongoose.Types.ObjectId.isValid(adminId)) {
+    orConditions.push({ _id: adminId });
+  }
+
+  const adminUsers = await User.find({
+    _id: { $in: validObjectIds },
+    $or: orConditions,
+  }).select('_id');
+
+  const adminIdSet = new Set(adminUsers.map((u) => u._id.toString()));
+  if (adminId) {
+    adminIdSet.add(adminId.toString());
+  }
+
+  const validIds = validObjectIds.filter((id) => !adminIdSet.has(id.toString()));
+  const skippedAdminsCount = validObjectIds.length - validIds.length;
+
+  return { validIds, skippedAdminsCount };
 };
 
 export const bulkSuspendUsers = async (userIds, admin, ipAddress) => {
-  const validUserIds = filterValidTargetIds(userIds, admin._id);
-  const result = await adminUserRepo.bulkSuspendUsers(validUserIds);
-  const count = result.modifiedCount || 0;
-  audit(admin, 'BULK_SUSPEND_USERS', `${count} users suspended`, null, `IDs: ${validUserIds.join(', ')}`, ipAddress);
-  return { count };
+  const { validIds, skippedAdminsCount } = await filterValidTargetIds(userIds, admin);
+  if (validIds.length === 0) {
+    throw new ApiError(400, 'Cannot suspend selected users: Admin accounts cannot be suspended.');
+  }
+  const result = await adminUserRepo.bulkSuspendUsers(validIds);
+  const count = result?.modifiedCount ?? result?.nModified ?? 0;
+  audit(admin, 'BULK_SUSPEND_USERS', `${count} users suspended`, null, `IDs: ${validIds.join(', ')}`, ipAddress);
+  return { count, skippedAdminsCount };
 };
 
 export const bulkActivateUsers = async (userIds, admin, ipAddress) => {
-  const validUserIds = filterValidTargetIds(userIds, admin._id);
-  const result = await adminUserRepo.bulkActivateUsers(validUserIds);
-  const count = result.modifiedCount || 0;
-  audit(admin, 'BULK_ACTIVATE_USERS', `${count} users activated`, null, `IDs: ${validUserIds.join(', ')}`, ipAddress);
-  return { count };
+  const { validIds, skippedAdminsCount } = await filterValidTargetIds(userIds, admin);
+  if (validIds.length === 0) {
+    throw new ApiError(400, 'Cannot activate selected users: Admin accounts cannot be modified.');
+  }
+  const result = await adminUserRepo.bulkActivateUsers(validIds);
+  const count = result?.modifiedCount ?? result?.nModified ?? 0;
+  audit(admin, 'BULK_ACTIVATE_USERS', `${count} users activated`, null, `IDs: ${validIds.join(', ')}`, ipAddress);
+  return { count, skippedAdminsCount };
 };
 
 export const bulkDeleteUsers = async (userIds, admin, ipAddress) => {
-  const validUserIds = filterValidTargetIds(userIds, admin._id);
-  const result = await adminUserRepo.bulkDeleteUsers(validUserIds, admin._id);
-  const count = result.modifiedCount || 0;
-  audit(admin, 'BULK_DELETE_USERS', `${count} users deleted`, null, `IDs: ${validUserIds.join(', ')}`, ipAddress);
-  return { count };
+  const adminId = admin?._id || admin?.id;
+  const { validIds, skippedAdminsCount } = await filterValidTargetIds(userIds, admin);
+  if (validIds.length === 0) {
+    throw new ApiError(400, 'Cannot delete selected users: Admin accounts cannot be deleted.');
+  }
+  const result = await adminUserRepo.bulkDeleteUsers(validIds, adminId);
+  const count = result?.modifiedCount ?? result?.nModified ?? 0;
+  audit(admin, 'BULK_DELETE_USERS', `${count} users deleted`, null, `IDs: ${validIds.join(', ')}`, ipAddress);
+  return { count, skippedAdminsCount };
 };
 

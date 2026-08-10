@@ -158,8 +158,12 @@ export const bulkSuspendUsers = asyncHandler(async (req, res) => {
   }
 
   const { userIds } = req.body;
-  const { count } = await adminUserService.bulkSuspendUsers(userIds, req.user, getIp(req));
-  return successResponse(res, `${count} users suspended successfully.`, { count });
+  const { count, skippedAdminsCount } = await adminUserService.bulkSuspendUsers(userIds, req.user, getIp(req));
+  let message = `${count} user${count !== 1 ? 's' : ''} suspended successfully.`;
+  if (skippedAdminsCount > 0) {
+    message += ` (${skippedAdminsCount} admin account${skippedAdminsCount !== 1 ? 's' : ''} skipped)`;
+  }
+  return successResponse(res, message, { count, skippedAdminsCount });
 });
 
 // PATCH /api/admin/users/bulk/activate
@@ -170,8 +174,12 @@ export const bulkActivateUsers = asyncHandler(async (req, res) => {
   }
 
   const { userIds } = req.body;
-  const { count } = await adminUserService.bulkActivateUsers(userIds, req.user, getIp(req));
-  return successResponse(res, `${count} users activated successfully.`, { count });
+  const { count, skippedAdminsCount } = await adminUserService.bulkActivateUsers(userIds, req.user, getIp(req));
+  let message = `${count} user${count !== 1 ? 's' : ''} activated successfully.`;
+  if (skippedAdminsCount > 0) {
+    message += ` (${skippedAdminsCount} admin account${skippedAdminsCount !== 1 ? 's' : ''} skipped)`;
+  }
+  return successResponse(res, message, { count, skippedAdminsCount });
 });
 
 // DELETE /api/admin/users/bulk/delete
@@ -182,8 +190,12 @@ export const bulkDeleteUsers = asyncHandler(async (req, res) => {
   }
 
   const { userIds } = req.body;
-  const { count } = await adminUserService.bulkDeleteUsers(userIds, req.user, getIp(req));
-  return successResponse(res, `${count} users deleted successfully.`, { count });
+  const { count, skippedAdminsCount } = await adminUserService.bulkDeleteUsers(userIds, req.user, getIp(req));
+  let message = `${count} user${count !== 1 ? 's' : ''} deleted successfully.`;
+  if (skippedAdminsCount > 0) {
+    message += ` (${skippedAdminsCount} admin account${skippedAdminsCount !== 1 ? 's' : ''} skipped)`;
+  }
+  return successResponse(res, message, { count, skippedAdminsCount });
 });
 
 

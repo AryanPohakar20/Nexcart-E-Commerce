@@ -58,26 +58,57 @@ const AdminUsers = () => {
     fetchUsers();
   }, [page, search, roleFilter, statusFilter]);
 
+  const handleSearchChange = (val) => {
+    setSearch(val);
+    setPage(1);
+    setSelected([]);
+  };
+
+  const handleRoleFilterChange = (val) => {
+    setRoleFilter(val);
+    setPage(1);
+    setSelected([]);
+  };
+
+  const handleStatusFilterChange = (val) => {
+    setStatusFilter(val);
+    setPage(1);
+    setSelected([]);
+  };
+
   const isAllSelected = useMemo(() => {
     return users.length > 0 && users.every((u) => selected.includes(u._id));
   }, [users, selected]);
 
   const toggleSelectAll = () => {
+    const pageUserIds = users.map((u) => u._id);
     if (isAllSelected) {
-      const pageUserIds = users.map((u) => u._id);
-      setSelected((prev) => prev.filter((id) => !pageUserIds.includes(id)));
+      setSelected((prev) => {
+        const next = prev.filter((id) => !pageUserIds.includes(id));
+        console.log("Selected users:", next);
+        return next;
+      });
     } else {
-      const pageUserIds = users.map((u) => u._id);
-      setSelected((prev) => Array.from(new Set([...prev, ...pageUserIds])));
+      setSelected((prev) => {
+        const next = Array.from(new Set([...prev, ...pageUserIds]));
+        console.log("Selected users:", next);
+        return next;
+      });
     }
   };
 
   const toggleSelect = (id) => {
-    setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+    setSelected((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      console.log("Selected users:", next);
+      return next;
+    });
   };
 
   const handleBulkSuspend = () => {
     if (selected.length === 0) return;
+    console.log("Selected users:", selected);
+    console.log("Bulk action IDs:", selected);
     const count = selected.length;
     setConfirmDialog({
       open: true,
@@ -90,7 +121,8 @@ const AdminUsers = () => {
           setActionLoading(true);
           const res = await adminService.bulkSuspendUsers(selected);
           const updatedCount = res?.data?.count ?? count;
-          if (showToast) showToast(`${updatedCount} user${updatedCount !== 1 ? 's' : ''} suspended successfully.`, 'success');
+          const message = res?.message || `${updatedCount} user${updatedCount !== 1 ? 's' : ''} suspended successfully.`;
+          if (showToast) showToast(message, 'success');
           setSelected([]);
           setConfirmDialog({ open: false });
           fetchUsers();
@@ -106,6 +138,8 @@ const AdminUsers = () => {
 
   const handleBulkActivate = () => {
     if (selected.length === 0) return;
+    console.log("Selected users:", selected);
+    console.log("Bulk action IDs:", selected);
     const count = selected.length;
     setConfirmDialog({
       open: true,
@@ -118,7 +152,8 @@ const AdminUsers = () => {
           setActionLoading(true);
           const res = await adminService.bulkActivateUsers(selected);
           const updatedCount = res?.data?.count ?? count;
-          if (showToast) showToast(`${updatedCount} user${updatedCount !== 1 ? 's' : ''} activated successfully.`, 'success');
+          const message = res?.message || `${updatedCount} user${updatedCount !== 1 ? 's' : ''} activated successfully.`;
+          if (showToast) showToast(message, 'success');
           setSelected([]);
           setConfirmDialog({ open: false });
           fetchUsers();
@@ -134,6 +169,8 @@ const AdminUsers = () => {
 
   const handleBulkDelete = () => {
     if (selected.length === 0) return;
+    console.log("Selected users:", selected);
+    console.log("Bulk action IDs:", selected);
     const count = selected.length;
     setConfirmDialog({
       open: true,
@@ -146,7 +183,8 @@ const AdminUsers = () => {
           setActionLoading(true);
           const res = await adminService.bulkDeleteUsers(selected);
           const updatedCount = res?.data?.count ?? count;
-          if (showToast) showToast(`${updatedCount} user${updatedCount !== 1 ? 's' : ''} deleted successfully.`, 'success');
+          const message = res?.message || `${updatedCount} user${updatedCount !== 1 ? 's' : ''} deleted successfully.`;
+          if (showToast) showToast(message, 'success');
           setSelected([]);
           setConfirmDialog({ open: false });
           fetchUsers();
@@ -268,8 +306,8 @@ const AdminUsers = () => {
       <div className="bg-[#1A1A1A] border border-white/5 rounded-2xl overflow-hidden">
         <TableToolbar
           search={search}
-          onSearch={setSearch}
-          onSearchClear={() => setSearch('')}
+          onSearch={handleSearchChange}
+          onSearchClear={() => handleSearchChange('')}
           searchPlaceholder="Search users..."
           selectedCount={selected.length}
           onExport={handleExport}
@@ -277,10 +315,10 @@ const AdminUsers = () => {
           createLabel="Add User"
           filters={
             <>
-              <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="h-9 px-3 text-xs font-semibold bg-white/5 border border-white/8 rounded-xl text-gray-300 outline-none">
+              <select value={roleFilter} onChange={(e) => handleRoleFilterChange(e.target.value)} className="h-9 px-3 text-xs font-semibold bg-white/5 border border-white/8 rounded-xl text-gray-300 outline-none">
                 {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{r === 'All Roles' ? r : r.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
               </select>
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 px-3 text-xs font-semibold bg-white/5 border border-white/8 rounded-xl text-gray-300 outline-none">
+              <select value={statusFilter} onChange={(e) => handleStatusFilterChange(e.target.value)} className="h-9 px-3 text-xs font-semibold bg-white/5 border border-white/8 rounded-xl text-gray-300 outline-none">
                 {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s === 'All Status' ? s : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
               </select>
             </>
