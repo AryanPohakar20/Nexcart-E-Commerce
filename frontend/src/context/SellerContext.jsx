@@ -397,14 +397,7 @@ export const SellerProvider = ({ children }) => {
   const [activePersona, setActivePersona] = useState('all');
 
   // 2. Products State
-  const [products, setProducts] = useState(() => {
-    try {
-      const stored = localStorage.getItem('nexcart-seller-products');
-      return stored ? JSON.parse(stored) : INITIAL_PRODUCTS;
-    } catch {
-      return INITIAL_PRODUCTS;
-    }
-  });
+  const [products, setProducts] = useState([]);
 
   // 3. Orders State
   const [orders, setOrders] = useState(() => {
@@ -420,10 +413,6 @@ export const SellerProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('nexcart-seller-settings', JSON.stringify(settings));
   }, [settings]);
-
-  useEffect(() => {
-    localStorage.setItem('nexcart-seller-products', JSON.stringify(products));
-  }, [products]);
 
   useEffect(() => {
     localStorage.setItem('nexcart-seller-orders', JSON.stringify(orders));

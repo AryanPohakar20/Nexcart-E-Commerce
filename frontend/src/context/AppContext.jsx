@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { PRODUCTS, COUPONS } from '../constants/dummyData';
+import { COUPONS } from '../constants/dummyData';
 import profileService from '../services/profileService';
 import addressService from '../services/addressService';
 import authService from '../services/authService';
@@ -31,18 +31,7 @@ export const AppProvider = ({ children }) => {
   const [saveForLater, setSaveForLater] = useState(() => JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]'));
   const [comparedProducts, setComparedProducts] = useState([]);
   const [addresses, setAddresses] = useState([]);
-  const [orders, setOrders] = useState([
-    {
-      id: 'ORD-98431',
-      date: '2026-07-10',
-      items: [{ product: PRODUCTS[1], quantity: 1 }],
-      shippingAddress: 'Penthouse B, Skyview Heights, Hitec City, Hyderabad - 500081',
-      paymentMethod: 'UPI (GPay)',
-      amount: 24999,
-      status: 'Delivered',
-      deliveryEstimate: 'Delivered on 12th July 2026',
-    },
-  ]);
+  const [orders, setOrders] = useState([]);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [notifications, setNotifications] = useState([
     { id: 'n-1', title: 'Order Delivered!', message: 'Your order ORD-98431 has been successfully delivered.', read: false, time: '2 days ago' },

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CATEGORIES as DEFAULT_CATEGORIES } from '../constants/dummyData';
 import ProductGrid from '../components/ProductGrid';
 import { FiSliders, FiX, FiCheck, FiChevronDown, FiStar, FiRefreshCw } from 'react-icons/fi';
 import productService from '../services/productService';
@@ -14,7 +13,7 @@ const Products = () => {
 
   // Products & Categories from MongoDB
   const [allProducts, setAllProducts] = useState([]);
-  const [categoriesList, setCategoriesList] = useState(DEFAULT_CATEGORIES);
+  const [categoriesList, setCategoriesList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Filter States
@@ -45,13 +44,10 @@ const Products = () => {
           }
           if (catRes?.data?.categories && catRes.data.categories.length > 0) {
             const formatted = catRes.data.categories.map((c) => {
-              const matched = DEFAULT_CATEGORIES.find(
-                (dc) => dc.name.toLowerCase() === c.name.toLowerCase() || dc.id === c.slug
-              );
               return {
                 id: c.slug || c._id,
                 name: c.name,
-                image: c.image || matched?.image,
+                image: c.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&q=80',
               };
             });
             setCategoriesList(formatted);

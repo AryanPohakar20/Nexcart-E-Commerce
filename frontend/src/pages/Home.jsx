@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
-import { BRANDS, COUPONS, TESTIMONIALS, CATEGORIES as DEFAULT_CATEGORIES } from '../constants/dummyData';
+import { BRANDS, COUPONS, TESTIMONIALS } from '../constants/dummyData';
 import { FiChevronLeft, FiChevronRight, FiClock, FiStar, FiPercent, FiCopy, FiCheck, FiArrowRight, FiShoppingCart, FiHeart } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
 import productService from '../services/productService';
@@ -14,7 +14,7 @@ const Home = () => {
   // Dynamic MongoDB state
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [trendingProducts, setTrendingProducts] = useState([]);
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Mouse position for Hero parallax
@@ -104,13 +104,10 @@ const Home = () => {
           if (catRes?.data?.categories && catRes.data.categories.length > 0) {
             // Format categories to match UI expectation
             const formattedCats = catRes.data.categories.map((c) => {
-              const matchedDefault = DEFAULT_CATEGORIES.find(
-                (dc) => dc.name.toLowerCase() === c.name.toLowerCase() || dc.id === c.slug
-              );
               return {
                 id: c.slug || c._id,
                 name: c.name,
-                image: c.image || matchedDefault?.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&q=80',
+                image: c.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&q=80',
               };
             });
             setCategories(formattedCats);

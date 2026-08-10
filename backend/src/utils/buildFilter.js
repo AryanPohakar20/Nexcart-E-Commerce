@@ -140,6 +140,8 @@ export const buildProductFilter = (query = {}) => {
   if (query.category) {
     if (mongoose.Types.ObjectId.isValid(query.category)) {
       filter.category = new mongoose.Types.ObjectId(query.category);
+    } else {
+      filter.category = query.category;
     }
   }
 
