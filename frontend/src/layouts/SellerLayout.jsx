@@ -98,7 +98,7 @@ const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) =>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
             <img src={logo} alt="Logo" className="w-8 h-8 rounded object-cover border border-primary/20" />
-            <span className="text-xl font-bold tracking-wider text-primary">NEX<span className="text-textPrimary">CART</span></span>
+            <span className="text-xl font-bold tracking-wider text-primary">Nex<span className="text-textPrimary">Cart</span></span>
             <span className="bg-primary/10 border border-primary/20 text-primary text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">Studio</span>
           </div>
           <button className="md:hidden text-textPrimary hover:text-primary" onClick={onCloseSidebar}>

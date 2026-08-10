@@ -41,7 +41,7 @@ const ResetPassword = () => {
         
         {/* Header */}
         <div className="text-center space-y-2">
-          <Link to="/" className="text-2xl font-bold tracking-wider text-primary">NEX<span className="text-white">CART</span></Link>
+          <Link to="/" className="text-2xl font-bold tracking-wider text-primary">Nex<span className="text-white">Cart</span></Link>
           <p className="text-xs text-gray-500 font-medium">Reset Password reset</p>
         </div>
 

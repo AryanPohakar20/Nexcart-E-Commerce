@@ -4,31 +4,27 @@ import { SellerContext } from '../../context/SellerContext';
 import { CATEGORIES } from '../../constants/dummyData';
 import { 
   FiX, FiPlus, FiTag, FiDollarSign, FiPackage, FiMapPin, 
-  FiCheckCircle, FiImage, FiLayers, FiShield, FiInfo, FiEdit3
+  FiCheckCircle, FiImage, FiLayers, FiShield, FiInfo, FiEdit3,
+  FiUploadCloud, FiTrash2, FiStar
 } from 'react-icons/fi';
-
-const SAMPLE_IMAGES = [
-  { label: 'Smartphone', url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80' },
-  { label: 'Headphones', url: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&q=80' },
-  { label: 'Laptop', url: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&q=80' },
-  { label: 'Sneakers', url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80' },
-  { label: 'Furniture', url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80' },
-  { label: 'Ceramic Mug', url: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&q=80' },
-  { label: 'Leather Bag', url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80' },
-  { label: 'Hoodie', url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&q=80' },
-];
 
 const AddProductModal = ({ isOpen, onClose, editingProduct = null }) => {
   const { addProduct, updateProduct, settings } = useContext(SellerContext);
 
   const [sellerType, setSellerType] = useState('individual_c2c'); // 'individual_c2c' | 'business'
+  
+  // Image Upload State
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: 'mobiles',
     price: '',
     originalPrice: '',
-    image: SAMPLE_IMAGES[0].url,
     stock: 1,
     // C2C Specific
     condition: 'Like New',
@@ -53,7 +49,6 @@ const AddProductModal = ({ isOpen, onClose, editingProduct = null }) => {
         category: editingProduct.category || 'mobiles',
         price: editingProduct.price || '',
         originalPrice: editingProduct.originalPrice || '',
-        image: editingProduct.image || SAMPLE_IMAGES[0].url,
         stock: editingProduct.stock ?? 1,
         condition: editingProduct.condition || 'Like New',
         usageDuration: editingProduct.usageDuration || '',
@@ -66,6 +61,16 @@ const AddProductModal = ({ isOpen, onClose, editingProduct = null }) => {
         sku: editingProduct.sku || '',
         warranty: editingProduct.warranty || '',
       });
+
+      // Load existing images if available
+      if (editingProduct.images && editingProduct.images.length > 0) {
+        setUploadedImages(editingProduct.images.map(img => ({ preview: img, isExisting: true })));
+      } else if (editingProduct.image) {
+        setUploadedImages([{ preview: editingProduct.image, isExisting: true }]);
+      } else {
+        setUploadedImages([]);
+      }
+      setPrimaryImageIndex(0);
     } else {
       setFormData({
         title: '',
@@ -73,7 +78,6 @@ const AddProductModal = ({ isOpen, onClose, editingProduct = null }) => {
         category: 'mobiles',
         price: '',
         originalPrice: '',
-        image: SAMPLE_IMAGES[0].url,
         stock: sellerType === 'individual_c2c' ? 1 : 10,
         condition: 'Like New',
         usageDuration: '6 months',
@@ -86,27 +90,110 @@ const AddProductModal = ({ isOpen, onClose, editingProduct = null }) => {
         sku: '',
         warranty: '1 Year Warranty',
       });
+      setUploadedImages([]);
+      setPrimaryImageIndex(0);
     }
-  }, [editingProduct, isOpen, settings]);
+  }, [editingProduct, isOpen, settings, sellerType]);
 
-  const handleSubmit = (e) => {
+  // Cleanup object URLs on unmount or when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      uploadedImages.forEach(img => {
+        if (img.file && img.preview) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+    }
+  }, [isOpen]);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    processFiles(files);
+  };
+
+  const processFiles = (files) => {
+    const validFiles = files.filter(file => {
+      const isValidType = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type);
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+      return isValidType && isValidSize;
+    });
+
+    const newImages = validFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      isExisting: false
+    }));
+
+    setUploadedImages(prev => [...prev, ...newImages]);
+  };
+
+  const removeImage = (index) => {
+    setUploadedImages(prev => {
+      const newImgs = [...prev];
+      const removed = newImgs.splice(index, 1)[0];
+      if (removed.file && removed.preview) {
+        URL.revokeObjectURL(removed.preview);
+      }
+      return newImgs;
+    });
+    
+    // Adjust primary index if needed
+    if (primaryImageIndex === index) {
+      setPrimaryImageIndex(0);
+    } else if (primaryImageIndex > index) {
+      setPrimaryImageIndex(prev => prev - 1);
+    }
+  };
+
+  // Convert File to Base64 to safely store in localStorage via Context
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.price) return;
-
-    const payload = {
-      ...formData,
-      sellerType,
-      stock: sellerType === 'individual_c2c' ? Math.max(1, Number(formData.stock) || 1) : Number(formData.stock) || 0,
-      price: Number(formData.price),
-      originalPrice: formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price) * 1.25,
-    };
-
-    if (editingProduct) {
-      updateProduct(editingProduct.id, payload);
-    } else {
-      addProduct(payload);
+    if (uploadedImages.length === 0) {
+      alert("Please upload at least one product image.");
+      return;
     }
-    onClose();
+
+    setIsSubmitting(true);
+    try {
+      // Process images to base64
+      const processedImages = await Promise.all(uploadedImages.map(async (img) => {
+        if (img.isExisting) return img.preview;
+        return await fileToBase64(img.file);
+      }));
+
+      const primaryImage = processedImages[primaryImageIndex] || processedImages[0];
+
+      const payload = {
+        ...formData,
+        sellerType,
+        stock: sellerType === 'individual_c2c' ? Math.max(1, Number(formData.stock) || 1) : Number(formData.stock) || 0,
+        price: Number(formData.price),
+        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price) * 1.25,
+        image: primaryImage,
+        images: processedImages,
+      };
+
+      if (editingProduct) {
+        updateProduct(editingProduct.id, payload);
+      } else {
+        addProduct(payload);
+      }
+      onClose();
+    } catch (error) {
+      console.error("Error processing form:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -452,34 +539,105 @@ const AddProductModal = ({ isOpen, onClose, editingProduct = null }) => {
               />
             </div>
 
-            {/* Image Selection */}
+            {/* Image Selection - Drag & Drop */}
             <div>
-              <label className="block text-textSecondary font-bold mb-1.5">
-                Product Image URL / Sample Selection
+              <label className="block text-textSecondary font-bold mb-1.5 flex items-center justify-between">
+                <span>Product Images <span className="text-red-400">*</span></span>
+                <span className="text-[10px] font-normal text-textSecondary">JPG, PNG, WEBP (Max 5MB)</span>
               </label>
-              <input
-                type="url"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="https://..."
-                className="w-full bg-surface border border-borderColor rounded-xl px-3.5 py-2 text-textPrimary placeholder-textSecondary focus:outline-none focus:border-primary text-xs font-mono mb-2"
-              />
 
-              {/* Sample Images Palette */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                {SAMPLE_IMAGES.map((img) => (
-                  <button
-                    key={img.label}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, image: img.url })}
-                    className={`relative rounded-xl overflow-hidden border flex-shrink-0 w-14 h-14 transition-all ${
-                      formData.image === img.url ? 'border-primary shadow-yellow-glow scale-105' : 'border-borderColor opacity-60 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
-                  </button>
-                ))}
+              {/* Upload Zone */}
+              <div 
+                className={`w-full border-2 border-dashed rounded-2xl p-6 transition-colors text-center cursor-pointer relative overflow-hidden group ${
+                  isDragging 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-borderColor bg-surface hover:border-primary/50 hover:bg-bgSecondary'
+                }`}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    processFiles(Array.from(e.dataTransfer.files));
+                  }
+                }}
+              >
+                <input
+                  type="file"
+                  multiple
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                
+                <div className="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                    isDragging ? 'bg-primary text-black' : 'bg-cardBg border border-borderColor text-textSecondary group-hover:text-primary group-hover:border-primary/30'
+                  }`}>
+                    <FiUploadCloud size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold text-textPrimary text-sm">Upload Product Images</p>
+                    <p className="text-[10px] text-textSecondary mt-0.5">Click to browse or drag & drop images here</p>
+                  </div>
+                </div>
               </div>
+
+              {/* Image Previews */}
+              {uploadedImages.length > 0 && (
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {uploadedImages.map((img, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`relative aspect-square rounded-xl overflow-hidden border-2 group transition-all ${
+                        primaryImageIndex === idx 
+                          ? 'border-primary shadow-yellow-glow ring-2 ring-primary/20' 
+                          : 'border-borderColor hover:border-primary/50'
+                      }`}
+                    >
+                      <img 
+                        src={img.preview} 
+                        alt={`Preview ${idx}`} 
+                        className="w-full h-full object-cover"
+                      />
+                      
+                      {/* Overlays */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => removeImage(idx)}
+                            className="w-6 h-6 rounded-full bg-red-500/90 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                            title="Remove image"
+                          >
+                            <FiTrash2 size={12} />
+                          </button>
+                        </div>
+                        <div className="flex justify-center">
+                          {primaryImageIndex !== idx && (
+                            <button
+                              type="button"
+                              onClick={() => setPrimaryImageIndex(idx)}
+                              className="px-2 py-1 bg-black/70 backdrop-blur-sm text-white text-[9px] font-bold rounded-lg border border-white/20 hover:bg-primary hover:text-black transition-colors"
+                            >
+                              Set as Cover
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Primary Badge */}
+                      {primaryImageIndex === idx && (
+                        <div className="absolute top-2 left-2 bg-primary text-black text-[9px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+                          <FiStar size={8} className="fill-black" />
+                          <span>COVER</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Actions */}
@@ -493,10 +651,17 @@ const AddProductModal = ({ isOpen, onClose, editingProduct = null }) => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl font-bold bg-primary text-black hover:bg-primary-light shadow-yellow-glow transition-all flex items-center gap-2"
+                disabled={isSubmitting}
+                className={`px-6 py-2.5 rounded-xl font-bold bg-primary text-black hover:bg-primary-light shadow-yellow-glow transition-all flex items-center gap-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                <FiCheckCircle size={16} />
-                <span>{editingProduct ? 'Save Changes' : 'Publish Listing'}</span>
+                {isSubmitting ? (
+                  <span className="animate-pulse">Processing...</span>
+                ) : (
+                  <>
+                    <FiCheckCircle size={16} />
+                    <span>{editingProduct ? 'Save Changes' : 'Publish Listing'}</span>
+                  </>
+                )}
               </button>
             </div>
           </form>

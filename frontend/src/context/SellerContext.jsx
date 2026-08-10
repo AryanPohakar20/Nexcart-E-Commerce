@@ -163,164 +163,6 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
-const INITIAL_ORDERS = [
-  {
-    id: 'ORD-78291',
-    customer: {
-      name: 'Aarav Sharma',
-      email: 'aarav.sharma@gmail.com',
-      phone: '+91 98451 23412',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
-    },
-    shippingAddress: 'Flat 402, Oakwood Residences, 12th Main, Indiranagar, Bengaluru - 560038',
-    items: [
-      {
-        id: 'prod-c2c-1',
-        title: 'Apple iPhone 13 (128GB, Midnight Black)',
-        price: 36999,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80',
-        sellerType: 'individual_c2c',
-        condition: 'Like New',
-      }
-    ],
-    totalAmount: 36999,
-    paymentMethod: 'UPI (PhonePe)',
-    paymentStatus: 'Paid',
-    status: 'Processing',
-    orderDate: '2026-08-03',
-    deliveryType: 'Courier Express',
-    trackingNumber: 'BLUEDART-89421',
-    carrier: 'BlueDart Express',
-    deliveryEstimate: 'Expected by Aug 06, 2026',
-    customerNote: 'Please bubble wrap well before dispatching.',
-  },
-  {
-    id: 'ORD-78290',
-    customer: {
-      name: 'Pooja Iyer',
-      email: 'pooja.iyer@gmail.com',
-      phone: '+91 97120 45892',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
-    },
-    shippingAddress: 'Villa 12, Palm Meadows Phase 2, Whitefield, Bengaluru - 560066',
-    items: [
-      {
-        id: 'prod-biz-1',
-        title: 'Minimalist Matte Ceramic Coffee Mug Set (Pack of 4)',
-        price: 1299,
-        quantity: 2,
-        image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&q=80',
-        sellerType: 'business',
-        condition: 'Brand New',
-      }
-    ],
-    totalAmount: 2598,
-    paymentMethod: 'Credit Card (HDFC)',
-    paymentStatus: 'Paid',
-    status: 'Shipped',
-    orderDate: '2026-08-02',
-    deliveryType: 'Express Courier',
-    trackingNumber: 'DELHIVERY-54312',
-    carrier: 'Delhivery Surface',
-    deliveryEstimate: 'Out for delivery tomorrow',
-    customerNote: 'Gift packaging requested if possible.',
-  },
-  {
-    id: 'ORD-78289',
-    customer: {
-      name: 'Karthik Nair',
-      email: 'karthik.n@yahoo.com',
-      phone: '+91 99881 77213',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-    },
-    shippingAddress: 'Direct Meetup @ Starbucks, Koramangala 5th Block, Bengaluru',
-    items: [
-      {
-        id: 'prod-c2c-2',
-        title: 'Sony WH-1000XM4 Wireless Headphones',
-        price: 14500,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&q=80',
-        sellerType: 'individual_c2c',
-        condition: 'Good',
-      }
-    ],
-    totalAmount: 14500,
-    paymentMethod: 'Cash on Meetup',
-    paymentStatus: 'Completed',
-    status: 'Delivered',
-    orderDate: '2026-07-31',
-    deliveryType: 'Buyer Meetup (In-Person)',
-    trackingNumber: 'LOCAL-MEETUP-KOR',
-    carrier: 'Direct Handshake',
-    deliveryEstimate: 'Handed over on 31st July',
-    customerNote: 'Tested on spot and received nicely!',
-  },
-  {
-    id: 'ORD-78288',
-    customer: {
-      name: 'Sneha Reddy',
-      email: 'sneha.reddy@gmail.com',
-      phone: '+91 98450 99881',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80',
-    },
-    shippingAddress: 'Flat 101, Prestige Lakeside Habitat, Varthur, Bengaluru - 560087',
-    items: [
-      {
-        id: 'prod-biz-2',
-        title: 'Vintage Full-Grain Leather Laptop Messenger Bag 15.6"',
-        price: 4499,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80',
-        sellerType: 'business',
-        condition: 'Brand New',
-      }
-    ],
-    totalAmount: 4499,
-    paymentMethod: 'UPI (GPay)',
-    paymentStatus: 'Paid',
-    status: 'Delivered',
-    orderDate: '2026-07-29',
-    deliveryType: 'Courier (DTDC)',
-    trackingNumber: 'DTDC-99214',
-    carrier: 'DTDC Express',
-    deliveryEstimate: 'Delivered on 30th July 2026',
-    customerNote: '',
-  },
-  {
-    id: 'ORD-78287',
-    customer: {
-      name: 'Rohan Gupta',
-      email: 'rohan.g@gmail.com',
-      phone: '+91 91234 56789',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80',
-    },
-    shippingAddress: 'House 89, Sector 14, Urban Estate, Gurgaon - 122001',
-    items: [
-      {
-        id: 'prod-biz-3',
-        title: 'Ergonomic Vertical Wireless Mouse',
-        price: 1899,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600&q=80',
-        sellerType: 'business',
-        condition: 'Brand New',
-      }
-    ],
-    totalAmount: 1899,
-    paymentMethod: 'Net Banking (ICICI)',
-    paymentStatus: 'Refunded',
-    status: 'Cancelled',
-    orderDate: '2026-07-28',
-    deliveryType: 'Standard Courier',
-    trackingNumber: 'CANCELLED',
-    carrier: 'N/A',
-    deliveryEstimate: 'Order Cancelled',
-    customerNote: 'Ordered accidentally, requested cancellation.',
-  }
-];
-
 const INITIAL_SETTINGS = {
   sellerMode: 'hybrid', // 'individual_c2c', 'business', or 'hybrid'
   sellerType: 'individual',  // synced from backend: 'individual' | 'business'
@@ -400,23 +242,103 @@ export const SellerProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
 
   // 3. Orders State
-  const [orders, setOrders] = useState(() => {
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [ordersError, setOrdersError] = useState(null);
+
+  const fetchSellerOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    setOrdersError(null);
     try {
-      const stored = localStorage.getItem('nexcart-seller-orders');
-      return stored ? JSON.parse(stored) : INITIAL_ORDERS;
-    } catch {
-      return INITIAL_ORDERS;
+      const res = await sellerAuthService.getOrders();
+      const rawOrders = res?.data?.orders || res?.orders || [];
+      
+      // Map backend status/data to UI format
+      const formatted = rawOrders.map(ord => {
+        const statusMap = {
+          pending: 'Pending',
+          confirmed: 'Processing',
+          processing: 'Processing',
+          packed: 'Processing',
+          shipped: 'Shipped',
+          delivered: 'Delivered',
+          cancelled: 'Cancelled',
+          returned: 'Returned',
+        };
+
+        const paymentMethodMap = {
+          'Credit Card': 'Credit/Debit Card',
+          'Debit Card': 'Credit/Debit Card',
+          'Net Banking': 'Net Banking',
+          'UPI': 'UPI',
+          'COD': 'Cash on Delivery',
+        };
+
+        return {
+          ...ord,
+          id: ord.orderId || ord._id,
+          orderDate: ord.createdAt ? new Date(ord.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          status: statusMap[ord.orderStatus] || 'Pending',
+          paymentMethod: paymentMethodMap[ord.paymentInfo?.method] || ord.paymentInfo?.method || 'UPI',
+          paymentStatus: ord.paymentInfo?.status || 'pending',
+          deliveryType: ord.shippingCarrier ? `Courier (${ord.shippingCarrier})` : 'Courier',
+          carrier: ord.shippingCarrier || 'Express',
+          deliveryEstimate: ord.orderStatus === 'delivered' ? 'Delivered' : 'Delivery expected within 2 days',
+          shippingAddress: ord.shippingAddress && typeof ord.shippingAddress === 'object'
+            ? `${ord.shippingAddress.fullName || ''}, ${ord.shippingAddress.addressLine1 || ''}${ord.shippingAddress.addressLine2 ? ', ' + ord.shippingAddress.addressLine2 : ''}, ${ord.shippingAddress.city || ''}, ${ord.shippingAddress.state || ''} - ${ord.shippingAddress.pincode || ''}`
+            : (typeof ord.shippingAddress === 'string' ? ord.shippingAddress : 'No address provided'),
+          customer: ord.customer 
+            ? {
+                name: `${ord.customer.firstName || ''} ${ord.customer.lastName || ''}`.trim() || 'John Doe',
+                email: ord.customer.email || '',
+                phone: ord.customer.phone || '',
+                avatar: ord.customer.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
+              }
+            : {
+                name: 'John Doe',
+                email: 'john.customer@nexcart.com',
+                phone: '9876543210',
+                avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
+              },
+          items: (ord.items || []).map(item => ({
+            product: {
+              id: item.product?._id || item.product,
+              title: item.name || '',
+              price: item.price || 0,
+              image: item.image || item.product?.thumbnail || item.product?.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
+              brand: item.product?.brand || 'NexCart',
+            },
+            title: item.name || '',
+            image: item.image || item.product?.thumbnail || item.product?.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
+            price: item.price || 0,
+            quantity: item.quantity || 1,
+            sku: item.sku || '',
+            subtotal: item.subtotal || (item.price * item.quantity) || 0,
+          })),
+        };
+      });
+
+      setOrders(formatted);
+    } catch (err) {
+      console.error('Error fetching seller orders:', err);
+      setOrdersError(err?.message || 'Failed to retrieve orders.');
+    } finally {
+      setOrdersLoading(false);
     }
-  });
+  }, []);
 
   // 4. Persistence
   useEffect(() => {
     localStorage.setItem('nexcart-seller-settings', JSON.stringify(settings));
   }, [settings]);
 
+  // Load seller orders on mount / user change
   useEffect(() => {
-    localStorage.setItem('nexcart-seller-orders', JSON.stringify(orders));
-  }, [orders]);
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      fetchSellerOrders();
+    }
+  }, [user, fetchSellerOrders]);
 
   // Sync profile data from backend dashboard API
   useEffect(() => {
@@ -556,31 +478,34 @@ export const SellerProvider = ({ children }) => {
 
   // ─── CRUD Actions: Orders ─────────────────────────────────────────────────
 
-  const updateOrderStatus = (orderId, newStatus, trackingInfo = {}) => {
-    setOrders((prev) =>
-      prev.map((ord) => {
-        if (ord.id === orderId) {
-          return {
-            ...ord,
-            status: newStatus,
-            trackingNumber: trackingInfo.trackingNumber || ord.trackingNumber,
-            carrier: trackingInfo.carrier || ord.carrier,
-            deliveryEstimate: trackingInfo.deliveryEstimate || ord.deliveryEstimate,
-          };
-        }
-        return ord;
-      })
-    );
-    showToast(`Order #${orderId} marked as ${newStatus}`);
+  const updateOrderStatus = async (orderId, newStatus, trackingInfo = {}) => {
+    try {
+      const res = await sellerAuthService.updateOrderStatus(orderId, newStatus, trackingInfo);
+      if (res.success) {
+        await fetchSellerOrders();
+        showToast(`Order status updated to ${newStatus}`);
+        return true;
+      }
+    } catch (err) {
+      console.error('Error updating order status:', err);
+      showToast(err?.message || 'Failed to update order status', 'error');
+    }
+    return false;
   };
 
-  const cancelOrder = (orderId, reason = 'Cancelled by vendor') => {
-    setOrders((prev) =>
-      prev.map((ord) =>
-        ord.id === orderId ? { ...ord, status: 'Cancelled', customerNote: reason } : ord
-      )
-    );
-    showToast(`Order #${orderId} has been cancelled`, 'info');
+  const cancelOrder = async (orderId, reason = 'Cancelled by vendor') => {
+    try {
+      const res = await sellerAuthService.cancelOrder(orderId, reason);
+      if (res.success) {
+        await fetchSellerOrders();
+        showToast(`Order cancelled successfully`, 'info');
+        return true;
+      }
+    } catch (err) {
+      console.error('Error cancelling order:', err);
+      showToast(err?.message || 'Failed to cancel order', 'error');
+    }
+    return false;
   };
 
   // ─── Settings & Profile Updaters ──────────────────────────────────────────
@@ -682,6 +607,9 @@ export const SellerProvider = ({ children }) => {
         setActivePersona,
         products,
         orders,
+        ordersLoading,
+        ordersError,
+        fetchSellerOrders,
         stats,
         // Product Actions
         addProduct,

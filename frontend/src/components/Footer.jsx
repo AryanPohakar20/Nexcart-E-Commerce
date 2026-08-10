@@ -65,7 +65,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 text-left">
           {/* Brand Info */}
           <div className="col-span-2 md:col-span-1 space-y-4">
-            <Link to="/" className="text-2xl font-bold tracking-wider text-primary inline-block hover:scale-105 transition-transform">NEX<span className="text-textPrimary">CART</span></Link>
+            <Link to="/" className="text-2xl font-bold tracking-wider text-primary inline-block hover:scale-105 transition-transform">Nex<span className="text-textPrimary">Cart</span></Link>
             <p className="text-xs text-textSecondary leading-relaxed">
               NexCart is a next-generation shopping experience offering ultra-fast delivery, secure checkouts, and custom collections. Shop Beyond Limits.
             </p>

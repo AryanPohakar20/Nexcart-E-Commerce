@@ -146,6 +146,10 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        {/* Public Profile View Routes */}
+        <Route path="profile/:userId" element={<SellerProfile />} />
+        <Route path="seller/:id" element={<SellerProfile />} />
+        <Route path="store/:slug" element={<SellerProfile />} />
         <Route
           path="addresses"
           element={

@@ -63,8 +63,8 @@ const AdminSidebar = ({ collapsed, onToggle, mobileOpen, onMobileClose, user, on
           >
             <img src={logo} alt="NexCart" className="w-8 h-8 rounded-lg object-cover" />
             <div>
-              <span className="text-sm font-black tracking-wider text-yellow-400">NEX</span>
-              <span className="text-sm font-black tracking-wider text-textPrimary">CART</span>
+              <span className="text-sm font-black tracking-wider text-yellow-400">Nex</span>
+              <span className="text-sm font-black tracking-wider text-textPrimary">Cart</span>
               <span className="ml-1.5 bg-yellow-500/15 border border-yellow-500/20 text-yellow-400 text-[9px] uppercase font-black tracking-widest px-1.5 py-0.5 rounded-md">Admin</span>
             </div>
           </div>
