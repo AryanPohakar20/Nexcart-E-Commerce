@@ -173,3 +173,13 @@ export const updateSellerBadges = async (sellerDocId, badgesList) => {
     { new: true }
   );
 };
+
+/**
+ * Retrieve only the fields needed for badge evaluation from a Seller document.
+ * @param {string} sellerDocId - Seller document ID
+ */
+export const getSellerEvaluationFields = async (sellerDocId) => {
+  return await Seller.findById(sellerDocId)
+    .select('trustScore averageRating totalReviews statistics.completedOrders statistics.cancellationRate badges')
+    .lean();
+};

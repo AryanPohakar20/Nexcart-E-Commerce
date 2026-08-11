@@ -1,5 +1,6 @@
 import * as sellerRepository from '../repositories/sellerRepository.js';
 import logger from '../utils/logger.js';
+import { evaluateSellerBadges } from './sellerBadgeService.js';
 
 // Configurable normalization weights & thresholds (Private)
 const WEIGHT_RATING = 40;
@@ -73,6 +74,13 @@ export const recalculateSellerTrustScore = async (sellerDocId) => {
       logger.info(
         `Seller trust score recalculated and persisted. Seller ID: ${sellerDocId}, Trust Score: ${trustScore}`
       );
+
+      // Trigger badge evaluation (non-blocking)
+      try {
+        await evaluateSellerBadges(sellerDocId);
+      } catch (err) {
+        logger.error(`Failed to automatically evaluate seller badges for Seller ID: ${sellerDocId}`, err);
+      }
     } else {
       logger.warn(`Failed to update trust score. Seller ID: ${sellerDocId}`);
     }
