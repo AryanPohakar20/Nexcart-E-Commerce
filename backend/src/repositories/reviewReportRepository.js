@@ -120,3 +120,30 @@ export const findReviewWithDetailsForReporting = async (reviewId, reviewType) =>
   }
   return null;
 };
+
+// ---------- Moderation Repository Methods ----------
+/**
+ * Update review report status and moderation metadata atomically.
+ * @param {string} reportId - ReviewReport ID
+ * @param {Object} fields - { status, moderatedBy, moderatedAt, moderationReason }
+ * @returns {Promise<Object>} Updated report document
+ */
+export const updateReportStatus = async (reportId, { status, moderatedBy, moderatedAt, moderationReason }) => {
+  const update = { status };
+  if (moderatedBy) update.moderatedBy = moderatedBy;
+  if (moderatedAt) update.moderatedAt = moderatedAt;
+  if (moderationReason) update.moderationReason = moderationReason;
+  return await ReviewReport.findByIdAndUpdate(reportId, { $set: update }, { new: true }).lean();
+};
+
+/**
+ * Retrieve a single report with reporter populated – used for moderation workflow.
+ * @param {string} reportId
+ * @returns {Promise<Object>} Report document
+ */
+export const findReportForModeration = async (reportId) => {
+  return await ReviewReport.findById(reportId)
+    .populate('reportedBy', 'firstName lastName username')
+    .lean();
+};
+

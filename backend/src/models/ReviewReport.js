@@ -33,6 +33,9 @@ const reviewReportSchema = new mongoose.Schema(
       enum: Object.values(REPORT_STATUS),
       default: REPORT_STATUS.PENDING,
     },
+    moderatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    moderatedAt: { type: Date },
+    moderationReason: { type: String, maxlength: 500 },
   },
   {
     timestamps: true,

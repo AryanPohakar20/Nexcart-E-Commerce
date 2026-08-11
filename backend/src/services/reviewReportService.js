@@ -1,7 +1,11 @@
 import mongoose from 'mongoose';
 import * as reviewReportRepository from '../repositories/reviewReportRepository.js';
+import * as reviewRepository from '../repositories/reviewRepository.js';
+import * as reviewModerationLogRepository from '../repositories/reviewModerationLogRepository.js';
+import { REPORT_STATUS } from '../constants/reviewReport.js';
 import { ReviewType, ReviewStatus } from '../constants/reviewStatus.js';
 import { toAdminReviewReportDTO, toAdminReviewReportsDTOList } from '../mappers/adminReviewReportMapper.js';
+import { toModerationResultDTO } from '../mappers/adminReviewModerationMapper.js';
 import { ApiError } from '../utils/ApiError.js';
 import logger from '../utils/logger.js';
 
@@ -141,4 +145,96 @@ export const getReportDetails = async (reportId) => {
   const review = await reviewReportRepository.findReviewWithDetailsForReporting(report.reviewId, report.reviewType);
 
   return toAdminReviewReportDTO(report.toObject ? report.toObject() : report, review);
+};
+
+/**
+ * Moderate a review report (hide, remove, restore, reject).
+ * Performs validation, status transitions, audit log creation, and returns DTO.
+ * @param {string} adminId - Admin user ID performing moderation
+ * @param {string} reportId - ReviewReport ID
+ * @param {string} action - one of 'hide', 'remove', 'restore', 'reject'
+ * @param {string} [reason] - optional moderation reason (required for remove/reject)
+ * @returns {Promise<Object>} Moderation result DTO
+ */
+export const moderateReview = async (adminId, reportId, action, reason) => {
+  // 1. Validate report existence and status
+  if (!reportId || !mongoose.Types.ObjectId.isValid(reportId)) {
+    throw new ApiError(400, 'Invalid Report ID format.');
+  }
+  const report = await reviewReportRepository.findReportForModeration(reportId);
+  if (!report) {
+    throw new ApiError(404, 'Report not found.');
+  }
+  // Ensure report is in a modifiable state
+  if (report.status !== REPORT_STATUS.PENDING && report.status !== REPORT_STATUS.UNDER_REVIEW) {
+    throw new ApiError(400, 'Report cannot be moderated in its current state.');
+  }
+
+  // 2. Fetch the associated review
+  const review = await reviewRepository.findReviewForModeration(report.reviewId, report.reviewType);
+  if (!review) {
+    throw new ApiError(404, 'Associated review not found.');
+  }
+
+  // 3. Determine allowed transitions
+  const transitionMap = {
+    hide: { from: [ReviewStatus.PUBLISHED], to: ReviewStatus.HIDDEN },
+    remove: { from: [ReviewStatus.PUBLISHED, ReviewStatus.HIDDEN], to: ReviewStatus.REMOVED },
+    restore: { from: [ReviewStatus.HIDDEN, ReviewStatus.REMOVED], to: ReviewStatus.PUBLISHED },
+    reject: { from: [], to: null },
+  };
+
+  const allowed = transitionMap[action];
+  if (!allowed) {
+    throw new ApiError(400, 'Invalid moderation action.');
+  }
+  if ((action === 'remove' || action === 'reject') && (!reason || reason.length === 0)) {
+    throw new ApiError(400, 'Moderation reason is required for remove or reject actions.');
+  }
+
+  // Verify current status allows transition (except reject)
+  if (action !== 'reject' && !allowed.from.includes(review.status)) {
+    throw new ApiError(400, `Cannot perform '${action}' on review with status '${review.status}'.`);
+  }
+
+  // 4. Update review status if applicable
+  let updatedReview = review;
+  if (action !== 'reject') {
+    updatedReview = await reviewRepository.updateReviewStatus(review._id, report.reviewType, allowed.to);
+  }
+
+  // 5. Update report status and moderation metadata
+  const newReportStatus = action === 'reject' ? REPORT_STATUS.REJECTED : REPORT_STATUS.RESOLVED;
+  const updatedReport = await reviewReportRepository.updateReportStatus(reportId, {
+    status: newReportStatus,
+    moderatedBy: adminId,
+    moderatedAt: new Date(),
+    moderationReason: reason,
+  });
+
+  // 6. Create audit log entry
+  await reviewModerationLogRepository.createLog({
+    reportId,
+    reviewId: review._id,
+    reviewType: report.reviewType,
+    adminId,
+    action,
+    previousReviewStatus: review.status,
+    newReviewStatus: allowed.to || review.status,
+    previousReportStatus: report.status,
+    newReportStatus,
+    reason,
+  });
+
+  // 7. Return DTO
+  return toModerationResultDTO(updatedReport, updatedReview, {
+    action,
+    previousReviewStatus: review.status,
+    newReviewStatus: allowed.to || review.status,
+    previousReportStatus: report.status,
+    newReportStatus,
+    adminId,
+    createdAt: new Date(),
+    reason,
+  });
 };

@@ -8,6 +8,8 @@ import { requirePermission } from '../middlewares/requirePermission.js';
 import { ADMIN_ROLES }  from '../constants/roles.js';
 import { getAdminReviewReports, getAdminReviewReportDetails } from '../controllers/adminReviewReportController.js';
 import { validateAdminReviewReportsList, validateAdminReviewReportId } from '../validations/adminReviewReportValidation.js';
+import { moderateReviewReport } from '../controllers/adminReviewModerationController.js';
+import { validateAdminReviewModeration } from '../validations/adminReviewModerationValidation.js';
 import {
   // Dashboard
   getDashboardStats,
@@ -300,6 +302,7 @@ router.get('/roles-permissions', getRolesAndPermissions);
 // ═══════════════════════════════════════════════════════════════════════════════
 router.get('/review-reports', requirePermission('reports', 'read'), validateAdminReviewReportsList, getAdminReviewReports);
 router.get('/review-reports/:reportId', requirePermission('reports', 'read'), validateAdminReviewReportId, getAdminReviewReportDetails);
+router.patch('/review-reports/:reportId/moderate', requirePermission('reports', 'update'), validateAdminReviewModeration, moderateReviewReport);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ADMIN PROFILE & CREDENTIALS
