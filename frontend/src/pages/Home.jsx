@@ -8,7 +8,7 @@ import ProductCard from '../components/ProductCard';
 import productService from '../services/productService';
 
 const Home = () => {
-  const { addToCart, showToast } = useContext(AppContext);
+  const { addToCart, showToast, t } = useContext(AppContext);
   const navigate = useNavigate();
 
   // Dynamic MongoDB state
@@ -164,7 +164,7 @@ const Home = () => {
   return (
     <div className="space-y-16">
       
-      {/* 1. Hero Slider Module */}
+      {/* 1. HERO CAROUSEL */}
       <section 
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -330,15 +330,165 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 2. Featured Categories List */}
+      {/* 2. PRODUCT CARDS / FEATURED PRODUCTS SECTION */}
+      <section className="space-y-12">
+        {/* Rail 1: Featured Products / Best Sellers */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary tracking-tight">{t('Featured Products')}</h2>
+              <p className="text-xs text-textSecondary mt-1">Handpicked premium items from top marketplace sellers.</p>
+            </div>
+            <Link to="/products" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
+              <span>{t('View All Catalog')}</span>
+              <FiArrowRight />
+            </Link>
+          </div>
+
+          <div className="flex gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-thin">
+            {(featuredProducts.length > 0 ? featuredProducts : trendingList).map((prod) => (
+              <div key={`feat-${prod.id}`} className="w-[260px] sm:w-[280px] flex-shrink-0">
+                <ProductCard product={prod} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Rail 2: Trending Products */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary tracking-tight">{t('Trending Products')}</h2>
+              <p className="text-xs text-textSecondary mt-1">Real-time popular items with high customer ratings.</p>
+            </div>
+            <Link to="/products?sort=popular" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
+              <span>{t('Explore All')}</span>
+              <FiArrowRight />
+            </Link>
+          </div>
+
+          <div className="flex gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-thin">
+            {trendingList.map((prod) => (
+              <div key={prod.id} className="w-[260px] sm:w-[280px] flex-shrink-0">
+                <ProductCard product={prod} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. DEALS SECTION */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary tracking-tight">Featured Categories</h2>
-            <p className="text-xs text-textSecondary mt-1">Discover items curated across major domains in MongoDB.</p>
+            <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary tracking-tight">{t('Deals of the Day')}</h2>
+            <p className="text-xs text-textSecondary mt-1">Exclusive limited-time flash discounts on flagship products.</p>
+          </div>
+          <Link to="/products?sort=discount" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
+            <span>View All Deals</span>
+            <FiArrowRight />
+          </Link>
+        </div>
+
+        {/* Flash Deals Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Flash Sale Countdown Panel */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="lg:col-span-1 bg-gradient-to-br from-primary/10 via-cardBg to-transparent border border-primary/20 rounded-3xl p-6 md:p-8 flex flex-col justify-between h-[360px] shadow-sm"
+          >
+            <div className="space-y-4">
+              <span className="bg-primary/20 border border-primary/40 text-primary text-[10px] font-extrabold px-2.5 py-1 rounded tracking-wider uppercase">Flash Sale</span>
+              <h3 className="text-2xl font-black text-textPrimary">Deals of the Day</h3>
+              <p className="text-xs text-textSecondary leading-relaxed font-medium">Limited stocks on top items. Prices return to standard soon.</p>
+              
+              {/* Clock Timer */}
+              <div className="flex items-center gap-3 pt-2">
+                <FiClock className="text-primary text-xl animate-spin" style={{ animationDuration: '10s' }} />
+                <div className="flex gap-1.5 text-center font-mono">
+                  <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
+                    {String(timeLeft.hours).padStart(2, '0')}
+                  </div>
+                  <span className="text-primary font-bold self-center">:</span>
+                  <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
+                    {String(timeLeft.minutes).padStart(2, '0')}
+                  </div>
+                  <span className="text-primary font-bold self-center">:</span>
+                  <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
+                    {String(timeLeft.seconds).padStart(2, '0')}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <motion.button 
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => navigate('/products?sort=discount')}
+              className="w-full btn-glow-yellow text-xs font-bold py-3 text-center"
+            >
+              Show All Flash Deals
+            </motion.button>
+          </motion.div>
+
+          {/* Best deals preview grid */}
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {flashDeals.map((prod) => (
+              <ProductCard key={prod.id} product={prod} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. COUPONS SECTION */}
+      <section className="space-y-6">
+        <div>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary tracking-tight">{t('Super Saver Coupons')}</h2>
+          <p className="text-xs text-textSecondary mt-1">Click a coupon card to copy discount codes directly for checkout.</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {COUPONS.map((cp) => (
+            <motion.div 
+              key={cp.code}
+              whileHover={{ y: -5, boxShadow: '0 0 25px rgba(255, 193, 7, 0.25)', borderColor: 'rgba(255, 193, 7, 0.4)' }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => copyCoupon(cp.code)}
+              className="bg-cardBg border border-borderColor p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 relative overflow-hidden group shadow-sm"
+            >
+              {/* Ticket punch-holes */}
+              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-bgPrimary" />
+              <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-bgPrimary" />
+              
+              <div className="pl-4 space-y-1.5">
+                <span className="text-[10px] text-accentBlue font-bold uppercase tracking-wider">Coupon Code</span>
+                <h4 className="text-lg font-black text-textPrimary tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
+                <p className="text-[10px] text-textSecondary">{cp.description}</p>
+              </div>
+
+              <div className="flex flex-col items-center gap-1 text-center bg-surface border border-borderColor p-2 rounded-lg pr-4">
+                <FiPercent className="text-primary text-lg" />
+                <span className="text-[10px] font-bold text-textSecondary">
+                  {copiedCoupon === cp.code ? 'Copied' : 'Copy'}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* 5. CATEGORIES SECTION */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary tracking-tight">{t('Shop By Category')}</h2>
+            <p className="text-xs text-textSecondary mt-1">Explore items curated across top categories in NexCart.</p>
           </div>
           <Link to="/products" className="text-xs text-primary font-bold hover:underline flex items-center gap-1 link-underline">
-            <span>Explore All</span>
+            <span>Explore All Categories</span>
             <FiArrowRight />
           </Link>
         </div>
@@ -367,120 +517,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 3. Flash Sale & Deals banner */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Flash Sale Countdown Panel */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="lg:col-span-1 bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-3xl p-6 md:p-8 flex flex-col justify-between h-[360px]"
-        >
-          <div className="space-y-4">
-            <span className="bg-primary/20 border border-primary/40 text-primary text-[10px] font-extrabold px-2.5 py-1 rounded tracking-wider uppercase">Flash Sale</span>
-            <h3 className="text-2xl font-black text-textPrimary">Deals of the Day</h3>
-            <p className="text-xs text-textSecondary leading-relaxed font-medium">Limited stocks on top items. Prices return to standard soon.</p>
-            
-            {/* Clock Timer */}
-            <div className="flex items-center gap-3 pt-2">
-              <FiClock className="text-primary text-xl animate-spin" style={{ animationDuration: '10s' }} />
-              <div className="flex gap-1.5 text-center font-mono">
-                <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
-                  {String(timeLeft.hours).padStart(2, '0')}
-                </div>
-                <span className="text-primary font-bold self-center">:</span>
-                <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
-                  {String(timeLeft.minutes).padStart(2, '0')}
-                </div>
-                <span className="text-primary font-bold self-center">:</span>
-                <div className="bg-surface border border-borderColor rounded px-2.5 py-1.5 text-sm font-bold text-textPrimary min-w-[36px]">
-                  {String(timeLeft.seconds).padStart(2, '0')}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <motion.button 
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => navigate('/products')}
-            className="w-full btn-glow-yellow text-xs font-bold py-3 text-center"
-          >
-            Show All Flash Deals
-          </motion.button>
-        </motion.div>
-
-        {/* Best deals preview grid */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {flashDeals.map((prod) => (
-            <ProductCard key={prod.id} product={prod} />
-          ))}
-        </div>
-      </section>
-
-      {/* 4. Coupons Drawer */}
-      <section className="space-y-6">
-        <div>
-          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Super Saver Coupons</h2>
-          <p className="text-xs text-textSecondary mt-1">Click a coupon card to copy code and apply discounts during checkout.</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {COUPONS.map((cp) => (
-            <motion.div 
-              key={cp.code}
-              whileHover={{ y: -5, boxShadow: '0 0 25px rgba(255, 193, 7, 0.25)', borderColor: 'rgba(255, 193, 7, 0.4)' }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => copyCoupon(cp.code)}
-              className="bg-cardBg border border-borderColor p-5 rounded-2xl flex items-center justify-between cursor-pointer transition-all duration-300 relative overflow-hidden group"
-            >
-              {/* Ticket punch-holes — use bgPrimary to blend with page background */}
-              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-bgPrimary" />
-              <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-bgPrimary" />
-              
-              <div className="pl-4 space-y-1.5">
-                <span className="text-[10px] text-accentBlue font-bold uppercase tracking-wider">Coupon Code</span>
-                <h4 className="text-lg font-black text-textPrimary tracking-widest group-hover:text-primary transition-colors">{cp.code}</h4>
-                <p className="text-[10px] text-textSecondary">{cp.description}</p>
-              </div>
-
-              <div className="flex flex-col items-center gap-1 text-center bg-surface border border-borderColor p-2 rounded-lg pr-4">
-                <FiPercent className="text-primary text-lg" />
-                <span className="text-[10px] font-bold text-textSecondary">
-                  {copiedCoupon === cp.code ? 'Copied' : 'Copy'}
-                </span>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* 5. Trending & Recommended Items */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Trending Collections</h2>
-            <p className="text-xs text-textSecondary mt-1">Real-time best rated and highly reviewed products from MongoDB.</p>
-          </div>
-          <Link to="/products?sort=popular" className="text-xs text-primary font-bold hover:underline flex items-center gap-1">
-            <span>View Catalog</span>
-            <FiArrowRight />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {trendingList.map((prod) => (
-            <ProductCard key={prod.id} product={prod} />
-          ))}
-        </div>
-      </section>
-
-      {/* 6. Popular Brands Banner */}
+      {/* 6. BRAND SECTION */}
       <section className="space-y-6">
         <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">Shop By Brands</h2>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">{t('Shop By Brands')}</h2>
           <p className="text-xs text-textSecondary mt-1">Explore authentic items from elite global suppliers.</p>
         </div>
 
@@ -493,7 +533,6 @@ const Home = () => {
               onClick={() => navigate(`/products?brand=${br.name}`)}
               className="bg-cardBg border border-borderColor p-6 rounded-2xl flex flex-col items-center justify-center gap-2 h-24 cursor-pointer transition-all duration-300 group"
             >
-              {/* Logo: invert only in dark mode so logos stay visible in both themes */}
               <img
                 src={br.logoUrl}
                 alt={br.name}
@@ -504,10 +543,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 7. Testimonials */}
+      {/* 7. REVIEWS SECTION */}
       <section className="space-y-6">
         <div className="text-center">
-          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">NexCart Reviews</h2>
+          <h2 className="text-xl md:text-2xl font-extrabold text-textPrimary">{t('NexCart Reviews')}</h2>
           <p className="text-xs text-textSecondary mt-1">What our premium customers have to say.</p>
         </div>
 
@@ -520,7 +559,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: idx * 0.1 }}
               whileHover={{ y: -4 }}
-              className="bg-cardBg border border-borderColor hover:border-primary/30 p-6 rounded-2xl space-y-4 transition-all duration-300"
+              className="bg-cardBg border border-borderColor hover:border-primary/30 p-6 rounded-2xl space-y-4 transition-all duration-300 shadow-sm"
             >
               <div className="flex items-center gap-3">
                 <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover border border-primary/20" />

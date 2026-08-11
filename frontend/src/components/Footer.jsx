@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiMail, FiFacebook, FiTwitter, FiInstagram, FiYoutube, FiCheck } from 'react-icons/fi';
+import { AppContext } from '../context/AppContext';
 
 const Footer = () => {
+  const { t } = useContext(AppContext);
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -93,11 +95,10 @@ const Footer = () => {
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-textPrimary uppercase tracking-wider">Shop</h4>
             <ul className="space-y-2 text-xs text-textSecondary">
-              <li><Link to="/category/electronics" className="hover:text-primary transition-all link-underline">Electronics</Link></li>
-              <li><Link to="/category/mobiles" className="hover:text-primary transition-all link-underline">Mobiles</Link></li>
-              <li><Link to="/category/laptops" className="hover:text-primary transition-all link-underline">Laptops</Link></li>
-              <li><Link to="/category/fashion" className="hover:text-primary transition-all link-underline">Fashion & Apparel</Link></li>
-              <li><Link to="/category/sports" className="hover:text-primary transition-all link-underline">Sports Equipment</Link></li>
+              <li><Link to="/products?cat=electronics" className="hover:text-primary transition-all link-underline">{t('Electronics')}</Link></li>
+              <li><Link to="/products?cat=mobiles" className="hover:text-primary transition-all link-underline">{t('Mobiles')}</Link></li>
+              <li><Link to="/products?cat=fashion" className="hover:text-primary transition-all link-underline">{t('Fashion')}</Link></li>
+              <li><Link to="/products?cat=ai-gadgets" className="hover:text-primary transition-all link-underline">{t('AI Tech')}</Link></li>
             </ul>
           </div>
 
@@ -117,10 +118,10 @@ const Footer = () => {
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-textPrimary uppercase tracking-wider">Portals</h4>
             <ul className="space-y-2 text-xs text-textSecondary">
-              <li><Link to="/profile" className="hover:text-primary transition-all link-underline">My Profile</Link></li>
-              <li><Link to="/orders" className="hover:text-primary transition-all link-underline">Track Orders</Link></li>
-              <li><Link to="/seller/dashboard" className="hover:text-primary transition-all link-underline">Seller Studio</Link></li>
-              <li><Link to="/admin/dashboard" className="hover:text-primary transition-all link-underline">System Root (Admin)</Link></li>
+              <li><Link to="/profile" className="hover:text-primary transition-all link-underline">{t('Profile')}</Link></li>
+              <li><Link to="/orders" className="hover:text-primary transition-all link-underline">{t('Orders')}</Link></li>
+              <li><Link to="/seller/dashboard" className="hover:text-primary transition-all link-underline">{t('Seller Portal')}</Link></li>
+              <li><Link to="/admin/dashboard" className="hover:text-primary transition-all link-underline">{t('Admin Portal')}</Link></li>
             </ul>
           </div>
         </div>

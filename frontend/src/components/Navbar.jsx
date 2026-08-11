@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import NexCartLogo from './NexCartLogo';
@@ -9,15 +9,17 @@ import { getRoleConfig } from '../constants/navigationMenu';
 import { 
   FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, 
   FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid, FiSliders,
-  FiMessageSquare
+  FiMessageSquare, FiCpu, FiShoppingBag, FiPackage, FiSmartphone, FiHome, FiSmile, FiActivity, FiBook, FiTv, FiTag, FiHelpCircle, FiPercent, FiCreditCard
 } from 'react-icons/fi';
 
 const Navbar = () => {
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, logoutUser, unreadChatCount 
+    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, logoutUser, unreadChatCount,
+    language, setLanguage, t 
   } = useContext(AppContext);
   
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   
@@ -27,7 +29,6 @@ const Navbar = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('EN / USD');
 
   // Premium UI scroll & focus states
   const [isScrolled, setIsScrolled] = useState(false);
@@ -82,8 +83,8 @@ const Navbar = () => {
           isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
         }`}>
           
-          {/* Left: Mobile Toggle & Floating Brand Logo */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Left: Mobile Toggle, NexCart Brand Logo & Delivery Address */}
+          <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
             <motion.button 
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -93,7 +94,27 @@ const Navbar = () => {
               {isMobileMenuOpen ? <FiX className="text-xl" /> : <FiMenu className="text-xl" />}
             </motion.button>
 
-            <NexCartLogo />
+            {/* NexCart Logo (~20% larger) */}
+            <div className="scale-120 sm:scale-125 origin-left transform-gpu">
+              <NexCartLogo />
+            </div>
+
+            <span className="text-gray-300 dark:text-gray-700 hidden xl:inline font-light">|</span>
+
+            {/* Location / Delivery Option immediately beside Logo */}
+            <Link
+              to="/addresses"
+              className="hidden xl:flex items-center gap-1.5 text-xs font-bold text-gray-800 dark:text-gray-200 hover:text-primary transition-colors py-1 px-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 border border-gray-200/50 dark:border-white/10"
+              title={t('Deliver to Hyderabad 500081')}
+            >
+              <FiMapPin className="text-sm text-primary flex-shrink-0" />
+              <div className="flex flex-col text-left leading-tight">
+                <span className="text-[10px] text-gray-400 font-normal">{t('Deliver to')}</span>
+                <span className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate max-w-[120px]">Hyderabad 500081</span>
+              </div>
+            </Link>
+
+            <span className="text-gray-300 dark:text-gray-700 hidden xl:inline font-light">|</span>
           </div>
 
           {/* Center: Omni-Search Bar (Interactive & Dynamic) */}
@@ -114,7 +135,7 @@ const Navbar = () => {
                   onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                   className="h-full px-4 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-primary flex items-center gap-1.5 border-r border-gray-200 dark:border-white/10 rounded-l-full bg-gray-100/50 dark:bg-white/[0.02]"
                 >
-                  <span className="truncate max-w-[90px]">{selectedCategory}</span>
+                  <span className="truncate max-w-[90px]">{selectedCategory === 'All' ? t('All Categories') : selectedCategory}</span>
                   <FiChevronDown className={`text-xs transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -161,7 +182,7 @@ const Navbar = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                placeholder="Search across 50,000+ luxury products, electronics & brands..."
+                placeholder={t('Search products, brands...')}
                 className="w-full bg-transparent px-4 text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none"
               />
 
@@ -208,6 +229,44 @@ const Navbar = () => {
           {/* Right: Actions (Role-aware actions, Theme, Wishlist/Cart/Dashboard, Notifications, Profile) */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
             
+            {/* Language / Currency Selector */}
+            <div className="relative hidden md:block">
+              <button
+                type="button"
+                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
+              >
+                <FiGlobe className="text-xs text-accentBlue" />
+                <span>{language}</span>
+                <FiChevronDown className="text-[10px]" />
+              </button>
+
+              <AnimatePresence>
+                {isLanguageOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-full mt-2 w-36 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-xl shadow-xl z-50 text-xs"
+                  >
+                    {['EN / USD', 'IN / INR', 'EU / EUR', 'UK / GBP'].map(lang => (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => { setLanguage(lang); setIsLanguageOpen(false); }}
+                        className={`w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary transition-colors ${
+                          language === lang ? 'text-primary font-bold bg-primary/5' : 'text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {/* Role-Specific Action CTA */}
             {isCustomerOrGuest && (
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
@@ -216,7 +275,7 @@ const Navbar = () => {
                   className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary hover:border-primary text-xs font-bold transition-all shadow-sm"
                 >
                   <FiBriefcase className="text-sm" />
-                  <span>Become Seller</span>
+                  <span>{t('Become Seller')}</span>
                 </Link>
               </motion.div>
             )}
@@ -233,6 +292,7 @@ const Navbar = () => {
               </motion.div>
             )}
 
+            {/* Admin Portal Button */}
             {isAdmin && (
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
                 <Link
@@ -240,13 +300,27 @@ const Navbar = () => {
                   className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-accentBlue/40 bg-accentBlue/10 hover:bg-accentBlue/20 text-accentBlue hover:border-accentBlue text-xs font-bold transition-all shadow-sm"
                 >
                   <FiSliders className="text-sm" />
-                  <span>Admin Portal</span>
+                  <span>{t('Admin Portal')}</span>
                 </Link>
               </motion.div>
             )}
 
-            {/* Clean Theme Toggle */}
-            <ThemeToggle />
+
+
+            {/* Orders Link */}
+            {user && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/orders"
+                  className="hidden sm:flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 text-xs font-semibold transition-all"
+                  aria-label="Orders"
+                  title="My Orders"
+                >
+                  <FiPackage className="text-base" />
+                  <span className="hidden md:inline">{t('Orders')}</span>
+                </Link>
+              </motion.div>
+            )}
 
             {/* Customer-only Wishlist Icon */}
             {isCustomerOrGuest && (
@@ -332,6 +406,9 @@ const Navbar = () => {
                 </Link>
               </motion.div>
             )}
+
+            {/* Clean Theme Toggle */}
+            <ThemeToggle />
 
             {/* Notifications Icon */}
             <div className="relative">
@@ -436,7 +513,7 @@ const Navbar = () => {
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary text-black font-extrabold text-xs shadow-yellow-glow hover:shadow-yellow-glow-lg transition-all"
                   >
                     <FiUser className="text-sm" />
-                    <span>Login</span>
+                    <span>{t('Login')}</span>
                   </Link>
                 </motion.div>
               )}
@@ -482,10 +559,18 @@ const Navbar = () => {
                             className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-all group"
                           >
                             <IconComponent className="text-sm text-gray-400 group-hover:text-primary transition-colors flex-shrink-0" />
-                            <span className="truncate">{item.name}</span>
+                            <span className="truncate">{t(item.name)}</span>
                           </Link>
                         );
                       })}
+                      <Link
+                        to="/addresses"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 font-medium transition-all group"
+                      >
+                        <FiMapPin className="text-sm text-gray-400 group-hover:text-primary transition-colors flex-shrink-0" />
+                        <span className="truncate">{t('Saved Addresses')}</span>
+                      </Link>
 
                       {/* Divider & Logout Action */}
                       <div className="pt-2 mt-1 border-t border-gray-200 dark:border-white/10">
@@ -495,7 +580,7 @@ const Navbar = () => {
                         >
                           <span className="flex items-center gap-2.5">
                             <FiLogOut className="text-sm flex-shrink-0 group-hover:-translate-x-0.5 transition-transform" />
-                            <span>Logout</span>
+                            <span>{t('Logout')}</span>
                           </span>
                         </button>
                       </div>
@@ -510,65 +595,103 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Secondary Utility Navigation Strip (Desktop & Tablet) */}
-      <div className="hidden md:block bg-gray-50/90 dark:bg-black/40 border-b border-gray-200/40 dark:border-white/5 py-2 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-[1440px] mx-auto flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+      {/* Second Navigation Row */}
+      <div className="bg-[#F8FAFC]/95 dark:bg-[#0a0e17]/95 border-b border-gray-200/60 dark:border-white/5 py-2 px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-none transition-all duration-300">
+        <div className="max-w-[1440px] mx-auto flex items-center justify-between text-xs sm:text-sm text-gray-700 dark:text-gray-300 gap-4">
           
-          {/* Left: Location & Categories quick trigger */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer group">
-              <FiMapPin className="text-primary text-sm flex-shrink-0 group-hover:bounce" />
-              <span>Deliver to <strong className="text-gray-900 dark:text-white font-bold">Hyderabad 500081</strong></span>
-            </div>
-
-            <div className="h-3 w-px bg-gray-300 dark:bg-white/10" />
-
-            <div className="flex items-center gap-4 font-semibold">
-              <Link to="/products?cat=electronics" className="hover:text-primary transition-colors link-underline">Electronics</Link>
-              <Link to="/products?cat=fashion" className="hover:text-primary transition-colors link-underline">Fashion</Link>
-              <Link to="/products?cat=ai-gadgets" className="hover:text-primary transition-colors flex items-center gap-1 text-primary link-underline">
-                <FiZap className="text-xs animate-pulse" />
-                <span>AI Tech</span>
-              </Link>
-              <Link to="/products" className="hover:text-primary transition-colors flex items-center gap-1 link-underline">
-                <FiGrid className="text-xs" />
-                <span>Browse All</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Right: Language / Currency selector */}
-          <div className="relative">
-            <button
-              onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-              className="flex items-center gap-1.5 font-medium hover:text-primary transition-colors"
+          {/* Marketplace Navigation Links Sequence: Browse All -> Deals -> Electronics -> Fashion -> AI Tech -> Coupons -> Cards */}
+          <div className="flex items-center gap-2 sm:gap-3 font-bold whitespace-nowrap overflow-x-auto py-0.5 scrollbar-none">
+            
+            {/* 1. Browse All */}
+            <Link 
+              to="/products" 
+              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+                location.pathname === '/products' && (!location.search || location.search === '') 
+                  ? 'text-primary bg-primary/10 font-extrabold shadow-sm' 
+                  : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
+              }`}
             >
-              <FiGlobe className="text-xs text-accentBlue" />
-              <span>{selectedLang}</span>
-              <FiChevronDown className="text-[10px]" />
-            </button>
+              <FiMenu className="text-sm sm:text-base flex-shrink-0" />
+              <span>{t('Browse All')}</span>
+            </Link>
 
-            <AnimatePresence>
-              {isLanguageOpen && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 top-full mt-2 w-36 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-xl shadow-xl z-50 text-xs"
-                >
-                  {['EN / USD', 'IN / INR', 'EU / EUR', 'UK / GBP'].map(lang => (
-                    <button
-                      key={lang}
-                      onClick={() => { setSelectedLang(lang); setIsLanguageOpen(false); }}
-                      className="w-full text-left px-3.5 py-1.5 hover:bg-primary/10 hover:text-primary text-gray-700 dark:text-gray-300 transition-colors"
-                    >
-                      {lang}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* 2. Deals */}
+            <Link 
+              to="/products?sort=discount" 
+              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-extrabold text-amber-500 ${
+                location.search.includes('sort=discount') 
+                  ? 'bg-amber-500/10 shadow-sm' 
+                  : 'hover:bg-amber-500/10'
+              }`}
+            >
+              <FiTag className="text-sm sm:text-base flex-shrink-0" />
+              <span>{t('Deals')}</span>
+            </Link>
+
+            {/* 3. Electronics */}
+            <Link 
+              to="/products?cat=electronics" 
+              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+                location.search.includes('cat=electronics') 
+                  ? 'text-primary bg-primary/10 font-bold shadow-sm' 
+                  : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
+              }`}
+            >
+              <FiCpu className="text-sm sm:text-base flex-shrink-0" />
+              <span>{t('Electronics')}</span>
+            </Link>
+
+            {/* 4. Fashion */}
+            <Link 
+              to="/products?cat=fashion" 
+              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+                location.search.includes('cat=fashion') 
+                  ? 'text-primary bg-primary/10 font-bold shadow-sm' 
+                  : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
+              }`}
+            >
+              <FiShoppingBag className="text-sm sm:text-base flex-shrink-0" />
+              <span>{t('Fashion')}</span>
+            </Link>
+
+            {/* 5. AI Tech */}
+            <Link 
+              to="/products?cat=ai-gadgets" 
+              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold text-primary ${
+                location.search.includes('cat=ai-gadgets') 
+                  ? 'bg-primary/10 shadow-sm font-extrabold' 
+                  : 'hover:bg-primary/10'
+              }`}
+            >
+              <FiZap className="text-sm sm:text-base flex-shrink-0 animate-pulse" />
+              <span>{t('AI Tech')}</span>
+            </Link>
+
+            {/* 6. Coupons */}
+            <Link 
+              to="/products?sort=popular" 
+              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+                location.search.includes('sort=popular') 
+                  ? 'text-primary bg-primary/10 font-bold shadow-sm' 
+                  : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
+              }`}
+            >
+              <FiPercent className="text-sm sm:text-base flex-shrink-0" />
+              <span>{t('Coupons')}</span>
+            </Link>
+
+            {/* 7. Cards */}
+            <Link 
+              to="/products?cat=gift-cards" 
+              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+                location.search.includes('cat=gift-cards') 
+                  ? 'text-primary bg-primary/10 font-bold shadow-sm' 
+                  : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
+              }`}
+            >
+              <FiCreditCard className="text-sm sm:text-base flex-shrink-0" />
+              <span>{t('Cards')}</span>
+            </Link>
           </div>
 
         </div>

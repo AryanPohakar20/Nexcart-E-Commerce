@@ -4,11 +4,11 @@
 
 @layer base {
   :root {
-    /* Light Theme */
-    --bg-primary: #FFFFFF;
+    /* Light Theme - Modern Amazon Layered Neutrals */
+    --bg-primary: #F3F4F6;
     --bg-secondary: #F8FAFC;
     --card-bg: #FFFFFF;
-    --surface: #F1F5F9;
+    --surface: #FFFFFF;
     --text-primary: #111827;
     --text-secondary: #4B5563;
     --border-color: #E5E7EB;
@@ -178,18 +178,37 @@
 
 /* ================= ACCESSIBLE & HIGH CONTRAST LIGHT THEME OVERRIDES ================= */
 
-/* 1. Global Light Theme Card & Surface Backgrounds */
-.light .bg-cardBg,
-.light .bg-secondaryBg,
+/* 1. Global Light Theme Page & Section Backgrounds (#F3F4F6) */
+.light body,
+html.light body,
+.light .bg-bgPrimary,
 .light .bg-darkBg,
+.light .bg-\[\#070B12\],
+.light .bg-\[\#0b101d\],
+.light .bg-\[\#0B1120\] {
+  background-color: #F3F4F6 !important;
+  color: #111827 !important;
+}
+
+/* 2. Global Light Theme Secondary Backgrounds (#F8FAFC) */
+.light .bg-secondaryBg,
+.light .bg-\[\#F8FAFC\] {
+  background-color: #F8FAFC !important;
+  border-color: #E5E7EB !important;
+}
+
+/* 3. Global Light Theme Card & Surface Backgrounds (#FFFFFF) */
+.light .bg-cardBg,
+.light .bg-surface,
+.light .glass-card,
 .light .bg-\[\#0A0A0A\],
 .light .bg-\[\#121212\],
 .light .bg-\[\#202020\],
-.light .bg-\[\#070B12\],
-.light .bg-\[\#0b101d\],
 .light .bg-\[\#0c111d\],
 .light .bg-\[\#0B0B0B\],
 .light .bg-\[\#0D0D0D\],
+.light .bg-\[\#0E0E10\],
+.light .bg-\[\#1C1C1E\],
 .light .bg-\[\#111111\],
 .light .bg-\[\#141414\],
 .light .bg-\[\#1A1A1A\],
@@ -200,12 +219,12 @@
 .light .bg-\[\#2A2A2A\],
 .light .bg-\[\#111\],
 .light .bg-\[\#0E1420\],
+.light .bg-[#0F172A],
 .light .bg-black,
 .light .bg-neutral-900,
 .light .bg-slate-900,
 .light .bg-zinc-900,
-.light .bg-gray-900,
-.light .bg-\[\#0B1120\] {
+.light .bg-gray-900 {
   background-color: #FFFFFF !important;
   border-color: #E5E7EB !important;
 }
@@ -285,8 +304,8 @@
 .light input:not([type="checkbox"]):not([type="radio"]),
 .light select,
 .light textarea {
-  background-color: #FFFFFF !important;
-  border-color: #D1D5DB !important;
+  background-color: #F8FAFC !important;
+  border-color: #E5E7EB !important;
   color: #111827 !important;
 }
 

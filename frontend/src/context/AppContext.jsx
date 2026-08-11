@@ -6,6 +6,7 @@ import authService from '../services/authService';
 import chatService from '../services/chatService';
 import socketService from '../services/socketService';
 import { AuthContext } from './AuthContext';
+import { TRANSLATIONS } from '../constants/translations';
 
 export const AppContext = createContext();
 
@@ -28,6 +29,16 @@ export const AppProvider = ({ children }) => {
   }, [authUser, user]);
 
   const [theme, setTheme] = useState(() => localStorage.getItem('nexcart-theme') || 'dark');
+  const [language, setLanguage] = useState(() => localStorage.getItem('nexcart-language') || 'EN / USD');
+
+  useEffect(() => {
+    localStorage.setItem('nexcart-language', language);
+  }, [language]);
+
+  const t = (key) => {
+    const dict = TRANSLATIONS[language] || TRANSLATIONS['EN / USD'];
+    return dict?.[key] || TRANSLATIONS['EN / USD']?.[key] || key;
+  };
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('nexcart-guest-cart') || '[]'));
   const [wishlist, setWishlist] = useState(() => JSON.parse(localStorage.getItem('nexcart-guest-wishlist') || '[]'));
   const [saveForLater, setSaveForLater] = useState(() => JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]'));
@@ -457,6 +468,9 @@ export const AppProvider = ({ children }) => {
         clearNotifications,
         unreadChatCount,
         setUnreadChatCount,
+        language,
+        setLanguage,
+        t,
       }}
     >
       {children}
