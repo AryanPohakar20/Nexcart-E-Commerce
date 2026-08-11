@@ -7,6 +7,7 @@ import Report from '../models/Report.js';
 import User from '../models/User.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { AppError } from '../middlewares/errorMiddleware.js';
+import MarketplaceListing from '../models/MarketplaceListing.js';
 
 /**
  * @route   POST /api/chat/createConversation
@@ -15,7 +16,20 @@ import { AppError } from '../middlewares/errorMiddleware.js';
  */
 export const createConversation = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
-  const { participantId, productId, listingId } = req.body;
+  let { participantId, productId, listingId } = req.body;
+
+  if (listingId) {
+    const listing = await MarketplaceListing.findById(listingId);
+    if (!listing) {
+      throw new AppError('Listing not found.', 404);
+    }
+    participantId = listing.sellerId;
+    productId = null; // Ensure it's a pure C2C conversation
+  }
+
+  if (!participantId) {
+    throw new AppError('participantId is required if no listingId is provided.', 400);
+  }
 
   if (currentUserId.toString() === participantId.toString()) {
     throw new AppError('You cannot start a conversation with yourself regarding your own listing.', 400);
