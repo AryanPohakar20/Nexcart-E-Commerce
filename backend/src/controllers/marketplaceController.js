@@ -208,3 +208,82 @@ export const deleteListing = asyncHandler(async (req, res) => {
 
   return successResponse(res, 'Listing deleted successfully', { listing });
 });
+
+/**
+ * PATCH /api/marketplace/listings/:id/sold
+ * Mark seller's own listing as sold
+ */
+export const markListingAsSold = asyncHandler(async (req, res) => {
+  const listing = await MarketplaceListing.findById(req.params.id);
+
+  if (!listing) {
+    throw new ApiError(404, 'Listing not found');
+  }
+
+  if (listing.sellerId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'You are not authorized to update this listing');
+  }
+
+  if (listing.status === 'sold') {
+    throw new ApiError(400, 'Listing is already marked as sold.');
+  }
+  
+  if (listing.status !== 'active') {
+    throw new ApiError(400, 'Only active listings can be marked as sold.');
+  }
+
+  let { finalSalePrice, costPrice } = req.body;
+  
+  finalSalePrice = parseNumericField(finalSalePrice, 'Final Sale Price', listing.price);
+  costPrice = parseNumericField(costPrice, 'Cost Price', listing.costPrice || 0);
+
+  const profit = finalSalePrice - costPrice;
+
+  listing.status = 'sold';
+  listing.stock = 0;
+  listing.finalSalePrice = finalSalePrice;
+  listing.costPrice = costPrice;
+  listing.profit = profit;
+  listing.soldAt = new Date();
+
+  await listing.save();
+
+  return successResponse(res, 'Listing marked as sold successfully', { listing });
+});
+
+/**
+ * GET /api/marketplace/earnings
+ * Get C2C marketplace earnings for the seller
+ */
+export const getMarketplaceEarnings = asyncHandler(async (req, res) => {
+  const sellerId = req.user._id;
+
+  const soldListings = await MarketplaceListing.find({
+    sellerId,
+    status: 'sold'
+  }).sort({ soldAt: -1 }).lean({ virtuals: true });
+
+  let totalRevenue = 0;
+  let totalCost = 0;
+  let totalProfit = 0;
+  const itemsSold = soldListings.length;
+
+  soldListings.forEach(listing => {
+    totalRevenue += (listing.finalSalePrice || 0);
+    totalCost += (listing.costPrice || 0);
+    totalProfit += (listing.profit || 0);
+  });
+
+  // Ensure `id` field is always present
+  const normalized = soldListings.map(l => ({ ...l, id: l.id || (l._id ? l._id.toString() : undefined) }));
+
+  return successResponse(res, 'Marketplace earnings fetched successfully', {
+    earnings: {
+      totalRevenue,
+      totalCost,
+      totalProfit,
+      itemsSold
+    },
+    sales: normalized
+  });
+});

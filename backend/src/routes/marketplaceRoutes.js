@@ -6,6 +6,8 @@ import {
   getListingById,
   updateListing,
   deleteListing,
+  markListingAsSold,
+  getMarketplaceEarnings,
 } from '../controllers/marketplaceController.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { upload } from '../middlewares/upload.js';
@@ -29,5 +31,11 @@ router.put('/listings/:id', authenticate, upload.array('images', 5), updateListi
 
 // DELETE /api/marketplace/listings/:id - Delete C2C listing (Protected)
 router.delete('/listings/:id', authenticate, deleteListing);
+
+// PATCH /api/marketplace/listings/:id/sold - Mark C2C listing as sold (Protected)
+router.patch('/listings/:id/sold', authenticate, markListingAsSold);
+
+// GET /api/marketplace/earnings - Get C2C marketplace earnings (Protected)
+router.get('/earnings', authenticate, getMarketplaceEarnings);
 
 export default router;

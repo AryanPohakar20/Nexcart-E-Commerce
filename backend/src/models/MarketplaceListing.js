@@ -28,6 +28,22 @@ const marketplaceListingSchema = new mongoose.Schema(
       required: [true, 'Price is required'],
       min: [0, 'Price cannot be negative'],
     },
+    costPrice: {
+      type: Number,
+      default: 0,
+    },
+    finalSalePrice: {
+      type: Number,
+      default: 0,
+    },
+    profit: {
+      type: Number,
+      default: 0,
+    },
+    soldAt: {
+      type: Date,
+      default: null,
+    },
     originalPrice: {
       type: Number,
       default: 0,

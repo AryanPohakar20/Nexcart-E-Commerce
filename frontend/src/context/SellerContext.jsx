@@ -114,6 +114,10 @@ export const SellerProvider = ({ children }) => {
   const [growthText, setGrowthText] = useState('+0%');
   const [dashboardLoading, setDashboardLoading] = useState(true);
 
+  // 5. C2C Earnings State
+  const [c2cEarnings, setC2cEarnings] = useState(null);
+  const [c2cEarningsLoading, setC2cEarningsLoading] = useState(false);
+
   const fetchDashboardSummary = useCallback(async (timeframe = '7D') => {
     setDashboardLoading(true);
     try {
@@ -144,6 +148,20 @@ export const SellerProvider = ({ children }) => {
       console.error('Error fetching seller listings:', err);
     } finally {
       setProductsLoading(false);
+    }
+  }, []);
+
+  const fetchC2CEarnings = useCallback(async () => {
+    setC2cEarningsLoading(true);
+    try {
+      const res = await marketplaceService.getEarnings();
+      if (res.success && res.data) {
+        setC2cEarnings(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching C2C earnings:', err);
+    } finally {
+      setC2cEarningsLoading(false);
     }
   }, []);
 
@@ -240,8 +258,9 @@ export const SellerProvider = ({ children }) => {
       fetchSellerOrders();
       fetchDashboardSummary('7D');
       fetchSellerProducts();
+      fetchC2CEarnings();
     }
-  }, [user, fetchSellerOrders, fetchDashboardSummary, fetchSellerProducts]);
+  }, [user, fetchSellerOrders, fetchDashboardSummary, fetchSellerProducts, fetchC2CEarnings]);
 
   // Sync profile data from backend dashboard API
   useEffect(() => {
@@ -360,6 +379,24 @@ export const SellerProvider = ({ children }) => {
     } catch (error) {
       console.error('Error deleting listing:', error);
       showToast(error.response?.data?.message || 'Failed to delete listing', 'error');
+      throw error;
+    }
+  };
+
+  const markListingAsSold = async (id, finalSalePrice, costPrice) => {
+    try {
+      const res = await marketplaceService.markAsSold(id, finalSalePrice, costPrice);
+      if (res.success && res.data?.listing) {
+        setProducts((prev) =>
+          prev.map((item) => (item.id === id || item._id === id ? res.data.listing : item))
+        );
+        showToast('Listing marked as sold!', 'success');
+        fetchC2CEarnings(); // Refresh earnings
+        return res.data.listing;
+      }
+    } catch (error) {
+      console.error('Error marking as sold:', error);
+      showToast(error.response?.data?.message || 'Failed to mark as sold', 'error');
       throw error;
     }
   };
@@ -517,10 +554,14 @@ export const SellerProvider = ({ children }) => {
         growthText,
         dashboardLoading,
         fetchDashboardSummary,
+        c2cEarnings,
+        c2cEarningsLoading,
+        fetchC2CEarnings,
         // Product Actions
         addProduct,
         updateProduct,
         deleteProduct,
+        markListingAsSold,
         toggleProductStatus,
         updateStock,
         // Order Actions

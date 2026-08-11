@@ -56,6 +56,24 @@ const marketplaceService = {
     const response = await axiosInstance.delete(`/marketplace/listings/${id}`);
     return response.data;
   },
+  /**
+   * Mark a C2C Marketplace Listing as Sold
+   */
+  markAsSold: async (id, finalSalePrice, costPrice) => {
+    const response = await axiosInstance.patch(`/marketplace/listings/${id}/sold`, {
+      finalSalePrice,
+      costPrice,
+    });
+    return response.data;
+  },
+
+  /**
+   * Get C2C Marketplace Earnings
+   */
+  getEarnings: async () => {
+    const response = await axiosInstance.get('/marketplace/earnings');
+    return response.data;
+  },
 };
 
 export default marketplaceService;

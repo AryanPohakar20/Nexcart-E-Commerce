@@ -4,6 +4,7 @@ import { SellerContext } from '../../context/SellerContext';
 import { CATEGORIES } from '../../constants/dummyData';
 import AddProductModal from '../../components/seller/AddProductModal';
 import QuickStockModal from '../../components/seller/QuickStockModal';
+import MarkAsSoldModal from '../../components/seller/MarkAsSoldModal';
 import { 
   FiPackage, FiPlus, FiSearch, FiFilter, FiEdit2, FiTrash2, 
   FiCopy, FiEye, FiGrid, FiList, FiCheckCircle, FiTag, 
@@ -23,6 +24,7 @@ const SellerProducts = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [stockModalProduct, setStockModalProduct] = useState(null);
+  const [markSoldModalProduct, setMarkSoldModalProduct] = useState(null);
 
   // Filtered Products
   const filteredProducts = products.filter((p) => {
@@ -326,6 +328,16 @@ const SellerProducts = () => {
                     {/* Actions */}
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        {p.sellerType === 'individual_c2c' && p.status === 'active' && (
+                          <button
+                            onClick={() => setMarkSoldModalProduct(p)}
+                            className="py-1.5 px-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 font-bold text-[11px] transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                            title="Mark as Sold"
+                          >
+                            <FiCheckCircle size={14} />
+                            <span>Mark Sold</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setEditingProduct(p);
@@ -429,6 +441,16 @@ const SellerProducts = () => {
                   </button>
                 </div>
 
+                {p.sellerType === 'individual_c2c' && p.status === 'active' && (
+                  <button
+                    onClick={() => setMarkSoldModalProduct(p)}
+                    className="w-full py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <FiCheckCircle size={14} />
+                    <span>Mark as Sold</span>
+                  </button>
+                )}
+
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => {
@@ -474,6 +496,12 @@ const SellerProducts = () => {
         product={stockModalProduct}
         isOpen={!!stockModalProduct}
         onClose={() => setStockModalProduct(null)}
+      />
+
+      <MarkAsSoldModal
+        product={markSoldModalProduct}
+        isOpen={!!markSoldModalProduct}
+        onClose={() => setMarkSoldModalProduct(null)}
       />
     </div>
   );
