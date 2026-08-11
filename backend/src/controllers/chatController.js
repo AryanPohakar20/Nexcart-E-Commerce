@@ -61,6 +61,12 @@ export const createConversation = asyncHandler(async (req, res) => {
     conversation = await Conversation.findById(conversation._id)
       .populate('participants', '_id name avatar role online lastSeen location')
       .exec();
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user:${currentUserId}`).emit('newConversation', conversation);
+      io.to(`user:${participantId}`).emit('newConversation', conversation);
+    }
   }
 
   res.status(200).json({
@@ -233,6 +239,26 @@ export const sendMessage = asyncHandler(async (req, res) => {
   conversation.lastMessage = newMessage._id;
   conversation.lastMessageTime = new Date();
   await conversation.save();
+
+  // Emit Socket.IO events for REST API requests
+  const io = req.app.get('io');
+  if (io) {
+    io.to(`conv:${conversationId}`).emit('receiveMessage', populatedMessage);
+    io.to(`user:${receiverId}`).emit('receiveMessage', populatedMessage);
+
+    io.to(`user:${receiverId}`).emit('conversationUpdated', {
+      conversationId,
+      lastMessage: populatedMessage,
+      unreadCount: currentUnread + 1,
+    });
+
+    const receiverConvs = await Conversation.find({ participants: receiverId });
+    let totalUnread = 0;
+    receiverConvs.forEach(c => {
+      totalUnread += (c.unreadCount.get(receiverId.toString()) || 0);
+    });
+    io.to(`user:${receiverId}`).emit('updateTotalUnreadCount', totalUnread);
+  }
 
   res.status(201).json({
     success: true,

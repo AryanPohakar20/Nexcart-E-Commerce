@@ -198,11 +198,21 @@ const Messages = () => {
 
   // Real-Time Socket Event Listeners
   useEffect(() => {
-    if (!activeConversationId) return;
+    if (activeConversationId) {
+      socketService.joinConversation(activeConversationId);
+      socketService.markMessageSeen(activeConversationId);
+      chatService.markAsRead(activeConversationId).catch(() => {});
+    }
 
-    socketService.joinConversation(activeConversationId);
-    socketService.markMessageSeen(activeConversationId);
-    chatService.markAsRead(activeConversationId).catch(() => {});
+    // Listen: newConversation
+    const handleNewConversation = (conv) => {
+      const formatted = formatConversation(conv);
+      setConversations(prev => {
+        const exists = prev.some(c => c.id === formatted.id);
+        if (exists) return prev;
+        return [formatted, ...prev];
+      });
+    };
 
     // Listen: receiveMessage
     const handleReceiveMessage = (msg) => {
@@ -221,7 +231,7 @@ const Messages = () => {
           if (c.id === msg.conversationId) {
             const updatedMsgs = c.id === activeConversationId
               ? [...c.messages.filter(m => m.id !== formatted.id), formatted]
-              : [...c.messages, formatted];
+              : [...c.messages.filter(m => m.id !== formatted.id), formatted];
             return {
               ...c,
               lastMessageTimestamp: formatted.timestamp,
@@ -296,6 +306,7 @@ const Messages = () => {
       }
     };
 
+    socketService.on('newConversation', handleNewConversation);
     socketService.on('receiveMessage', handleReceiveMessage);
     socketService.on('messageSeen', handleMessageSeen);
     socketService.on('typing', handleTyping);
@@ -305,7 +316,10 @@ const Messages = () => {
     socketService.on('offerUpdated', handleOfferUpdated);
 
     return () => {
-      socketService.leaveConversation(activeConversationId);
+      if (activeConversationId) {
+        socketService.leaveConversation(activeConversationId);
+      }
+      socketService.off('newConversation', handleNewConversation);
       socketService.off('receiveMessage', handleReceiveMessage);
       socketService.off('messageSeen', handleMessageSeen);
       socketService.off('typing', handleTyping);
@@ -314,7 +328,7 @@ const Messages = () => {
       socketService.off('userOffline', handleUserOffline);
       socketService.off('offerUpdated', handleOfferUpdated);
     };
-  }, [activeConversationId, currentUserIdStr, formatMessage]);
+  }, [activeConversationId, currentUserIdStr, formatMessage, formatConversation]);
 
   // Retrieve current active conversation object combined with latest activeMessages
   const activeConversation = useMemo(() => {
@@ -339,6 +353,7 @@ const Messages = () => {
     if (!activeConversation) return;
 
     const receiverId = activeConversation.partner.id;
+    const tempId = `temp-${Date.now()}`;
 
     const payload = {
       conversationId: activeConversation.id,
@@ -351,6 +366,24 @@ const Messages = () => {
       meetupDetails: msgData.meetupDetails,
     };
 
+    // Optimistically update UI
+    const optimisticMsg = {
+      id: tempId,
+      senderId: 'current-user',
+      receiverId,
+      text: payload.message,
+      type: payload.messageType,
+      attachments: payload.attachments,
+      imageUrl: payload.attachments[0]?.url,
+      locationDetails: payload.locationDetails,
+      offerDetails: payload.offerDetails,
+      meetupDetails: payload.meetupDetails,
+      status: 'sending',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setActiveMessages(prev => [...prev, optimisticMsg]);
+
     // Socket real-time send
     socketService.sendMessage(payload, (res) => {
       if (res?.error) {
@@ -358,10 +391,21 @@ const Messages = () => {
         chatService.sendMessage(payload).then(apiRes => {
           if (apiRes.success && apiRes.data) {
             const formatted = formatMessage(apiRes.data);
-            setActiveMessages(prev => [...prev, formatted]);
+            setActiveMessages(prev => prev.map(m => m.id === tempId ? formatted : m));
           }
         }).catch(err => {
           showToast(err.message || 'Failed to send message', 'error');
+          setActiveMessages(prev => prev.filter(m => m.id !== tempId));
+        });
+      } else if (res?.success && res.data) {
+        // Socket success callback
+        const formatted = formatMessage(res.data);
+        setActiveMessages(prev => {
+          const hasRealMsg = prev.some(m => m.id === formatted.id);
+          if (hasRealMsg) {
+             return prev.filter(m => m.id !== tempId);
+          }
+          return prev.map(m => m.id === tempId ? formatted : m);
         });
       }
     });
