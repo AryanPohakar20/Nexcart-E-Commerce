@@ -6,6 +6,8 @@ import sellerRoutes from './sellerRoutes.js';
 import profileRoutes from './profileRoutes.js';
 import addressRoutes from './addressRoutes.js';
 import adminRoutes from './adminRoutes.js';
+import productReviewRoutes from './productReviewRoutes.js';
+import sellerReviewRoutes from './sellerReviewRoutes.js';
 
 // ─── Marketplace Route Imports ────────────────────────────────────────────────
 import productRoutes from './productRoutes.js';
@@ -90,5 +92,7 @@ router.use('/brands', brandRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/subcategories', subcategoryRoutes);
 router.use('/attributes', attributeRoutes);
+router.use('/product-reviews', productReviewRoutes);
+router.use('/seller-reviews', sellerReviewRoutes);
 
 export default router;

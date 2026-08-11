@@ -142,20 +142,19 @@ export const getMarketplaceAnalytics = async (range = '12 Months') => {
 
   // 4. Bestselling Products
   const bestProductsAgg = await Product.find({ isDeleted: false })
-    .populate('category', 'name')
-    .populate('seller', 'businessName storeName')
-    .sort({ rating: -1, ratingsCount: -1, createdAt: -1 })
+    .populate('sellerId', 'firstName lastName shopName business individual')
+    .sort({ rating: -1, reviewsCount: -1, createdAt: -1 })
     .limit(5)
     .lean();
 
   const bestProducts = bestProductsAgg.map((p) => ({
     id: p._id,
-    name: p.name,
-    category: p.category?.name || 'General',
-    seller: p.seller?.businessName || p.seller?.storeName || 'NexCart Official',
+    name: p.title || p.name || 'Untitled Product',
+    category: p.category || 'General',
+    seller: p.sellerId?.shopName || p.sellerId?.business?.businessName || 'NexCart Official',
     price: p.price,
     rating: p.rating || 4.8,
-    image: (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150&auto=format&fit=crop&q=80',
+    image: (p.images && p.images[0]?.url) || (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150&auto=format&fit=crop&q=80',
   }));
 
   // 5. Total GMV, Platform Commission, and AOV
