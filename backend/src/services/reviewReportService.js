@@ -9,8 +9,8 @@ import { toModerationResultDTO } from '../mappers/adminReviewModerationMapper.js
 import { recalculateProductRating } from './productRatingService.js';
 import { recalculateSellerRating } from './sellerRatingService.js';
 import { ApiError } from '../utils/ApiError.js';
+import * as notificationService from './notificationService.js';
 import logger from '../utils/logger.js';
-
 /**
  * Create a new report against a review (Product or Seller review).
  * @param {string} userId - User ID submitting the report (reportedBy)
@@ -65,6 +65,24 @@ export const createReviewReport = async (userId, reviewId, reviewType, reportDat
     logger.info(
       `Review report created successfully. Report ID: ${savedReport._id}, Review: ${reviewId}, Type: ${reviewType}, Reported By: ${userId}`
     );
+
+    // 5. Notify administrators
+    try {
+      await notificationService.createNotification({
+        type: 'report',
+        title: 'New Review Report',
+        message: `A new report has been filed against a ${reviewType} review.`,
+        priority: 'normal',
+        recipientRole: 'admin',
+        metadata: {
+          reportId: savedReport._id,
+          reviewType,
+          reason: reportData.reason,
+        },
+      });
+    } catch (notifError) {
+      logger.error(`Failed to send report notification for report ID: ${savedReport._id}`, notifError);
+    }
 
     return savedReport;
   } catch (error) {
@@ -280,7 +298,64 @@ export const moderateReview = async (adminId, reportId, action, reason) => {
     }
   }
 
-  // 13. Return DTO
+  // 13. Send Moderation Notifications
+  if (['hide', 'remove', 'restore', 'reject'].includes(action)) {
+    const notificationPromises = [];
+    const reporterId = report.reportedBy && report.reportedBy._id ? report.reportedBy._id : report.reportedBy;
+
+    // Notify the reporter
+    if (['hide', 'remove', 'restore'].includes(action)) {
+      notificationPromises.push(
+        notificationService.createNotification({
+          type: 'report',
+          title: 'Report Resolved',
+          message: `Your report regarding a ${report.reviewType} review has been resolved.`,
+          priority: 'normal',
+          recipientRole: 'customer',
+          recipientUser: reporterId,
+          metadata: { reportId: report._id, reviewType: report.reviewType, action: 'resolved' }
+        })
+      );
+    } else if (action === 'reject') {
+      notificationPromises.push(
+        notificationService.createNotification({
+          type: 'report',
+          title: 'Report Rejected',
+          message: `Your report regarding a ${report.reviewType} review has been rejected.`,
+          priority: 'normal',
+          recipientRole: 'customer',
+          recipientUser: reporterId,
+          metadata: { reportId: report._id, reviewType: report.reviewType, action: 'rejected' }
+        })
+      );
+    }
+
+    // Notify the review author (only for content alterations)
+    if (['hide', 'remove', 'restore'].includes(action)) {
+      notificationPromises.push(
+        notificationService.createNotification({
+          type: 'alert',
+          title: 'Review Moderation Alert',
+          message: `Your ${report.reviewType} review has been ${action === 'restore' ? 'restored' : action + 'd'}.`,
+          priority: 'high',
+          recipientRole: 'customer',
+          recipientUser: review.customerId,
+          metadata: { reviewId: review._id, reviewType: report.reviewType, action, reason }
+        })
+      );
+    }
+
+    // Execute asynchronously without awaiting to ensure moderation isn't delayed/failed
+    Promise.allSettled(notificationPromises).then(results => {
+      results.forEach((result) => {
+        if (result.status === 'rejected') {
+          logger.error(`Notification failed during moderation of report ${reportId}:`, result.reason);
+        }
+      });
+    });
+  }
+
+  // 14. Return DTO
   return toModerationResultDTO(updatedReport, updatedReview, {
     action,
     previousReviewStatus: review.status,

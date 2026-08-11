@@ -86,6 +86,7 @@ export const createNotification = async ({
   message,
   priority = 'normal',
   recipientRole = 'admin',
+  recipientUser = null,
   link = '',
   metadata = {},
 }) => {
@@ -95,6 +96,7 @@ export const createNotification = async ({
     message,
     priority,
     recipientRole,
+    recipientUser,
     link,
     metadata,
   });
