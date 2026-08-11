@@ -291,17 +291,17 @@ const Navbar = () => {
             {/* Cart Option immediately to the RIGHT SIDE of Messages icon */}
             <motion.div 
               key={`cart-${cartCount}`}
-              whileHover={{ scale: 1.05 }} 
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.1 }} 
+              whileTap={{ scale: 0.9 }}
             >
               <Link
                 to="/cart"
-                className="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 border border-transparent hover:border-primary/20 text-xs font-bold transition-all group"
+                className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group block"
                 aria-label="Shopping Cart"
                 title="Shopping Cart"
               >
-                <div className="relative flex items-center">
-                  <FiShoppingCart className="text-base sm:text-lg transition-transform group-hover:scale-110" />
+                <div className="relative flex items-center justify-center">
+                  <FiShoppingCart className="text-lg sm:text-xl transition-transform group-hover:scale-110" />
                   {cartCount > 0 && (
                     <motion.span 
                       initial={{ scale: 0 }}
@@ -313,7 +313,6 @@ const Navbar = () => {
                     </motion.span>
                   )}
                 </div>
-                <span className="font-bold text-xs">{t('Cart')} ({cartCount})</span>
               </Link>
             </motion.div>
 
