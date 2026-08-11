@@ -1,6 +1,7 @@
 import * as sellerReviewRepository from '../repositories/sellerReviewRepository.js';
 import * as sellerRepository from '../repositories/sellerRepository.js';
 import logger from '../utils/logger.js';
+import { recalculateSellerTrustScore } from './sellerTrustScoreService.js';
 
 /**
  * Recalculates and updates the rating statistics for a seller.
@@ -28,6 +29,13 @@ export const recalculateSellerRating = async (sellerUserId) => {
       logger.info(
         `Seller rating statistics recalculated. Seller User ID: ${sellerUserId}, Avg: ${stats.averageRating}, Total: ${stats.totalReviews}`
       );
+
+      // Recalculate trust score (non-blocking)
+      try {
+        await recalculateSellerTrustScore(updatedSeller._id);
+      } catch (err) {
+        logger.error(`Failed to trigger trust score recalculation for Seller User ID: ${sellerUserId}`, err);
+      }
     } else {
       logger.warn(`Seller not found during rating recalculation. Seller User ID: ${sellerUserId}`);
     }

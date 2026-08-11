@@ -307,6 +307,7 @@ const sellerSchema = new mongoose.Schema(
 
     // ── New: Trust & Reputation ────────────────────────────────────────────────
     trustScore: { type: Number, default: 0, min: 0, max: 100 },
+    lastTrustScoreUpdatedAt: { type: Date, default: null },
     sellerLevel: {
       type: String,
       enum: ['bronze', 'silver', 'gold', 'platinum'],

@@ -7,7 +7,6 @@ import { uploadAadhaarImage, replaceImage, deleteImage } from './cloudinaryServi
 import { buildDashboardProfile, buildPublicProfile } from '../helpers/sellerHelpers.js';
 import { generateUniqueSlug } from '../helpers/slugGenerator.js';
 import { calculateSellerCompletion } from './profileCompletion.js';
-import { calculateTrustScore, getTrustLevel } from './trustScore.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
 
@@ -448,8 +447,8 @@ export const deleteStore = async (userId) => {
 export const getDashboardSummary = async (userId) => {
   const seller = await requireSeller(userId);
 
-  const trustScore = calculateTrustScore(seller);
-  const sellerLevel = getTrustLevel(trustScore);
+  const trustScore = seller.trustScore || 0;
+  const sellerLevel = seller.sellerLevel || 'bronze';
   const { completion } = calculateSellerCompletion(seller, seller.userId);
 
   return {

@@ -147,3 +147,16 @@ export const updateSellerStatistics = async (sellerDocId, statsUpdates) => {
     { new: true }
   );
 };
+
+/**
+ * Update the trust score and metadata for a seller by their document ID.
+ * @param {string} sellerDocId - Seller document ID
+ * @param {Object} trustData - { trustScore, lastTrustScoreUpdatedAt }
+ */
+export const updateSellerTrustScore = async (sellerDocId, trustData) => {
+  return await Seller.findByIdAndUpdate(
+    sellerDocId,
+    { $set: trustData },
+    { new: true }
+  );
+};

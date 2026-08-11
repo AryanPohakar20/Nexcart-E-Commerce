@@ -1,6 +1,7 @@
 import * as orderRepository from '../repositories/orderRepository.js';
 import * as sellerRepository from '../repositories/sellerRepository.js';
 import logger from '../utils/logger.js';
+import { recalculateSellerTrustScore } from './sellerTrustScoreService.js';
 
 /**
  * Recalculates and updates the performance statistics for a seller.
@@ -26,6 +27,13 @@ export const recalculateSellerStatistics = async (sellerDocId) => {
       logger.info(
         `Seller performance statistics recalculated. Seller ID: ${sellerDocId}, Completed: ${stats.completedOrders}, Cancellation Rate: ${stats.cancellationRate}%`
       );
+
+      // Recalculate trust score (non-blocking)
+      try {
+        await recalculateSellerTrustScore(sellerDocId);
+      } catch (err) {
+        logger.error(`Failed to trigger trust score recalculation for Seller ID: ${sellerDocId}`, err);
+      }
     } else {
       logger.warn(`Seller not found during statistics recalculation. Seller ID: ${sellerDocId}`);
     }
