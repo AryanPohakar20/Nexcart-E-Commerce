@@ -115,11 +115,13 @@ const Marketplace = () => {
         </div>
       ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProducts.map(product => (
+          {filteredProducts.map(product => {
+            const listingId = product.id || product._id;
+            return (
             <div 
-              key={product.id} 
+              key={listingId} 
               className="bg-[#18181b]/80 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 group cursor-pointer flex flex-col hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1"
-              onClick={() => navigate(`/marketplace/product/${product.id}`)}
+              onClick={() => navigate(`/marketplace/product/${listingId}`)}
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-black/40">
                 <img 
@@ -156,7 +158,8 @@ const Marketplace = () => {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="py-24 flex flex-col items-center justify-center text-center border-2 border-dashed border-white/10 rounded-2xl bg-white/5">

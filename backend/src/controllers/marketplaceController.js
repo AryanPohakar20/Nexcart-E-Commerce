@@ -105,7 +105,10 @@ export const getAllListings = asyncHandler(async (req, res) => {
     .limit(Math.min(100, Number(limit) || 100))
     .lean({ virtuals: true });
 
-  return successResponse(res, 'Marketplace listings fetched successfully', { listings });
+  // Ensure `id` field is always present as string (lean() may omit the Mongoose id virtual)
+  const normalized = listings.map(l => ({ ...l, id: l.id || (l._id ? l._id.toString() : undefined) }));
+
+  return successResponse(res, 'Marketplace listings fetched successfully', { listings: normalized });
 });
 
 /**
@@ -117,7 +120,9 @@ export const getMyListings = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .lean({ virtuals: true });
 
-  return successResponse(res, 'My marketplace listings fetched successfully', { listings });
+  const normalized = listings.map(l => ({ ...l, id: l.id || (l._id ? l._id.toString() : undefined) }));
+
+  return successResponse(res, 'My marketplace listings fetched successfully', { listings: normalized });
 });
 
 /**
@@ -133,7 +138,10 @@ export const getListingById = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Marketplace listing not found');
   }
 
-  return successResponse(res, 'Marketplace listing details fetched', { listing });
+  // Ensure id field is present
+  const normalized = { ...listing, id: listing.id || (listing._id ? listing._id.toString() : undefined) };
+
+  return successResponse(res, 'Marketplace listing details fetched', { listing: normalized });
 });
 
 /**
