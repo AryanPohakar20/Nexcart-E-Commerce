@@ -46,9 +46,16 @@ export const validateCreateSellerReview = [
     .optional()
     .isArray()
     .withMessage('Images must be an array of strings')
-    .custom((arr) => {
-      if (arr && !arr.every(item => typeof item === 'string')) {
-        throw new Error('All images must be strings');
+    .custom((arr, { req }) => {
+      if (arr) {
+        if (!arr.every(item => typeof item === 'string' && /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/.test(item))) {
+          throw new Error('All images must be valid URLs');
+        }
+        const uniqueImages = Array.from(new Set(arr));
+        if (uniqueImages.length > 5) {
+          throw new Error('Maximum of 5 images are allowed');
+        }
+        req.body.images = uniqueImages;
       }
       return true;
     }),
@@ -73,9 +80,16 @@ export const validateUpdateSellerReview = [
     .optional()
     .isArray()
     .withMessage('Images must be an array of strings')
-    .custom((arr) => {
-      if (arr && !arr.every(item => typeof item === 'string')) {
-        throw new Error('All images must be strings');
+    .custom((arr, { req }) => {
+      if (arr) {
+        if (!arr.every(item => typeof item === 'string' && /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/.test(item))) {
+          throw new Error('All images must be valid URLs');
+        }
+        const uniqueImages = Array.from(new Set(arr));
+        if (uniqueImages.length > 5) {
+          throw new Error('Maximum of 5 images are allowed');
+        }
+        req.body.images = uniqueImages;
       }
       return true;
     }),

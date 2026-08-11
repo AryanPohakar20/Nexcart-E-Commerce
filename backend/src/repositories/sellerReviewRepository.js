@@ -5,14 +5,15 @@ import SellerReview from '../models/SellerReview.js'; // imported for future use
  * Create a new seller review.
  */
 export const create = async (reviewData) => {
-  throw new ApiError(501, 'sellerReviewRepository.create method is not implemented.');
+  const review = new SellerReview(reviewData);
+  return await review.save();
 };
 
 /**
  * Find a seller review by ID.
  */
 export const findById = async (id) => {
-  throw new ApiError(501, 'sellerReviewRepository.findById method is not implemented.');
+  return await SellerReview.findOne({ _id: id, isDeleted: false });
 };
 
 /**
@@ -26,14 +27,27 @@ export const findBySeller = async (sellerId, filters = {}) => {
  * Update a seller review by ID.
  */
 export const update = async (id, updateData) => {
-  throw new ApiError(501, 'sellerReviewRepository.update method is not implemented.');
+  return await SellerReview.findOneAndUpdate(
+    { _id: id, isDeleted: false },
+    { $set: updateData },
+    { new: true, runValidators: true }
+  );
 };
 
 /**
  * Soft delete a seller review by ID.
  */
 export const softDelete = async (id) => {
-  throw new ApiError(501, 'sellerReviewRepository.softDelete method is not implemented.');
+  return await SellerReview.findOneAndUpdate(
+    { _id: id, isDeleted: false },
+    {
+      $set: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    },
+    { new: true }
+  );
 };
 
 /**
@@ -49,4 +63,19 @@ export const existsByOrder = async (orderId) => {
  */
 export const findExistingSellerReview = async ({ customerId, orderId, sellerId }) => {
   return SellerReview.findOne({ customerId, orderId, sellerId, isDeleted: false }).lean();
+};
+
+/**
+ * Find a review by customer and order.
+ */
+export const findByCustomerAndOrder = async (customerId, orderId) => {
+  return await SellerReview.findOne({ customerId, orderId, isDeleted: false }).lean();
+};
+
+/**
+ * Check if a non-deleted review exists for a specific order and seller.
+ */
+export const existsByOrderAndSeller = async (orderId, sellerId) => {
+  const count = await SellerReview.countDocuments({ orderId, sellerId, isDeleted: false });
+  return count > 0;
 };

@@ -95,5 +95,6 @@ router.use('/attributes', attributeRoutes);
 router.use('/product-reviews', productReviewRoutes);
 router.use('/reviews', productReviewRoutes);
 router.use('/seller-reviews', sellerReviewRoutes);
+router.use('/sellers', sellerReviewRoutes);
 
 export default router;
