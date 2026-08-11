@@ -341,14 +341,16 @@ export const getSuggestions = async (q) => {
 };
 
 /**
- * Internal helper to ensure some products are flagged as featured if none are.
+ * Internal helper to ensure some products are flagged as featured if there are too few.
  */
 const checkAndSeedFeatured = async () => {
   const count = await Product.countDocuments({
     $or: [{ isFeatured: true }, { featured: true }],
   });
-  if (count === 0) {
-    const topRated = await Product.find({}).sort({ rating: -1 }).limit(15);
+  if (count < 15) {
+    const topRated = await Product.find({ isFeatured: { $ne: true }, featured: { $ne: true } })
+      .sort({ rating: -1 })
+      .limit(15 - count);
     if (topRated.length > 0) {
       const ids = topRated.map((p) => p._id);
       await Product.updateMany({ _id: { $in: ids } }, { $set: { isFeatured: true, featured: true } });
@@ -357,14 +359,16 @@ const checkAndSeedFeatured = async () => {
 };
 
 /**
- * Internal helper to ensure some products are flagged as trending if none are.
+ * Internal helper to ensure some products are flagged as trending if there are too few.
  */
 const checkAndSeedTrending = async () => {
   const count = await Product.countDocuments({
     $or: [{ isTrending: true }, { trending: true }],
   });
-  if (count === 0) {
-    const topReviewed = await Product.find({}).sort({ reviewCount: -1, 'ratings.count': -1 }).limit(15);
+  if (count < 15) {
+    const topReviewed = await Product.find({ isTrending: { $ne: true }, trending: { $ne: true } })
+      .sort({ reviewCount: -1, 'ratings.count': -1 })
+      .limit(15 - count);
     if (topReviewed.length > 0) {
       const ids = topReviewed.map((p) => p._id);
       await Product.updateMany({ _id: { $in: ids } }, { $set: { isTrending: true, trending: true } });
