@@ -24,6 +24,7 @@ const TRAFFIC_SOURCES = [
 
 const SellerAnalytics = () => {
   const { stats, settings, products, orders } = useContext(SellerContext);
+  const { formatCurrency } = useContext(AppContext);
   const isBusiness = settings?.sellerType === 'business';
 
   const avgOrderValue = orders.length > 0 ? Math.round(stats.totalRevenue / orders.length) : 0;
@@ -48,8 +49,8 @@ const SellerAnalytics = () => {
         <SellerStatsCard
           title="Gross Merchandise Value"
           value={stats.totalRevenue}
-          prefix="₹"
-          formatter={(val) => val.toLocaleString('en-IN')}
+          prefix=""
+          formatter={(val) => formatCurrency(val)}
           change="+24.8% YoY"
           isPositive={true}
           icon={FiDollarSign}
@@ -60,8 +61,8 @@ const SellerAnalytics = () => {
         <SellerStatsCard
           title="Average Order Value"
           value={avgOrderValue}
-          prefix="₹"
-          formatter={(val) => val.toLocaleString('en-IN')}
+          prefix=""
+          formatter={(val) => formatCurrency(val)}
           change="+12.4% this week"
           isPositive={true}
           icon={FiTrendingUp}
@@ -215,7 +216,7 @@ const SellerAnalytics = () => {
                     </span>
                   </td>
                   <td className="p-4 font-black text-white">
-                    ₹{p.price.toLocaleString('en-IN')}
+                    {formatCurrency(p.price)}
                   </td>
                   <td className="p-4 font-bold text-accentBlue">
                     {p.views || 320} views

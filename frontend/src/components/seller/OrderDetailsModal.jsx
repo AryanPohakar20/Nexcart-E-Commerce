@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SellerContext } from '../../context/SellerContext';
+import { AppContext } from '../../context/AppContext';
 import { 
   FiX, FiTruck, FiCheckCircle, FiClock, FiAlertCircle, 
   FiUser, FiMapPin, FiPhone, FiMail, FiPackage, FiDollarSign 
@@ -10,6 +11,7 @@ const STATUS_STEPS = ['Pending', 'Processing', 'Shipped', 'Delivered'];
 
 const OrderDetailsModal = ({ order, isOpen, onClose }) => {
   const { updateOrderStatus, cancelOrder } = useContext(SellerContext);
+  const { formatCurrency } = useContext(AppContext);
 
   const [isUpdatingTracking, setIsUpdatingTracking] = useState(false);
   const [carrier, setCarrier] = useState(order?.carrier || 'Delhivery');
@@ -222,16 +224,16 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     </div>
                     <div className="text-right">
                       <div className="font-black text-textPrimary text-sm">
-                        ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                        {formatCurrency(item.price * item.quantity)}
                       </div>
-                      <span className="text-[10px] text-textSecondary">₹{item.price.toLocaleString('en-IN')} / unit</span>
+                      <span className="text-[10px] text-textSecondary">{formatCurrency(item.price)} / unit</span>
                     </div>
                   </div>
                 ))}
               </div>
               <div className="p-4 bg-surface border-t border-borderColor flex justify-between items-center font-bold">
                 <span className="text-textSecondary">Total Order Amount:</span>
-                <span className="text-base text-primary font-black">₹{order.totalAmount.toLocaleString('en-IN')}</span>
+                <span className="text-base text-primary font-black">{formatCurrency(order.totalAmount)}</span>
               </div>
             </div>
 

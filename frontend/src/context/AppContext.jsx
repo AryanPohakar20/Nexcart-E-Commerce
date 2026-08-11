@@ -10,6 +10,31 @@ import { TRANSLATIONS } from '../constants/translations';
 
 export const AppContext = createContext();
 
+export const CURRENCY_CONFIG = {
+  'EN / USD': { code: 'USD', symbol: '$', rate: 1 / 83, locale: 'en-US', digits: 2 },
+  'IN / INR': { code: 'INR', symbol: '₹', rate: 1, locale: 'en-IN', digits: 0 },
+  'UK / GBP': { code: 'GBP', symbol: '£', rate: 1 / 105, locale: 'en-GB', digits: 2 },
+  'EU / EUR': { code: 'EUR', symbol: '€', rate: 1 / 90, locale: 'de-DE', digits: 2 },
+  'JP / JPY': { code: 'JPY', symbol: '¥', rate: 1.87, locale: 'ja-JP', digits: 0 },
+};
+
+export const formatCurrencyValue = (amount, langKey = 'EN / USD') => {
+  const num = Number(amount) || 0;
+  const config = CURRENCY_CONFIG[langKey] || CURRENCY_CONFIG['EN / USD'];
+  const converted = num * config.rate;
+  
+  if (config.code === 'INR') {
+    return `${config.symbol}${Math.round(converted).toLocaleString('en-IN')}`;
+  }
+  
+  const formatted = converted.toLocaleString(config.locale, {
+    minimumFractionDigits: config.digits,
+    maximumFractionDigits: config.digits,
+  });
+  
+  return `${config.symbol}${formatted}`;
+};
+
 export const AppProvider = ({ children }) => {
   const { user: authUser } = useContext(AuthContext) || {};
   const [user, setUser] = useState(() => {
@@ -39,6 +64,10 @@ export const AppProvider = ({ children }) => {
     const dict = TRANSLATIONS[language] || TRANSLATIONS['EN / USD'];
     return dict?.[key] || TRANSLATIONS['EN / USD']?.[key] || key;
   };
+
+  const currencyConfig = CURRENCY_CONFIG[language] || CURRENCY_CONFIG['EN / USD'];
+  const formatCurrency = (amount) => formatCurrencyValue(amount, language);
+  const formatPrice = formatCurrency;
   const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('nexcart-guest-cart') || '[]'));
   const [wishlist, setWishlist] = useState(() => JSON.parse(localStorage.getItem('nexcart-guest-wishlist') || '[]'));
   const [saveForLater, setSaveForLater] = useState(() => JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]'));
@@ -471,6 +500,9 @@ export const AppProvider = ({ children }) => {
         language,
         setLanguage,
         t,
+        currencyConfig,
+        formatCurrency,
+        formatPrice,
       }}
     >
       {children}

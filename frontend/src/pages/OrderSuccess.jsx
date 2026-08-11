@@ -6,7 +6,7 @@ import { FiCheckCircle, FiTruck, FiShoppingBag, FiChevronRight } from 'react-ico
 const OrderSuccess = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { orders } = useContext(AppContext);
+  const { orders, formatCurrency } = useContext(AppContext);
 
   const order = useMemo(() => {
     return orders.find(o => o.id === id) || orders[0];
@@ -41,7 +41,7 @@ const OrderSuccess = () => {
           </div>
           <div className="flex justify-between font-medium text-gray-400 pt-3">
             <span>Amount Paid</span>
-            <span className="text-white">₹{order.amount.toLocaleString('en-IN')}</span>
+            <span className="text-white">{formatCurrency(order.amount)}</span>
           </div>
           <div className="flex justify-between font-medium text-gray-400 pt-3">
             <span>Delivery Estimate</span>

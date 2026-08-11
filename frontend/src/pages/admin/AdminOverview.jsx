@@ -14,6 +14,7 @@ import {
   REVENUE_MONTHLY, USER_GROWTH_MONTHLY,
   ADMIN_ORDERS, SYSTEM_ALERTS
 } from '../../constants/adminDummyData';
+import { AppContext } from '../../context/AppContext';
 
 const getStatsCards = (stats) => [
   { label: 'Total Users', value: stats?.users?.total || 0, icon: FiUsers, color: 'blue', trend: 12.4, trendLabel: '+2,840 this month', delay: 0 },
@@ -44,6 +45,7 @@ const alertTypeConfig = {
 
 const AdminOverview = () => {
   const navigate = useNavigate();
+  const { formatCurrency } = React.useContext(AppContext);
   const [chartRange, setChartRange] = useState('monthly');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -263,7 +265,7 @@ const AdminOverview = () => {
                   <p className="text-[10px] text-gray-500 truncate">{o.customer}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-bold text-white">₹{o.total.toLocaleString('en-IN')}</p>
+                  <p className="text-xs font-bold text-white">{formatCurrency(o.total)}</p>
                   <StatusBadge status={o.status} size="sm" />
                 </div>
               </div>

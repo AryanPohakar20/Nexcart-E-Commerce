@@ -11,10 +11,12 @@ import TableToolbar from '../../components/admin/shared/TableToolbar';
 import Pagination from '../../components/admin/shared/Pagination';
 import ConfirmDialog from '../../components/admin/shared/ConfirmDialog';
 import adminService from '../../services/adminService';
+import { AppContext } from '../../context/AppContext';
 
 const STATUS_OPTIONS = ['All Status', 'active', 'out_of_stock', 'Pending', 'Rejected'];
 
 const AdminProducts = () => {
+  const { formatCurrency } = React.useContext(AppContext);
   const [products, setProducts] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -342,7 +344,7 @@ const AdminProducts = () => {
                       </td>
                       <td className="py-4 px-4 text-right">
                         <div className="font-bold text-white font-mono">
-                          ₹{product.price.toLocaleString('en-IN')}
+                          {formatCurrency(product.price)}
                         </div>
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -420,7 +422,7 @@ const AdminProducts = () => {
                 <p className="text-xs text-gray-400 mt-1">Merchant: {drawerProduct.seller}</p>
                 <div className="flex items-center justify-center gap-2 mt-3">
                   <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2.5 py-1 rounded-full font-black">
-                    ₹{drawerProduct.price.toLocaleString('en-IN')}
+                    {formatCurrency(drawerProduct.price)}
                   </span>
                   <StatusBadge status={drawerProduct.status} size="md" />
                 </div>

@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { SellerContext } from '../../context/SellerContext';
+import { AppContext } from '../../context/AppContext';
 import OrderDetailsModal from '../../components/seller/OrderDetailsModal';
 import { 
   FiShoppingBag, FiSearch, FiFilter, FiEye, FiTruck, 
@@ -18,6 +19,7 @@ const TAB_STATUSES = [
 
 const SellerOrders = () => {
   const { orders, updateOrderStatus } = useContext(SellerContext);
+  const { formatCurrency } = useContext(AppContext);
 
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -228,7 +230,7 @@ const SellerOrders = () => {
                     {/* Total Amount */}
                     <td className="p-4">
                       <div className="font-black text-textPrimary text-sm">
-                        ₹{ord.totalAmount.toLocaleString('en-IN')}
+                        {formatCurrency(ord.totalAmount)}
                       </div>
                       <span className="text-[10px] text-textSecondary">{ord.paymentMethod}</span>
                     </td>

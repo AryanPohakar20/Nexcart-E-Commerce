@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { FiTrendingUp, FiCalendar, FiDollarSign } from 'react-icons/fi';
+import { AppContext } from '../../context/AppContext';
 
 const DATA_7D = [
   { label: 'Mon', revenue: 14200, orders: 3 },
@@ -34,8 +35,9 @@ const DATA_12M = [
   { label: 'Dec', revenue: 780000, orders: 165 },
 ];
 
-const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' }) => {
-  const [timeframe, setTimeframe] = useState('7D');
+const RevenueChart = ({ title = 'Studio Revenue Trends', initialTimeframe = '7D', className = '' }) => {
+  const { formatCurrency } = useContext(AppContext);
+  const [timeframe, setTimeframe] = useState(initialTimeframe);
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
   const data = timeframe === '7D' ? DATA_7D : timeframe === '30D' ? DATA_30D : DATA_12M;
@@ -55,7 +57,7 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
             <h3 className="text-base font-bold text-textPrimary tracking-tight">{title}</h3>
           </div>
           <p className="text-xs text-textSecondary mt-1">
-            Total for period: <span className="text-primary font-bold">₹{totalPeriodRevenue.toLocaleString('en-IN')}</span> across {totalPeriodOrders} orders
+            Total for period: <span className="text-primary font-bold">{formatCurrency(totalPeriodRevenue)}</span> across {totalPeriodOrders} orders
           </p>
         </div>
 
@@ -109,7 +111,7 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
                   ${isHovered ? 'opacity-100 scale-100 -translate-y-1' : 'opacity-0 scale-95 pointer-events-none'}
                 `}
               >
-                <div className="text-primary">₹{item.revenue.toLocaleString('en-IN')}</div>
+                <div className="text-primary">{formatCurrency(item.revenue)}</div>
                 <div className="text-[9px] text-textSecondary font-medium">{item.orders} orders</div>
               </div>
 
@@ -142,13 +144,13 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
         <div className="bg-surface border border-borderColor p-3 rounded-2xl">
           <span className="text-[10px] uppercase font-bold text-textSecondary tracking-wider block">Peak Period</span>
           <span className="text-sm font-black text-textPrimary mt-0.5 block">
-            ₹{maxRevenue.toLocaleString('en-IN')}
+            {formatCurrency(maxRevenue)}
           </span>
         </div>
         <div className="bg-surface border border-borderColor p-3 rounded-2xl">
           <span className="text-[10px] uppercase font-bold text-textSecondary tracking-wider block">Avg per Entry</span>
           <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">
-            ₹{Math.round(totalPeriodRevenue / data.length).toLocaleString('en-IN')}
+            {formatCurrency(Math.round(totalPeriodRevenue / data.length))}
           </span>
         </div>
         <div className="bg-surface border border-borderColor p-3 rounded-2xl">

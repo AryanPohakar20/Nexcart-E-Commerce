@@ -183,7 +183,7 @@ const Navbar = () => {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-2 w-36 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-xl shadow-xl z-50 text-xs"
                   >
-                    {['EN / USD', 'IN / INR', 'EU / EUR', 'UK / GBP'].map(lang => (
+                    {['EN / USD', 'IN / INR', 'UK / GBP', 'EU / EUR', 'JP / JPY'].map(lang => (
                       <button
                         key={lang}
                         type="button"
@@ -262,36 +262,6 @@ const Navbar = () => {
               </motion.div>
             )}
 
-            {/* Customer-only Cart Icon */}
-            {isCustomerOrGuest && (
-              <motion.div 
-                key={`cart-${cartCount}`}
-                animate={{ scale: [1, 1.25, 1], y: cartCount > 0 ? [0, -6, 0] : 0 }}
-                transition={{ duration: 0.4 }}
-                whileHover={{ scale: 1.1 }} 
-                whileTap={{ scale: 0.9 }}
-              >
-                <Link
-                  to="/cart"
-                  className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group block"
-                  aria-label="Shopping Cart"
-                  title="Shopping Cart"
-                >
-                  <FiShoppingCart className="text-lg sm:text-xl transition-transform" />
-                  {cartCount > 0 && (
-                    <motion.span 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: [0.8, 1.25, 1] }}
-                      transition={{ duration: 0.3 }}
-                      className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-gradient-to-r from-primary to-amber-400 text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow"
-                    >
-                      {cartCount}
-                    </motion.span>
-                  )}
-                </Link>
-              </motion.div>
-            )}
-
             {/* Messages Chat Icon */}
             {user && (
               <motion.div
@@ -317,6 +287,35 @@ const Navbar = () => {
                 </Link>
               </motion.div>
             )}
+
+            {/* Cart Option immediately to the RIGHT SIDE of Messages icon */}
+            <motion.div 
+              key={`cart-${cartCount}`}
+              whileHover={{ scale: 1.05 }} 
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link
+                to="/cart"
+                className="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 border border-transparent hover:border-primary/20 text-xs font-bold transition-all group"
+                aria-label="Shopping Cart"
+                title="Shopping Cart"
+              >
+                <div className="relative flex items-center">
+                  <FiShoppingCart className="text-base sm:text-lg transition-transform group-hover:scale-110" />
+                  {cartCount > 0 && (
+                    <motion.span 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [0.8, 1.25, 1] }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute -top-2 -right-2.5 min-w-[16px] h-4 px-1 bg-gradient-to-r from-primary to-amber-400 text-black text-[9px] font-black rounded-full flex items-center justify-center shadow-yellow-glow"
+                    >
+                      {cartCount}
+                    </motion.span>
+                  )}
+                </div>
+                <span className="font-bold text-xs">{t('Cart')} ({cartCount})</span>
+              </Link>
+            </motion.div>
 
             {/* Clean Theme Toggle */}
             <ThemeToggle />

@@ -8,8 +8,11 @@ import {
   FiPlus, FiSliders, FiDollarSign, FiBox, FiSearch 
 } from 'react-icons/fi';
 
+import { AppContext } from '../../context/AppContext';
+
 const SellerInventory = () => {
   const { products, updateStock, stats, settings } = useContext(SellerContext);
+  const { formatCurrency } = useContext(AppContext);
   const isBusiness = settings?.sellerType === 'business';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,8 +66,8 @@ const SellerInventory = () => {
         <SellerStatsCard
           title="Total Stock Valuation"
           value={stats.totalInventoryValue}
-          prefix="₹"
-          formatter={(val) => val.toLocaleString('en-IN')}
+          prefix=""
+          formatter={(val) => formatCurrency(val)}
           change="Catalog asset worth"
           isPositive={true}
           icon={FiDollarSign}
@@ -202,12 +205,12 @@ const SellerInventory = () => {
 
                   {/* Unit Price */}
                   <td className="p-4 font-bold text-textPrimary">
-                    ₹{p.price.toLocaleString('en-IN')}
+                    {formatCurrency(p.price)}
                   </td>
 
                   {/* Total Value */}
                   <td className="p-4 font-black text-primary">
-                    ₹{(p.price * p.stock).toLocaleString('en-IN')}
+                    {formatCurrency(p.price * p.stock)}
                   </td>
 
                   {/* Health Indicator */}

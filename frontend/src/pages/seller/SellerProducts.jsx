@@ -10,8 +10,11 @@ import {
   FiLayers, FiAlertTriangle, FiSliders, FiBox
 } from 'react-icons/fi';
 
+import { AppContext } from '../../context/AppContext';
+
 const SellerProducts = () => {
   const { products, deleteProduct, toggleProductStatus, addProduct } = useContext(SellerContext);
+  const { formatCurrency } = useContext(AppContext);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -280,11 +283,11 @@ const SellerProducts = () => {
                     {/* Price */}
                     <td className="p-4">
                       <div className="font-black text-textPrimary text-sm">
-                        ₹{p.price.toLocaleString('en-IN')}
+                        {formatCurrency(p.price)}
                       </div>
                       {p.originalPrice > p.price && (
                         <span className="text-[10px] text-textSecondary line-through">
-                          ₹{p.originalPrice.toLocaleString('en-IN')}
+                          {formatCurrency(p.originalPrice)}
                         </span>
                       )}
                     </td>
@@ -417,7 +420,7 @@ const SellerProducts = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-sm font-black text-textPrimary">
-                      ₹{p.price.toLocaleString('en-IN')}
+                      {formatCurrency(p.price)}
                     </span>
                   </div>
                   <button

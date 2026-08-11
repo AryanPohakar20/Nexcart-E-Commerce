@@ -7,10 +7,12 @@ import {
 import DashboardChart, { ChartCard } from '../../components/admin/shared/DashboardChart';
 import StatsCard from '../../components/admin/shared/StatsCard';
 import adminService from '../../services/adminService';
+import { AppContext } from '../../context/AppContext';
 
 const RANGES = ['7 Days', '30 Days', '90 Days', '12 Months'];
 
 const AdminAnalytics = () => {
+  const { formatCurrency } = React.useContext(AppContext);
   const [activeRange, setActiveRange] = useState('12 Months');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -249,7 +251,7 @@ const AdminAnalytics = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-white text-xs">₹{(p.price || 0).toLocaleString('en-IN')}</p>
+                    <p className="font-bold text-white text-xs">{formatCurrency(p.price || 0)}</p>
                     <div className="flex items-center gap-1 justify-end text-yellow-400 text-[10px] font-bold">
                       <FiStar size={10} className="fill-yellow-400" />
                       <span>{p.rating}</span>

@@ -12,9 +12,12 @@ import {
   FiCompass, FiTrendingUp, FiLayers, FiShield
 } from 'react-icons/fi';
 
+import { AppContext } from '../context/AppContext';
+
 const SellerDashboard = () => {
   const navigate = useNavigate();
   const { settings, stats, orders, products } = useContext(SellerContext);
+  const { formatCurrency } = useContext(AppContext);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -73,8 +76,8 @@ const SellerDashboard = () => {
         <SellerStatsCard
           title="Total Studio Revenue"
           value={stats.totalRevenue}
-          prefix="₹"
-          formatter={(val) => val.toLocaleString('en-IN')}
+          prefix=""
+          formatter={(val) => formatCurrency(val)}
           change="21.5% this month"
           isPositive={true}
           icon={FiDollarSign}
@@ -181,7 +184,7 @@ const SellerDashboard = () => {
                         )}
                       </td>
                       <td className="py-3.5 font-black text-textPrimary">
-                        ₹{ord.totalAmount.toLocaleString('en-IN')}
+                        {formatCurrency(ord.totalAmount)}
                       </td>
                       <td className="py-3.5 text-right">
                         <span

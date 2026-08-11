@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { AppContext } from '../context/AppContext';
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(null);
+  const { formatCurrency } = useContext(AppContext);
 
   const faqs = [
-    { q: 'What is the shipping cost at NexCart?', a: 'We offer free delivery on orders above ₹20,000. For orders below this value, a flat shipping fee of ₹150 applies.' },
+    { q: 'What is the shipping cost at NexCart?', a: `We offer free delivery on orders above ${formatCurrency(20000)}. For orders below this value, a flat shipping fee of ${formatCurrency(150)} applies.` },
     { q: 'How long does a refund take?', a: 'Refunds are initiated immediately upon cancellation or product return approvals and reflect in your payment source within 3-5 business days.' },
     { q: 'Can I sell my products on NexCart?', a: 'Yes! Click "Become Seller" in the navigation bar to switch your account and set up your vendor products dashboard.' },
     { q: 'What is the standard warranty period?', a: 'All electronics items have a standard 1 Year Brand Warranty unless specified otherwise in details sheets.' }

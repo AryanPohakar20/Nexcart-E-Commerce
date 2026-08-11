@@ -11,11 +11,13 @@ import TableToolbar from '../../components/admin/shared/TableToolbar';
 import Pagination from '../../components/admin/shared/Pagination';
 import ConfirmDialog from '../../components/admin/shared/ConfirmDialog';
 import adminService from '../../services/adminService';
+import { AppContext } from '../../context/AppContext';
 
 const STATUS_OPTIONS = ['All Statuses', 'delivered', 'shipped', 'processing', 'cancelled', 'pending'];
 const PAYMENT_OPTIONS = ['All Payments', 'paid', 'pending', 'refunded', 'failed'];
 
 const AdminOrders = () => {
+  const { formatCurrency } = React.useContext(AppContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -256,7 +258,7 @@ const AdminOrders = () => {
                     </td>
                     <td className="p-4 text-gray-300 font-medium">{order.seller}</td>
                     <td className="p-4 font-bold text-white text-sm">
-                      ₹{order.total.toLocaleString('en-IN')}
+                      {formatCurrency(order.total)}
                     </td>
                     <td className="p-4">
                       <div className="space-y-0.5">
@@ -329,7 +331,7 @@ const AdminOrders = () => {
                 <div className="text-right">
                   <p className="text-[10px] text-gray-500 uppercase font-bold">Total Invoiced</p>
                   <p className="text-lg font-black text-white mt-0.5">
-                    ₹{drawerOrder.total.toLocaleString('en-IN')}
+                    {formatCurrency(drawerOrder.total)}
                   </p>
                 </div>
               </div>

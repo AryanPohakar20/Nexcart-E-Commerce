@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { SellerContext } from '../../context/SellerContext';
+import { AppContext } from '../../context/AppContext';
 import SellerBadge from '../../components/seller/SellerBadge';
 import { getSellerDisplayName, getSellerAvatar } from '../../utils/sellerHelpers';
 import { 
@@ -183,7 +184,7 @@ const SellerProfile = () => {
             <FiEye className="mx-auto text-yellow-500 mb-2" size={20} />
           )}
           <div className="text-xl font-black text-textPrimary">
-            {isBusiness ? `₹${(stats?.totalRevenue || 124000).toLocaleString('en-IN')}` : '4.2k'}
+            {isBusiness ? formatCurrency(stats?.totalRevenue || 124000) : '4.2k'}
           </div>
           <div className="text-[10px] text-textSecondary uppercase tracking-wider font-bold">
             {isBusiness ? 'Revenue' : 'Profile Views'}

@@ -5,7 +5,7 @@ import { AppContext } from '../context/AppContext';
 import { FiHeart, FiEye, FiActivity, FiShoppingCart, FiStar, FiX } from 'react-icons/fi';
 
 const ProductCard = ({ product }) => {
-  const { addToCart, wishlist, toggleWishlist, toggleCompare, comparedProducts } = useContext(AppContext);
+  const { addToCart, wishlist, toggleWishlist, toggleCompare, comparedProducts, formatCurrency } = useContext(AppContext);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -132,9 +132,9 @@ const ProductCard = ({ product }) => {
           {/* Pricing area */}
           <div className="pt-2 border-t border-borderColor space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-extrabold text-textPrimary group-hover:text-primary transition-colors duration-300">₹{product.price.toLocaleString('en-IN')}</span>
+              <span className="text-lg font-extrabold text-textPrimary group-hover:text-primary transition-colors duration-300">{formatCurrency(product.price)}</span>
               {product.mrp > product.price && (
-                <span className="text-xs text-textSecondary line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+                <span className="text-xs text-textSecondary line-through">{formatCurrency(product.mrp)}</span>
               )}
             </div>
 
@@ -200,9 +200,9 @@ const ProductCard = ({ product }) => {
                     <p className="text-xs text-textSecondary mt-2 line-clamp-3 leading-relaxed">{product.description}</p>
                     
                     <div className="flex items-center gap-2 mt-3">
-                      <span className="text-xl font-black text-textPrimary">₹{product.price.toLocaleString('en-IN')}</span>
+                      <span className="text-xl font-black text-textPrimary">{formatCurrency(product.price)}</span>
                       {product.mrp > product.price && (
-                        <span className="text-xs text-textSecondary line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+                        <span className="text-xs text-textSecondary line-through">{formatCurrency(product.mrp)}</span>
                       )}
                     </div>
                   </div>

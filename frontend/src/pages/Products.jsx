@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductGrid from '../components/ProductGrid';
 import { FiSliders, FiX, FiCheck, FiChevronDown, FiStar, FiRefreshCw } from 'react-icons/fi';
 import productService from '../services/productService';
+import { AppContext } from '../context/AppContext';
 
 const Products = () => {
+  const { formatCurrency } = useContext(AppContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQ = searchParams.get('q') || '';
   const searchCat = searchParams.get('cat') || searchParams.get('category') || 'All';
@@ -285,7 +287,7 @@ const Products = () => {
           <div className="space-y-3 pt-4 border-t border-white/5">
             <div className="flex items-center justify-between text-xs font-bold text-white">
               <span>Max Price</span>
-              <span>₹{priceRange.toLocaleString('en-IN')}</span>
+              <span>{formatCurrency(priceRange)}</span>
             </div>
             <input 
               type="range" 
@@ -297,8 +299,8 @@ const Products = () => {
               className="w-full accent-primary bg-white/10 h-1 rounded-lg appearance-none cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-gray-500 font-bold">
-              <span>₹1K</span>
-              <span>₹400K</span>
+              <span>{formatCurrency(1000)}</span>
+              <span>{formatCurrency(400000)}</span>
             </div>
           </div>
 
@@ -404,7 +406,7 @@ const Products = () => {
               <div className="space-y-2 pt-4 border-t border-white/5">
                 <div className="flex items-center justify-between text-xs font-bold text-white">
                   <span>Price Range</span>
-                  <span className="text-primary">₹{priceRange.toLocaleString('en-IN')}</span>
+                  <span className="text-primary">{formatCurrency(priceRange)}</span>
                 </div>
                 <input 
                   type="range" 

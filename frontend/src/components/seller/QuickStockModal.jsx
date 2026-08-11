@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SellerContext } from '../../context/SellerContext';
+import { AppContext } from '../../context/AppContext';
 import { FiX, FiPackage, FiCheck, FiMinus, FiPlus, FiAlertTriangle } from 'react-icons/fi';
 
 const QuickStockModal = ({ product, isOpen, onClose }) => {
   const { updateStock } = useContext(SellerContext);
+  const { formatCurrency } = useContext(AppContext);
   const [stockVal, setStockVal] = useState(product?.stock ?? 0);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ const QuickStockModal = ({ product, isOpen, onClose }) => {
             <div className="overflow-hidden">
               <h4 className="font-bold text-textPrimary text-xs truncate">{product.title}</h4>
               <p className="text-[11px] text-textSecondary capitalize mt-0.5">
-                {product.category} • Price: ₹{product.price.toLocaleString('en-IN')}
+                {product.category} • Price: {formatCurrency(product.price)}
               </p>
             </div>
           </div>
