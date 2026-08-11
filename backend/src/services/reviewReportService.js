@@ -6,6 +6,7 @@ import { REPORT_STATUS } from '../constants/reviewReport.js';
 import { ReviewType, ReviewStatus } from '../constants/reviewStatus.js';
 import { toAdminReviewReportDTO, toAdminReviewReportsDTOList } from '../mappers/adminReviewReportMapper.js';
 import { toModerationResultDTO } from '../mappers/adminReviewModerationMapper.js';
+import { recalculateProductRating } from './productRatingService.js';
 import { ApiError } from '../utils/ApiError.js';
 import logger from '../utils/logger.js';
 
@@ -226,7 +227,20 @@ export const moderateReview = async (adminId, reportId, action, reason) => {
     reason,
   });
 
-  // 7. Return DTO
+  // 7. Trigger Product Rating recalculation if applicable
+  if (report.reviewType === ReviewType.PRODUCT && action !== 'reject') {
+    try {
+      // review.productId is available because findReviewForModeration returns the full document
+      await recalculateProductRating(review.productId);
+    } catch (error) {
+      logger.error(
+        `Product rating recalculation failed during review moderation. Review ID: ${review._id}, Product ID: ${review.productId}`,
+        error
+      );
+    }
+  }
+
+  // 8. Return DTO
   return toModerationResultDTO(updatedReport, updatedReview, {
     action,
     previousReviewStatus: review.status,
