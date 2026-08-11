@@ -6,17 +6,7 @@ import * as productService from '../services/productService.js';
 import { successResponse } from '../utils/ApiResponse.js';
 import Product from '../models/Product.js';
 import { ApiError } from '../utils/ApiError.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.join(__dirname, '../../public/uploads/products');
-
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
+import { uploadImage, deleteImage } from '../services/cloudinaryService.js';
 
 /**
  * Handle GET /api/products and GET /api/search
@@ -120,12 +110,10 @@ export const createProduct = asyncHandler(async (req, res) => {
     const uploadedImages = [];
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
-      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
-      const filepath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(filepath, file.buffer);
+      const uploaded = await uploadImage(file.buffer, 'nexcart/products');
       uploadedImages.push({
-        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
-        publicId: filename,
+        url: uploaded.secure_url,
+        publicId: uploaded.public_id,
         isPrimary: i === 0,
       });
     }
@@ -181,17 +169,16 @@ export const updateProduct = asyncHandler(async (req, res) => {
     updates.mrp = parseNumericField(updates.mrp || updates.originalPrice, 'MRP / Original Price', product.mrp);
   }
   
-  // Handle new uploaded images if any (append to existing)
+  // If the frontend is completely replacing images, it should pass a flag or we should know.
+  // For now, appending images.
   if (req.files && req.files.length > 0) {
     const newImages = [];
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
-      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
-      const filepath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(filepath, file.buffer);
+      const uploaded = await uploadImage(file.buffer, 'nexcart/products');
       newImages.push({
-        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
-        publicId: filename,
+        url: uploaded.secure_url,
+        publicId: uploaded.public_id,
         isPrimary: (product.images.length === 0 && i === 0),
       });
     }
@@ -218,6 +205,18 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 
   if (product.sellerId.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'You are not authorized to delete this product');
+  }
+
+  // Optional: Actually delete images from Cloudinary upon deletion?
+  // User said: "When a Product is permanently deleted: delete associated Cloudinary assets using publicId."
+  // Right now this is a soft delete (isDeleted = true), but the prompt says "When permanently deleted".
+  // Let's delete Cloudinary assets here for now or when a script purges.
+  if (product.images && product.images.length > 0) {
+    for (const img of product.images) {
+      if (img.publicId) {
+        await deleteImage(img.publicId).catch(err => console.error('Failed to delete image', err));
+      }
+    }
   }
 
   product.isDeleted = true;

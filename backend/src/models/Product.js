@@ -204,6 +204,14 @@ productSchema.set('toJSON', {
 productSchema.statics.importData = function (data) {
   const title = data.name || data.title || 'Untitled Product';
   const slugBase = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  
+  let initialImages = [];
+  if (data.image) {
+    initialImages = [{ url: data.image, isPrimary: true }];
+  } else if (data.images && data.images.length > 0) {
+    initialImages = data.images;
+  }
+  
   return {
     title,
     slug: data.slug || `${slugBase}-${Date.now().toString(36)}-${Math.floor(Math.random() * 1000)}`,
@@ -221,7 +229,7 @@ productSchema.statics.importData = function (data) {
     sku: data.sku || `SKU-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`,
     tags: data.tags || [],
     delivery: typeof data.delivery === 'string' ? data.delivery : 'Free Express Delivery by Tomorrow',
-    images: data.image ? [{ url: data.image, isPrimary: true }] : (data.images && data.images.length > 0 ? data.images : [{ url: 'https://via.placeholder.com/150', isPrimary: true }]),
+    images: initialImages,
     specs: data.specs || []
   };
 };

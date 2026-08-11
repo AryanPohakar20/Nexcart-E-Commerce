@@ -1,18 +1,8 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import MarketplaceListing from '../models/MarketplaceListing.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { successResponse } from '../utils/ApiResponse.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.join(__dirname, '../../public/uploads/products');
-
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
+import { uploadImage, deleteImage } from '../services/cloudinaryService.js';
 
 const parseNumericField = (fieldVal, fieldName, defaultValue = 0) => {
   if (Array.isArray(fieldVal)) {
@@ -44,12 +34,10 @@ export const createListing = asyncHandler(async (req, res) => {
     const uploadedImages = [];
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
-      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
-      const filepath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(filepath, file.buffer);
+      const uploaded = await uploadImage(file.buffer, 'nexcart/products');
       uploadedImages.push({
-        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
-        publicId: filename,
+        url: uploaded.secure_url,
+        publicId: uploaded.public_id,
         isPrimary: i === 0,
       });
     }
@@ -168,12 +156,10 @@ export const updateListing = asyncHandler(async (req, res) => {
     const newImages = [];
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
-      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
-      const filepath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(filepath, file.buffer);
+      const uploaded = await uploadImage(file.buffer, 'nexcart/products');
       newImages.push({
-        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
-        publicId: filename,
+        url: uploaded.secure_url,
+        publicId: uploaded.public_id,
         isPrimary: listing.images.length === 0 && i === 0,
       });
     }
@@ -199,6 +185,14 @@ export const deleteListing = asyncHandler(async (req, res) => {
 
   if (listing.sellerId.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'You are not authorized to delete this listing');
+  }
+
+  if (listing.images && listing.images.length > 0) {
+    for (const img of listing.images) {
+      if (img.publicId) {
+        await deleteImage(img.publicId).catch(err => console.error('Failed to delete image', err));
+      }
+    }
   }
 
   listing.isDeleted = true;

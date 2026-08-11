@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "lint": "eslint src/ --ext .js"
+    "lint": "eslint src/ --ext .js",
+    "migrate-images": "node scripts/migrateProductImagesToCloudinary.js --apply",
+    "migrate-images:dry": "node scripts/migrateProductImagesToCloudinary.js --dry-run"
   },
   "keywords": [
     "nexcart",

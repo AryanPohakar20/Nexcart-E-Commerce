@@ -37,7 +37,8 @@ const MarketplaceProduct = () => {
     return () => { isMounted = false; };
   }, [id]);
 
-  const rawSellerId = product?.sellerId?._id || product?.sellerId?.id || product?.sellerId;
+  const currentUserId = (user?._id || user?.id)?.toString();
+  const rawSellerId = (product?.sellerId?._id || product?.sellerId?.id || (typeof product?.sellerId === 'string' ? product.sellerId : null))?.toString();
 
   const handleEnquire = async () => {
     if (!isAuthenticated) {
@@ -47,7 +48,7 @@ const MarketplaceProduct = () => {
     }
     
     // Prevent enquiring own product
-    if (user?._id && rawSellerId && user._id.toString() === rawSellerId.toString()) {
+    if (currentUserId && rawSellerId && currentUserId === rawSellerId) {
       showToast('You cannot enquire about your own listing.', 'error');
       return;
     }
@@ -59,7 +60,7 @@ const MarketplaceProduct = () => {
 
     setEnquiring(true);
     try {
-      const listingId = product._id || product.id;
+      const listingId = (product._id || product.id)?.toString();
       const res = await chatService.createConversation(rawSellerId, null, listingId);
       if (res.success) {
         showToast('Conversation opened!', 'success');

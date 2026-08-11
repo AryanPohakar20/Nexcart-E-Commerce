@@ -16,11 +16,15 @@ const chatService = {
   },
 
   createConversation: async (participantId, productId = null, listingId = null) => {
-    const response = await axiosInstance.post('/chat/createConversation', {
-      participantId,
-      productId,
-      listingId,
-    });
+    const cleanParticipantId = typeof participantId === 'object' ? (participantId?._id || participantId?.id) : participantId;
+    const cleanProductId = typeof productId === 'object' ? (productId?._id || productId?.id) : productId;
+    const cleanListingId = typeof listingId === 'object' ? (listingId?._id || listingId?.id) : listingId;
+
+    const payload = { participantId: cleanParticipantId ? String(cleanParticipantId) : null };
+    if (cleanProductId) payload.productId = String(cleanProductId);
+    if (cleanListingId) payload.listingId = String(cleanListingId);
+
+    const response = await axiosInstance.post('/chat/createConversation', payload);
     return response.data;
   },
 
