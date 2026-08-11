@@ -5,6 +5,7 @@ import * as reviewEligibilityService from './reviewEligibilityService.js';
 import { toReviewDTO } from '../mappers/productReviewMapper.js';
 import logger from '../utils/logger.js';
 import ProductReview from '../models/ProductReview.js';
+import { recalculateProductRating } from './productRatingService.js';
 
 /**
  * Create a new product review.
@@ -38,6 +39,9 @@ export const createReview = async (reviewData) => {
   });
 
   logger.info(`Product review created successfully. Review ID: ${newReview._id}, Customer: ${customerId}, Product: ${productId}`);
+
+  // Recalculate product rating statistics
+  await recalculateProductRating(productId);
 
   // Populate reviewer details to return complete DTO
   const populatedReview = await ProductReview.findById(newReview._id)
@@ -75,6 +79,11 @@ export const updateReview = async (id, customerId, updateData) => {
 
   logger.info(`Product review updated successfully. Review ID: ${id}, Customer: ${customerId}`);
 
+  // Recalculate product rating statistics if rating was updated
+  if (sanitizedUpdate.rating !== undefined) {
+    await recalculateProductRating(review.productId);
+  }
+
   const populatedReview = await ProductReview.findById(updatedReview._id)
     .populate('customerId', 'firstName lastName avatar username')
     .lean();
@@ -103,6 +112,9 @@ export const deleteReview = async (id, customerId) => {
   await productReviewRepository.softDelete(id);
 
   logger.info(`Product review soft-deleted successfully. Review ID: ${id}, Customer: ${customerId}`);
+
+  // Recalculate product rating statistics
+  await recalculateProductRating(review.productId);
 
   return { id, isDeleted: true };
 };

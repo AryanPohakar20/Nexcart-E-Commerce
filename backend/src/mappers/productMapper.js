@@ -216,6 +216,16 @@ export const toProductDTO = (product) => {
     rating,
     reviewsCount: reviewCount,
     reviewCount,
+    averageRating: product.averageRating !== undefined && product.averageRating !== null ? Number(product.averageRating) : rating,
+    totalReviews: product.totalReviews !== undefined && product.totalReviews !== null ? Number(product.totalReviews) : reviewCount,
+    ratingDistribution: product.ratingDistribution || {
+      oneStar: 0,
+      twoStar: 0,
+      threeStar: 0,
+      fourStar: 0,
+      fiveStar: 0
+    },
+    lastRatingUpdatedAt: product.lastRatingUpdatedAt || null,
     reviews: Array.isArray(product.reviews) ? product.reviews : [],
     image: primaryImage,
     images: normalizedImages,

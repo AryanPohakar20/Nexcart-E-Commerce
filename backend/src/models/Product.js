@@ -143,6 +143,25 @@ const productSchema = new mongoose.Schema(
     // PRODUCT STATISTICS
     rating: { type: Number, default: 0, min: 0, max: 5 },
     reviewsCount: { type: Number, default: 0, min: 0 },
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
+    totalReviews: { type: Number, default: 0, min: 0 },
+    ratingDistribution: {
+      type: {
+        oneStar: { type: Number, default: 0 },
+        twoStar: { type: Number, default: 0 },
+        threeStar: { type: Number, default: 0 },
+        fourStar: { type: Number, default: 0 },
+        fiveStar: { type: Number, default: 0 },
+      },
+      default: () => ({
+        oneStar: 0,
+        twoStar: 0,
+        threeStar: 0,
+        fourStar: 0,
+        fiveStar: 0,
+      }),
+    },
+    lastRatingUpdatedAt: { type: Date, default: null },
     views: { type: Number, default: 0 },
     wishlistCount: { type: Number, default: 0 },
     purchaseCount: { type: Number, default: 0 },
@@ -191,6 +210,10 @@ productSchema.set('toJSON', {
       mrp: ret.mrp,
       rating: ret.rating,
       reviewsCount: ret.reviewsCount,
+      averageRating: ret.averageRating,
+      totalReviews: ret.totalReviews,
+      ratingDistribution: ret.ratingDistribution,
+      lastRatingUpdatedAt: ret.lastRatingUpdatedAt,
       image: ret.image, // from virtual
       delivery: ret.delivery,
       stock: ret.stock,

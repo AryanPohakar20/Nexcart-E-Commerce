@@ -125,3 +125,14 @@ export const findRecommended = async (limit = 10, skip = 0) => {
 export const countRecommended = async () => {
   return Product.countDocuments({});
 };
+
+/**
+ * Update the rating statistics for a product.
+ */
+export const updateProductRatingStatistics = async (productId, stats) => {
+  return await Product.findByIdAndUpdate(
+    productId,
+    { $set: stats },
+    { new: true }
+  );
+};

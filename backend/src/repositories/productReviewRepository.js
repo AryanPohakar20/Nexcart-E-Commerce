@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { ApiError } from '../utils/ApiError.js';
 import ProductReview from '../models/ProductReview.js'; // imported for future use
 
@@ -110,4 +111,96 @@ export const findExistingReview = async ({ customerId, orderItemId, productId })
  */
 export const findByCustomerAndOrderItem = async (customerId, orderItemId) => {
   return ProductReview.findOne({ customerId, orderItemId, isDeleted: false }).lean();
+};
+
+/**
+ * Find all published, non-deleted reviews for a product.
+ */
+export const findPublishedReviewsByProduct = async (productId) => {
+  if (!productId || !mongoose.Types.ObjectId.isValid(productId)) return [];
+  return await ProductReview.find({
+    productId: new mongoose.Types.ObjectId(productId),
+    status: 'Published',
+    isDeleted: false,
+  }).lean();
+};
+
+/**
+ * Aggregate rating distribution counts by star for a product.
+ */
+export const countRatingsByStar = async (productId) => {
+  if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+    return { oneStar: 0, twoStar: 0, threeStar: 0, fourStar: 0, fiveStar: 0 };
+  }
+
+  const prodId = new mongoose.Types.ObjectId(productId);
+  const stats = await ProductReview.aggregate([
+    {
+      $match: {
+        productId: prodId,
+        status: 'Published',
+        isDeleted: false,
+      },
+    },
+    {
+      $group: {
+        _id: '$rating',
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const distribution = {
+    oneStar: 0,
+    twoStar: 0,
+    threeStar: 0,
+    fourStar: 0,
+    fiveStar: 0,
+  };
+
+  stats.forEach((item) => {
+    if (item._id === 1) distribution.oneStar = item.count;
+    if (item._id === 2) distribution.twoStar = item.count;
+    if (item._id === 3) distribution.threeStar = item.count;
+    if (item._id === 4) distribution.fourStar = item.count;
+    if (item._id === 5) distribution.fiveStar = item.count;
+  });
+
+  return distribution;
+};
+
+/**
+ * Calculate the average rating and total reviews count using aggregation.
+ */
+export const calculateAverageRating = async (productId) => {
+  if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+    return { averageRating: 0, totalReviews: 0 };
+  }
+
+  const prodId = new mongoose.Types.ObjectId(productId);
+  const stats = await ProductReview.aggregate([
+    {
+      $match: {
+        productId: prodId,
+        status: 'Published',
+        isDeleted: false,
+      },
+    },
+    {
+      $group: {
+        _id: '$productId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  if (stats.length === 0) {
+    return { averageRating: 0, totalReviews: 0 };
+  }
+
+  return {
+    averageRating: Math.round(stats[0].averageRating * 10) / 10,
+    totalReviews: stats[0].totalReviews,
+  };
 };
