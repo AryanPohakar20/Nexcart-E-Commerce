@@ -40,6 +40,7 @@ const reviewReportSchema = new mongoose.Schema(
 );
 
 // ─── Indexes ──────────────────────────────────────────────────────────────────
+reviewReportSchema.index({ reportedBy: 1, reviewId: 1, reviewType: 1 }, { unique: true });
 reviewReportSchema.index({ reviewId: 1, reviewType: 1 });
 reviewReportSchema.index({ reportedBy: 1 });
 reviewReportSchema.index({ status: 1 });
