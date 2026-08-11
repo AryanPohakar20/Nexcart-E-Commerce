@@ -1,18 +1,10 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import MarketplaceListing from '../models/MarketplaceListing.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { successResponse } from '../utils/ApiResponse.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.join(__dirname, '../../public/uploads/products');
-
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
+import { uploadImage, deleteImage } from '../services/supabaseStorageService.js';
+import mongoose from 'mongoose';
+import logger from '../utils/logger.js';
 
 const parseNumericField = (fieldVal, fieldName, defaultValue = 0) => {
   if (Array.isArray(fieldVal)) {
@@ -35,25 +27,23 @@ const parseNumericField = (fieldVal, fieldName, defaultValue = 0) => {
 export const createListing = asyncHandler(async (req, res) => {
   const listingData = { ...req.body };
   
+  const listingId = new mongoose.Types.ObjectId();
+  listingData._id = listingId;
+  
   // Set seller details from authenticated user
   listingData.sellerId = req.user._id;
   listingData.sellerName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || req.user.username;
 
   // Handle image files
   if (req.files && req.files.length > 0) {
-    const uploadedImages = [];
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
-      const filepath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(filepath, file.buffer);
-      uploadedImages.push({
-        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
-        publicId: filename,
-        isPrimary: i === 0,
-      });
-    }
-    listingData.images = uploadedImages;
+    const uploadPromises = req.files.map((file) => uploadImage(file.buffer, `listings/${listingId}`, file.originalname));
+    const results = await Promise.all(uploadPromises);
+    
+    listingData.images = results.map((result, i) => ({
+      url: result.url,
+      publicId: result.path,
+      isPrimary: i === 0,
+    }));
   }
 
   // Parse numeric values
@@ -68,6 +58,17 @@ export const createListing = asyncHandler(async (req, res) => {
 
   return successResponse(res, 'Marketplace listing published successfully', { listing });
 });
+
+const normalizeListing = (l) => {
+  if (!l) return l;
+  const primaryImg = l.images?.find((img) => img.isPrimary) || l.images?.[0];
+  const imageUrl = primaryImg?.url || (typeof primaryImg === 'string' ? primaryImg : null) || 'https://via.placeholder.com/400';
+  return {
+    ...l,
+    id: l.id || (l._id ? l._id.toString() : undefined),
+    image: l.image || imageUrl,
+  };
+};
 
 /**
  * GET /api/marketplace/listings
@@ -105,8 +106,7 @@ export const getAllListings = asyncHandler(async (req, res) => {
     .limit(Math.min(100, Number(limit) || 100))
     .lean({ virtuals: true });
 
-  // Ensure `id` field is always present as string (lean() may omit the Mongoose id virtual)
-  const normalized = listings.map(l => ({ ...l, id: l.id || (l._id ? l._id.toString() : undefined) }));
+  const normalized = listings.map(normalizeListing);
 
   return successResponse(res, 'Marketplace listings fetched successfully', { listings: normalized });
 });
@@ -120,7 +120,7 @@ export const getMyListings = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .lean({ virtuals: true });
 
-  const normalized = listings.map(l => ({ ...l, id: l.id || (l._id ? l._id.toString() : undefined) }));
+  const normalized = listings.map(normalizeListing);
 
   return successResponse(res, 'My marketplace listings fetched successfully', { listings: normalized });
 });
@@ -138,8 +138,7 @@ export const getListingById = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Marketplace listing not found');
   }
 
-  // Ensure id field is present
-  const normalized = { ...listing, id: listing.id || (listing._id ? listing._id.toString() : undefined) };
+  const normalized = normalizeListing(listing);
 
   return successResponse(res, 'Marketplace listing details fetched', { listing: normalized });
 });
@@ -164,19 +163,32 @@ export const updateListing = asyncHandler(async (req, res) => {
   if (updates.price !== undefined) updates.price = parseNumericField(updates.price, 'Price', listing.price);
   if (updates.stock !== undefined) updates.stock = parseNumericField(updates.stock, 'Stock', listing.stock);
 
-  if (req.files && req.files.length > 0) {
-    const newImages = [];
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
-      const filepath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(filepath, file.buffer);
-      newImages.push({
-        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
-        publicId: filename,
-        isPrimary: listing.images.length === 0 && i === 0,
-      });
+  // Handle deletions
+  if (req.body.deletedImages) {
+    let deletedIds = req.body.deletedImages;
+    if (typeof deletedIds === 'string') {
+      try { deletedIds = JSON.parse(deletedIds); } catch (e) { deletedIds = [deletedIds]; }
     }
+    if (Array.isArray(deletedIds)) {
+      for (const id of deletedIds) {
+        if (id && (id.startsWith('products/') || id.startsWith('listings/'))) {
+          await deleteImage(id).catch(err => logger.warn(`Failed to delete old image ${id}: ${err.message}`));
+        }
+      }
+      listing.images = (listing.images || []).filter(img => !deletedIds.includes(img.publicId));
+    }
+  }
+
+  if (req.files && req.files.length > 0) {
+    const uploadPromises = req.files.map((file) => uploadImage(file.buffer, `listings/${listing._id}`, file.originalname));
+    const results = await Promise.all(uploadPromises);
+    
+    const newImages = results.map((result, i) => ({
+      url: result.url,
+      publicId: result.path,
+      isPrimary: listing.images.length === 0 && i === 0,
+    }));
+    
     updates.images = [...(listing.images || []), ...newImages];
   }
 

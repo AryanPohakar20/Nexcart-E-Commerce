@@ -241,7 +241,7 @@ const SellerProducts = () => {
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={p.image}
+                          src={p.image || (p.images?.length > 0 ? (typeof p.images[0] === 'string' ? p.images[0] : p.images[0].url) : 'https://via.placeholder.com/150')}
                           alt={p.title}
                           className="w-12 h-12 rounded-xl object-cover border border-borderColor flex-shrink-0"
                         />
@@ -384,7 +384,7 @@ const SellerProducts = () => {
                 {/* Image Container */}
                 <div className="relative rounded-2xl overflow-hidden aspect-video bg-surface">
                   <img
-                    src={p.image}
+                    src={p.image || (p.images?.length > 0 ? (typeof p.images[0] === 'string' ? p.images[0] : p.images[0].url) : 'https://via.placeholder.com/300')}
                     alt={p.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />

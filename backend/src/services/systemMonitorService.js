@@ -97,7 +97,7 @@ export const getSystemHealth = async () => {
       dataSize: dbStats.dataSize,
     },
     storage: {
-      provider: 'Cloudinary CDN',
+      provider: 'Supabase Storage',
       status: 'active',
       bandwidthUsage: 'Normal',
       cacheHitRate: '94.2%',

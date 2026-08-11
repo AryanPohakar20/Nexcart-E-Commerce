@@ -1,6 +1,6 @@
 import multer from 'multer';
 
-// Memory storage keeps the file in memory as Buffer for Cloudinary stream upload
+// Memory storage keeps the file in memory as Buffer for Supabase stream upload
 const storage = multer.memoryStorage();
 
 // File filter for allowed extensions (images, pdfs, documents)

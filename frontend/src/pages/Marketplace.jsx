@@ -125,7 +125,7 @@ const Marketplace = () => {
             >
               <div className="relative aspect-[4/3] overflow-hidden bg-black/40">
                 <img 
-                  src={product.image || 'https://via.placeholder.com/400'} 
+                  src={product.image || (product.images?.length > 0 ? (typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url) : 'https://via.placeholder.com/400')} 
                   alt={product.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                 />

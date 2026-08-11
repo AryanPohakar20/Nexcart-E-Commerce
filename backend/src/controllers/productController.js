@@ -6,17 +6,9 @@ import * as productService from '../services/productService.js';
 import { successResponse } from '../utils/ApiResponse.js';
 import Product from '../models/Product.js';
 import { ApiError } from '../utils/ApiError.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.join(__dirname, '../../public/uploads/products');
-
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
+import { uploadImage, deleteImage } from '../services/supabaseStorageService.js';
+import mongoose from 'mongoose';
+import logger from '../utils/logger.js';
 
 /**
  * Handle GET /api/products and GET /api/search
@@ -115,22 +107,19 @@ export const createProduct = asyncHandler(async (req, res) => {
   const productData = { ...req.body };
   productData.sellerId = req.user._id;
 
+  const productId = new mongoose.Types.ObjectId();
+  productData._id = productId;
+
   // Handle uploaded images
   if (req.files && req.files.length > 0) {
-    const uploadedImages = [];
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
-      const filepath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(filepath, file.buffer);
-      uploadedImages.push({
-        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
-        publicId: filename,
-        isPrimary: i === 0,
-      });
-    }
+    const uploadPromises = req.files.map((file) => uploadImage(file.buffer, `products/${productId}`, file.originalname));
+    const results = await Promise.all(uploadPromises);
     
-    productData.images = uploadedImages;
+    productData.images = results.map((result, i) => ({
+      url: result.url,
+      publicId: result.path,
+      isPrimary: i === 0,
+    }));
   }
 
   // Strictly normalize & validate numeric fields
@@ -181,20 +170,32 @@ export const updateProduct = asyncHandler(async (req, res) => {
     updates.mrp = parseNumericField(updates.mrp || updates.originalPrice, 'MRP / Original Price', product.mrp);
   }
   
+  // Handle deletions
+  if (req.body.deletedImages) {
+    let deletedIds = req.body.deletedImages;
+    if (typeof deletedIds === 'string') {
+      try { deletedIds = JSON.parse(deletedIds); } catch (e) { deletedIds = [deletedIds]; }
+    }
+    if (Array.isArray(deletedIds)) {
+      for (const id of deletedIds) {
+        if (id && (id.startsWith('products/') || id.startsWith('listings/'))) {
+          await deleteImage(id).catch(err => logger.warn(`Failed to delete old image ${id}: ${err.message}`));
+        }
+      }
+      product.images = (product.images || []).filter(img => !deletedIds.includes(img.publicId));
+    }
+  }
+
   // Handle new uploaded images if any (append to existing)
   if (req.files && req.files.length > 0) {
-    const newImages = [];
-    for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
-      const filepath = path.join(UPLOADS_DIR, filename);
-      fs.writeFileSync(filepath, file.buffer);
-      newImages.push({
-        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
-        publicId: filename,
-        isPrimary: (product.images.length === 0 && i === 0),
-      });
-    }
+    const uploadPromises = req.files.map((file) => uploadImage(file.buffer, `products/${product._id}`, file.originalname));
+    const results = await Promise.all(uploadPromises);
+    
+    const newImages = results.map((result, i) => ({
+      url: result.url,
+      publicId: result.path,
+      isPrimary: (product.images.length === 0 && i === 0),
+    }));
     
     updates.images = [...(product.images || []), ...newImages];
   }

@@ -311,8 +311,8 @@ const AdminProducts = () => {
                         <div className="flex items-center gap-3">
                           <div className="relative">
                             <img
-                              src={product.image}
-                              alt={product.name}
+                              src={product.image || (product.images?.length > 0 ? (typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url) : 'https://via.placeholder.com/100')}
+                              alt={product.name || product.title}
                               className="w-10 h-10 rounded-xl object-cover border border-white/10 bg-white/5"
                             />
                             {product.featured && (

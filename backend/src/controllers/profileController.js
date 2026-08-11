@@ -4,7 +4,7 @@
 import User from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
-import { uploadImage, replaceImage } from '../services/cloudinaryService.js';
+import { uploadImage, replaceImage } from '../services/supabaseStorageService.js';
 import { updateCompletion } from '../services/profileCompletion.js';
 import logger from '../utils/logger.js';
 
@@ -86,7 +86,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 /**
  * Upload or replace profile avatar image.
  * Accepts multipart/form-data with a single `avatar` file field.
- * Stores the image in Cloudinary under nexcart/avatars.
+ * Stores the image in Supabase under profiles/<userId>.
  */
 export const uploadAvatar = asyncHandler(async (req, res) => {
   if (!req.file) {
@@ -98,18 +98,16 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User not found');
   }
 
-  // Extract old public_id from current avatar URL if it's a Cloudinary URL
+  // Extract old public_id from current avatar URL if it's a Supabase URL
   let oldPublicId = null;
   if (user.avatarPublicId) {
     oldPublicId = user.avatarPublicId;
   }
 
-  // Upload to Cloudinary (replaces old if exists)
-  const result = await replaceImage(oldPublicId, req.file.buffer, 'nexcart/avatars', {
-    transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }],
-  });
+  // Upload to Supabase (replaces old if exists)
+  const result = await replaceImage(oldPublicId, req.file.buffer, `profiles/${user._id}`, req.file.originalname);
 
-  user.avatar = result.secure_url;
+  user.avatar = result.url;
   // Store public_id for future deletion (using a transient field — won't be saved unless in schema)
   // We store it directly in the avatar URL pattern or add avatarPublicId field
   await user.save();

@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import * as sellerRepo from '../repositories/sellerRepository.js';
 import { SELLER_STATUS, VERIFICATION_STATUS } from '../constants/sellerStatus.js';
 import { ApiError } from '../utils/ApiError.js';
-import { uploadAadhaarImage, replaceImage, deleteImage } from './cloudinaryService.js';
+import { uploadPrivateDocument, replaceImage, deleteImage, getSignedUrl } from './supabaseStorageService.js';
 import { buildDashboardProfile, buildPublicProfile } from '../helpers/sellerHelpers.js';
 import { generateUniqueSlug } from '../helpers/slugGenerator.js';
 import { calculateSellerCompletion } from './profileCompletion.js';
@@ -89,20 +89,26 @@ export const saveStep2 = async (userId, data) => {
 
 // ─── PUT /api/seller/onboarding/step-3 ───────────────────────────────────────
 
-export const saveStep3 = async (userId, data, frontFileBuffer, backFileBuffer) => {
+export const saveStep3 = async (userId, data, frontFile, backFile) => {
   const { aadhaarNumber, pan, gst } = data;
 
-  const frontUpload = await uploadAadhaarImage(frontFileBuffer, 'nexcart/identity');
+  const frontBuffer = Buffer.isBuffer(frontFile) ? frontFile : frontFile?.buffer;
+  const frontName = frontFile?.originalname || 'aadhaar_front.jpg';
+
+  const backBuffer = Buffer.isBuffer(backFile) ? backFile : backFile?.buffer;
+  const backName = backFile?.originalname || 'aadhaar_back.jpg';
+
+  const frontUpload = await uploadPrivateDocument(frontBuffer, `verification/${userId}`, frontName);
 
   let backUpload = null;
-  if (backFileBuffer) {
-    backUpload = await uploadAadhaarImage(backFileBuffer, 'nexcart/identity');
+  if (backBuffer) {
+    backUpload = await uploadPrivateDocument(backBuffer, `verification/${userId}`, backName);
   }
 
   const updates = {
     'identity.aadhaar.number': aadhaarNumber || '',
-    'identity.aadhaar.frontImage.public_id': frontUpload.public_id,
-    'identity.aadhaar.frontImage.url': frontUpload.secure_url,
+    'identity.aadhaar.frontImage.public_id': frontUpload.path,
+    'identity.aadhaar.frontImage.url': frontUpload.url,
     'identity.pan': pan || '',
     'identity.gst': gst || '',
     verificationStatus: VERIFICATION_STATUS.IN_PROGRESS,
@@ -110,8 +116,8 @@ export const saveStep3 = async (userId, data, frontFileBuffer, backFileBuffer) =
   };
 
   if (backUpload) {
-    updates['identity.aadhaar.backImage.public_id'] = backUpload.public_id;
-    updates['identity.aadhaar.backImage.url'] = backUpload.secure_url;
+    updates['identity.aadhaar.backImage.public_id'] = backUpload.path;
+    updates['identity.aadhaar.backImage.url'] = backUpload.url;
   }
 
   const seller = await sellerRepo.updateByUserId(userId, updates);
@@ -259,7 +265,7 @@ export const updateProfileImage = async (userId, fileBuffer) => {
   const seller = await requireSeller(userId);
   const isBusiness = seller.sellerType === 'business';
 
-  const folder = 'nexcart/sellers';
+  const folder = `sellers/${userId}`;
   let oldPublicId = null;
   let updateKey = '';
 
@@ -271,21 +277,19 @@ export const updateProfileImage = async (userId, fileBuffer) => {
     updateKey = 'individual.profilePhoto';
   }
 
-  const uploaded = await replaceImage(oldPublicId, fileBuffer, folder, {
-    transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }],
-  });
+  const uploaded = await replaceImage(oldPublicId, fileBuffer, folder);
 
   const updated = await sellerRepo.updateByUserId(userId, {
-    [`${updateKey}.public_id`]: uploaded.public_id,
-    [`${updateKey}.url`]: uploaded.secure_url,
+    [`${updateKey}.public_id`]: uploaded.path,
+    [`${updateKey}.url`]: uploaded.url,
   });
 
   if (!updated) throw new ApiError(404, 'Seller record not found.');
 
   logger.info(`Profile image updated for userId: ${userId}`);
   return {
-    url: uploaded.secure_url,
-    public_id: uploaded.public_id,
+    url: uploaded.url,
+    public_id: uploaded.path,
   };
 };
 
@@ -304,21 +308,19 @@ export const updateBanner = async (userId, fileBuffer) => {
 
   const oldPublicId = seller.business?.businessBanner?.public_id || null;
 
-  const uploaded = await replaceImage(oldPublicId, fileBuffer, 'nexcart/sellers/banners', {
-    transformation: [{ width: 1200, height: 400, crop: 'fill' }],
-  });
+  const uploaded = await replaceImage(oldPublicId, fileBuffer, `sellers/${userId}`);
 
   const updated = await sellerRepo.updateByUserId(userId, {
-    'business.businessBanner.public_id': uploaded.public_id,
-    'business.businessBanner.url': uploaded.secure_url,
+    'business.businessBanner.public_id': uploaded.path,
+    'business.businessBanner.url': uploaded.url,
   });
 
   if (!updated) throw new ApiError(404, 'Seller record not found.');
 
   logger.info(`Business banner updated for userId: ${userId}`);
   return {
-    url: uploaded.secure_url,
-    public_id: uploaded.public_id,
+    url: uploaded.url,
+    public_id: uploaded.path,
   };
 };
 
@@ -750,7 +752,7 @@ export const deleteStore = async (userId) => {
   const seller = await sellerRepo.findByUserId(userId);
   if (!seller) throw new ApiError(404, 'Seller record not found.');
 
-  // Clean up Cloudinary images before deleting
+  // Clean up Supabase images before deleting
   const cleanupTasks = [];
 
   if (seller.individual?.profilePhoto?.public_id) {

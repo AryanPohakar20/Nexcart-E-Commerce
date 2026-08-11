@@ -33,8 +33,8 @@ const settingsSchema = new mongoose.Schema(
       rateLimitMaxRequests: { type: Number, default: 100 },
     },
     storage: {
-      provider: { type: String, default: 'cloudinary' },
-      cloudinaryCloudName: { type: String, default: '' },
+      provider: { type: String, default: 'supabase' },
+      supabaseUrl: { type: String, default: '' },
       uploadLimitsMb: { type: Number, default: 20 },
       maxImageSizeMb: { type: Number, default: 5 },
       allowedFormats: { type: [String], default: ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'csv', 'xlsx'] },

@@ -4,9 +4,8 @@ const REQUIRED_VARS = [
   'JWT_SECRET',
   'JWT_EXPIRES_IN',
   'CLIENT_URL',
-  'CLOUDINARY_CLOUD_NAME',
-  'CLOUDINARY_API_KEY',
-  'CLOUDINARY_API_SECRET',
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
 ];
 
 const validateEnv = () => {
@@ -27,12 +26,11 @@ const validateEnv = () => {
   }
 
   if (
-    !process.env.CLOUDINARY_CLOUD_NAME ||
-    !process.env.CLOUDINARY_API_KEY ||
-    !process.env.CLOUDINARY_API_SECRET
+    !process.env.SUPABASE_URL ||
+    !process.env.SUPABASE_SERVICE_ROLE_KEY
   ) {
     console.warn(
-      '\nCLOUDINARY credentials not fully set in .env - document uploads will return mock URLs in dev mode.\n'
+      '\nSUPABASE credentials not fully set in .env - document uploads will return mock URLs in dev mode.\n'
     );
   }
 };
