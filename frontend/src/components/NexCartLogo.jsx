@@ -8,16 +8,16 @@ const NexCartLogo = ({ size = 'md', animated = true, showText = true, className 
   const theme = context?.theme || 'dark';
 
   const sizeMap = {
-    sm: { height: 'h-9', font: 'text-lg', gap: 'gap-2' },
-    md: { height: 'h-12', font: 'text-2xl', gap: 'gap-3' },
-    lg: { height: 'h-14', font: 'text-3xl', gap: 'gap-3.5' },
-    xl: { height: 'h-16', font: 'text-4xl', gap: 'gap-4' }
+    sm: { height: 'h-8 sm:h-9', font: 'text-base sm:text-lg', gap: 'gap-2' },
+    md: { height: 'h-10 sm:h-11', font: 'text-xl sm:text-2xl', gap: 'gap-2.5' },
+    lg: { height: 'h-12 sm:h-13', font: 'text-2xl sm:text-3xl', gap: 'gap-3' },
+    xl: { height: 'h-14 sm:h-15', font: 'text-3xl sm:text-4xl', gap: 'gap-3.5' }
   };
 
   const currentSize = sizeMap[size] || sizeMap.md;
 
   return (
-    <div className={`inline-flex items-center justify-center ${currentSize.gap} ${className} transition-all duration-300`}>
+    <div className={`inline-flex items-center justify-start flex-shrink-0 ${currentSize.gap} ${className} transition-all duration-300`}>
       <AnimatePresence mode="wait">
         <motion.div
           key={theme}
@@ -36,7 +36,7 @@ const NexCartLogo = ({ size = 'md', animated = true, showText = true, className 
             repeatType: 'reverse', 
             ease: 'easeInOut' 
           }}
-          className={`flex items-center justify-center ${currentSize.height} py-0.5 relative group rounded-xl`}
+          className={`flex items-center justify-center ${currentSize.height} flex-shrink-0 py-0.5 relative group rounded-xl`}
         >
           {/* Subtle Ambient Glow for Dark Theme */}
           {theme === 'dark' && (
@@ -46,7 +46,7 @@ const NexCartLogo = ({ size = 'md', animated = true, showText = true, className 
           <img
             src={logoImg}
             alt="NexCart Logo"
-            className={`${currentSize.height} w-auto object-contain rounded-xl shadow-md border ${
+            className={`${currentSize.height} w-auto object-contain flex-shrink-0 rounded-xl shadow-md border ${
               theme === 'dark'
                 ? 'border-amber-500/30 bg-[#0a0f1d] p-1'
                 : 'border-gray-200 bg-white p-1'
@@ -54,6 +54,13 @@ const NexCartLogo = ({ size = 'md', animated = true, showText = true, className 
           />
         </motion.div>
       </AnimatePresence>
+
+      {showText && (
+        <span className="font-extrabold tracking-tight text-xl sm:text-2xl leading-none transition-colors flex-shrink-0 whitespace-nowrap flex items-center">
+          <span className="text-primary">Nex</span>
+          <span className="text-gray-900 dark:text-white">Cart</span>
+        </span>
+      )}
     </div>
   );
 };

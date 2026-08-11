@@ -83,8 +83,8 @@ const Navbar = () => {
           isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'
         }`}>
           
-          {/* Left: Mobile Toggle, NexCart Brand Logo & Delivery Address */}
-          <div className="flex items-center gap-2 sm:gap-3.5 flex-shrink-0">
+          {/* Left: Mobile Toggle & NexCart Brand Logo + Name */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <motion.button 
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -94,87 +94,20 @@ const Navbar = () => {
               {isMobileMenuOpen ? <FiX className="text-xl" /> : <FiMenu className="text-xl" />}
             </motion.button>
 
-            {/* NexCart Logo (~20% larger) */}
-            <div className="scale-120 sm:scale-125 origin-left transform-gpu">
-              <NexCartLogo />
-            </div>
-
-            <span className="text-gray-300 dark:text-gray-700 hidden xl:inline font-light">|</span>
-
-            {/* Location / Delivery Option immediately beside Logo */}
-            <Link
-              to="/addresses"
-              className="hidden xl:flex items-center gap-1.5 text-xs font-bold text-gray-800 dark:text-gray-200 hover:text-primary transition-colors py-1 px-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 border border-gray-200/50 dark:border-white/10"
-              title={t('Deliver to Hyderabad 500081')}
-            >
-              <FiMapPin className="text-sm text-primary flex-shrink-0" />
-              <div className="flex flex-col text-left leading-tight">
-                <span className="text-[10px] text-gray-400 font-normal">{t('Deliver to')}</span>
-                <span className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate max-w-[120px]">Hyderabad 500081</span>
-              </div>
-            </Link>
-
-            <span className="text-gray-300 dark:text-gray-700 hidden xl:inline font-light">|</span>
+            {/* NexCart Logo + Brand Name */}
+            <NexCartLogo />
           </div>
 
-          {/* Center: Omni-Search Bar (Interactive & Dynamic) */}
-          <div className="hidden lg:flex flex-1 max-w-2xl mx-auto relative">
+          {/* Center: Wider Search Bar (Without All Categories Dropdown) */}
+          <div className="hidden lg:flex flex-1 max-w-3xl mx-auto relative">
             <form 
               onSubmit={handleSearch}
-              className={`w-full flex items-center h-11 bg-gray-50/80 dark:bg-white/5 border rounded-full transition-all duration-300 relative ${
+              className={`w-full flex items-center h-11 bg-gray-50/80 dark:bg-white/5 border rounded-full transition-all duration-300 relative px-4 ${
                 isSearchFocused 
                   ? 'border-primary shadow-yellow-glow bg-white dark:bg-black/80' 
                   : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
               }`}
             >
-              
-              {/* Category Dropdown selector inside search */}
-              <div className="relative h-full flex items-center">
-                <button
-                  type="button"
-                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                  className="h-full px-4 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-primary flex items-center gap-1.5 border-r border-gray-200 dark:border-white/10 rounded-l-full bg-gray-100/50 dark:bg-white/[0.02]"
-                >
-                  <span className="truncate max-w-[90px]">{selectedCategory === 'All' ? t('All Categories') : selectedCategory}</span>
-                  <FiChevronDown className={`text-xs transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Category Menu Popover */}
-                <AnimatePresence>
-                  {isCategoryOpen && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute left-0 top-full mt-2 w-48 py-2 bg-white dark:bg-[#0c111d] border border-gray-200 dark:border-white/15 rounded-2xl shadow-2xl z-50 text-xs"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => { setSelectedCategory('All'); setIsCategoryOpen(false); }}
-                        className={`w-full text-left px-4 py-2 hover:bg-primary/10 hover:text-primary transition-colors ${
-                          selectedCategory === 'All' ? 'text-primary font-bold bg-primary/5' : 'text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        All Categories
-                      </button>
-                      {CATEGORIES.map((cat) => (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => { setSelectedCategory(cat.name); setIsCategoryOpen(false); }}
-                          className={`w-full text-left px-4 py-2 hover:bg-primary/10 hover:text-primary transition-colors ${
-                            selectedCategory === cat.name ? 'text-primary font-bold bg-primary/5' : 'text-gray-700 dark:text-gray-300'
-                          }`}
-                        >
-                          {cat.name}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
               {/* Input Area */}
               <input
                 type="text"
@@ -183,16 +116,16 @@ const Navbar = () => {
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                 placeholder={t('Search products, brands...')}
-                className="w-full bg-transparent px-4 text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none"
+                className="w-full bg-transparent text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none pr-2"
               />
 
-              {/* Search Button */}
+              {/* Search Icon Button */}
               <button
                 type="submit"
-                className="h-9 px-4 mr-1 rounded-full bg-primary hover:bg-primary/90 text-black font-bold flex items-center justify-center transition-all duration-300 shadow-sm"
+                className="p-2 rounded-full hover:bg-primary/20 text-gray-700 dark:text-gray-300 hover:text-primary transition-colors flex items-center justify-center flex-shrink-0"
                 aria-label="Submit search"
               >
-                <FiSearch className="text-base" />
+                <FiSearch className="text-lg" />
               </button>
             </form>
 
@@ -267,33 +200,8 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
 
-            {/* Role-Specific Action CTA */}
-            {isCustomerOrGuest && (
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                <Link
-                  to="/seller/become-seller"
-                  className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary hover:border-primary text-xs font-bold transition-all shadow-sm"
-                >
-                  <FiBriefcase className="text-sm" />
-                  <span>{t('Become Seller')}</span>
-                </Link>
-              </motion.div>
-            )}
-
-            {isSeller && (
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                <Link
-                  to="/seller/dashboard"
-                  className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:border-emerald-500 text-xs font-bold transition-all shadow-sm"
-                >
-                  <FiGrid className="text-sm" />
-                  <span>Seller Portal</span>
-                </Link>
-              </motion.div>
-            )}
-
-            {/* Admin Portal Button */}
-            {isAdmin && (
+            {/* Single Role-Aware Dashboard Action CTA */}
+            {isAdmin ? (
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
                 <Link
                   to="/admin/dashboard"
@@ -303,21 +211,24 @@ const Navbar = () => {
                   <span>{t('Admin Portal')}</span>
                 </Link>
               </motion.div>
-            )}
-
-
-
-            {/* Orders Link */}
-            {user && (
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            ) : isSeller ? (
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
                 <Link
-                  to="/orders"
-                  className="hidden sm:flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 text-xs font-semibold transition-all"
-                  aria-label="Orders"
-                  title="My Orders"
+                  to="/seller/dashboard"
+                  className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:border-emerald-500 text-xs font-bold transition-all shadow-sm"
                 >
-                  <FiPackage className="text-base" />
-                  <span className="hidden md:inline">{t('Orders')}</span>
+                  <FiGrid className="text-sm" />
+                  <span>Seller Dashboard</span>
+                </Link>
+              </motion.div>
+            ) : (
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                <Link
+                  to="/seller/become-seller"
+                  className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary hover:border-primary text-xs font-bold transition-all shadow-sm"
+                >
+                  <FiBriefcase className="text-sm" />
+                  <span>{t('Become Seller')}</span>
                 </Link>
               </motion.div>
             )}
@@ -596,100 +507,100 @@ const Navbar = () => {
       </div>
 
       {/* Second Navigation Row */}
-      <div className="bg-[#F8FAFC]/95 dark:bg-[#0a0e17]/95 border-b border-gray-200/60 dark:border-white/5 py-2 px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-none transition-all duration-300">
+      <div className="bg-[#F8FAFC]/95 dark:bg-[#0a0e17]/95 border-b border-gray-200/60 dark:border-white/5 py-1.5 px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-none transition-all duration-300">
         <div className="max-w-[1440px] mx-auto flex items-center justify-between text-xs sm:text-sm text-gray-700 dark:text-gray-300 gap-4">
           
           {/* Marketplace Navigation Links Sequence: Browse All -> Deals -> Electronics -> Fashion -> AI Tech -> Coupons -> Cards */}
-          <div className="flex items-center gap-2 sm:gap-3 font-bold whitespace-nowrap overflow-x-auto py-0.5 scrollbar-none">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 font-semibold whitespace-nowrap overflow-x-auto py-0.5 scrollbar-none">
             
-            {/* 1. Browse All */}
+            {/* 1. Browse All (Subtle Primary Highlight) */}
             <Link 
               to="/products" 
-              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+              className={`hover:text-primary transition-all flex items-center gap-1 py-1 px-2.5 rounded-md text-xs sm:text-sm ${
                 location.pathname === '/products' && (!location.search || location.search === '') 
-                  ? 'text-primary bg-primary/10 font-extrabold shadow-sm' 
-                  : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
+                  ? 'text-primary bg-primary/10 font-bold shadow-sm' 
+                  : 'bg-primary/10 text-primary font-semibold hover:bg-primary/20'
               }`}
             >
-              <FiMenu className="text-sm sm:text-base flex-shrink-0" />
+              <FiMenu className="text-sm flex-shrink-0" />
               <span>{t('Browse All')}</span>
             </Link>
 
             {/* 2. Deals */}
             <Link 
               to="/products?sort=discount" 
-              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-extrabold text-amber-500 ${
+              className={`hover:text-primary transition-all flex items-center gap-1 py-1 px-2.5 rounded-md text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 ${
                 location.search.includes('sort=discount') 
-                  ? 'bg-amber-500/10 shadow-sm' 
-                  : 'hover:bg-amber-500/10'
+                  ? 'text-primary bg-primary/10 font-bold shadow-sm' 
+                  : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
               }`}
             >
-              <FiTag className="text-sm sm:text-base flex-shrink-0" />
+              <FiTag className="text-sm flex-shrink-0" />
               <span>{t('Deals')}</span>
             </Link>
 
             {/* 3. Electronics */}
             <Link 
               to="/products?cat=electronics" 
-              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+              className={`hover:text-primary transition-all flex items-center gap-1 py-1 px-2.5 rounded-md text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 ${
                 location.search.includes('cat=electronics') 
                   ? 'text-primary bg-primary/10 font-bold shadow-sm' 
                   : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
               }`}
             >
-              <FiCpu className="text-sm sm:text-base flex-shrink-0" />
+              <FiCpu className="text-sm flex-shrink-0" />
               <span>{t('Electronics')}</span>
             </Link>
 
             {/* 4. Fashion */}
             <Link 
               to="/products?cat=fashion" 
-              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+              className={`hover:text-primary transition-all flex items-center gap-1 py-1 px-2.5 rounded-md text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 ${
                 location.search.includes('cat=fashion') 
                   ? 'text-primary bg-primary/10 font-bold shadow-sm' 
                   : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
               }`}
             >
-              <FiShoppingBag className="text-sm sm:text-base flex-shrink-0" />
+              <FiShoppingBag className="text-sm flex-shrink-0" />
               <span>{t('Fashion')}</span>
             </Link>
 
             {/* 5. AI Tech */}
             <Link 
               to="/products?cat=ai-gadgets" 
-              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold text-primary ${
+              className={`hover:text-primary transition-all flex items-center gap-1 py-1 px-2.5 rounded-md text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 ${
                 location.search.includes('cat=ai-gadgets') 
-                  ? 'bg-primary/10 shadow-sm font-extrabold' 
-                  : 'hover:bg-primary/10'
+                  ? 'text-primary bg-primary/10 font-bold shadow-sm' 
+                  : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
               }`}
             >
-              <FiZap className="text-sm sm:text-base flex-shrink-0 animate-pulse" />
+              <FiZap className="text-sm flex-shrink-0" />
               <span>{t('AI Tech')}</span>
             </Link>
 
             {/* 6. Coupons */}
             <Link 
               to="/products?sort=popular" 
-              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+              className={`hover:text-primary transition-all flex items-center gap-1 py-1 px-2.5 rounded-md text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 ${
                 location.search.includes('sort=popular') 
                   ? 'text-primary bg-primary/10 font-bold shadow-sm' 
                   : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
               }`}
             >
-              <FiPercent className="text-sm sm:text-base flex-shrink-0" />
+              <FiPercent className="text-sm flex-shrink-0" />
               <span>{t('Coupons')}</span>
             </Link>
 
             {/* 7. Cards */}
             <Link 
               to="/products?cat=gift-cards" 
-              className={`hover:text-primary transition-all flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs sm:text-sm font-bold ${
+              className={`hover:text-primary transition-all flex items-center gap-1 py-1 px-2.5 rounded-md text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 ${
                 location.search.includes('cat=gift-cards') 
                   ? 'text-primary bg-primary/10 font-bold shadow-sm' 
                   : 'hover:bg-gray-200/60 dark:hover:bg-white/5'
               }`}
             >
-              <FiCreditCard className="text-sm sm:text-base flex-shrink-0" />
+              <FiCreditCard className="text-sm flex-shrink-0" />
               <span>{t('Cards')}</span>
             </Link>
           </div>
