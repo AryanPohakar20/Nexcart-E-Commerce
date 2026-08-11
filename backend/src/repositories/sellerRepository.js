@@ -134,3 +134,16 @@ export const updateSellerRatingStatistics = async (sellerUserId, stats) => {
     { new: true }
   );
 };
+
+/**
+ * Update the performance statistics object on a Seller document by the Seller's _id.
+ * @param {string} sellerDocId - Seller document ID
+ * @param {Object} statsUpdates - Statistics updates using dot notation
+ */
+export const updateSellerStatistics = async (sellerDocId, statsUpdates) => {
+  return await Seller.findByIdAndUpdate(
+    sellerDocId,
+    { $set: statsUpdates },
+    { new: true }
+  );
+};

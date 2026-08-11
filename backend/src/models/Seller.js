@@ -196,6 +196,8 @@ const statisticsSchema = new mongoose.Schema(
     totalOrders: { type: Number, default: 0, min: 0 },
     completedOrders: { type: Number, default: 0, min: 0 },
     cancelledOrders: { type: Number, default: 0, min: 0 },
+    cancellationRate: { type: Number, default: 0, min: 0, max: 100 },
+    responseRate: { type: Number, default: 0, min: 0, max: 100 },
     revenue: { type: Number, default: 0, min: 0 },
     followers: { type: Number, default: 0, min: 0 },
     wishlistCount: { type: Number, default: 0, min: 0 },

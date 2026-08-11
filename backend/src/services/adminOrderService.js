@@ -6,6 +6,7 @@ import * as auditLogRepo from '../repositories/auditLogRepository.js';
 import { ApiError } from '../utils/ApiError.js';
 import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import { buildOrderFilter } from '../utils/buildFilter.js';
+import { recalculateSellerStatistics } from './sellerStatisticsService.js';
 
 /**
  * List orders with pagination and filtering.
@@ -89,6 +90,13 @@ export const updateOrderStatus = async (id, status, note = '', adminUser, ip) =>
   });
 
   await orderDoc.save();
+
+  // Recalculate seller statistics on order status transitions (non-blocking)
+  try {
+    await recalculateSellerStatistics(orderDoc.seller);
+  } catch (error) {
+    console.error(`Failed to recalculate seller statistics after order status update. Seller ID: ${orderDoc.seller}`, error);
+  }
 
   const populated = await orderRepo.getOrderById(id);
 
