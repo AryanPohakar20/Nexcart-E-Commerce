@@ -12,8 +12,8 @@ export const validateAdminReviewModeration = [
     .isMongoId()
     .withMessage('Invalid report ID'),
   body('action')
-    .isIn(['hide', 'remove', 'restore', 'reject'])
-    .withMessage('Action must be hide, remove, restore, or reject'),
+    .isIn(['hide', 'remove', 'restore', 'reject', 'under_review'])
+    .withMessage('Action must be hide, remove, restore, reject, or under_review'),
   body('reason')
     .optional({ nullable: true })
     .isString()

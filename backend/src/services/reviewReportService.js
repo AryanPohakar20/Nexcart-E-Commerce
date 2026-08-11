@@ -167,46 +167,74 @@ export const moderateReview = async (adminId, reportId, action, reason) => {
   if (!report) {
     throw new ApiError(404, 'Report not found.');
   }
-  // Ensure report is in a modifiable state
-  if (report.status !== REPORT_STATUS.PENDING && report.status !== REPORT_STATUS.UNDER_REVIEW) {
-    throw new ApiError(400, 'Report cannot be moderated in its current state.');
-  }
-
   // 2. Fetch the associated review
   const review = await reviewRepository.findReviewForModeration(report.reviewId, report.reviewType);
   if (!review) {
     throw new ApiError(404, 'Associated review not found.');
   }
 
-  // 3. Determine allowed transitions
-  const transitionMap = {
-    hide: { from: [ReviewStatus.PUBLISHED], to: ReviewStatus.HIDDEN },
-    remove: { from: [ReviewStatus.PUBLISHED, ReviewStatus.HIDDEN], to: ReviewStatus.REMOVED },
-    restore: { from: [ReviewStatus.HIDDEN, ReviewStatus.REMOVED], to: ReviewStatus.PUBLISHED },
-    reject: { from: [], to: null },
+  // 3. Define Action Configuration
+  const actionConfig = {
+    under_review: { targetReportStatus: REPORT_STATUS.UNDER_REVIEW, targetReviewStatus: null, requireReason: false },
+    reject: { targetReportStatus: REPORT_STATUS.REJECTED, targetReviewStatus: null, requireReason: true },
+    hide: { targetReportStatus: REPORT_STATUS.RESOLVED, targetReviewStatus: ReviewStatus.HIDDEN, requireReason: false, fromReviewStatus: [ReviewStatus.PUBLISHED] },
+    remove: { targetReportStatus: REPORT_STATUS.RESOLVED, targetReviewStatus: ReviewStatus.REMOVED, requireReason: true, fromReviewStatus: [ReviewStatus.PUBLISHED, ReviewStatus.HIDDEN] },
+    restore: { targetReportStatus: REPORT_STATUS.RESOLVED, targetReviewStatus: ReviewStatus.PUBLISHED, requireReason: false, fromReviewStatus: [ReviewStatus.HIDDEN, ReviewStatus.REMOVED] }
   };
 
-  const allowed = transitionMap[action];
-  if (!allowed) {
+  const config = actionConfig[action];
+  if (!config) {
     throw new ApiError(400, 'Invalid moderation action.');
   }
-  if ((action === 'remove' || action === 'reject') && (!reason || reason.length === 0)) {
-    throw new ApiError(400, 'Moderation reason is required for remove or reject actions.');
+
+  // 4. Idempotency Check
+  // If the report is ALREADY in the target state, and (if applicable) the review is in the target state, return early
+  if (report.status === config.targetReportStatus) {
+    const isReviewStateSatisfied = !config.targetReviewStatus || review.status === config.targetReviewStatus;
+    if (isReviewStateSatisfied) {
+      logger.info(`Idempotent request: Report ${reportId} is already in the requested state. Skipping database writes.`);
+      return toModerationResultDTO(report, review, {
+        action,
+        previousReviewStatus: review.status,
+        newReviewStatus: review.status,
+        previousReportStatus: report.status,
+        newReportStatus: report.status,
+        adminId,
+        createdAt: new Date(),
+        reason: report.moderationReason
+      });
+    }
   }
 
-  // Verify current status allows transition (except reject)
-  if (action !== 'reject' && !allowed.from.includes(review.status)) {
+  // 5. Enforce Valid Report Status Transitions
+  if (action === 'under_review' && report.status !== REPORT_STATUS.PENDING) {
+    throw new ApiError(400, 'Report can only transition to UnderReview from Pending.');
+  }
+  if (action === 'reject' && report.status !== REPORT_STATUS.PENDING && report.status !== REPORT_STATUS.UNDER_REVIEW) {
+    throw new ApiError(400, 'Report can only transition to Rejected from Pending or UnderReview.');
+  }
+  if (['hide', 'remove', 'restore'].includes(action) && report.status !== REPORT_STATUS.UNDER_REVIEW) {
+    throw new ApiError(400, 'Report must be UnderReview before applying a moderation resolution.');
+  }
+
+  // 6. Validate Reason Requirements
+  if (config.requireReason && (!reason || reason.trim() === '')) {
+    throw new ApiError(400, 'Moderation reason is required for this action.');
+  }
+
+  // 7. Enforce Valid Review Status Transitions
+  if (config.fromReviewStatus && !config.fromReviewStatus.includes(review.status)) {
     throw new ApiError(400, `Cannot perform '${action}' on review with status '${review.status}'.`);
   }
 
-  // 4. Update review status if applicable
+  // 8. Update review status if applicable
   let updatedReview = review;
-  if (action !== 'reject') {
-    updatedReview = await reviewRepository.updateReviewStatus(review._id, report.reviewType, allowed.to);
+  if (config.targetReviewStatus) {
+    updatedReview = await reviewRepository.updateReviewStatus(review._id, report.reviewType, config.targetReviewStatus);
   }
 
-  // 5. Update report status and moderation metadata
-  const newReportStatus = action === 'reject' ? REPORT_STATUS.REJECTED : REPORT_STATUS.RESOLVED;
+  // 9. Update report status and moderation metadata
+  const newReportStatus = config.targetReportStatus;
   const updatedReport = await reviewReportRepository.updateReportStatus(reportId, {
     status: newReportStatus,
     moderatedBy: adminId,
@@ -214,7 +242,7 @@ export const moderateReview = async (adminId, reportId, action, reason) => {
     moderationReason: reason,
   });
 
-  // 6. Create audit log entry
+  // 10. Create audit log entry
   await reviewModerationLogRepository.createLog({
     reportId,
     reviewId: review._id,
@@ -222,16 +250,15 @@ export const moderateReview = async (adminId, reportId, action, reason) => {
     adminId,
     action,
     previousReviewStatus: review.status,
-    newReviewStatus: allowed.to || review.status,
+    newReviewStatus: config.targetReviewStatus || review.status,
     previousReportStatus: report.status,
     newReportStatus,
     reason,
   });
 
-  // 7. Trigger Product Rating recalculation if applicable
-  if (report.reviewType === ReviewType.PRODUCT && action !== 'reject') {
+  // 11. Trigger Product Rating recalculation if applicable
+  if (report.reviewType === ReviewType.PRODUCT && config.targetReviewStatus) {
     try {
-      // review.productId is available because findReviewForModeration returns the full document
       await recalculateProductRating(review.productId);
     } catch (error) {
       logger.error(
@@ -241,10 +268,9 @@ export const moderateReview = async (adminId, reportId, action, reason) => {
     }
   }
 
-  // 8. Trigger Seller Rating recalculation if applicable
-  if (report.reviewType === ReviewType.SELLER && action !== 'reject') {
+  // 12. Trigger Seller Rating recalculation if applicable
+  if (report.reviewType === ReviewType.SELLER && config.targetReviewStatus) {
     try {
-      // review.sellerId is available because findReviewForModeration returns the full document
       await recalculateSellerRating(review.sellerId);
     } catch (error) {
       logger.error(
@@ -254,11 +280,11 @@ export const moderateReview = async (adminId, reportId, action, reason) => {
     }
   }
 
-  // 9. Return DTO
+  // 13. Return DTO
   return toModerationResultDTO(updatedReport, updatedReview, {
     action,
     previousReviewStatus: review.status,
-    newReviewStatus: allowed.to || review.status,
+    newReviewStatus: config.targetReviewStatus || review.status,
     previousReportStatus: report.status,
     newReportStatus,
     adminId,

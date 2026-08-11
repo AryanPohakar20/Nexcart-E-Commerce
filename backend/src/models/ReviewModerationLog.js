@@ -6,7 +6,7 @@ const reviewModerationLogSchema = new mongoose.Schema(
     reviewId: { type: mongoose.Schema.Types.ObjectId, required: true },
     reviewType: { type: String, enum: ['PRODUCT', 'SELLER'], required: true },
     adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    action: { type: String, enum: ['hide', 'remove', 'restore', 'reject'], required: true },
+    action: { type: String, enum: ['hide', 'remove', 'restore', 'reject', 'under_review'], required: true },
     previousReviewStatus: { type: String, required: true },
     newReviewStatus: { type: String, required: true },
     previousReportStatus: { type: String, required: true },
