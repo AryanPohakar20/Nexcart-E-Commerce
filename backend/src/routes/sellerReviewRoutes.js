@@ -6,10 +6,16 @@ import {
   deleteSellerReview
 } from '../controllers/sellerReviewController.js';
 import {
+  reportSellerReview
+} from '../controllers/reviewReportController.js';
+import {
   validateCreateSellerReview,
   validateUpdateSellerReview,
   validateGetSellerReviews
 } from '../validations/sellerReviewValidation.js';
+import {
+  validateReviewReport
+} from '../validations/reviewReportValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { preProcessCreateSellerReview } from '../middlewares/sellerReviewMiddleware.js';
 
@@ -30,5 +36,9 @@ router.patch('/:id', authenticate, validateUpdateSellerReview, updateSellerRevie
 // Delete Seller Review
 // Matches: DELETE /seller-reviews/:id
 router.delete('/:id', authenticate, deleteSellerReview);
+
+// Report Seller Review
+// Matches: POST /seller-reviews/:reviewId/report
+router.post('/:reviewId/report', authenticate, validateReviewReport, reportSellerReview);
 
 export default router;

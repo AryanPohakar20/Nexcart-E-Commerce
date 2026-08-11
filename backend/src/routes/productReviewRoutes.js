@@ -6,9 +6,15 @@ import {
   deleteProductReview
 } from '../controllers/productReviewController.js';
 import {
+  reportProductReview
+} from '../controllers/reviewReportController.js';
+import {
   validateCreateProductReview,
   validateUpdateProductReview
 } from '../validations/productReviewValidation.js';
+import {
+  validateReviewReport
+} from '../validations/reviewReportValidation.js';
 
 import { authenticate } from '../middlewares/authenticate.js';
 
@@ -25,5 +31,8 @@ router.patch('/:id', authenticate, validateUpdateProductReview, updateProductRev
 
 // Delete review
 router.delete('/:id', authenticate, deleteProductReview);
+
+// Report review
+router.post('/:reviewId/report', authenticate, validateReviewReport, reportProductReview);
 
 export default router;
