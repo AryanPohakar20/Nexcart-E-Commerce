@@ -93,6 +93,7 @@ router.use('/categories', categoryRoutes);
 router.use('/subcategories', subcategoryRoutes);
 router.use('/attributes', attributeRoutes);
 router.use('/product-reviews', productReviewRoutes);
+router.use('/reviews', productReviewRoutes);
 router.use('/seller-reviews', sellerReviewRoutes);
 
 export default router;

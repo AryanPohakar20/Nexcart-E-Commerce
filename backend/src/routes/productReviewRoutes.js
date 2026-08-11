@@ -10,6 +10,8 @@ import {
   validateUpdateProductReview
 } from '../validations/productReviewValidation.js';
 
+import { authenticate } from '../middlewares/authenticate.js';
+
 const router = express.Router();
 
 // Create review
@@ -19,9 +21,9 @@ router.post('/', validateCreateProductReview, createProductReview);
 router.get('/product/:productId', getProductReviews);
 
 // Update review
-router.patch('/:id', validateUpdateProductReview, updateProductReview);
+router.patch('/:id', authenticate, validateUpdateProductReview, updateProductReview);
 
 // Delete review
-router.delete('/:id', deleteProductReview);
+router.delete('/:id', authenticate, deleteProductReview);
 
 export default router;

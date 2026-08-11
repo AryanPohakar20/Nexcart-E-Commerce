@@ -22,21 +22,21 @@ export const getProductReviews = asyncHandler(async (req, res) => {
 });
 
 /**
- * Handle PATCH /api/product-reviews/:id
+ * Handle PATCH /api/reviews/:id
  * Update an existing product review.
  */
 export const updateProductReview = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const result = await productReviewService.updateReview(id, req.body);
+  const result = await productReviewService.updateReview(id, req.user._id, req.body);
   return successResponse(res, 'Product review updated successfully.', result);
 });
 
 /**
- * Handle DELETE /api/product-reviews/:id
+ * Handle DELETE /api/reviews/:id
  * Delete a product review.
  */
 export const deleteProductReview = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const result = await productReviewService.deleteReview(id);
+  const result = await productReviewService.deleteReview(id, req.user._id);
   return successResponse(res, 'Product review deleted successfully.', result);
 });
