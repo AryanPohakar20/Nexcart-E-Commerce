@@ -21,6 +21,10 @@ export const createConversationValidation = [
     .optional()
     .isMongoId()
     .withMessage('productId must be a valid MongoId'),
+  body('listingId')
+    .optional()
+    .isMongoId()
+    .withMessage('listingId must be a valid MongoId'),
   validateResult,
 ];
 

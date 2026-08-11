@@ -8,7 +8,7 @@ import addressRoutes from './addressRoutes.js';
 import adminRoutes from './adminRoutes.js';
 import orderRoutes from './orderRoutes.js';
 
-// ─── Marketplace Route Imports ────────────────────────────────────────────────
+import marketplaceRoutes from './marketplaceRoutes.js';
 import productRoutes from './productRoutes.js';
 import searchRoutes from './searchRoutes.js';
 import searchHistoryRoutes from './searchHistoryRoutes.js';
@@ -87,6 +87,7 @@ router.use('/orders', orderRoutes);
 // prefix intercepting /search/history requests.
 router.use('/search/history', searchHistoryRoutes);
 router.use('/search', searchRoutes);
+router.use('/marketplace', marketplaceRoutes);
 router.use('/products', productRoutes);
 router.use('/brands', brandRoutes);
 router.use('/categories', categoryRoutes);

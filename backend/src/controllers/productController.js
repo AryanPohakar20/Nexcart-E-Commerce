@@ -4,6 +4,19 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as productService from '../services/productService.js';
 import { successResponse } from '../utils/ApiResponse.js';
+import Product from '../models/Product.js';
+import { ApiError } from '../utils/ApiError.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const UPLOADS_DIR = path.join(__dirname, '../../public/uploads/products');
+
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 /**
  * Handle GET /api/products and GET /api/search
@@ -77,4 +90,141 @@ export const getNewestProducts = asyncHandler(async (req, res) => {
 export const getRecommendedProducts = asyncHandler(async (req, res) => {
   const result = await productService.getRecommendedProducts(req.query);
   return successResponse(res, 'Recommended products fetched successfully', result);
+});
+
+// Helper to safely parse and validate single numeric fields
+const parseNumericField = (fieldVal, fieldName, defaultValue = 0) => {
+  if (Array.isArray(fieldVal)) {
+    throw new ApiError(400, `${fieldName} must be a single numeric value, not an array.`);
+  }
+  if (fieldVal === undefined || fieldVal === null || fieldVal === '') {
+    return defaultValue;
+  }
+  const num = Number(fieldVal);
+  if (!Number.isFinite(num) || num < 0) {
+    throw new ApiError(400, `${fieldName} must be a valid non-negative number.`);
+  }
+  return num;
+};
+
+/**
+ * Handle POST /api/products
+ * Create a new product. (Auth required)
+ */
+export const createProduct = asyncHandler(async (req, res) => {
+  const productData = { ...req.body };
+  productData.sellerId = req.user._id;
+
+  // Handle uploaded images
+  if (req.files && req.files.length > 0) {
+    const uploadedImages = [];
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
+      const filepath = path.join(UPLOADS_DIR, filename);
+      fs.writeFileSync(filepath, file.buffer);
+      uploadedImages.push({
+        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
+        publicId: filename,
+        isPrimary: i === 0,
+      });
+    }
+    
+    productData.images = uploadedImages;
+  }
+
+  // Strictly normalize & validate numeric fields
+  productData.price = parseNumericField(productData.price, 'Price', 0);
+  productData.stock = parseNumericField(productData.stock, 'Stock', 1);
+  productData.mrp = parseNumericField(productData.mrp || productData.originalPrice, 'MRP / Original Price', productData.price * 1.25);
+  productData.discount = parseNumericField(productData.discount, 'Discount', 0);
+
+  const product = new Product(Product.importData(productData));
+  await product.save();
+
+  return successResponse(res, 'Product created successfully', { product });
+});
+
+/**
+ * Handle GET /api/products/seller
+ * Get all products belonging to the currently logged in seller.
+ */
+export const getSellerProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({ sellerId: req.user._id, isDeleted: { $ne: true } })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // We should return them formatted for the frontend
+  return successResponse(res, 'Seller products fetched successfully', { products });
+});
+
+/**
+ * Handle PUT /api/products/:id
+ * Update an existing product. Only the owner can update.
+ */
+export const updateProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  
+  if (!product) {
+    throw new ApiError(404, 'Product not found');
+  }
+
+  if (product.sellerId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'You are not authorized to update this product');
+  }
+
+  const updates = { ...req.body };
+
+  if (updates.price !== undefined) updates.price = parseNumericField(updates.price, 'Price', product.price);
+  if (updates.stock !== undefined) updates.stock = parseNumericField(updates.stock, 'Stock', product.stock);
+  if (updates.mrp !== undefined || updates.originalPrice !== undefined) {
+    updates.mrp = parseNumericField(updates.mrp || updates.originalPrice, 'MRP / Original Price', product.mrp);
+  }
+  
+  // Handle new uploaded images if any (append to existing)
+  if (req.files && req.files.length > 0) {
+    const newImages = [];
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname || '.jpg')}`;
+      const filepath = path.join(UPLOADS_DIR, filename);
+      fs.writeFileSync(filepath, file.buffer);
+      newImages.push({
+        url: `${process.env.API_URL || 'http://localhost:5000'}/uploads/products/${filename}`,
+        publicId: filename,
+        isPrimary: (product.images.length === 0 && i === 0),
+      });
+    }
+    
+    updates.images = [...(product.images || []), ...newImages];
+  }
+
+  Object.assign(product, updates);
+  await product.save();
+
+  return successResponse(res, 'Product updated successfully', { product });
+});
+
+/**
+ * Handle DELETE /api/products/:id
+ * Delete a product. Only the owner can delete.
+ */
+export const deleteProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  
+  if (!product) {
+    throw new ApiError(404, 'Product not found');
+  }
+
+  if (product.sellerId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'You are not authorized to delete this product');
+  }
+
+  product.isDeleted = true;
+  product.deletedAt = new Date();
+  product.deletedBy = req.user._id;
+  product.status = 'Deleted';
+  await product.save();
+
+  return successResponse(res, 'Product deleted successfully', { product });
 });

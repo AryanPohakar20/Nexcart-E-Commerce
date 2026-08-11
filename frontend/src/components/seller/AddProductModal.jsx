@@ -165,28 +165,54 @@ const AddProductModal = ({ isOpen, onClose, editingProduct = null }) => {
 
     setIsSubmitting(true);
     try {
-      // Process images to base64
-      const processedImages = await Promise.all(uploadedImages.map(async (img) => {
-        if (img.isExisting) return img.preview;
-        return await fileToBase64(img.file);
-      }));
+      const payload = new FormData();
+      
+      const computedStock = sellerType === 'individual_c2c' 
+        ? Math.max(1, Number(formData.stock) || 1) 
+        : Math.max(0, Number(formData.stock) || 0);
+      
+      const computedPrice = Number(formData.price) || 0;
+      const computedOriginalPrice = formData.originalPrice 
+        ? Number(formData.originalPrice) 
+        : (computedPrice ? computedPrice * 1.25 : 0);
 
-      const primaryImage = processedImages[primaryImageIndex] || processedImages[0];
-
-      const payload = {
+      const fieldsToAppend = {
         ...formData,
-        sellerType,
-        stock: sellerType === 'individual_c2c' ? Math.max(1, Number(formData.stock) || 1) : Number(formData.stock) || 0,
-        price: Number(formData.price),
-        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : Number(formData.price) * 1.25,
-        image: primaryImage,
-        images: processedImages,
+        price: computedPrice,
+        originalPrice: computedOriginalPrice,
+        mrp: computedOriginalPrice,
+        stock: computedStock,
+        sellerType: sellerType,
       };
 
+      // Append each key exactly ONCE to FormData
+      Object.entries(fieldsToAppend).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          payload.append(key, value);
+        }
+      });
+
+      // Append new image files. We ensure the primary image comes first if it's a new upload.
+      // (Backend assumes first image is primary if it's new).
+      const newImages = uploadedImages.filter(img => !img.isExisting);
+      if (newImages.length > 0) {
+         // Sort so primaryImageIndex file comes first if it's a new image
+         const primaryImage = uploadedImages[primaryImageIndex];
+         
+         if (primaryImage && !primaryImage.isExisting) {
+            payload.append('images', primaryImage.file);
+            newImages.forEach(img => {
+               if (img !== primaryImage) payload.append('images', img.file);
+            });
+         } else {
+            newImages.forEach(img => payload.append('images', img.file));
+         }
+      }
+
       if (editingProduct) {
-        updateProduct(editingProduct.id, payload);
+        await updateProduct(editingProduct.id || editingProduct._id, payload);
       } else {
-        addProduct(payload);
+        await addProduct(payload);
       }
       onClose();
     } catch (error) {

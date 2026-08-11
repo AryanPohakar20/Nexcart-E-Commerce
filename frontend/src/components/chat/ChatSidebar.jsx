@@ -57,18 +57,18 @@ const ChatSidebar = ({
     <div className="h-full flex flex-col bg-white/70 dark:bg-[#121212]/80 backdrop-blur-xl border-r border-gray-200/80 dark:border-white/10 select-none overflow-hidden">
       
       {/* Sidebar Header: NexCart Branding */}
-      <div className="p-4 border-b border-gray-200/60 dark:border-white/10 flex items-center justify-between">
+      <div className="px-5 py-3.5 border-b border-gray-200/60 dark:border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <NexCartLogo className="h-7 w-auto" />
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1">
-              Messenger <span className="bg-primary/20 text-primary text-[10px] px-1.5 py-0.5 rounded font-extrabold">C2C</span>
+          <NexCartLogo size="sm" className="scale-95 origin-left" />
+          <div className="flex items-center pt-0.5">
+            <span className="text-[12px] font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+              Messenger <span className="bg-primary/20 text-[#FFA800] text-[10px] px-2 py-0.5 rounded-md font-extrabold tracking-wider">C2C</span>
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+        <div className="flex items-center">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Live Marketplace
           </span>
         </div>
