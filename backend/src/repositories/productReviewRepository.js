@@ -35,3 +35,25 @@ export const update = async (id, updateData) => {
 export const softDelete = async (id) => {
   throw new ApiError(501, 'productReviewRepository.softDelete method is not implemented.');
 };
+
+/**
+ * Check if a non-deleted review exists for a specific order item.
+ */
+export const existsByOrderItem = async (orderItemId) => {
+  const count = await ProductReview.countDocuments({ orderItemId, isDeleted: false });
+  return count > 0;
+};
+
+/**
+ * Find an existing review by customer, order item, and product.
+ */
+export const findExistingReview = async ({ customerId, orderItemId, productId }) => {
+  return ProductReview.findOne({ customerId, orderItemId, productId, isDeleted: false }).lean();
+};
+
+/**
+ * Find a review by customer and order item.
+ */
+export const findByCustomerAndOrderItem = async (customerId, orderItemId) => {
+  return ProductReview.findOne({ customerId, orderItemId, isDeleted: false }).lean();
+};
