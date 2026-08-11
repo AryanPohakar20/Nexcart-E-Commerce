@@ -4,10 +4,11 @@
   "description": "Nexcart E-Commerce Backend - Authentication & User Management API",
   "main": "src/server.js",
   "type": "module",
-  "scripts": {
+    "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "lint": "eslint src/ --ext .js"
+    "lint": "eslint src/ --ext .js",
+    "test": "node verify_admin_reports_queue.js"
   },
   "keywords": [
     "nexcart",

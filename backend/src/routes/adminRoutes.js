@@ -6,6 +6,8 @@ import { authenticate } from '../middlewares/authenticate.js';
 import { authorize }    from '../middlewares/authorize.js';
 import { requirePermission } from '../middlewares/requirePermission.js';
 import { ADMIN_ROLES }  from '../constants/roles.js';
+import { getAdminReviewReports, getAdminReviewReportDetails } from '../controllers/adminReviewReportController.js';
+import { validateAdminReviewReportsList, validateAdminReviewReportId } from '../validations/adminReviewReportValidation.js';
 import {
   // Dashboard
   getDashboardStats,
@@ -292,6 +294,12 @@ router.get('/export/:entity', requirePermission('export', 'export'), exportData)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get('/roles-permissions', getRolesAndPermissions);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REVIEW REPORTS QUEUE
+// ═══════════════════════════════════════════════════════════════════════════════
+router.get('/review-reports', requirePermission('reports', 'read'), validateAdminReviewReportsList, getAdminReviewReports);
+router.get('/review-reports/:reportId', requirePermission('reports', 'read'), validateAdminReviewReportId, getAdminReviewReportDetails);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ADMIN PROFILE & CREDENTIALS

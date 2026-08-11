@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import * as reviewReportRepository from '../repositories/reviewReportRepository.js';
 import { ReviewType, ReviewStatus } from '../constants/reviewStatus.js';
+import { toAdminReviewReportDTO, toAdminReviewReportsDTOList } from '../mappers/adminReviewReportMapper.js';
 import { ApiError } from '../utils/ApiError.js';
 import logger from '../utils/logger.js';
 
@@ -67,4 +68,77 @@ export const createReviewReport = async (userId, reviewId, reviewType, reportDat
     }
     throw error;
   }
+};
+
+/**
+ * Retrieve a paginated list of all review reports for administrators.
+ * @param {Object} queryParams - { page, limit, status, reviewType, reason, sort }
+ * @returns {Promise<Object>} { reports, pagination }
+ */
+export const getReportedReviews = async (queryParams) => {
+  const page = Math.max(1, parseInt(queryParams.page) || 1);
+  const limit = Math.max(1, Math.min(100, parseInt(queryParams.limit) || 10));
+
+  const { reports, total } = await reviewReportRepository.getReportedReviewsList({
+    page,
+    limit,
+    status: queryParams.status,
+    reviewType: queryParams.reviewType,
+    reason: queryParams.reason,
+    sort: queryParams.sort,
+  });
+
+  // Group and bulk load reviews to avoid N+1 queries
+  const productReviewIds = reports
+    .filter((r) => r.reviewType === 'PRODUCT')
+    .map((r) => r.reviewId);
+  const sellerReviewIds = reports
+    .filter((r) => r.reviewType === 'SELLER')
+    .map((r) => r.reviewId);
+
+  const [productReviews, sellerReviews] = await Promise.all([
+    reviewReportRepository.findReviewsForReporting(productReviewIds, 'PRODUCT'),
+    reviewReportRepository.findReviewsForReporting(sellerReviewIds, 'SELLER'),
+  ]);
+
+  const reviewMap = new Map();
+  productReviews.forEach((r) => reviewMap.set(r._id.toString(), r));
+  sellerReviews.forEach((r) => reviewMap.set(r._id.toString(), r));
+
+  const mappedReports = toAdminReviewReportsDTOList(reports, reviewMap);
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    reports: mappedReports,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    },
+  };
+};
+
+/**
+ * Retrieve detailed report by ID for administrators.
+ * @param {string} reportId - Review report ID
+ * @returns {Promise<Object>} Detailed admin DTO
+ */
+export const getReportDetails = async (reportId) => {
+  if (!reportId || !mongoose.Types.ObjectId.isValid(reportId)) {
+    throw new ApiError(400, 'Invalid Report ID format.');
+  }
+
+  const report = await reviewReportRepository.findReportById(reportId);
+  if (!report) {
+    throw new ApiError(404, 'Report not found.');
+  }
+
+  await report.populate('reportedBy', 'firstName lastName username');
+
+  const review = await reviewReportRepository.findReviewWithDetailsForReporting(report.reviewId, report.reviewType);
+
+  return toAdminReviewReportDTO(report.toObject ? report.toObject() : report, review);
 };
