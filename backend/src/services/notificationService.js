@@ -19,6 +19,9 @@ export const NOTIFICATION_TYPES = Object.freeze([
   'Discount',
   'Recommendation',
   'Order Update',
+  'Seller Update',
+  'Product Update',
+  'Account Alert',
   'Security Alert',
   'Maintenance',
   'System Alert',
@@ -48,6 +51,7 @@ export const INTERNAL_ACTION_ROUTES = Object.freeze([
   '/order-success/',
   '/track-order/',
   '/profile',
+  '/account',
   '/addresses',
   '/notifications',
   '/promotion',
@@ -59,6 +63,7 @@ export const INTERNAL_ACTION_ROUTES = Object.freeze([
   '/login',
   '/register',
   '/seller/become-seller',
+  '/seller/',
 ]);
 
 /**
@@ -106,13 +111,17 @@ const resolveLegacyType = (notificationType) => {
     case 'System Alert':
     case 'Maintenance':
     case 'System Update':
+    case 'Seller Update':
       return 'system';
     case 'Order Update':
       return 'order';
     case 'Warning':
     case 'Error':
     case 'Security Alert':
+    case 'Account Alert':
       return 'alert';
+    case 'Product Update':
+      return 'inventory';
     case 'Announcement':
     case 'Success':
     case 'Information':
@@ -407,6 +416,16 @@ export const createNotification = async (payload, admin, ipAddress = null) => {
 
     audit(admin, 'CREATE_NOTIFICATION', title, null, JSON.stringify({ notificationType, recipientUsers: recipientUserIds, publishStatus }), ipAddress);
     return hydrated.length === 1 ? hydrated[0] : hydrated;
+  }
+
+  const targetAudienceValue = String(targetAudience).toLowerCase();
+
+  if (
+    targetAudienceValue.includes('specific') &&
+    payload.recipientUsers === undefined &&
+    payload.recipientUser === undefined
+  ) {
+    throw new ApiError(400, 'recipientUsers is required when targeting specific users.');
   }
 
   const storedNotification = await Notification.create({

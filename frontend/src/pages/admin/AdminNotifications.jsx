@@ -15,7 +15,7 @@ import SkeletonLoader from '../../components/admin/shared/SkeletonLoader';
 import StatusBadge from '../../components/admin/shared/StatusBadge';
 import ActionDropdown from '../../components/admin/shared/ActionDropdown';
 
-const TYPE_OPTIONS = ['All Types', 'Promotion', 'Offer', 'Discount', 'Recommendation', 'Announcement', 'Order Update', 'System Alert', 'Custom', 'Success', 'Warning', 'Error', 'Information', 'Security Alert', 'Maintenance', 'System Update'];
+const TYPE_OPTIONS = ['All Types', 'Promotion', 'Offer', 'Discount', 'Recommendation', 'Announcement', 'Order Update', 'Seller Update', 'Product Update', 'Account Alert', 'System Alert', 'Custom', 'Success', 'Warning', 'Error', 'Information', 'Security Alert', 'Maintenance', 'System Update'];
 const STATUS_OPTIONS = ['All Statuses', 'draft', 'scheduled', 'published', 'unpublished'];
 const AUDIENCE_OPTIONS = ['All Audiences', 'all', 'all customers', 'all sellers', 'customers', 'sellers', 'admins'];
 const PRIORITY_OPTIONS = ['All Priorities', 'low', 'normal', 'high', 'critical'];

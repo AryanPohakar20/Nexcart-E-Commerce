@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiBell, FiChevronRight, FiTrash2, FiCheckCircle, FiRefreshCw, FiFilter, FiArrowRight } from 'react-icons/fi';
 import notificationService from '../services/notificationService';
@@ -13,6 +13,9 @@ const TYPE_STYLES = {
   'Security Alert': 'text-red-400 border-red-500/20 bg-red-500/10',
   Maintenance: 'text-orange-400 border-orange-500/20 bg-orange-500/10',
   'System Update': 'text-violet-400 border-violet-500/20 bg-violet-500/10',
+  'Seller Update': 'text-sky-400 border-sky-500/20 bg-sky-500/10',
+  'Product Update': 'text-purple-400 border-purple-500/20 bg-purple-500/10',
+  'Account Alert': 'text-rose-400 border-rose-500/20 bg-rose-500/10',
 };
 
 const Notifications = () => {
@@ -24,6 +27,7 @@ const Notifications = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const loadNotifications = async (nextPage = 1, nextStatus = status, nextSearch = search) => {
     try {
@@ -42,6 +46,7 @@ const Notifications = () => {
       if (response.success) {
         setNotifications(response.data?.notifications || []);
         setTotalPages(response.data?.pagination?.totalPages || 1);
+        setUnreadCount(response.data?.unreadCount ?? 0);
       } else {
         setError(response.message || 'Unable to load notifications.');
       }
@@ -57,12 +62,14 @@ const Notifications = () => {
     setPage(1);
   }, [status, search]);
 
-  const unreadCount = useMemo(() => notifications.filter((item) => !item.isRead).length, [notifications]);
-
   const handleMarkRead = async (id) => {
     try {
       const response = await notificationService.markAsRead(id);
       if (response.success) {
+        const target = notifications.find((item) => item._id === id);
+        if (target && !target.isRead && !target.read) {
+          setUnreadCount((count) => Math.max(0, count - 1));
+        }
         setNotifications((prev) => prev.map((item) => (item._id === id ? { ...item, isRead: true, read: true, readAt: new Date().toISOString() } : item)));
       }
     } catch (err) {
@@ -85,6 +92,10 @@ const Notifications = () => {
     try {
       const response = await notificationService.deleteNotification(id);
       if (response.success) {
+        const target = notifications.find((item) => item._id === id);
+        if (target && !target.isRead && !target.read) {
+          setUnreadCount((count) => Math.max(0, count - 1));
+        }
         setNotifications((prev) => prev.filter((item) => item._id !== id));
       }
     } catch (err) {
@@ -96,6 +107,7 @@ const Notifications = () => {
     try {
       const response = await notificationService.markAllAsRead();
       if (response.success) {
+        setUnreadCount(0);
         setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true, read: true, readAt: new Date().toISOString() })));
       }
     } catch (err) {
@@ -128,6 +140,12 @@ const Notifications = () => {
             <span>Alerts & Notifications</span>
           </h1>
           <p className="text-xs text-gray-500 mt-1">Stay updated with recent account, order, and system activity.</p>
+          {unreadCount > 0 && (
+            <p className="text-[11px] font-bold text-primary mt-1.5 inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-primary" />
+              {unreadCount} unread {unreadCount === 1 ? 'notification' : 'notifications'}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

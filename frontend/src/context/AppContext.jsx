@@ -46,6 +46,7 @@ export const AppProvider = ({ children }) => {
   ]);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const [toasts, setToasts] = useState([]);
   const [prevUser, setPrevUser] = useState(null);
 
@@ -86,9 +87,15 @@ export const AppProvider = ({ children }) => {
     if (!token) return;
 
     try {
-      const res = await notificationService.getNotifications({ page: 1, limit: 10, sort: 'createdAt:desc' });
-      if (res?.success) {
-        setNotifications((res.data?.notifications || []).map(mapNotification));
+      const [listRes, countRes] = await Promise.all([
+        notificationService.getNotifications({ page: 1, limit: 10, sort: 'createdAt:desc' }),
+        notificationService.getUnreadCount(),
+      ]);
+      if (listRes?.success) {
+        setNotifications((listRes.data?.notifications || []).map(mapNotification));
+      }
+      if (countRes?.success) {
+        setUnreadNotificationsCount(countRes.data?.unreadCount ?? 0);
       }
     } catch {
       // Silent — the notifications page surfaces API errors.
@@ -100,6 +107,7 @@ export const AppProvider = ({ children }) => {
       loadNotifications();
     } else {
       setNotifications([]);
+      setUnreadNotificationsCount(0);
     }
   }, [user?._id]);
 
@@ -429,6 +437,10 @@ export const AppProvider = ({ children }) => {
   };
 
   const markNotificationRead = async (id) => {
+    const target = notifications.find((notification) => notification.id === id);
+    if (target && !target.read) {
+      setUnreadNotificationsCount((count) => Math.max(0, count - 1));
+    }
     setNotifications((prev) => prev.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)));
     try {
       await notificationService.markAsRead(id);
@@ -472,6 +484,7 @@ export const AppProvider = ({ children }) => {
         setOrders,
         appliedCoupon,
         notifications,
+        unreadNotificationsCount,
         toasts,
         showToast,
         addToCart,

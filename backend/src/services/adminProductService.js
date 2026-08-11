@@ -3,6 +3,9 @@
 
 import * as productRepo from '../repositories/adminProductRepository.js';
 import * as auditLogRepo from '../repositories/auditLogRepository.js';
+import * as notificationService from './notificationService.js';
+import Seller from '../models/Seller.js';
+import logger from '../utils/logger.js';
 import { ApiError } from '../utils/ApiError.js';
 import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import { buildProductFilter } from '../utils/buildFilter.js';
@@ -128,6 +131,21 @@ export const restoreProduct = async (id, adminUser, ip) => {
 };
 
 /**
+ * Resolve the owner user of a product so the seller can be notified.
+ * The product's seller ref may point to a populated seller doc or a raw id.
+ */
+const ownerUserIdOf = async (product) => {
+  const sellerRef = product?.seller;
+  if (!sellerRef) return null;
+
+  const sellerId = typeof sellerRef === 'object' ? sellerRef._id : sellerRef;
+  const seller = await Seller.findById(sellerId).select('userId').lean();
+  if (!seller?.userId) return null;
+
+  return typeof seller.userId === 'object' ? seller.userId._id : seller.userId;
+};
+
+/**
  * Moderate Product: Approve.
  */
 export const approveProduct = async (id, adminUser, ip) => {
@@ -151,6 +169,30 @@ export const approveProduct = async (id, adminUser, ip) => {
     target: updated.name,
     ip,
   });
+
+  // Automatic product notification for the owning seller.
+  const ownerUserId = await ownerUserIdOf(updated);
+  if (ownerUserId) {
+    try {
+      await notificationService.createNotification(
+        {
+          notificationType: 'Product Update',
+          title: 'Product approved',
+          message: `Your product "${updated.name}" has been approved and is now live on NexCart.`,
+          priority: 'normal',
+          targetAudience: 'specific users',
+          recipientUser: ownerUserId,
+          actionUrl: `/product/${id}`,
+          actionText: 'View Product',
+          publishStatus: 'published',
+        },
+        null,
+        null
+      );
+    } catch (err) {
+      logger.warn(`Product approval notification failed for product ${id}: ${err.message}`);
+    }
+  }
 
   return updated;
 };
@@ -181,6 +223,30 @@ export const rejectProduct = async (id, reason = '', adminNotes = '', adminUser,
     details: { reason, adminNotes },
     ip,
   });
+
+  // Automatic product notification for the owning seller.
+  const ownerUserId = await ownerUserIdOf(updated);
+  if (ownerUserId) {
+    try {
+      await notificationService.createNotification(
+        {
+          notificationType: 'Product Update',
+          title: 'Product rejected',
+          message: `Your product "${updated.name}" was rejected${reason ? `: ${reason}` : ''}. Please review and resubmit.`,
+          priority: 'high',
+          targetAudience: 'specific users',
+          recipientUser: ownerUserId,
+          actionUrl: `/product/${id}`,
+          actionText: 'View Product',
+          publishStatus: 'published',
+        },
+        null,
+        null
+      );
+    } catch (err) {
+      logger.warn(`Product rejection notification failed for product ${id}: ${err.message}`);
+    }
+  }
 
   return updated;
 };

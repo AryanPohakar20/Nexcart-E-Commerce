@@ -96,6 +96,7 @@ const AppRoutes = () => {
       <Route path="/" element={<RootLayout />}>
         <Route index element={<Home />} />
         <Route path="products" element={<Products />} />
+        <Route path="products/:id" element={<ProductDetails />} />
         <Route path="promotion" element={<Promotion />} />
         <Route path="product/:id" element={<ProductDetails />} />
         <Route path="category/:id" element={<Category />} />
@@ -128,6 +129,14 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="orders/:id"
+          element={
+            <ProtectedRoute>
+              <OrderDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="order-details/:id"
           element={
             <ProtectedRoute>
@@ -145,6 +154,14 @@ const AppRoutes = () => {
         />
         <Route
           path="profile"
+          element={
+            <ProtectedRoute>
+              <UserProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="account"
           element={
             <ProtectedRoute>
               <UserProfile />

@@ -3,6 +3,8 @@
 
 import * as orderRepo from '../repositories/adminOrderRepository.js';
 import * as auditLogRepo from '../repositories/auditLogRepository.js';
+import * as notificationService from './notificationService.js';
+import logger from '../utils/logger.js';
 import { ApiError } from '../utils/ApiError.js';
 import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import { buildOrderFilter } from '../utils/buildFilter.js';
@@ -103,6 +105,32 @@ export const updateOrderStatus = async (id, status, note = '', adminUser, ip) =>
     details: { oldStatus, newStatus: status, note },
     ip,
   });
+
+  // Automatic order-update notification for the customer who placed the order.
+  if (orderDoc.customer) {
+    try {
+      await notificationService.createNotification(
+        {
+          notificationType: 'Order Update',
+          title: `Order ${orderDoc.orderId} ${status.toLowerCase()}`,
+          message:
+            status.toLowerCase() === 'cancelled'
+              ? `Your order ${orderDoc.orderId} has been cancelled${note ? ` (${note})` : ''}. Any applicable refund has been initiated.`
+              : `Your order ${orderDoc.orderId} has been updated to "${status.toLowerCase()}".`,
+          priority: 'normal',
+          targetAudience: 'specific users',
+          recipientUser: orderDoc.customer,
+          actionUrl: `/order-details/${id}`,
+          actionText: 'Track Order',
+          publishStatus: 'published',
+        },
+        null,
+        null
+      );
+    } catch (err) {
+      logger.warn(`Order notification failed for order ${orderDoc.orderId}: ${err.message}`);
+    }
+  }
 
   return populated;
 };

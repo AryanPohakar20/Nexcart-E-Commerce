@@ -56,6 +56,11 @@ export const findSellerByUserId = async (userId) => {
     .lean();
 };
 
+/**
+ * Alias used by the admin verification service.
+ */
+export const getSellerById = findSellerById;
+
 // ─── Update ───────────────────────────────────────────────────────────────────
 
 export const updateSellerById = async (id, updates) => {

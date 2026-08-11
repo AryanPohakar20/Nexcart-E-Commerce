@@ -3,10 +3,20 @@
 
 import * as sellerRepo from '../repositories/adminSellerRepository.js';
 import * as auditLogRepo from '../repositories/auditLogRepository.js';
+import * as notificationService from './notificationService.js';
 import Seller from '../models/Seller.js';
+import logger from '../utils/logger.js';
 import { ApiError } from '../utils/ApiError.js';
 import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import { buildVerificationFilter } from '../utils/buildFilter.js';
+
+// userId is populated into a user object by the seller repository; reduce it back
+// to the raw ObjectId that the notification system expects.
+const recipientUserIdOf = (seller) => {
+  const userId = seller?.userId;
+  if (!userId) return null;
+  return typeof userId === 'object' ? userId._id : userId;
+};
 
 /**
  * List seller verification requests.
@@ -83,6 +93,30 @@ export const approveVerification = async (id, adminUser, ip) => {
     ip,
   });
 
+  // Automatic seller notification when KYC is approved.
+  const sellerUserId = recipientUserIdOf(seller);
+  if (sellerUserId) {
+    try {
+      await notificationService.createNotification(
+        {
+          notificationType: 'Seller Update',
+          title: 'Seller verification approved',
+          message: 'Congratulations! Your seller account has been verified. You can now sell on NexCart.',
+          priority: 'normal',
+          targetAudience: 'specific users',
+          recipientUser: sellerUserId,
+          actionUrl: '/seller/verification-status',
+          actionText: 'View Status',
+          publishStatus: 'published',
+        },
+        null,
+        null
+      );
+    } catch (err) {
+      logger.warn(`Seller verification notification failed for seller ${id}: ${err.message}`);
+    }
+  }
+
   return updated;
 };
 
@@ -109,6 +143,30 @@ export const rejectVerification = async (id, remarks = '', adminUser, ip) => {
     details: { remarks },
     ip,
   });
+
+  // Automatic seller notification when KYC is rejected.
+  const sellerUserId = recipientUserIdOf(seller);
+  if (sellerUserId) {
+    try {
+      await notificationService.createNotification(
+        {
+          notificationType: 'Account Alert',
+          title: 'Seller verification rejected',
+          message: `Your seller verification was rejected${remarks ? `: ${remarks}` : ''}. Please review the reason and resubmit your documents.`,
+          priority: 'high',
+          targetAudience: 'specific users',
+          recipientUser: sellerUserId,
+          actionUrl: '/seller/verification-status',
+          actionText: 'View Status',
+          publishStatus: 'published',
+        },
+        null,
+        null
+      );
+    } catch (err) {
+      logger.warn(`Seller verification notification failed for seller ${id}: ${err.message}`);
+    }
+  }
 
   return updated;
 };

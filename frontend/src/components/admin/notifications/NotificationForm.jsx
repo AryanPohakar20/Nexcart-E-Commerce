@@ -19,7 +19,7 @@ const defaultValues = {
   actionText: '',
 };
 
-const notificationTypes = ['Promotion', 'Offer', 'Discount', 'Recommendation', 'Announcement', 'Order Update', 'System Alert', 'Custom', 'Success', 'Warning', 'Error', 'Information', 'Security Alert', 'Maintenance', 'System Update'];
+const notificationTypes = ['Promotion', 'Offer', 'Discount', 'Recommendation', 'Announcement', 'Order Update', 'Seller Update', 'Product Update', 'Account Alert', 'System Alert', 'Custom', 'Success', 'Warning', 'Error', 'Information', 'Security Alert', 'Maintenance', 'System Update'];
 const priorityOptions = ['low', 'normal', 'high', 'critical'];
 const publishOptions = ['draft', 'scheduled', 'published', 'unpublished'];
 const AUDIENCE_OPTIONS = ['all', 'all customers', 'all sellers', 'admins', 'customers', 'sellers', 'specific users'];
