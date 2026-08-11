@@ -79,6 +79,7 @@ import { recalculateProductRating } from './src/services/productRatingService.js
     let reportId = reportRes.body.data.report._id;
 
     // Admin Hides r1
+    await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'under_review' }).expect(200);
     await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'hide' }).expect(200);
     sA = await getSStats(sellerA._id);
     // Left: 5, 4, 3 => Avg = 12/3 = 4, Total = 3
@@ -87,6 +88,7 @@ import { recalculateProductRating } from './src/services/productRatingService.js
 
     console.log('\n--- Test 4: Restore Seller Review ---');
     await ReviewReport.findByIdAndUpdate(reportId, { status: 'Pending' });
+    await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'under_review' }).expect(200);
     await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'restore' }).expect(200);
     sA = await getSStats(sellerA._id);
     // Restored: 5, 5, 4, 3 => Avg = 4.3, Total = 4
@@ -95,6 +97,7 @@ import { recalculateProductRating } from './src/services/productRatingService.js
 
     console.log('\n--- Test 5: Remove Seller Review ---');
     await ReviewReport.findByIdAndUpdate(reportId, { status: 'Pending' });
+    await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'under_review' }).expect(200);
     await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'remove', reason: 'Spam' }).expect(200);
     sA = await getSStats(sellerA._id);
     // Removed: 5, 4, 3 => Avg = 4, Total = 3
@@ -133,6 +136,7 @@ import { recalculateProductRating } from './src/services/productRatingService.js
     let reportId2 = reportRes2.body.data.report._id;
     
     // Simulate API call, relying on try/catch logic internally
+    await request(app).patch(`/api/admin/review-reports/${reportId2}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'under_review' }).expect(200);
     const moderateRes = await request(app).patch(`/api/admin/review-reports/${reportId2}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'hide' }).expect(200);
     
     if (moderateRes.body.success !== true) throw new Error('Test 13 Failed');

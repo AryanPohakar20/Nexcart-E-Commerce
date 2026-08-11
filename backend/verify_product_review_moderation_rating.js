@@ -83,6 +83,7 @@ import { recalculateSellerRating } from './src/services/sellerRatingService.js';
     let reportId = reportRes.body.data.report._id;
 
     // Admin Hides r5
+    await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'under_review' }).expect(200);
     await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'hide' }).expect(200);
     pA = await getPStats(productA._id);
     // Left: 4, 3 => Avg = 3.5, Total = 2
@@ -91,6 +92,7 @@ import { recalculateSellerRating } from './src/services/sellerRatingService.js';
 
     console.log('\n--- Test 4: Restore Review ---');
     await ReviewReport.findByIdAndUpdate(reportId, { status: 'Pending' });
+    await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'under_review' }).expect(200);
     await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'restore' }).expect(200);
     pA = await getPStats(productA._id);
     // Restored: 5, 4, 3 => Avg = 4, Total = 3
@@ -99,6 +101,7 @@ import { recalculateSellerRating } from './src/services/sellerRatingService.js';
 
     console.log('\n--- Test 5: Remove Review ---');
     await ReviewReport.findByIdAndUpdate(reportId, { status: 'Pending' });
+    await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'under_review' }).expect(200);
     await request(app).patch(`/api/admin/review-reports/${reportId}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'remove', reason: 'Spam' }).expect(200);
     pA = await getPStats(productA._id);
     // Removed: 4, 3 => Avg = 3.5, Total = 2
@@ -140,6 +143,7 @@ import { recalculateSellerRating } from './src/services/sellerRatingService.js';
     let reportId2 = reportRes2.body.data.report._id;
     
     // We will verify the API succeeds (200) regardless of internal rating service state.
+    await request(app).patch(`/api/admin/review-reports/${reportId2}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'under_review' }).expect(200);
     const moderateRes = await request(app).patch(`/api/admin/review-reports/${reportId2}/moderate`).set('Authorization', `Bearer ${admin.generateJWT()}`).send({ action: 'hide' }).expect(200);
     
     if (moderateRes.body.success !== true) throw new Error('Test 11 Failed');
