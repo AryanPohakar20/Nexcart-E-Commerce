@@ -12,6 +12,16 @@ export const createSellerReview = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Handle GET /sellers/:sellerId/reviews
+ * Fetch reviews for a specific seller.
+ */
+export const getSellerReviews = asyncHandler(async (req, res) => {
+  const { sellerId } = req.params;
+  const result = await sellerReviewService.getSellerReviews(sellerId, req.query);
+  return successResponse(res, 'Seller reviews fetched successfully.', result);
+});
+
+/**
  * Handle PATCH /seller-reviews/:id
  * Update an existing seller review.
  */

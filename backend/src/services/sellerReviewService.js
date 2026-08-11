@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { ApiError } from '../utils/ApiError.js';
 import * as sellerReviewRepository from '../repositories/sellerReviewRepository.js';
 import * as reviewEligibilityService from './reviewEligibilityService.js';
-import { toSellerReviewDTO } from '../mappers/sellerReviewMapper.js';
+import { toSellerReviewDTO, toSellerReviewDTOList } from '../mappers/sellerReviewMapper.js';
 import logger from '../utils/logger.js';
 import SellerReview from '../models/SellerReview.js';
 
@@ -118,5 +118,40 @@ export const deleteReview = async (id, customerId) => {
  * Fetch reviews for a specific seller.
  */
 export const getSellerReviews = async (sellerId, queryParams = {}) => {
-  throw new ApiError(501, 'sellerReviewService.getSellerReviews method is not implemented for this commit.');
+  if (!sellerId || !mongoose.Types.ObjectId.isValid(sellerId)) {
+    throw new ApiError(400, 'Invalid Seller User ID format.');
+  }
+
+  // Safe defaults
+  const page = Math.max(1, parseInt(queryParams.page, 10) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(queryParams.limit, 10) || 10));
+  const sort = ['newest', 'highest', 'lowest'].includes(queryParams.sort) ? queryParams.sort : 'newest';
+  const rating = queryParams.rating ? parseInt(queryParams.rating, 10) : undefined;
+
+  // Retrieve matching public reviews and count
+  const { reviews, total } = await sellerReviewRepository.findBySeller(sellerId, {
+    page,
+    limit,
+    sort,
+    rating,
+  });
+
+  // Map database documents to public DTO layout
+  const mappedReviews = toSellerReviewDTOList(reviews);
+
+  const totalPages = Math.ceil(total / limit);
+  const hasNextPage = page < totalPages;
+  const hasPreviousPage = page > 1;
+
+  return {
+    reviews: mappedReviews,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+    },
+  };
 };

@@ -1,4 +1,4 @@
-import { body, validationResult } from 'express-validator';
+import { body, query, validationResult } from 'express-validator';
 import { ApiError } from '../utils/ApiError.js';
 
 const checkValidationResult = (req, res, next) => {
@@ -93,6 +93,33 @@ export const validateUpdateSellerReview = [
       }
       return true;
     }),
+
+  checkValidationResult,
+];
+
+export const validateGetSellerReviews = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer')
+    .toInt(),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 50 })
+    .withMessage('Limit must be a positive integer up to 50')
+    .toInt(),
+
+  query('sort')
+    .optional()
+    .isIn(['newest', 'highest', 'lowest'])
+    .withMessage('Sort value must be newest, highest, or lowest'),
+
+  query('rating')
+    .optional()
+    .isInt({ min: 1, max: 5 })
+    .withMessage('Rating must be an integer between 1 and 5')
+    .toInt(),
 
   checkValidationResult,
 ];

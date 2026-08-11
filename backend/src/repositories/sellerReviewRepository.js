@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { ApiError } from '../utils/ApiError.js';
 import SellerReview from '../models/SellerReview.js'; // imported for future use
 
@@ -20,7 +21,46 @@ export const findById = async (id) => {
  * Find reviews for a seller.
  */
 export const findBySeller = async (sellerId, filters = {}) => {
-  throw new ApiError(501, 'sellerReviewRepository.findBySeller method is not implemented.');
+  const { page = 1, limit = 10, sort = 'newest', rating } = filters;
+
+  const query = {
+    sellerId: new mongoose.Types.ObjectId(sellerId),
+    status: 'Published',
+    isDeleted: false,
+  };
+
+  if (rating !== undefined && rating !== null) {
+    query.rating = parseInt(rating, 10);
+  }
+
+  let dbSort = { createdAt: -1 };
+  if (sort === 'highest') {
+    dbSort = { rating: -1, createdAt: -1 };
+  } else if (sort === 'lowest') {
+    dbSort = { rating: 1, createdAt: -1 };
+  }
+
+  // Deterministic tie-breaker
+  dbSort._id = -1;
+
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [reviews, total] = await Promise.all([
+    SellerReview.find(query)
+      .populate('customerId', 'firstName lastName avatar username')
+      .sort(dbSort)
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    SellerReview.countDocuments(query),
+  ]);
+
+  return {
+    reviews,
+    total,
+  };
 };
 
 /**
