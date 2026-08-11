@@ -3,6 +3,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import * as sellerService from '../services/sellerService.js';
+import * as sellerReputationService from '../services/sellerReputationService.js';
 
 // ─── POST /api/seller/create ──────────────────────────────────────────────────
 
@@ -253,5 +254,21 @@ export const getDashboardSummary = asyncHandler(async (req, res) => {
     success: true,
     message: 'Dashboard summary fetched successfully.',
     data: { summary },
+  });
+});
+
+// ─── GET /api/sellers/:sellerId/reputation (no auth) ───────────────────────────
+
+/**
+ * Fetch public reputation stats for a specific seller.
+ */
+export const getSellerReputation = asyncHandler(async (req, res) => {
+  const { sellerId } = req.params;
+  const reputation = await sellerReputationService.getSellerReputation(sellerId);
+
+  res.status(200).json({
+    success: true,
+    message: 'Seller reputation fetched successfully.',
+    data: { reputation },
   });
 });

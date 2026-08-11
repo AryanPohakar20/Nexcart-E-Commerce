@@ -1,4 +1,4 @@
-import { body, validationResult } from 'express-validator';
+import { body, param, validationResult } from 'express-validator';
 import { ApiError } from '../utils/ApiError.js';
 import { BUSINESS_CATEGORIES } from '../models/Seller.js';
 
@@ -204,5 +204,16 @@ export const validatePasswordChange = [
       }
       return true;
     }),
+  handleValidationErrors,
+];
+
+// ─── Reputation Validation ─────────────────────────────────────────────────────
+
+export const validateGetSellerReputation = [
+  param('sellerId')
+    .notEmpty()
+    .withMessage('Seller ID is required')
+    .isMongoId()
+    .withMessage('Invalid Seller User ID format'),
   handleValidationErrors,
 ];

@@ -32,8 +32,9 @@ import {
   loginWithGoogle,
   loginWithApple,
 } from '../controllers/authController.js';
-import { getPublicProfile, updateStep3, updateStep4, updateStep5, getSellerStatus } from '../controllers/sellerController.js';
+import { getPublicProfile, updateStep3, updateStep4, updateStep5, getSellerStatus, getSellerReputation } from '../controllers/sellerController.js';
 import { validateRegistration, validateLogin } from '../validations/authValidation.js';
+import { validateGetSellerReputation } from '../validations/sellerValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 import { upload } from '../middlewares/upload.js';
@@ -96,5 +97,8 @@ router.use('/product-reviews', productReviewRoutes);
 router.use('/reviews', productReviewRoutes);
 router.use('/seller-reviews', sellerReviewRoutes);
 router.use('/sellers', sellerReviewRoutes);
+
+// Public Reputation Route
+router.get('/sellers/:sellerId/reputation', validateGetSellerReputation, getSellerReputation);
 
 export default router;
