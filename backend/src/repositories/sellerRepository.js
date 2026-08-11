@@ -160,3 +160,16 @@ export const updateSellerTrustScore = async (sellerDocId, trustData) => {
     { new: true }
   );
 };
+
+/**
+ * Atomically replace the badges array for a seller by their document ID.
+ * @param {string} sellerDocId - Seller document ID
+ * @param {Array} badgesList - Array of badge states
+ */
+export const updateSellerBadges = async (sellerDocId, badgesList) => {
+  return await Seller.findByIdAndUpdate(
+    sellerDocId,
+    { $set: { badges: badgesList } },
+    { new: true }
+  );
+};

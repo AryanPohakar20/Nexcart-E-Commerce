@@ -219,6 +219,21 @@ const dashboardSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// ─── Seller Badge Sub-schema ──────────────────────────────────────────────────
+
+const sellerBadgeSchema = new mongoose.Schema(
+  {
+    badgeType: {
+      type: String,
+      enum: ['TrustedSeller', 'TopRatedSeller', 'FastResponder', 'IdentityVerified'],
+      required: true,
+    },
+    awardedAt: { type: Date, default: Date.now },
+    isActive: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
 // ─── Main Seller Schema ───────────────────────────────────────────────────────
 
 const sellerSchema = new mongoose.Schema(
@@ -312,6 +327,10 @@ const sellerSchema = new mongoose.Schema(
       type: String,
       enum: ['bronze', 'silver', 'gold', 'platinum'],
       default: 'bronze',
+    },
+    badges: {
+      type: [sellerBadgeSchema],
+      default: [],
     },
 
     // ── New: Public Metrics ────────────────────────────────────────────────────

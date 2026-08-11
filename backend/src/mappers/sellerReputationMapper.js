@@ -1,4 +1,5 @@
 import { getSellerDisplayName, getSellerAvatar } from '../helpers/sellerHelpers.js';
+import { toSellerBadgesDTOList } from './sellerBadgeMapper.js';
 
 /**
  * Map Seller document to public Seller Reputation DTO.
@@ -26,5 +27,6 @@ export const toSellerReputationDTO = (seller) => {
     completedOrders: seller.statistics?.completedOrders || 0,
     cancellationRate: seller.statistics?.cancellationRate || 0,
     responseRate: seller.statistics?.responseRate || 0,
+    badges: toSellerBadgesDTOList(seller.badges || []),
   };
 };
