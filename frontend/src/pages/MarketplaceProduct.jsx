@@ -60,10 +60,10 @@ const MarketplaceProduct = () => {
     setEnquiring(true);
     try {
       const listingId = product._id || product.id;
-      const res = await chatService.createConversation(rawSellerId, null, listingId);
-      if (res.success) {
+      const res = await chatService.createConversation(null, null, listingId);
+      if (res.success && res.data) {
         showToast('Conversation opened!', 'success');
-        navigate('/messages');
+        navigate(`/messages?conversationId=${res.data._id || res.data.id}`);
       }
     } catch (error) {
       console.error('Failed to open chat:', error);

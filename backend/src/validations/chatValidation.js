@@ -13,8 +13,7 @@ export const validateResult = (req, res, next) => {
 
 export const createConversationValidation = [
   body('participantId')
-    .notEmpty()
-    .withMessage('participantId is required')
+    .optional()
     .isMongoId()
     .withMessage('participantId must be a valid MongoId'),
   body('productId')
