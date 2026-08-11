@@ -231,8 +231,8 @@ export const moderateReview = async (adminId, reportId, action, reason) => {
   if (action === 'reject' && report.status !== REPORT_STATUS.PENDING && report.status !== REPORT_STATUS.UNDER_REVIEW) {
     throw new ApiError(400, 'Report can only transition to Rejected from Pending or UnderReview.');
   }
-  if (['hide', 'remove', 'restore'].includes(action) && report.status !== REPORT_STATUS.UNDER_REVIEW) {
-    throw new ApiError(400, 'Report must be UnderReview before applying a moderation resolution.');
+  if (['hide', 'remove', 'restore'].includes(action) && report.status !== REPORT_STATUS.UNDER_REVIEW && report.status !== REPORT_STATUS.RESOLVED) {
+    throw new ApiError(400, 'Report must be UnderReview or Resolved before applying a moderation resolution.');
   }
 
   // 6. Validate Reason Requirements
