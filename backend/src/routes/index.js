@@ -6,8 +6,9 @@ import sellerRoutes from './sellerRoutes.js';
 import profileRoutes from './profileRoutes.js';
 import addressRoutes from './addressRoutes.js';
 import adminRoutes from './adminRoutes.js';
+import orderRoutes from './orderRoutes.js';
 
-// ─── Marketplace Route Imports ────────────────────────────────────────────────
+import marketplaceRoutes from './marketplaceRoutes.js';
 import productRoutes from './productRoutes.js';
 import searchRoutes from './searchRoutes.js';
 import searchHistoryRoutes from './searchHistoryRoutes.js';
@@ -79,12 +80,14 @@ router.post('/auth/reset-password', resetPassword);
 router.use('/profile', profileRoutes);
 router.use('/address', addressRoutes);
 router.use('/admin', adminRoutes);
+router.use('/orders', orderRoutes);
 
 // ─── Marketplace Routes ───────────────────────────────────────────────────────
 // NOTE: /search/history MUST be mounted before /search to avoid the /search
 // prefix intercepting /search/history requests.
 router.use('/search/history', searchHistoryRoutes);
 router.use('/search', searchRoutes);
+router.use('/marketplace', marketplaceRoutes);
 router.use('/products', productRoutes);
 router.use('/brands', brandRoutes);
 router.use('/categories', categoryRoutes);

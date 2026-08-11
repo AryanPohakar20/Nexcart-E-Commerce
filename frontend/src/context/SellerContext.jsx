@@ -1,325 +1,10 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AppContext } from './AppContext';
 import sellerAuthService from '../services/sellerAuthService';
+import productService from '../services/productService';
+import marketplaceService from '../services/marketplaceService';
 
 export const SellerContext = createContext();
-
-const INITIAL_PRODUCTS = [
-  {
-    id: 'prod-c2c-1',
-    title: 'Apple iPhone 13 (128GB, Midnight Black) - Mint Condition',
-    description: 'Selling my carefully used iPhone 13. 88% battery health, zero scratches, applied glass screen protector since day 1. Includes original box, Apple invoice, and fast charging cable.',
-    price: 36999,
-    originalPrice: 69900,
-    category: 'mobiles',
-    sellerType: 'individual_c2c',
-    condition: 'Like New',
-    usageDuration: '8 months',
-    hasBox: true,
-    hasBill: true,
-    location: 'Indiranagar, Bengaluru',
-    deliveryType: 'Meetup & Courier',
-    negotiable: true,
-    stock: 1,
-    views: 482,
-    status: 'active',
-    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80',
-    createdAt: '2026-07-28',
-  },
-  {
-    id: 'prod-c2c-2',
-    title: 'Sony WH-1000XM4 Wireless Noise Cancelling Headphones',
-    description: 'Lightly used for occasional flight travel. Outstanding active noise cancellation and 30-hour battery life. Clean ear cushions and includes travel carry case.',
-    price: 14500,
-    originalPrice: 29990,
-    category: 'electronics',
-    sellerType: 'individual_c2c',
-    condition: 'Good',
-    usageDuration: '1.5 years',
-    hasBox: true,
-    hasBill: false,
-    location: 'Koramangala, Bengaluru',
-    deliveryType: 'Courier',
-    negotiable: false,
-    stock: 1,
-    views: 290,
-    status: 'active',
-    image: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&q=80',
-    createdAt: '2026-07-25',
-  },
-  {
-    id: 'prod-biz-1',
-    title: 'Minimalist Matte Ceramic Coffee Mug Set (Artisan Pack of 4)',
-    description: 'Handcrafted premium ceramic stoneware coffee mugs. Microwave safe, dishwasher friendly, ergonomic grip, and matte earthy glaze finish.',
-    price: 1299,
-    originalPrice: 1999,
-    category: 'home',
-    sellerType: 'business',
-    condition: 'Brand New',
-    sku: 'NX-MUG-04',
-    brand: 'Studio Terra',
-    stock: 42,
-    warranty: '6 Months Replacement',
-    views: 1450,
-    status: 'active',
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&q=80',
-    createdAt: '2026-07-10',
-  },
-  {
-    id: 'prod-biz-2',
-    title: 'Vintage Full-Grain Leather Laptop Messenger Bag 15.6"',
-    description: 'Genuine hand-stitched buffalo leather messenger bag. Padded laptop compartment, YKK brass zippers, multiple organizer pockets, and adjustable shoulder strap.',
-    price: 4499,
-    originalPrice: 7999,
-    category: 'accessories',
-    sellerType: 'business',
-    condition: 'Brand New',
-    sku: 'NX-BAG-VN',
-    brand: 'CraftedLegacy',
-    stock: 12,
-    warranty: '1 Year Leather Warranty',
-    views: 2310,
-    status: 'active',
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80',
-    createdAt: '2026-07-05',
-  },
-  {
-    id: 'prod-c2c-3',
-    title: 'Solid Sheesham Wood Study & Work Table with Drawers',
-    description: 'Moving out sale! Extremely sturdy solid rosewood desk with smooth lacquer finish. 3 deep utility drawers. Buyer can pick up directly from HSR Layout.',
-    price: 7499,
-    originalPrice: 16500,
-    category: 'furniture',
-    sellerType: 'individual_c2c',
-    condition: 'Good',
-    usageDuration: '2 years',
-    hasBox: false,
-    hasBill: false,
-    location: 'HSR Layout, Bengaluru',
-    deliveryType: 'Local Pickup Only',
-    negotiable: true,
-    stock: 1,
-    views: 615,
-    status: 'active',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80',
-    createdAt: '2026-07-20',
-  },
-  {
-    id: 'prod-biz-3',
-    title: 'Ergonomic Vertical Wireless Mouse (Silent Clicks, 2400 DPI)',
-    description: 'Natural handshake ergonomic angle reduces forearm muscle strain. USB 2.4G + Dual Bluetooth 5.0 connection. Rechargeable 500mAh battery lasts up to 60 days.',
-    price: 1899,
-    originalPrice: 2999,
-    category: 'electronics',
-    sellerType: 'business',
-    condition: 'Brand New',
-    sku: 'NX-MOU-V1',
-    brand: 'ProClick',
-    stock: 4,
-    warranty: '1 Year Warranty',
-    views: 3120,
-    status: 'active',
-    image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600&q=80',
-    createdAt: '2026-06-28',
-  },
-  {
-    id: 'prod-biz-4',
-    title: 'Heavyweight Oversized Streetwear Hoodie (100% French Terry Cotton)',
-    description: '450 GSM ultra-heavyweight combed organic cotton hoodie. Drop-shoulder relaxed streetwear fit, double-layered hood, and ribbed cuffs.',
-    price: 2199,
-    originalPrice: 3499,
-    category: 'fashion',
-    sellerType: 'business',
-    condition: 'Brand New',
-    sku: 'NX-HOOD-ST',
-    brand: 'UrbanAura',
-    stock: 0,
-    warranty: '30 Days Exchange',
-    views: 4590,
-    status: 'draft',
-    image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&q=80',
-    createdAt: '2026-06-20',
-  },
-  {
-    id: 'prod-c2c-4',
-    title: 'PlayStation 4 Pro (1TB) + 2 DualShock 4 Controllers & 4 Games',
-    description: 'Console in 100% working condition. Includes God of War, Spider-Man, Horizon Zero Dawn, and FIFA. Original power cord and HDMI cable included.',
-    price: 19999,
-    originalPrice: 38990,
-    category: 'gaming',
-    sellerType: 'individual_c2c',
-    condition: 'Fair',
-    usageDuration: '3 years',
-    hasBox: true,
-    hasBill: false,
-    location: 'Whitefield, Bengaluru',
-    deliveryType: 'Meetup & Courier',
-    negotiable: true,
-    stock: 0,
-    views: 890,
-    status: 'sold',
-    image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=600&q=80',
-    createdAt: '2026-07-15',
-  }
-];
-
-const INITIAL_ORDERS = [
-  {
-    id: 'ORD-78291',
-    customer: {
-      name: 'Aarav Sharma',
-      email: 'aarav.sharma@gmail.com',
-      phone: '+91 98451 23412',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
-    },
-    shippingAddress: 'Flat 402, Oakwood Residences, 12th Main, Indiranagar, Bengaluru - 560038',
-    items: [
-      {
-        id: 'prod-c2c-1',
-        title: 'Apple iPhone 13 (128GB, Midnight Black)',
-        price: 36999,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80',
-        sellerType: 'individual_c2c',
-        condition: 'Like New',
-      }
-    ],
-    totalAmount: 36999,
-    paymentMethod: 'UPI (PhonePe)',
-    paymentStatus: 'Paid',
-    status: 'Processing',
-    orderDate: '2026-08-03',
-    deliveryType: 'Courier Express',
-    trackingNumber: 'BLUEDART-89421',
-    carrier: 'BlueDart Express',
-    deliveryEstimate: 'Expected by Aug 06, 2026',
-    customerNote: 'Please bubble wrap well before dispatching.',
-  },
-  {
-    id: 'ORD-78290',
-    customer: {
-      name: 'Pooja Iyer',
-      email: 'pooja.iyer@gmail.com',
-      phone: '+91 97120 45892',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
-    },
-    shippingAddress: 'Villa 12, Palm Meadows Phase 2, Whitefield, Bengaluru - 560066',
-    items: [
-      {
-        id: 'prod-biz-1',
-        title: 'Minimalist Matte Ceramic Coffee Mug Set (Pack of 4)',
-        price: 1299,
-        quantity: 2,
-        image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&q=80',
-        sellerType: 'business',
-        condition: 'Brand New',
-      }
-    ],
-    totalAmount: 2598,
-    paymentMethod: 'Credit Card (HDFC)',
-    paymentStatus: 'Paid',
-    status: 'Shipped',
-    orderDate: '2026-08-02',
-    deliveryType: 'Express Courier',
-    trackingNumber: 'DELHIVERY-54312',
-    carrier: 'Delhivery Surface',
-    deliveryEstimate: 'Out for delivery tomorrow',
-    customerNote: 'Gift packaging requested if possible.',
-  },
-  {
-    id: 'ORD-78289',
-    customer: {
-      name: 'Karthik Nair',
-      email: 'karthik.n@yahoo.com',
-      phone: '+91 99881 77213',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-    },
-    shippingAddress: 'Direct Meetup @ Starbucks, Koramangala 5th Block, Bengaluru',
-    items: [
-      {
-        id: 'prod-c2c-2',
-        title: 'Sony WH-1000XM4 Wireless Headphones',
-        price: 14500,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&q=80',
-        sellerType: 'individual_c2c',
-        condition: 'Good',
-      }
-    ],
-    totalAmount: 14500,
-    paymentMethod: 'Cash on Meetup',
-    paymentStatus: 'Completed',
-    status: 'Delivered',
-    orderDate: '2026-07-31',
-    deliveryType: 'Buyer Meetup (In-Person)',
-    trackingNumber: 'LOCAL-MEETUP-KOR',
-    carrier: 'Direct Handshake',
-    deliveryEstimate: 'Handed over on 31st July',
-    customerNote: 'Tested on spot and received nicely!',
-  },
-  {
-    id: 'ORD-78288',
-    customer: {
-      name: 'Sneha Reddy',
-      email: 'sneha.reddy@gmail.com',
-      phone: '+91 98450 99881',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80',
-    },
-    shippingAddress: 'Flat 101, Prestige Lakeside Habitat, Varthur, Bengaluru - 560087',
-    items: [
-      {
-        id: 'prod-biz-2',
-        title: 'Vintage Full-Grain Leather Laptop Messenger Bag 15.6"',
-        price: 4499,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80',
-        sellerType: 'business',
-        condition: 'Brand New',
-      }
-    ],
-    totalAmount: 4499,
-    paymentMethod: 'UPI (GPay)',
-    paymentStatus: 'Paid',
-    status: 'Delivered',
-    orderDate: '2026-07-29',
-    deliveryType: 'Courier (DTDC)',
-    trackingNumber: 'DTDC-99214',
-    carrier: 'DTDC Express',
-    deliveryEstimate: 'Delivered on 30th July 2026',
-    customerNote: '',
-  },
-  {
-    id: 'ORD-78287',
-    customer: {
-      name: 'Rohan Gupta',
-      email: 'rohan.g@gmail.com',
-      phone: '+91 91234 56789',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80',
-    },
-    shippingAddress: 'House 89, Sector 14, Urban Estate, Gurgaon - 122001',
-    items: [
-      {
-        id: 'prod-biz-3',
-        title: 'Ergonomic Vertical Wireless Mouse',
-        price: 1899,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600&q=80',
-        sellerType: 'business',
-        condition: 'Brand New',
-      }
-    ],
-    totalAmount: 1899,
-    paymentMethod: 'Net Banking (ICICI)',
-    paymentStatus: 'Refunded',
-    status: 'Cancelled',
-    orderDate: '2026-07-28',
-    deliveryType: 'Standard Courier',
-    trackingNumber: 'CANCELLED',
-    carrier: 'N/A',
-    deliveryEstimate: 'Order Cancelled',
-    customerNote: 'Ordered accidentally, requested cancellation.',
-  }
-];
 
 const INITIAL_SETTINGS = {
   sellerMode: 'hybrid', // 'individual_c2c', 'business', or 'hybrid'
@@ -398,25 +83,184 @@ export const SellerProvider = ({ children }) => {
 
   // 2. Products State
   const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
 
   // 3. Orders State
-  const [orders, setOrders] = useState(() => {
-    try {
-      const stored = localStorage.getItem('nexcart-seller-orders');
-      return stored ? JSON.parse(stored) : INITIAL_ORDERS;
-    } catch {
-      return INITIAL_ORDERS;
-    }
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [ordersError, setOrdersError] = useState(null);
+
+  // 4. Dashboard Stats & Analytics State
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    ordersCount: 0,
+    deliveredOrdersCount: 0,
+    processingOrdersCount: 0,
+    shippedOrdersCount: 0,
+    totalListings: 0,
+    activeListings: 0,
+    lowStockCount: 0,
+    outOfStockCount: 0,
+    totalViews: 0,
+    c2cCount: 0,
+    businessCount: 0,
+    totalInventoryValue: 0,
+    rating: 0,
+    reviewsCount: 0,
   });
+  const [dashboardRecentOrders, setDashboardRecentOrders] = useState([]);
+  const [dashboardLowStockItems, setDashboardLowStockItems] = useState([]);
+  const [revenueChartData, setRevenueChartData] = useState([]);
+  const [growthText, setGrowthText] = useState('+0%');
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  // 5. C2C Earnings State
+  const [c2cEarnings, setC2cEarnings] = useState(null);
+  const [c2cEarningsLoading, setC2cEarningsLoading] = useState(false);
+
+  const fetchDashboardSummary = useCallback(async (timeframe = '7D') => {
+    setDashboardLoading(true);
+    try {
+      const res = await sellerAuthService.getDashboardSummary(timeframe);
+      if (res?.data?.summary) {
+        const sum = res.data.summary;
+        if (sum.analytics) setStats(sum.analytics);
+        if (sum.recentOrders) setDashboardRecentOrders(sum.recentOrders);
+        if (sum.lowStockItems) setDashboardLowStockItems(sum.lowStockItems);
+        if (sum.analytics?.revenueChartData) setRevenueChartData(sum.analytics.revenueChartData);
+        if (sum.analytics?.growthText) setGrowthText(sum.analytics.growthText);
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard summary:', err);
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, []);
+
+  const fetchSellerProducts = useCallback(async () => {
+    setProductsLoading(true);
+    try {
+      const res = await marketplaceService.getMyListings();
+      if (res?.data?.listings) {
+        setProducts(res.data.listings);
+      }
+    } catch (err) {
+      console.error('Error fetching seller listings:', err);
+    } finally {
+      setProductsLoading(false);
+    }
+  }, []);
+
+  const fetchC2CEarnings = useCallback(async () => {
+    setC2cEarningsLoading(true);
+    try {
+      const res = await marketplaceService.getEarnings();
+      if (res.success && res.data) {
+        setC2cEarnings(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching C2C earnings:', err);
+    } finally {
+      setC2cEarningsLoading(false);
+    }
+  }, []);
+
+  const fetchSellerOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    setOrdersError(null);
+    try {
+      const res = await sellerAuthService.getOrders();
+      const rawOrders = res?.data?.orders || res?.orders || [];
+      
+      // Map backend status/data to UI format
+      const formatted = rawOrders.map(ord => {
+        const statusMap = {
+          pending: 'Pending',
+          confirmed: 'Processing',
+          processing: 'Processing',
+          packed: 'Processing',
+          shipped: 'Shipped',
+          delivered: 'Delivered',
+          cancelled: 'Cancelled',
+          returned: 'Returned',
+        };
+
+        const paymentMethodMap = {
+          'Credit Card': 'Credit/Debit Card',
+          'Debit Card': 'Credit/Debit Card',
+          'Net Banking': 'Net Banking',
+          'UPI': 'UPI',
+          'COD': 'Cash on Delivery',
+        };
+
+        return {
+          ...ord,
+          id: ord.orderId || ord._id,
+          orderDate: ord.createdAt ? new Date(ord.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          status: statusMap[ord.orderStatus] || 'Pending',
+          paymentMethod: paymentMethodMap[ord.paymentInfo?.method] || ord.paymentInfo?.method || 'UPI',
+          paymentStatus: ord.paymentInfo?.status || 'pending',
+          deliveryType: ord.shippingCarrier ? `Courier (${ord.shippingCarrier})` : 'Courier',
+          carrier: ord.shippingCarrier || 'Express',
+          deliveryEstimate: ord.orderStatus === 'delivered' ? 'Delivered' : 'Delivery expected within 2 days',
+          shippingAddress: ord.shippingAddress && typeof ord.shippingAddress === 'object'
+            ? `${ord.shippingAddress.fullName || ''}, ${ord.shippingAddress.addressLine1 || ''}${ord.shippingAddress.addressLine2 ? ', ' + ord.shippingAddress.addressLine2 : ''}, ${ord.shippingAddress.city || ''}, ${ord.shippingAddress.state || ''} - ${ord.shippingAddress.pincode || ''}`
+            : (typeof ord.shippingAddress === 'string' ? ord.shippingAddress : 'No address provided'),
+          customer: ord.customer 
+            ? {
+                name: `${ord.customer.firstName || ''} ${ord.customer.lastName || ''}`.trim() || 'John Doe',
+                email: ord.customer.email || '',
+                phone: ord.customer.phone || '',
+                avatar: ord.customer.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
+              }
+            : {
+                name: 'John Doe',
+                email: 'john.customer@nexcart.com',
+                phone: '9876543210',
+                avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
+              },
+          items: (ord.items || []).map(item => ({
+            product: {
+              id: item.product?._id || item.product,
+              title: item.name || '',
+              price: item.price || 0,
+              image: item.image || item.product?.thumbnail || item.product?.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
+              brand: item.product?.brand || 'NexCart',
+            },
+            title: item.name || '',
+            image: item.image || item.product?.thumbnail || item.product?.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
+            price: item.price || 0,
+            quantity: item.quantity || 1,
+            sku: item.sku || '',
+            subtotal: item.subtotal || (item.price * item.quantity) || 0,
+          })),
+        };
+      });
+
+      setOrders(formatted);
+    } catch (err) {
+      console.error('Error fetching seller orders:', err);
+      setOrdersError(err?.message || 'Failed to retrieve orders.');
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
 
   // 4. Persistence
   useEffect(() => {
     localStorage.setItem('nexcart-seller-settings', JSON.stringify(settings));
   }, [settings]);
 
+  // Load seller orders and dashboard summary on mount / user change
   useEffect(() => {
-    localStorage.setItem('nexcart-seller-orders', JSON.stringify(orders));
-  }, [orders]);
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      fetchSellerOrders();
+      fetchDashboardSummary('7D');
+      fetchSellerProducts();
+      fetchC2CEarnings();
+    }
+  }, [user, fetchSellerOrders, fetchDashboardSummary, fetchSellerProducts, fetchC2CEarnings]);
 
   // Sync profile data from backend dashboard API
   useEffect(() => {
@@ -493,94 +337,142 @@ export const SellerProvider = ({ children }) => {
       .finally(() => setSellerLoading(false));
   }, []);
 
-  // ─── CRUD Actions: Products ───────────────────────────────────────────────
+  // ─── CRUD Actions: Products / C2C Listings ───────────────────────────────
 
-  const addProduct = (prodData) => {
-    const newId = `prod-${prodData.sellerType === 'individual_c2c' ? 'c2c' : 'biz'}-${Date.now()}`;
-    const newProduct = {
-      id: newId,
-      views: 0,
-      status: 'active',
-      createdAt: new Date().toISOString().split('T')[0],
-      ...prodData,
-      price: Number(prodData.price) || 0,
-      originalPrice: Number(prodData.originalPrice) || Number(prodData.price) * 1.25,
-      stock: Number(prodData.stock) || 1,
-    };
-    setProducts((prev) => [newProduct, ...prev]);
-    showToast('Listing published to Marketplace successfully!');
-    return newProduct;
+  const addProduct = async (formData) => {
+    try {
+      const res = await marketplaceService.createListing(formData);
+      if (res.success && res.data?.listing) {
+        setProducts((prev) => [res.data.listing, ...prev]);
+        showToast('Listing published to C2C Marketplace successfully!', 'success');
+        return res.data.listing;
+      }
+    } catch (error) {
+      console.error('Error adding listing:', error);
+      showToast(error.response?.data?.message || 'Failed to publish listing', 'error');
+      throw error;
+    }
   };
 
-  const updateProduct = (id, updatedFields) => {
-    setProducts((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              ...updatedFields,
-              price: updatedFields.price !== undefined ? Number(updatedFields.price) : item.price,
-              stock: updatedFields.stock !== undefined ? Number(updatedFields.stock) : item.stock,
-            }
-          : item
-      )
-    );
-    showToast('Product listing updated');
+  const updateProduct = async (id, formData) => {
+    try {
+      const res = await marketplaceService.updateListing(id, formData);
+      if (res.success && res.data?.listing) {
+        setProducts((prev) =>
+          prev.map((item) => (item.id === id || item._id === id ? res.data.listing : item))
+        );
+        showToast('Product listing updated', 'success');
+        return res.data.listing;
+      }
+    } catch (error) {
+      console.error('Error updating listing:', error);
+      showToast(error.response?.data?.message || 'Failed to update listing', 'error');
+      throw error;
+    }
   };
 
-  const deleteProduct = (id) => {
-    setProducts((prev) => prev.filter((item) => item.id !== id));
-    showToast('Product listing removed', 'info');
+  const deleteProduct = async (id) => {
+    try {
+      await marketplaceService.deleteListing(id);
+      setProducts((prev) => prev.filter((item) => item.id !== id && item._id !== id));
+      showToast('Product listing removed', 'info');
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      showToast(error.response?.data?.message || 'Failed to delete listing', 'error');
+      throw error;
+    }
   };
 
-  const toggleProductStatus = (id) => {
-    setProducts((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const nextStatus = item.status === 'active' ? 'draft' : 'active';
-          showToast(`Listing is now ${nextStatus === 'active' ? 'Live' : 'Paused'}`);
-          return { ...item, status: nextStatus };
-        }
-        return item;
-      })
-    );
+  const markListingAsSold = async (id, finalSalePrice, costPrice) => {
+    try {
+      const res = await marketplaceService.markAsSold(id, finalSalePrice, costPrice);
+      if (res.success && res.data?.listing) {
+        setProducts((prev) =>
+          prev.map((item) => (item.id === id || item._id === id ? res.data.listing : item))
+        );
+        showToast('Listing marked as sold!', 'success');
+        fetchC2CEarnings(); // Refresh earnings
+        return res.data.listing;
+      }
+    } catch (error) {
+      console.error('Error marking as sold:', error);
+      showToast(error.response?.data?.message || 'Failed to mark as sold', 'error');
+      throw error;
+    }
   };
 
-  const updateStock = (id, newStock) => {
+  const toggleProductStatus = async (id) => {
+    const item = products.find(p => p.id === id || p._id === id);
+    if (!item) return;
+    const nextStatus = item.status === 'Active' ? 'Draft' : 'Active';
+    
+    // We create a dummy formData for status update (not perfect, but it works if backend supports partial updates)
+    const formData = new FormData();
+    formData.append('status', nextStatus);
+    
+    try {
+      const res = await productService.updateProduct(item._id || item.id, formData);
+      if (res.success && res.data?.product) {
+         setProducts((prev) =>
+            prev.map((p) => (p.id === id || p._id === id ? res.data.product : p))
+         );
+         showToast(`Listing is now ${nextStatus === 'Active' ? 'Live' : 'Paused'}`);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      showToast(error.response?.data?.message || 'Failed to update status', 'error');
+    }
+  };
+
+  const updateStock = async (id, newStock) => {
     const clamped = Math.max(0, Number(newStock));
-    setProducts((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, stock: clamped } : item))
-    );
-    showToast(`Stock updated to ${clamped} units`);
+    const formData = new FormData();
+    formData.append('stock', clamped);
+    
+    try {
+      const res = await productService.updateProduct(id, formData);
+      if (res.success && res.data?.product) {
+         setProducts((prev) =>
+            prev.map((p) => (p.id === id || p._id === id ? res.data.product : p))
+         );
+         showToast(`Stock updated to ${clamped} units`);
+      }
+    } catch (error) {
+       console.error('Error updating stock:', error);
+       showToast(error.response?.data?.message || 'Failed to update stock', 'error');
+    }
   };
 
   // ─── CRUD Actions: Orders ─────────────────────────────────────────────────
 
-  const updateOrderStatus = (orderId, newStatus, trackingInfo = {}) => {
-    setOrders((prev) =>
-      prev.map((ord) => {
-        if (ord.id === orderId) {
-          return {
-            ...ord,
-            status: newStatus,
-            trackingNumber: trackingInfo.trackingNumber || ord.trackingNumber,
-            carrier: trackingInfo.carrier || ord.carrier,
-            deliveryEstimate: trackingInfo.deliveryEstimate || ord.deliveryEstimate,
-          };
-        }
-        return ord;
-      })
-    );
-    showToast(`Order #${orderId} marked as ${newStatus}`);
+  const updateOrderStatus = async (orderId, newStatus, trackingInfo = {}) => {
+    try {
+      const res = await sellerAuthService.updateOrderStatus(orderId, newStatus, trackingInfo);
+      if (res.success) {
+        await fetchSellerOrders();
+        showToast(`Order status updated to ${newStatus}`);
+        return true;
+      }
+    } catch (err) {
+      console.error('Error updating order status:', err);
+      showToast(err?.message || 'Failed to update order status', 'error');
+    }
+    return false;
   };
 
-  const cancelOrder = (orderId, reason = 'Cancelled by vendor') => {
-    setOrders((prev) =>
-      prev.map((ord) =>
-        ord.id === orderId ? { ...ord, status: 'Cancelled', customerNote: reason } : ord
-      )
-    );
-    showToast(`Order #${orderId} has been cancelled`, 'info');
+  const cancelOrder = async (orderId, reason = 'Cancelled by vendor') => {
+    try {
+      const res = await sellerAuthService.cancelOrder(orderId, reason);
+      if (res.success) {
+        await fetchSellerOrders();
+        showToast(`Order cancelled successfully`, 'info');
+        return true;
+      }
+    } catch (err) {
+      console.error('Error cancelling order:', err);
+      showToast(err?.message || 'Failed to cancel order', 'error');
+    }
+    return false;
   };
 
   // ─── Settings & Profile Updaters ──────────────────────────────────────────
@@ -641,38 +533,7 @@ export const SellerProvider = ({ children }) => {
     }
   }, []);
 
-  // ─── Computed Dynamic Stats ───────────────────────────────────────────────
-
-  const stats = React.useMemo(() => {
-    const validOrders = orders.filter((o) => o.status !== 'Cancelled');
-    const totalRevenue = validOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-    const activeProducts = products.filter((p) => p.status === 'active');
-    const lowStockItems = products.filter((p) => p.status === 'active' && p.stock > 0 && p.stock <= 5);
-    const outOfStockItems = products.filter((p) => p.stock === 0);
-    const totalViews = products.reduce((sum, p) => sum + (p.views || 0), 0);
-    const c2cCount = products.filter((p) => p.sellerType === 'individual_c2c').length;
-    const businessCount = products.filter((p) => p.sellerType === 'business').length;
-    const totalInventoryValue = products.reduce((sum, p) => sum + p.price * p.stock, 0);
-
-    return {
-      totalRevenue,
-      ordersCount: orders.length,
-      deliveredOrdersCount: orders.filter((o) => o.status === 'Delivered').length,
-      processingOrdersCount: orders.filter((o) => o.status === 'Processing' || o.status === 'Pending').length,
-      shippedOrdersCount: orders.filter((o) => o.status === 'Shipped').length,
-      totalListings: products.length,
-      activeListings: activeProducts.length,
-      lowStockCount: lowStockItems.length,
-      outOfStockCount: outOfStockItems.length,
-      totalViews,
-      c2cCount,
-      businessCount,
-      totalInventoryValue,
-      rating: 4.9,
-      reviewsCount: 142,
-    };
-  }, [orders, products]);
-
+  // stats computation logic was removed to use backend aggregation in fetchDashboardSummary
   return (
     <SellerContext.Provider
       value={{
@@ -681,12 +542,26 @@ export const SellerProvider = ({ children }) => {
         activePersona,
         setActivePersona,
         products,
+        productsLoading,
         orders,
+        ordersLoading,
+        ordersError,
+        fetchSellerOrders,
         stats,
+        dashboardRecentOrders,
+        dashboardLowStockItems,
+        revenueChartData,
+        growthText,
+        dashboardLoading,
+        fetchDashboardSummary,
+        c2cEarnings,
+        c2cEarningsLoading,
+        fetchC2CEarnings,
         // Product Actions
         addProduct,
         updateProduct,
         deleteProduct,
+        markListingAsSold,
         toggleProductStatus,
         updateStock,
         // Order Actions

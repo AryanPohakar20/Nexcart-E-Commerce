@@ -2,43 +2,16 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiTrendingUp, FiCalendar, FiDollarSign } from 'react-icons/fi';
 
-const DATA_7D = [
-  { label: 'Mon', revenue: 14200, orders: 3 },
-  { label: 'Tue', revenue: 28500, orders: 6 },
-  { label: 'Wed', revenue: 19800, orders: 4 },
-  { label: 'Thu', revenue: 42000, orders: 9 },
-  { label: 'Fri', revenue: 51200, orders: 12 },
-  { label: 'Sat', revenue: 68900, orders: 15 },
-  { label: 'Sun', revenue: 58400, orders: 11 },
-];
-
-const DATA_30D = [
-  { label: 'Week 1', revenue: 124000, orders: 28 },
-  { label: 'Week 2', revenue: 168500, orders: 36 },
-  { label: 'Week 3', revenue: 195000, orders: 42 },
-  { label: 'Week 4', revenue: 242000, orders: 54 },
-];
-
-const DATA_12M = [
-  { label: 'Jan', revenue: 120000, orders: 25 },
-  { label: 'Feb', revenue: 150000, orders: 32 },
-  { label: 'Mar', revenue: 180000, orders: 38 },
-  { label: 'Apr', revenue: 240000, orders: 49 },
-  { label: 'May', revenue: 310000, orders: 62 },
-  { label: 'Jun', revenue: 420000, orders: 84 },
-  { label: 'Jul', revenue: 489000, orders: 98 },
-  { label: 'Aug', revenue: 530000, orders: 110 },
-  { label: 'Sep', revenue: 460000, orders: 92 },
-  { label: 'Oct', revenue: 590000, orders: 125 },
-  { label: 'Nov', revenue: 670000, orders: 140 },
-  { label: 'Dec', revenue: 780000, orders: 165 },
-];
-
-const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' }) => {
-  const [timeframe, setTimeframe] = useState('7D');
+const RevenueChart = ({ 
+  title = 'Sales & Revenue Performance', 
+  className = '', 
+  data = [], 
+  timeframe = '7D', 
+  setTimeframe,
+  growthText 
+}) => {
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
-  const data = timeframe === '7D' ? DATA_7D : timeframe === '30D' ? DATA_30D : DATA_12M;
   const maxRevenue = Math.max(...data.map((d) => d.revenue), 1000);
   const totalPeriodRevenue = data.reduce((acc, curr) => acc + curr.revenue, 0);
   const totalPeriodOrders = data.reduce((acc, curr) => acc + curr.orders, 0);
@@ -160,7 +133,7 @@ const RevenueChart = ({ title = 'Sales & Revenue Performance', className = '' })
         <div className="bg-surface border border-borderColor p-3 rounded-2xl">
           <span className="text-[10px] uppercase font-bold text-textSecondary tracking-wider block">Growth Velocity</span>
           <span className="text-sm font-black text-primary mt-0.5 block">
-            +24.6% YoY
+            {growthText || '+0%'}
           </span>
         </div>
       </div>

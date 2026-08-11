@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { FiMapPin, FiCreditCard, FiDollarSign, FiPlus, FiChevronRight, FiCheck } from 'react-icons/fi';
+import orderService from '../services/orderService';
 
 
 const Checkout = () => {
@@ -67,7 +68,7 @@ const Checkout = () => {
     }
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!selectedAddrId) {
       showToast('Please select a shipping address', 'error');
       return;
@@ -83,26 +84,81 @@ const Checkout = () => {
       return;
     }
 
-    // Place Order mock simulation
     showToast('Processing Payment...', 'info');
 
-    setTimeout(() => {
-      const newOrder = {
-        id: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
-        date: new Date().toISOString().split('T')[0],
-        items: [...cart],
-        shippingAddress: selectedAddressText,
-        paymentMethod: paymentMethod === 'COD' ? 'Cash on Delivery' : paymentMethod === 'UPI' ? `UPI (${upiId})` : 'Credit/Debit Card',
-        amount: grandTotal,
-        status: 'Processing',
-        deliveryEstimate: 'Delivery expected within 2 days'
+    try {
+      const selectedAddress = addresses.find(a => a._id === selectedAddrId);
+      const shippingAddress = {
+        fullName: selectedAddress?.fullName || '',
+        phone: selectedAddress?.phone || '',
+        addressLine1: selectedAddress?.addressLine1 || '',
+        addressLine2: selectedAddress?.addressLine2 || '',
+        city: selectedAddress?.city || '',
+        state: selectedAddress?.state || '',
+        pincode: selectedAddress?.postalCode || selectedAddress?.pincode || '',
+        country: 'India',
       };
 
-      setOrders((prev) => [newOrder, ...prev]);
+      // Group cart items by seller
+      const itemsBySeller = {};
+      cart.forEach(item => {
+        const sellerId = item.product.seller?.id || item.product.sellerId || item.product.seller || 'mock_seller_123';
+        if (!itemsBySeller[sellerId]) {
+          itemsBySeller[sellerId] = [];
+        }
+        itemsBySeller[sellerId].push(item);
+      });
+
+      const orderRequests = Object.keys(itemsBySeller).map(async (sellerId) => {
+        const sellerItems = itemsBySeller[sellerId];
+        const subtotal = sellerItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+        const tax = Math.round(subtotal * 0.12);
+        const sellerTotal = subtotal + tax;
+
+        const orderPayload = {
+          items: sellerItems.map(item => ({
+            product: item.product._id || item.product.id,
+            name: item.product.title || item.product.name,
+            image: item.product.image || '',
+            price: item.product.price,
+            quantity: item.quantity,
+            sku: item.product.sku || '',
+          })),
+          seller: sellerId,
+          totalAmount: sellerTotal,
+          shippingAddress,
+          paymentInfo: {
+            method: paymentMethod,
+            status: 'paid',
+          }
+        };
+
+        return await orderService.createOrder(orderPayload);
+      });
+
+      const results = await Promise.all(orderRequests);
+      const mainOrder = results[0]?.data?.order || results[0]?.order;
+      const orderIdToShow = mainOrder?.orderId || mainOrder?.id || `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+
+      // Sync user's buyer orders if possible
+      try {
+        const buyerOrdersRes = await orderService.getBuyerOrders();
+        if (buyerOrdersRes?.data?.orders) {
+          setOrders(buyerOrdersRes.data.orders);
+        } else if (buyerOrdersRes?.orders) {
+          setOrders(buyerOrdersRes.orders);
+        }
+      } catch (err) {
+        console.error('Failed to sync buyer orders:', err);
+      }
+
       clearCart();
       showToast('Order Placed Successfully!');
-      navigate(`/order-success/${newOrder.id}`);
-    }, 2000);
+      navigate(`/order-success/${orderIdToShow}`);
+    } catch (error) {
+      console.error('Checkout error:', error);
+      showToast(error?.message || 'Failed to place order. Please try again.', 'error');
+    }
   };
 
 

@@ -530,6 +530,10 @@ const Navbar = () => {
                 <FiZap className="text-xs animate-pulse" />
                 <span>AI Tech</span>
               </Link>
+              <Link to="/marketplace" className="hover:text-primary transition-colors flex items-center gap-1 link-underline font-bold text-amber-500">
+                <FiBriefcase className="text-xs" />
+                <span>Marketplace</span>
+              </Link>
               <Link to="/products" className="hover:text-primary transition-colors flex items-center gap-1 link-underline">
                 <FiGrid className="text-xs" />
                 <span>Browse All</span>
@@ -610,6 +614,9 @@ const Navbar = () => {
               </Link>
               <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
                 Categories
+              </Link>
+              <Link to="/marketplace" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 font-bold col-span-2 text-center">
+                C2C Marketplace
               </Link>
 
               {isCustomerOrGuest && (

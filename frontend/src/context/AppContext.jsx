@@ -6,6 +6,7 @@ import authService from '../services/authService';
 import chatService from '../services/chatService';
 import socketService from '../services/socketService';
 import { AuthContext } from './AuthContext';
+import orderService from '../services/orderService';
 
 export const AppContext = createContext();
 
@@ -337,8 +338,53 @@ export const AppProvider = ({ children }) => {
     } catch {}
   };
 
+  const loadBuyerOrders = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const res = await orderService.getBuyerOrders();
+      const rawOrders = res?.data?.orders || res?.orders || [];
+      const statusMap = {
+        pending: 'Pending',
+        confirmed: 'Processing',
+        processing: 'Processing',
+        packed: 'Processing',
+        shipped: 'Shipped',
+        delivered: 'Delivered',
+        cancelled: 'Cancelled',
+        returned: 'Returned',
+      };
+      
+      const formatted = rawOrders.map(ord => ({
+        id: ord.orderId || ord._id,
+        date: ord.createdAt ? new Date(ord.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        amount: ord.totalAmount || 0,
+        status: statusMap[ord.orderStatus] || 'Pending',
+        deliveryEstimate: ord.orderStatus === 'delivered' ? 'Delivered' : 'Delivery expected within 2 days',
+        items: (ord.items || []).map(item => ({
+          product: {
+            id: item.product?._id || item.product,
+            title: item.name || '',
+            brand: item.product?.brand || 'NexCart',
+            price: item.price || 0,
+            image: item.image || item.product?.thumbnail || item.product?.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
+          },
+          quantity: item.quantity || 1,
+        }))
+      }));
+
+      setOrders(formatted);
+    } catch (err) {
+      console.error('Failed to load buyer orders:', err);
+    }
+  };
+
   useEffect(() => {
-    if (user) loadAddresses();
+    if (user) {
+      loadAddresses();
+      loadBuyerOrders();
+    }
   }, [user?._id]);
 
   const addAddress = async (addressData) => {

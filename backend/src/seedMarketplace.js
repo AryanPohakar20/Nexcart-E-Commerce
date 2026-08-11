@@ -9,6 +9,8 @@ import Order from './models/Order.js';
 import Settings from './models/Settings.js';
 import Notification from './models/Notification.js';
 import Report from './models/Report.js';
+import Review from './models/Review.js';
+import Follow from './models/Follow.js';
 
 const seedMarketplace = async () => {
   try {
@@ -387,7 +389,41 @@ const seedMarketplace = async () => {
     }
     console.log('Seeded Dispute Reports.');
 
-    console.log('✅ Marketplace successfully seeded with Categories, Products, Orders, Settings, Notifications, and Reports.');
+    // 7. Reviews & Follows
+    if (sellerUser && sampleUser) {
+      const existingFollow = await Follow.findOne({ follower: sampleUser._id, following: sellerUser._id });
+      if (!existingFollow) {
+        await Follow.create({ follower: sampleUser._id, following: sellerUser._id });
+        console.log('Seeded Follow relationship.');
+      }
+
+      const existingReview1 = await Review.findOne({ seller: sellerUser._id, buyer: sampleUser._id });
+      if (!existingReview1) {
+        await Review.create({
+          seller: sellerUser._id,
+          buyer: sampleUser._id,
+          buyerName: 'Rahul Verma',
+          buyerAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
+          rating: 5,
+          comment: 'Super fast handoff! The items were in mint condition as advertised, came with full original accessories and box.',
+          productTitle: 'Quantum SoundPro ANC Wireless Earbuds',
+          orderType: 'Verified Purchase',
+        });
+        await Review.create({
+          seller: sellerUser._id,
+          buyer: sampleUser._id,
+          buyerName: 'Sneha Patel',
+          buyerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80',
+          rating: 5,
+          comment: 'Amazing packaging! Everything arrived safely and promptly. Excellent official store experience.',
+          productTitle: 'Apex UltraBook Pro 15',
+          orderType: 'Verified Purchase',
+        });
+        console.log('Seeded Sample Seller Reviews.');
+      }
+    }
+
+    console.log('✅ Marketplace successfully seeded with Categories, Products, Orders, Settings, Notifications, Reviews, and Reports.');
     process.exit(0);
   } catch (err) {
     console.error('❌ Seed error:', err);

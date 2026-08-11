@@ -15,15 +15,20 @@ import {
   updateProfileImage,
   updateBanner,
   getPublicProfile,
+  toggleFollow,
+  createReview,
   getSettings,
   updateSettings,
   changePassword,
   deactivateStore,
   deleteStore,
   getDashboardSummary,
+  getSellerOrders,
+  updateSellerOrderStatus,
+  cancelSellerOrder,
 } from '../controllers/sellerController.js';
 
-import { authenticate } from '../middlewares/authenticate.js';
+import { authenticate, optionalAuthenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 import { upload } from '../middlewares/upload.js';
 import {
@@ -37,10 +42,12 @@ import {
 
 const router = Router();
 
-// ─── Public Routes (no authentication required) ───────────────────────────────
-// Must be defined BEFORE the authenticate middleware below
+// ─── Public Profile Routes ────────────────────────────────────────────────────
+// Must be defined BEFORE the strict authenticate middleware below
 
-router.get('/public/:slug', getPublicProfile);
+router.get('/public/:slug', optionalAuthenticate, getPublicProfile);
+router.post('/public/:slug/follow', authenticate, toggleFollow);
+router.post('/public/:slug/review', authenticate, createReview);
 
 // ─── All routes below require authentication ──────────────────────────────────
 
@@ -87,6 +94,11 @@ router.patch(
 
 // Dashboard Summary
 router.get('/dashboard/summary', authorize('seller', 'marketplace_seller'), getDashboardSummary);
+
+// Orders Pipeline
+router.get('/dashboard/orders',              authorize('seller', 'marketplace_seller'), getSellerOrders);
+router.patch('/dashboard/orders/:id/status', authorize('seller', 'marketplace_seller'), updateSellerOrderStatus);
+router.patch('/dashboard/orders/:id/cancel', authorize('seller', 'marketplace_seller'), cancelSellerOrder);
 
 // Settings
 router.get('/dashboard/settings',           authorize('seller', 'marketplace_seller'), getSettings);

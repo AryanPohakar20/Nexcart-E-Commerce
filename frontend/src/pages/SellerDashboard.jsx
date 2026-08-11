@@ -14,13 +14,24 @@ import {
 
 const SellerDashboard = () => {
   const navigate = useNavigate();
-  const { settings, stats, orders, products } = useContext(SellerContext);
+  const { 
+    settings, 
+    stats, 
+    dashboardRecentOrders, 
+    dashboardLowStockItems, 
+    revenueChartData, 
+    growthText,
+    fetchDashboardSummary
+  } = useContext(SellerContext);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [timeframe, setTimeframe] = useState('7D');
 
-  const recentOrders = orders.slice(0, 5);
-  const lowStockItems = products.filter((p) => p.status === 'active' && p.stock <= 5);
+  // Fetch summary when timeframe changes
+  React.useEffect(() => {
+    fetchDashboardSummary(timeframe);
+  }, [timeframe, fetchDashboardSummary]);
 
   return (
     <div className="space-y-8 text-left">
@@ -75,8 +86,8 @@ const SellerDashboard = () => {
           value={stats.totalRevenue}
           prefix="₹"
           formatter={(val) => val.toLocaleString('en-IN')}
-          change="21.5% this month"
-          isPositive={true}
+          change={`${growthText} vs prev period`}
+          isPositive={growthText.startsWith('+')}
           icon={FiDollarSign}
           accent="yellow"
           subtitle="Net payouts ready"
@@ -85,7 +96,7 @@ const SellerDashboard = () => {
         <SellerStatsCard
           title="Orders Placed"
           value={stats.ordersCount}
-          change="+3 new today"
+          change={`+${stats.ordersCount} total`}
           isPositive={true}
           icon={FiShoppingBag}
           accent="blue"
@@ -105,11 +116,11 @@ const SellerDashboard = () => {
         <SellerStatsCard
           title="Total Listing Impressions"
           value={stats.totalViews}
-          change="4.9 ★ Seller Rating"
+          change={`${stats.rating} ★ Seller Rating`}
           isPositive={true}
           icon={FiEye}
           accent="green"
-          subtitle="142 verified reviews"
+          subtitle={`${stats.reviewsCount} verified reviews`}
         />
       </div>
 
@@ -117,7 +128,13 @@ const SellerDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         {/* Revenue Performance Chart (2 Cols) */}
         <div className="lg:col-span-2 space-y-6">
-          <RevenueChart title="Revenue & Sales Trajectory" />
+          <RevenueChart 
+            title="Revenue & Sales Trajectory" 
+            data={revenueChartData}
+            timeframe={timeframe}
+            setTimeframe={setTimeframe}
+            growthText={growthText}
+          />
 
           {/* Recent Orders Overview */}
           <div className="bg-cardBg border border-borderColor rounded-3xl p-6 space-y-4">
@@ -151,12 +168,13 @@ const SellerDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-borderColor">
-                  {recentOrders.map((ord) => (
-                    <tr
-                      key={ord.id}
-                      onClick={() => setSelectedOrder(ord)}
-                      className="hover:bg-surface transition-colors cursor-pointer group"
-                    >
+                  {dashboardRecentOrders.length > 0 ? (
+                    dashboardRecentOrders.map((ord) => (
+                      <tr
+                        key={ord.id}
+                        onClick={() => setSelectedOrder(ord)}
+                        className="hover:bg-surface transition-colors cursor-pointer group"
+                      >
                       <td className="py-3.5 font-bold text-textPrimary group-hover:text-primary transition-colors">
                         {ord.id}
                       </td>
@@ -201,7 +219,14 @@ const SellerDashboard = () => {
                         </span>
                       </td>
                     </tr>
-                  ))}
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="py-8 text-center text-textSecondary text-xs">
+                        No recent orders found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -225,9 +250,9 @@ const SellerDashboard = () => {
               </button>
             </div>
 
-            {lowStockItems.length > 0 ? (
+            {dashboardLowStockItems.length > 0 ? (
               <div className="space-y-3">
-                {lowStockItems.slice(0, 3).map((item) => (
+                {dashboardLowStockItems.map((item) => (
                   <div
                     key={item.id}
                     className="p-3 bg-surface border border-borderColor rounded-2xl flex items-center justify-between gap-3"

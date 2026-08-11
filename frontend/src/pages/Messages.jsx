@@ -90,7 +90,7 @@ const Messages = () => {
   const formatConversation = useCallback((conv) => {
     const isConvBlocked = conv.isBlocked || false;
     const partnerData = conv.partner || {};
-    const productData = conv.product || {};
+    const productData = conv.listingId || conv.productId || conv.product || {};
 
     return {
       id: conv._id || conv.id,
@@ -133,7 +133,12 @@ const Messages = () => {
       if (res.success && Array.isArray(res.data)) {
         const formattedList = res.data.map(formatConversation);
         setConversations(formattedList);
-        if (formattedList.length > 0 && !activeConversationId) {
+        
+        const urlConvId = searchParams.get('conversationId');
+        if (urlConvId && formattedList.some(c => c.id === urlConvId)) {
+          setActiveConversationId(urlConvId);
+          setMobileView('chat');
+        } else if (formattedList.length > 0 && !activeConversationId && !urlConvId) {
           setActiveConversationId(formattedList[0].id);
         }
       }
@@ -176,6 +181,18 @@ const Messages = () => {
 
   // Handle URL Query Params (e.g. /messages?productId=prod123&seller=sellerId)
   useEffect(() => {
+    const paramConvId = searchParams.get('conversationId');
+    if (paramConvId) {
+      if (!loadingConvs && conversations.length > 0) {
+        const exists = conversations.some(c => c.id === paramConvId);
+        if (exists && activeConversationId !== paramConvId) {
+          setActiveConversationId(paramConvId);
+          setMobileView('chat');
+        }
+      }
+      return; // Skip the B2C creation logic if we have conversationId
+    }
+
     const paramProdId = searchParams.get('productId');
     const paramSellerId = searchParams.get('sellerId') || searchParams.get('seller');
 
@@ -194,7 +211,7 @@ const Messages = () => {
         console.error('Error creating conversation from URL param:', err);
       });
     }
-  }, [searchParams, currentUserIdStr, formatConversation]);
+  }, [searchParams, currentUserIdStr, formatConversation, loadingConvs, conversations, activeConversationId]);
 
   // Real-Time Socket Event Listeners
   useEffect(() => {

@@ -7,6 +7,7 @@ import Report from '../models/Report.js';
 import User from '../models/User.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { AppError } from '../middlewares/errorMiddleware.js';
+import MarketplaceListing from '../models/MarketplaceListing.js';
 
 /**
  * @route   POST /api/chat/createConversation
@@ -15,29 +16,46 @@ import { AppError } from '../middlewares/errorMiddleware.js';
  */
 export const createConversation = asyncHandler(async (req, res) => {
   const currentUserId = req.user._id;
-  const { participantId, productId } = req.body;
+  let { participantId, productId, listingId } = req.body;
+
+  if (listingId) {
+    const listing = await MarketplaceListing.findById(listingId);
+    if (!listing) {
+      throw new AppError('Listing not found.', 404);
+    }
+    participantId = listing.sellerId;
+    productId = null; // Ensure it's a pure C2C conversation
+  }
+
+  if (!participantId) {
+    throw new AppError('participantId is required if no listingId is provided.', 400);
+  }
 
   if (currentUserId.toString() === participantId.toString()) {
-    throw new AppError('You cannot start a conversation with yourself.', 400);
+    throw new AppError('You cannot start a conversation with yourself regarding your own listing.', 400);
   }
 
   // Check if participant exists
-  const partnerUser = await User.findById(participantId).select('_id name avatar role online lastSeen').lean();
+  const partnerUser = await User.findById(participantId).select('_id name firstName lastName username avatar role online lastSeen').lean();
   if (!partnerUser) {
     throw new AppError('Partner user not found.', 404);
   }
 
-  // Search for existing conversation with participants & optional productId
+  // Search for existing conversation with participants & optional listingId / productId
   const query = {
     participants: { $all: [currentUserId, participantId] },
   };
-  if (productId) {
+  if (listingId) {
+    query.listingId = listingId;
+  } else if (productId) {
     query.productId = productId;
   }
 
   let conversation = await Conversation.findOne(query)
-    .populate('participants', '_id name avatar role online lastSeen location')
+    .populate('participants', '_id name firstName lastName username avatar role online lastSeen location')
     .populate('lastMessage')
+    .populate('productId', '_id title price image category condition status')
+    .populate('listingId', '_id title price images category condition status location sellerId')
     .exec();
 
   if (!conversation) {
@@ -52,6 +70,7 @@ export const createConversation = asyncHandler(async (req, res) => {
     conversation = await Conversation.create({
       participants: [currentUserId, participantId],
       productId: productId || null,
+      listingId: listingId || null,
       unreadCount: { [currentUserId.toString()]: 0, [participantId.toString()]: 0 },
       isBlocked: !!blockedPair,
       blockedBy: blockedPair ? blockedPair.blocker : null,
@@ -59,7 +78,9 @@ export const createConversation = asyncHandler(async (req, res) => {
 
     // Populate initial conversation
     conversation = await Conversation.findById(conversation._id)
-      .populate('participants', '_id name avatar role online lastSeen location')
+      .populate('participants', '_id name firstName lastName username avatar role online lastSeen location')
+      .populate('productId', '_id title price image category condition status')
+      .populate('listingId', '_id title price images category condition status location sellerId')
       .exec();
 
     const io = req.app.get('io');
@@ -95,12 +116,13 @@ export const getConversations = asyncHandler(async (req, res) => {
   }
 
   let conversations = await Conversation.find(matchQuery)
-    .populate('participants', '_id name avatar role online lastSeen location rating reviewCount verified')
+    .populate('participants', '_id name firstName lastName username avatar role online lastSeen location rating reviewCount verified')
     .populate({
       path: 'lastMessage',
       populate: { path: 'senderId receiverId', select: '_id name avatar' },
     })
     .populate('productId', '_id title price image category condition status')
+    .populate('listingId', '_id title price images category condition status location sellerId')
     .sort({ updatedAt: -1 })
     .lean()
     .exec();

@@ -12,7 +12,12 @@ const conversationSchema = new mongoose.Schema(
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Product',
-      required: false, // Optional for general user-to-user chat, required for marketplace product inquiry
+      required: false,
+    },
+    listingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MarketplaceListing',
+      required: false,
     },
     lastMessage: {
       type: mongoose.Schema.Types.ObjectId,

@@ -176,9 +176,9 @@ const sellerAuthService = {
     }
   },
 
-  getDashboardSummary: async () => {
+  getDashboardSummary: async (timeframe = '7D') => {
     try {
-      const response = await axiosInstance.get('/seller/dashboard/summary');
+      const response = await axiosInstance.get(`/seller/dashboard/summary?timeframe=${timeframe}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -236,6 +236,38 @@ const sellerAuthService = {
   getPublicProfile: async (slug) => {
     try {
       const response = await axiosInstance.get(`/seller/public/${slug}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  getOrders: async () => {
+    try {
+      const response = await axiosInstance.get('/seller/dashboard/orders');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  updateOrderStatus: async (id, status, trackingInfo = {}) => {
+    try {
+      const response = await axiosInstance.patch(`/seller/dashboard/orders/${id}/status`, {
+        status,
+        ...trackingInfo,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  cancelOrder: async (id, reason) => {
+    try {
+      const response = await axiosInstance.patch(`/seller/dashboard/orders/${id}/cancel`, {
+        reason,
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

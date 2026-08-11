@@ -10,6 +10,8 @@ import AdminLayout from "../layouts/AdminLayout";
 import Home from "../pages/Home";
 import Products from "../pages/Products";
 import ProductDetails from "../pages/ProductDetails";
+import Marketplace from "../pages/Marketplace";
+import MarketplaceProduct from "../pages/MarketplaceProduct";
 import Category from "../pages/Category";
 import Categories from "../pages/Categories";
 import OrderSuccess from "../pages/OrderSuccess";
@@ -93,6 +95,8 @@ const AppRoutes = () => {
         <Route index element={<Home />} />
         <Route path="products" element={<Products />} />
         <Route path="product/:id" element={<ProductDetails />} />
+        <Route path="marketplace" element={<Marketplace />} />
+        <Route path="marketplace/product/:id" element={<MarketplaceProduct />} />
         <Route path="category/:id" element={<Category />} />
         <Route path="categories" element={<Categories />} />
         <Route path="search" element={<Search />} />
@@ -146,6 +150,10 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        {/* Public Profile View Routes */}
+        <Route path="profile/:userId" element={<SellerProfile />} />
+        <Route path="seller/:id" element={<SellerProfile />} />
+        <Route path="store/:slug" element={<SellerProfile />} />
         <Route
           path="addresses"
           element={

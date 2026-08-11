@@ -28,7 +28,7 @@ class SocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('⚡ Socket connected successfully:', this.socket.id);
+      console.log('⚡ Socket connected successfully:', this.socket?.id);
     });
 
     this.socket.on('connect_error', (err) => {

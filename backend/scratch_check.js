@@ -137,3 +137,5 @@ async function testMapping() {
 }
 
 testMapping();
+
+// trigger restart

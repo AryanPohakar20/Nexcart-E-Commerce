@@ -45,3 +45,28 @@ export const authenticate = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, 'Not authorized to access this route');
   }
 });
+
+export const optionalAuthenticate = asyncHandler(async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies?.accessToken) {
+    token = req.cookies.accessToken;
+  } else if (req.cookies?.token) {
+    token = req.cookies.token;
+  }
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
+  } catch {
+    req.user = null;
+  }
+  next();
+});
