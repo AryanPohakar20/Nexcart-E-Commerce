@@ -121,3 +121,16 @@ export const listSellers = async ({ page = 1, limit = 20, filter = {} } = {}) =>
 
   return { sellers, total, page, limit, totalPages: Math.ceil(total / limit) };
 };
+
+/**
+ * Update the rating statistics for a seller by their User ID.
+ * @param {string} sellerUserId - Seller User ID
+ * @param {Object} stats - Statistics object
+ */
+export const updateSellerRatingStatistics = async (sellerUserId, stats) => {
+  return await Seller.findOneAndUpdate(
+    { userId: sellerUserId },
+    { $set: stats },
+    { new: true }
+  );
+};

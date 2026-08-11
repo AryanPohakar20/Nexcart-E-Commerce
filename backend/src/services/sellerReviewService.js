@@ -5,6 +5,7 @@ import * as reviewEligibilityService from './reviewEligibilityService.js';
 import { toSellerReviewDTO, toSellerReviewDTOList } from '../mappers/sellerReviewMapper.js';
 import logger from '../utils/logger.js';
 import SellerReview from '../models/SellerReview.js';
+import { recalculateSellerRating } from './sellerRatingService.js';
 
 /**
  * Create a new seller review.
@@ -36,7 +37,13 @@ export const createReview = async (reviewData) => {
 
   logger.info(`Seller review created successfully. Review ID: ${newReview._id}, Customer: ${customerId}, Seller: ${sellerId}`);
 
-  // TODO: Trigger Seller Rating Aggregation
+  // Trigger Seller Rating Aggregation (non-blocking)
+  try {
+    await recalculateSellerRating(sellerId);
+  } catch (error) {
+    logger.error(`Seller rating aggregation failed after review creation. Seller ID: ${sellerId}`, error);
+  }
+
   // TODO: Publish Review Created Event
   // TODO: Recalculate Seller Reputation
 
@@ -76,7 +83,15 @@ export const updateReview = async (id, customerId, updateData) => {
 
   logger.info(`Seller review updated successfully. Review ID: ${id}, Customer: ${customerId}`);
 
-  // TODO: Trigger Seller Rating Aggregation
+  // Recalculate rating statistics if rating actually changed
+  if (sanitizedUpdate.rating !== undefined && sanitizedUpdate.rating !== review.rating) {
+    try {
+      await recalculateSellerRating(review.sellerId);
+    } catch (error) {
+      logger.error(`Seller rating aggregation failed after review update. Seller ID: ${review.sellerId}`, error);
+    }
+  }
+
   // TODO: Publish Review Updated Event
 
   const populatedReview = await SellerReview.findById(updatedReview._id)
@@ -108,7 +123,13 @@ export const deleteReview = async (id, customerId) => {
 
   logger.info(`Seller review soft-deleted successfully. Review ID: ${id}, Customer: ${customerId}`);
 
-  // TODO: Trigger Seller Rating Aggregation
+  // Trigger Seller Rating Aggregation
+  try {
+    await recalculateSellerRating(review.sellerId);
+  } catch (error) {
+    logger.error(`Seller rating aggregation failed after review deletion. Seller ID: ${review.sellerId}`, error);
+  }
+
   // TODO: Publish Review Deleted Event
 
   return { id, isDeleted: true };

@@ -119,3 +119,66 @@ export const existsByOrderAndSeller = async (orderId, sellerId) => {
   const count = await SellerReview.countDocuments({ orderId, sellerId, isDeleted: false });
   return count > 0;
 };
+
+/**
+ * Run a single optimized MongoDB aggregation pipeline to compute seller rating statistics.
+ */
+export const aggregateSellerRating = async (sellerUserId) => {
+  if (!sellerUserId || !mongoose.Types.ObjectId.isValid(sellerUserId)) {
+    return {
+      averageRating: 0,
+      totalReviews: 0,
+      ratingDistribution: { oneStar: 0, twoStar: 0, threeStar: 0, fourStar: 0, fiveStar: 0 }
+    };
+  }
+
+  const selId = new mongoose.Types.ObjectId(sellerUserId);
+  const stats = await SellerReview.aggregate([
+    {
+      $match: {
+        sellerId: selId,
+        status: 'Published',
+        isDeleted: false,
+      },
+    },
+    {
+      $group: {
+        _id: '$sellerId',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+        fiveStar: { $sum: { $cond: [{ $eq: ['$rating', 5] }, 1, 0] } },
+        fourStar: { $sum: { $cond: [{ $eq: ['$rating', 4] }, 1, 0] } },
+        threeStar: { $sum: { $cond: [{ $eq: ['$rating', 3] }, 1, 0] } },
+        twoStar: { $sum: { $cond: [{ $eq: ['$rating', 2] }, 1, 0] } },
+        oneStar: { $sum: { $cond: [{ $eq: ['$rating', 1] }, 1, 0] } },
+      },
+    },
+  ]);
+
+  if (stats.length === 0) {
+    return {
+      averageRating: 0,
+      totalReviews: 0,
+      ratingDistribution: {
+        oneStar: 0,
+        twoStar: 0,
+        threeStar: 0,
+        fourStar: 0,
+        fiveStar: 0,
+      },
+    };
+  }
+
+  const result = stats[0];
+  return {
+    averageRating: Math.round(result.averageRating * 10) / 10,
+    totalReviews: result.totalReviews,
+    ratingDistribution: {
+      oneStar: result.oneStar,
+      twoStar: result.twoStar,
+      threeStar: result.threeStar,
+      fourStar: result.fourStar,
+      fiveStar: result.fiveStar,
+    },
+  };
+};

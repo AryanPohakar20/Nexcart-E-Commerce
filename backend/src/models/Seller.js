@@ -314,6 +314,24 @@ const sellerSchema = new mongoose.Schema(
     // ── New: Public Metrics ────────────────────────────────────────────────────
     rating: { type: Number, default: 0, min: 0, max: 5 },
     totalReviews: { type: Number, default: 0, min: 0 },
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
+    ratingDistribution: {
+      type: {
+        oneStar: { type: Number, default: 0 },
+        twoStar: { type: Number, default: 0 },
+        threeStar: { type: Number, default: 0 },
+        fourStar: { type: Number, default: 0 },
+        fiveStar: { type: Number, default: 0 },
+      },
+      default: () => ({
+        oneStar: 0,
+        twoStar: 0,
+        threeStar: 0,
+        fourStar: 0,
+        fiveStar: 0,
+      }),
+    },
+    lastRatingUpdatedAt: { type: Date, default: null },
     followers: { type: Number, default: 0, min: 0 },
     profileViews: { type: Number, default: 0, min: 0 },
 
