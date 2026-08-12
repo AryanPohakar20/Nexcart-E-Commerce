@@ -391,7 +391,9 @@ export const SellerProvider = ({ children }) => {
           prev.map((item) => (item.id === id || item._id === id ? res.data.listing : item))
         );
         showToast('Listing marked as sold!', 'success');
-        fetchC2CEarnings(); // Refresh earnings
+        // Refresh dashboard stats + earnings so the dashboard cards update immediately
+        fetchC2CEarnings();
+        fetchDashboardSummary('7D');
         return res.data.listing;
       }
     } catch (error) {

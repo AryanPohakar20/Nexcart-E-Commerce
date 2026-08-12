@@ -15,6 +15,7 @@ import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import Follow from '../models/Follow.js';
 import Review from '../models/Review.js';
+import MarketplaceListing from '../models/MarketplaceListing.js';
 import logger from '../utils/logger.js';
 
 // ─── Helper: ensure Seller document exists ───────────────────────────────────
@@ -811,6 +812,12 @@ export const getDashboardSummary = async (userId, timeframe = '7D') => {
     .sort({ createdAt: -1 })
     .lean();
 
+  // Fetch all sold marketplace listings for seller
+  const soldMarketplaceListings = await MarketplaceListing.find({
+    sellerId: seller.userId,
+    status: 'sold'
+  }).lean();
+
   // Fetch all products for seller (non-deleted)
   const products = await Product.find({ sellerId: seller.userId, status: { $ne: 'Deleted' } }).lean();
 
@@ -829,6 +836,10 @@ export const getDashboardSummary = async (userId, timeframe = '7D') => {
     if (o.orderStatus === 'shipped') shippedOrdersCount++;
   });
 
+  soldMarketplaceListings.forEach(l => {
+    totalRevenue += (l.finalSalePrice || 0);
+  });
+
   const activeProducts = products.filter(p => p.status === 'Active' || p.status === 'active');
   const lowStockItemsFull = activeProducts.filter(p => p.stock > 0 && p.stock <= 5).sort((a, b) => a.stock - b.stock);
   const outOfStockCount = products.filter(p => p.stock === 0).length;
@@ -839,13 +850,21 @@ export const getDashboardSummary = async (userId, timeframe = '7D') => {
   const totalInventoryValue = products.reduce((sum, p) => sum + ((p.price || 0) * (p.stock || 0)), 0);
 
   // Period stats for growth
-  const curRev = orders
+  let curRev = orders
     .filter(o => o.orderStatus !== 'cancelled' && new Date(o.createdAt) >= currentStart)
     .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     
-  const prevRev = orders
+  let prevRev = orders
     .filter(o => o.orderStatus !== 'cancelled' && new Date(o.createdAt) >= prevStart && new Date(o.createdAt) < prevEnd)
     .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+  curRev += soldMarketplaceListings
+    .filter(l => new Date(l.soldAt || l.updatedAt) >= currentStart)
+    .reduce((sum, l) => sum + (l.finalSalePrice || 0), 0);
+    
+  prevRev += soldMarketplaceListings
+    .filter(l => new Date(l.soldAt || l.updatedAt) >= prevStart && new Date(l.soldAt || l.updatedAt) < prevEnd)
+    .reduce((sum, l) => sum + (l.finalSalePrice || 0), 0);
   
   let growthText = '+0%';
   if (prevRev === 0) {
@@ -887,6 +906,24 @@ export const getDashboardSummary = async (userId, timeframe = '7D') => {
        }
        if (chartDataMap[label]) {
          chartDataMap[label].revenue += (o.totalAmount || 0);
+         chartDataMap[label].orders += 1;
+       }
+    }
+  });
+
+  soldMarketplaceListings.forEach(l => {
+    const lDate = new Date(l.soldAt || l.updatedAt);
+    if (lDate >= currentStart) {
+       let label;
+       if (timeframe === '12M') {
+         label = lDate.toLocaleString('default', { month: 'short' });
+       } else if (timeframe === '7D') {
+         label = lDate.toLocaleString('default', { weekday: 'short' });
+       } else {
+         label = lDate.getDate().toString();
+       }
+       if (chartDataMap[label]) {
+         chartDataMap[label].revenue += (l.finalSalePrice || 0);
          chartDataMap[label].orders += 1;
        }
     }
