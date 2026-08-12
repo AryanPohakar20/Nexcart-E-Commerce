@@ -20,6 +20,7 @@ const PORT = process.env.PORT || 5000;
 // Allowed CORS origins for HTTP & Socket.IO
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  'https://nexcart-e-commerce.vercel.app', // Production frontend
   'http://localhost:3000',
   'http://localhost:5173',
   'http://127.0.0.1:3000',
