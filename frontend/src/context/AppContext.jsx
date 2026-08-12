@@ -42,9 +42,6 @@ export const AppProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
-  // Chat/Messaging
-  const [unreadChatCount, setUnreadChatCount] = useState(0);
-
   const [toasts, setToasts] = useState([]);
   const [prevUser, setPrevUser] = useState(null);
 
