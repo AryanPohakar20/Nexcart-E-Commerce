@@ -21,7 +21,8 @@ class SocketService {
 
     this.socket = io(socketUrl, {
       auth: { token },
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'], // polling first — required for Render free tier
+      upgrade: true,                         // upgrade to websocket after polling connects
       autoConnect: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
