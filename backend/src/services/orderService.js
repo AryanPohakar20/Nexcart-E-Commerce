@@ -239,13 +239,13 @@ export const placeOrder = async (customerId, orderData) => {
 /**
  * Get detailed order information for a specific customer.
  * Enforces customer ownership — returns 404 if order not found or not owned.
+ * Accepts either the MongoDB ObjectId or the business order number (ORD-xxxxx).
  */
 export const getCustomerOrderDetails = async (orderId, customerId) => {
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
-    throw new ApiError(400, 'Invalid order id.');
-  }
+  const order = mongoose.Types.ObjectId.isValid(orderId)
+    ? await orderRepo.findCustomerOrderDetails(orderId, customerId)
+    : await orderRepo.findCustomerOrderByNumber(orderId, customerId);
 
-  const order = await orderRepo.findCustomerOrderDetails(orderId, customerId);
   if (!order) throw new ApiError(404, 'Order not found');
 
   return formatCustomerOrderDetail(order);
@@ -294,19 +294,7 @@ export const getCustomerOrders = async (customerId, query = {}) => {
 
   const totalPages = Math.ceil(totalOrders / limit) || 1;
 
-  const mappedOrders = orders.map(order => ({
-    _id:           order._id,
-    orderId:       order.orderId || order.orderNumber,
-    orderNumber:   order.orderNumber || order.orderId,
-    orderDate:     order.createdAt,
-    orderStatus:   order.orderStatus,
-    paymentStatus: order.paymentInfo?.status || 'pending',
-    paymentMethod: order.paymentInfo?.method || 'COD',
-    grandTotal:    order.totalAmount || order.pricing?.total || 0,
-    itemCount:     order.items?.reduce((s, i) => s + (i.quantity || 0), 0) || 0,
-    firstProduct:  order.items?.[0]?.product?.thumbnail || order.items?.[0]?.thumbnail || null,
-    sellerName:    order.seller?.business?.businessName || order.seller?.accountInfo?.displayName || 'Nexcart Seller',
-  }));
+  const mappedOrders = orders.map(order => formatCustomerOrderSummary(order));
 
   return {
     orders: mappedOrders,
@@ -581,44 +569,115 @@ export const updateSellerOrderStatus = async (orderId, sellerUserId, status) => 
 
 // ─── Internal Formatters ──────────────────────────────────────────────────────
 
-const formatCustomerOrderDetail = (order) => ({
-  _id:          order._id,
-  orderId:      order.orderId || order.orderNumber,
-  orderNumber:  order.orderNumber || order.orderId,
-  orderDate:    order.createdAt,
-  orderStatus:  order.orderStatus,
-  paymentStatus: order.paymentInfo?.status || 'pending',
-  paymentMethod: order.paymentInfo?.method || 'COD',
-  grandTotal:   order.totalAmount || order.pricing?.total || 0,
-  pricing: {
-    subtotal:        order.pricing?.subtotal || order.totalAmount || 0,
-    tax:             order.pricing?.tax || 0,
-    shippingCharges: order.pricing?.shippingCharges || 0,
-    discount:        order.pricing?.discount || 0,
-    total:           order.totalAmount || order.pricing?.total || 0,
-  },
-  shippingAddress: order.shippingAddress || null,
-  seller: {
-    shopName: order.seller?.business?.businessName ||
-              order.seller?.accountInfo?.displayName ||
-              'Nexcart Seller',
-  },
-  items: order.items.map(item => ({
-    productId:  item.product?._id || item.product,
-    name:       item.product?.title || item.product?.name || item.title || item.name || 'Product',
-    thumbnail:  item.product?.thumbnail || item.thumbnail || null,
-    quantity:   item.quantity,
-    price:      item.price,
-    subtotal:   item.subtotal || (item.price * item.quantity),
-  })),
-  timeline: (order.timeline || []).map(e => ({
-    status:    e.status,
-    updatedBy: e.updatedBy || 'System',
-    timestamp: e.timestamp,
-    message:   e.description || e.title || e.message || '',
-  })),
-  trackingNumber:    order.tracking?.trackingNumber || order.trackingNumber || null,
-  estimatedDelivery: order.tracking?.estimatedDelivery || null,
-  orderNotes:        order.orderNotes || null,
-  returnRequested:   order.returnRequested || false,
-});
+/**
+ * Map order items to the customer-facing DTO shape.
+ * Uses the MongoDB product data (populated by the repository) as the source
+ * of truth for title/brand/image, falling back to the order snapshot fields.
+ */
+const formatCustomerOrderItems = (order) =>
+  (order.items || []).map(item => {
+    const product = item.product || {};
+    const images = Array.isArray(product.images) ? product.images : [];
+    const primaryImage =
+      (images.find(img => img && img.isPrimary)?.url) ||
+      (images[0]?.url) ||
+      '';
+
+    let itemImage = primaryImage;
+    if (!itemImage) {
+      if (typeof item.image === 'string' && item.image.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(item.image.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ').replace(/'/g, '"'));
+          itemImage = parsed.url;
+        } catch (e) {
+          itemImage = item.image;
+        }
+      } else {
+        itemImage = item.image || item.thumbnail || product.thumbnail || '';
+      }
+    }
+
+    return {
+      product: {
+        _id:   product._id || item.productId || null,
+        title: product.title || product.name || item.title || item.name || 'Product',
+        brand: product.brand || 'NexCart',
+        price: item.price || 0,
+        image: itemImage,
+        images: images,
+      },
+      quantity: item.quantity || 1,
+      price:    item.price || 0,
+      subtotal: item.subtotal || ((item.price || 0) * (item.quantity || 1)),
+    };
+  });
+
+/**
+ * Customer-facing order summary DTO (list view).
+ * Contains everything the frontend Orders page and context normalizer need.
+ */
+const formatCustomerOrderSummary = (order) => {
+  const total = order.totalAmount ?? order.pricing?.total ?? 0;
+  const sellerName =
+    order.seller?.business?.businessName ||
+    order.seller?.accountInfo?.displayName ||
+    'Nexcart Seller';
+
+  return {
+    _id:           order._id,
+    orderId:       order.orderId || order.orderNumber,
+    orderNumber:   order.orderNumber || order.orderId,
+    createdAt:     order.createdAt,
+    orderDate:     order.createdAt,
+    orderStatus:   order.orderStatus,
+    paymentStatus: order.paymentInfo?.status || order.payment?.paymentStatus || 'pending',
+    paymentMethod: order.paymentInfo?.method || order.payment?.paymentMethod || 'COD',
+    totalAmount:   total,
+    grandTotal:    total,
+    itemCount:     order.items?.reduce((s, i) => s + (i.quantity || 0), 0) || 0,
+    firstProduct:  order.items?.[0]?.product?.thumbnail || order.items?.[0]?.thumbnail || null,
+    sellerName,
+    seller: {
+      id:   order.seller?._id || null,
+      name: sellerName,
+    },
+    items: formatCustomerOrderItems(order),
+    pricing: {
+      subtotal:        order.pricing?.subtotal || 0,
+      tax:             order.pricing?.tax || 0,
+      shippingCharges: order.pricing?.shippingCharges || 0,
+      discount:        order.pricing?.discount || 0,
+      total:           total,
+    },
+    tracking: {
+      trackingNumber:    order.tracking?.trackingNumber || order.trackingNumber || null,
+      carrier:           order.tracking?.carrier || order.shippingCarrier || null,
+      estimatedDelivery: order.tracking?.estimatedDelivery || null,
+    },
+  };
+};
+
+/**
+ * Customer-facing order detail DTO.
+ * Superset of the summary DTO with addresses, timeline, notes, and return info.
+ */
+const formatCustomerOrderDetail = (order) => {
+  const summary = formatCustomerOrderSummary(order);
+
+  return {
+    ...summary,
+    shippingAddress:  order.shippingAddress || null,
+    billingAddress:   order.billingAddress || null,
+    timeline: (order.timeline || []).map(e => ({
+      status:    e.status,
+      updatedBy: e.updatedBy || 'System',
+      timestamp: e.timestamp,
+      message:   e.description || e.title || e.message || '',
+    })),
+    trackingNumber:    summary.tracking.trackingNumber,
+    estimatedDelivery: summary.tracking.estimatedDelivery,
+    orderNotes:        order.orderNotes || null,
+    coupon:            order.coupon || null,
+    returnRequested:   order.returnRequested || false,
+  };
+};

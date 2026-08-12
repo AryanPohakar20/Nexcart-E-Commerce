@@ -8,7 +8,7 @@ import orderService from '../services/orderService';
 
 const Checkout = () => {
   const { 
-    cart, addresses, addAddress, appliedCoupon, clearCart, setOrders, showToast, formatPrice 
+    cart, addresses, addAddress, appliedCoupon, clearCart, loadBuyerOrders, showToast, formatPrice 
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -138,16 +138,16 @@ const Checkout = () => {
 
       const results = await Promise.all(orderRequests);
       const mainOrder = results[0]?.data?.order || results[0]?.order;
-      const orderIdToShow = mainOrder?.orderId || mainOrder?.id || `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+      const orderIdToShow = mainOrder?.orderId || mainOrder?._id || mainOrder?.id;
 
-      // Sync user's buyer orders if possible
+      if (!orderIdToShow) {
+        showToast('Order was created but no reference was returned. Please check My Orders.', 'error');
+        return;
+      }
+
+      // Sync the user's buyer orders (normalized) so Orders / Details / Tracking work immediately
       try {
-        const buyerOrdersRes = await orderService.getBuyerOrders();
-        if (buyerOrdersRes?.data?.orders) {
-          setOrders(buyerOrdersRes.data.orders);
-        } else if (buyerOrdersRes?.orders) {
-          setOrders(buyerOrdersRes.orders);
-        }
+        await loadBuyerOrders();
       } catch (err) {
         console.error('Failed to sync buyer orders:', err);
       }

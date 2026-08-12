@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { COUPONS } from '../constants/dummyData';
 import profileService from '../services/profileService';
 import addressService from '../services/addressService';
@@ -10,6 +10,71 @@ import { AuthContext } from './AuthContext';
 import orderService from '../services/orderService';
 
 export const AppContext = createContext();
+
+const ORDER_STATUS_MAP = {
+  pending: 'Pending',
+  confirmed: 'Processing',
+  processing: 'Processing',
+  packed: 'Processing',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+  returned: 'Returned',
+};
+
+const toDateString = (value) => {
+  try {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
+};
+
+const formatAddressText = (address) => {
+  if (!address) return '';
+  if (typeof address === 'string') return address;
+  return [
+    address.fullName || `${address.firstName || ''} ${address.lastName || ''}`.trim(),
+    address.addressLine1 || address.street,
+    address.addressLine2,
+    [address.city, address.state].filter(Boolean).join(', '),
+    address.pincode || address.zipCode,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(', ');
+};
+
+const normalizeBuyerOrder = (ord) => ({
+  id: ord.orderId || ord.orderNumber || ord._id,
+  date: toDateString(ord.createdAt || ord.orderDate) || new Date().toISOString().split('T')[0],
+  amount: ord.totalAmount ?? ord.grandTotal ?? ord.pricing?.total ?? 0,
+  status: ORDER_STATUS_MAP[ord.orderStatus] || 'Pending',
+  deliveryEstimate: ord.orderStatus === 'delivered' ? 'Delivered' : 'Delivery expected within 2 days',
+  paymentMethod: ord.paymentMethod || ord.paymentInfo?.method || 'COD',
+  paymentStatus: ord.paymentStatus || ord.paymentInfo?.status || 'pending',
+  pricing: ord.pricing || null,
+  shippingAddress: ord.shippingAddress,
+  shippingAddressText: formatAddressText(ord.shippingAddress),
+  items: (ord.items || []).map(item => {
+    const productId = item.product?._id || item.product || item.productId;
+    return {
+      product: {
+        id: productId,
+        title: item.title || item.name || item.product?.title || item.product?.name || 'Product',
+        brand: item.product?.brand || 'NexCart',
+        price: item.price || 0,
+        image: item.image || item.thumbnail || item.product?.image || item.product?.thumbnail ||
+          item.product?.images?.find(img => img.isPrimary)?.url ||
+          item.product?.images?.[0]?.url || '',
+      },
+      quantity: item.quantity || 1,
+      price: item.price || 0,
+      subtotal: item.subtotal || ((item.price || 0) * (item.quantity || 1)),
+    };
+  }),
+});
 
 export const AppProvider = ({ children }) => {
   const { user: authUser } = useContext(AuthContext) || {};
@@ -370,40 +435,40 @@ export const AppProvider = ({ children }) => {
     try {
       const res = await orderService.getBuyerOrders();
       const rawOrders = res?.data?.orders || res?.orders || [];
-      const statusMap = {
-        pending: 'Pending',
-        confirmed: 'Processing',
-        processing: 'Processing',
-        packed: 'Processing',
-        shipped: 'Shipped',
-        delivered: 'Delivered',
-        cancelled: 'Cancelled',
-        returned: 'Returned',
-      };
-      
-      const formatted = rawOrders.map(ord => ({
-        id: ord.orderId || ord._id,
-        date: ord.createdAt ? new Date(ord.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        amount: ord.totalAmount || 0,
-        status: statusMap[ord.orderStatus] || 'Pending',
-        deliveryEstimate: ord.orderStatus === 'delivered' ? 'Delivered' : 'Delivery expected within 2 days',
-        items: (ord.items || []).map(item => ({
-          product: {
-            id: item.product?._id || item.product,
-            title: item.name || '',
-            brand: item.product?.brand || 'NexCart',
-            price: item.price || 0,
-            image: item.image || item.product?.thumbnail || item.product?.images?.[0]?.url || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
-          },
-          quantity: item.quantity || 1,
-        }))
-      }));
+      const formatted = rawOrders.map(normalizeBuyerOrder);
 
       setOrders(formatted);
+      return formatted;
     } catch (err) {
       console.error('Failed to load buyer orders:', err);
     }
   };
+
+  const getOrderById = useCallback(async (orderId) => {
+    const local = orders.find(o => o.id === orderId);
+    if (local && local.shippingAddress) return local;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return null;
+
+    try {
+      const res = await orderService.getOrderDetails(orderId);
+      const raw = res?.data?.order || res?.order;
+      if (!raw) return null;
+
+      const normalized = normalizeBuyerOrder(raw);
+      setOrders(prev => {
+        if (prev.some(o => o.id === normalized.id)) {
+          return prev.map(o => o.id === normalized.id ? normalized : o);
+        }
+        return [normalized, ...prev];
+      });
+      return normalized;
+    } catch (err) {
+      console.error('Failed to fetch order details:', err);
+      return null;
+    }
+  }, [orders]);
 
   const relativeTime = (dateValue) => {
     if (!dateValue) return '';
@@ -575,6 +640,8 @@ export const AppProvider = ({ children }) => {
         updateAddress,
         orders,
         setOrders,
+        loadBuyerOrders,
+        getOrderById,
         appliedCoupon,
         notifications,
         unreadNotificationsCount,

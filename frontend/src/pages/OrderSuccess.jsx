@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { FiCheckCircle, FiTruck, FiShoppingBag, FiChevronRight } from 'react-icons/fi';
@@ -6,14 +6,33 @@ import { FiCheckCircle, FiTruck, FiShoppingBag, FiChevronRight } from 'react-ico
 const OrderSuccess = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { orders } = useContext(AppContext);
+  const { getOrderById } = useContext(AppContext);
 
-  const order = useMemo(() => {
-    return orders.find(o => o.id === id) || orders[0];
-  }, [id, orders]);
+  const [order, setOrder] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    setOrder(null);
+    setNotFound(false);
+
+    getOrderById(id).then((result) => {
+      if (!mounted) return;
+      if (result) setOrder(result);
+      else setNotFound(true);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, getOrderById]);
+
+  if (notFound) {
+    return <div className="py-12 text-center text-gray-500">Order details not found.</div>;
+  }
 
   if (!order) {
-    return <div className="py-12 text-center text-gray-500">Order details not found.</div>;
+    return <div className="py-12 text-center text-gray-500">Loading order details...</div>;
   }
 
   return (

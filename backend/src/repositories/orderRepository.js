@@ -140,7 +140,7 @@ export const findCustomerOrders = async ({ queryFilters, sortQuery, skip, limit 
       path: 'seller',
       select: 'business individual accountInfo sellerType slug',
     })
-    .populate({ path: 'items.product', select: 'title name thumbnail images' })
+    .populate({ path: 'items.product', select: 'title name thumbnail images brand' })
     .select('orderId orderNumber createdAt orderStatus paymentInfo totalAmount pricing tracking items seller')
     .lean();
 };
@@ -159,6 +159,26 @@ export const countCustomerOrders = async (queryFilters) => {
  */
 export const findCustomerOrderDetails = async (orderId, customerId) => {
   return Order.findOne({ _id: orderId, customer: customerId, isDeleted: { $ne: true } })
+    .populate({
+      path: 'seller',
+      select: 'business individual accountInfo sellerType slug',
+    })
+    .populate({ path: 'items.product', select: 'title name thumbnail images brand' })
+    .lean();
+};
+
+/**
+ * Retrieve detailed customer order by its business order number (ORD-xxxxx),
+ * enforcing ownership.
+ * @param {string} orderNumber - Business order number / orderId string
+ * @param {string} customerId  - Authenticated customer's ObjectId
+ */
+export const findCustomerOrderByNumber = async (orderNumber, customerId) => {
+  return Order.findOne({
+    $or: [{ orderNumber }, { orderId: orderNumber }],
+    customer: customerId,
+    isDeleted: { $ne: true },
+  })
     .populate({
       path: 'seller',
       select: 'business individual accountInfo sellerType slug',

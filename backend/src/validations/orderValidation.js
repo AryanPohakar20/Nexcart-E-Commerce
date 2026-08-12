@@ -3,6 +3,7 @@
 // Uses express-validator — the same library already in use throughout Main.
 
 import { body, query, param, validationResult } from 'express-validator';
+import mongoose from 'mongoose';
 import { ApiError } from '../utils/ApiError.js';
 import Order from '../models/Order.js';
 
@@ -120,9 +121,16 @@ export const validateCustomerOrderListing = [
 ];
 
 // ─── Order ID param validation ────────────────────────────────────────────────
+// Accepts either a MongoDB ObjectId or a business order number (e.g. ORD-85159).
+// Ownership is still enforced downstream in the order service/repository.
 export const validateOrderId = [
   param('orderId')
-    .isMongoId().withMessage('Invalid order id.'),
+    .notEmpty().withMessage('Invalid order id.')
+    .isString().withMessage('Invalid order id.')
+    .custom((value) =>
+      mongoose.Types.ObjectId.isValid(value) || /^ORD-[A-Z0-9-]+$/i.test(value)
+    )
+    .withMessage('Invalid order id.'),
 
   (req, res, next) => {
     const errors = validationResult(req);
