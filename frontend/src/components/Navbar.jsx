@@ -14,7 +14,7 @@ import {
 
 const Navbar = () => {
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, logoutUser, unreadChatCount 
+    user, cart, wishlist, notifications, unreadNotificationsCount, markNotificationRead, clearNotifications, logoutUser, unreadChatCount 
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ const Navbar = () => {
   // Stats
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const wishlistCount = wishlist.length;
-  const unreadNotifications = notifications.filter(n => !n.read).length;
+  const unreadNotifications = unreadNotificationsCount ?? notifications.filter(n => !n.read).length;
 
   const userName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user?.username || user?.email?.split('@')[0] || 'User');
   const userInitial = (userName.trim()[0] || 'U').toUpperCase();

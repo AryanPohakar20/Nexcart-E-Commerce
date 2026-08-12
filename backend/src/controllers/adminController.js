@@ -644,6 +644,36 @@ export const getUnreadNotificationsCount = asyncHandler(async (req, res) => {
   return successResponse(res, 'Unread notification count fetched.', { unreadCount });
 });
 
+// GET /api/admin/notifications/:id
+export const getNotificationById = asyncHandler(async (req, res) => {
+  const notification = await notificationService.getNotificationById(req.params.id);
+  return successResponse(res, 'Notification fetched successfully.', { notification });
+});
+
+// POST /api/admin/notifications
+export const createNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.createNotification(req.body, req.user, getIp(req));
+  return successResponse(res, 'Notification created successfully.', { notification }, 201);
+});
+
+// PUT /api/admin/notifications/:id
+export const updateNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.updateNotification(req.params.id, req.body, req.user, getIp(req));
+  return successResponse(res, 'Notification updated successfully.', { notification });
+});
+
+// PATCH /api/admin/notifications/:id/publish
+export const publishNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.publishNotification(req.params.id, req.user, getIp(req));
+  return successResponse(res, 'Notification published successfully.', { notification });
+});
+
+// PATCH /api/admin/notifications/:id/unpublish
+export const unpublishNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.unpublishNotification(req.params.id, req.user, getIp(req));
+  return successResponse(res, 'Notification unpublished successfully.', { notification });
+});
+
 // PATCH /api/admin/notifications/:id/read
 export const markNotificationRead = asyncHandler(async (req, res) => {
   const notification = await notificationService.markNotificationRead(req.params.id);
@@ -658,8 +688,8 @@ export const markAllNotificationsRead = asyncHandler(async (req, res) => {
 
 // DELETE /api/admin/notifications/:id
 export const deleteNotification = asyncHandler(async (req, res) => {
-  const notification = await notificationService.deleteNotification(req.params.id);
-  return successResponse(res, 'Notification dismissed.', { notification });
+  const notification = await notificationService.deleteNotification(req.params.id, req.user, getIp(req));
+  return successResponse(res, 'Notification deleted successfully.', { notification });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -101,6 +101,11 @@ import {
 
   // Notifications
   getNotifications,
+  getNotificationById,
+  createNotification,
+  updateNotification,
+  publishNotification,
+  unpublishNotification,
   getUnreadNotificationsCount,
   markNotificationRead,
   markAllNotificationsRead,
@@ -128,6 +133,7 @@ import { listReturns, getReturnDetails, reviewReturn } from '../controllers/retu
 import { getOrderAnalytics } from '../services/orderAnalyticsService.js';
 import { validateAdminReturnListing, validateReturnId, validateReturnReview } from '../validations/returnValidation.js';
 import { validateOrderAnalytics } from '../validations/orderValidation.js';
+import { validateNotificationCreate, validateNotificationUpdate } from '../validations/notificationValidation.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { successResponse } from '../utils/ApiResponse.js';
 import { importUpload } from '../middlewares/importUpload.js';
@@ -275,7 +281,12 @@ router.get('/analytics', requirePermission('analytics', 'read'), getMarketplaceA
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(   '/notifications',              requirePermission('notifications', 'read'),   getNotifications);
+router.post(  '/notifications',              requirePermission('notifications', 'write'),  validateNotificationCreate, createNotification);
 router.get(   '/notifications/unread-count', requirePermission('notifications', 'read'),   getUnreadNotificationsCount);
+router.get(   '/notifications/:id',          requirePermission('notifications', 'read'),   getNotificationById);
+router.put(   '/notifications/:id',          requirePermission('notifications', 'update'), validateNotificationUpdate, updateNotification);
+router.patch( '/notifications/:id/publish',  requirePermission('notifications', 'update'), publishNotification);
+router.patch( '/notifications/:id/unpublish',requirePermission('notifications', 'update'), unpublishNotification);
 router.patch( '/notifications/:id/read',     requirePermission('notifications', 'update'), markNotificationRead);
 router.patch( '/notifications/read-all',     requirePermission('notifications', 'update'), markAllNotificationsRead);
 router.delete('/notifications/:id',          requirePermission('notifications', 'delete'), deleteNotification);

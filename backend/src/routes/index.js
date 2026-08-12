@@ -14,6 +14,7 @@ import productRoutes from './productRoutes.js';
 import searchRoutes from './searchRoutes.js';
 import searchHistoryRoutes from './searchHistoryRoutes.js';
 import productReviewRoutes from './productReviewRoutes.js';
+import notificationRoutes from './notificationRoutes.js';
 import sellerReviewRoutes from './sellerReviewRoutes.js';
 import brandRoutes from './brandRoutes.js';
 import categoryRoutes from './categoryRoutes.js';
@@ -84,6 +85,7 @@ router.post('/auth/reset-password', resetPassword);
 router.use('/profile', profileRoutes);
 router.use('/address', addressRoutes);
 router.use('/admin', adminRoutes);
+router.use('/notifications', notificationRoutes);
 router.use('/orders', orderRoutes);
 router.use('/seller/orders', sellerOrderRoutes);
 

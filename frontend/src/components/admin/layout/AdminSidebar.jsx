@@ -16,6 +16,7 @@ const NAV_SECTIONS = [
     label: 'Core',
     items: [
       { name: 'Dashboard', path: '/admin/dashboard', icon: FiGrid },
+      { name: 'Notifications', path: '/admin/notifications', icon: FiBell },
     ]
   },
   {
