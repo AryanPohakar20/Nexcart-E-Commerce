@@ -151,12 +151,19 @@ export const saveStep5 = async (userId) => {
   const seller = await sellerRepo.updateByUserId(userId, {
     'agreement.accepted': true,
     'agreement.acceptedAt': new Date(),
-    sellerStatus: SELLER_STATUS.PENDING,
+    sellerStatus: SELLER_STATUS.APPROVED,
+    verificationStatus: VERIFICATION_STATUS.VERIFIED,
     onboardingStep: 5,
   });
 
   if (!seller) throw new ApiError(404, 'Seller record not found.');
-  logger.info(`Step 5 (agreement) accepted for userId: ${userId}`);
+
+  await User.findByIdAndUpdate(userId, {
+    role: 'seller',
+    isVerified: true,
+  });
+
+  logger.info(`Step 5 (agreement) accepted and seller approved for userId: ${userId}`);
   return seller;
 };
 
@@ -164,11 +171,14 @@ export const saveStep5 = async (userId) => {
 
 export const getSellerStatus = async (userId) => {
   const seller = await requireSeller(userId);
+  const status = seller.sellerStatus === SELLER_STATUS.APPROVED ? 'Marketplace Seller' : seller.sellerStatus;
   return {
+    status,
     sellerId: seller.sellerId,
     sellerStatus: seller.sellerStatus,
     verificationStatus: seller.verificationStatus,
     onboardingStep: seller.onboardingStep,
+    trustScore: seller.reputation?.trustScore || 100,
   };
 };
 
