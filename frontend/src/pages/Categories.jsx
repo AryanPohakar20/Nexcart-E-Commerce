@@ -20,7 +20,7 @@ const Categories = () => {
             return {
               id: c.slug || c._id,
               name: c.name,
-              image: c.image || matched?.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1200&q=80',
+              image: (c.image && typeof c.image === 'object' ? c.image.url : c.image) || matched?.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1200&q=80',
               count: c.productCount || matched?.count || 25,
             };
           });
