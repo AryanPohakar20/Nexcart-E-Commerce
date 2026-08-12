@@ -118,6 +118,12 @@ import {
   updateAdminProfile,
   updateAdminPassword,
 } from '../controllers/adminController.js';
+import { listReturns, getReturnDetails, reviewReturn } from '../controllers/returnController.js';
+import { getOrderAnalytics } from '../services/orderAnalyticsService.js';
+import { validateAdminReturnListing, validateReturnId, validateReturnReview } from '../validations/returnValidation.js';
+import { validateOrderAnalytics } from '../validations/orderValidation.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { successResponse } from '../utils/ApiResponse.js';
 import { importUpload } from '../middlewares/importUpload.js';
 
 const router = Router();
@@ -293,12 +299,34 @@ router.get('/export/:entity', requirePermission('export', 'export'), exportData)
 
 router.get('/roles-permissions', getRolesAndPermissions);
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════
 // ADMIN PROFILE & CREDENTIALS
-// ═══════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════════
 
 router.get('/profile',          getAdminProfile);
 router.put('/profile',          updateAdminProfile);
 router.put('/profile/password', updateAdminPassword);
+
+// ════════════════════════════════════════════════════════════════════════════════
+// RETURNS & REFUNDS MANAGEMENT
+// ════════════════════════════════════════════════════════════════════════════════
+
+router.get(   '/returns',             requirePermission('orders', 'read'),   validateAdminReturnListing, listReturns);
+router.get(   '/returns/:returnId',   requirePermission('orders', 'read'),   validateReturnId,           getReturnDetails);
+router.patch( '/returns/:returnId',   requirePermission('orders', 'update'), validateReturnReview,       reviewReturn);
+
+// ════════════════════════════════════════════════════════════════════════════════
+// ORDER ANALYTICS
+// ════════════════════════════════════════════════════════════════════════════════
+
+router.get(
+  '/orders/analytics',
+  requirePermission('orders', 'read'),
+  validateOrderAnalytics,
+  asyncHandler(async (req, res) => {
+    const result = await getOrderAnalytics(req.query);
+    return successResponse(res, 'Order analytics fetched successfully.', result);
+  })
+);
 
 export default router;

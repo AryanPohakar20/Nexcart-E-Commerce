@@ -218,40 +218,53 @@ export const AppProvider = ({ children }) => {
     setPrevUser(user);
   }, [cart, wishlist, saveForLater, user, prevUser]);
 
+  const sanitizeCart = (cartArray) => {
+    if (!Array.isArray(cartArray)) return [];
+    return cartArray.filter((item) => item && item.product && typeof item.product === 'object' && (item.product.id || item.product._id));
+  };
+
   const addToCart = (product, quantity = 1) => {
-    if (product.stock <= 0) {
-      showToast(`${product.title} is out of stock!`, 'error');
+    if (!product) return;
+    const prodId = product.id || product._id;
+    const maxStock = product.stock !== undefined ? product.stock : 10;
+    if (maxStock <= 0) {
+      showToast(`${product.title || 'Item'} is out of stock!`, 'error');
       return;
     }
 
     setCart((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
+      const safePrev = sanitizeCart(prev);
+      const existing = safePrev.find((item) => (item.product.id || item.product._id) === prodId);
       if (existing) {
         const nextQty = existing.quantity + quantity;
-        const maxStock = product.stock || 10;
         if (nextQty > maxStock) {
           showToast(`Cannot add more. Only ${maxStock} items in stock!`, 'error');
-          return prev;
+          return safePrev;
         }
-        showToast(`Increased quantity of ${product.brand} ${product.title.split(' ')[1]} in Cart`);
-        return prev.map((item) => (item.product.id === product.id ? { ...item, quantity: nextQty } : item));
+        showToast(`Increased quantity of ${product.title || 'item'} in Cart`);
+        return safePrev.map((item) =>
+          (item.product.id || item.product._id) === prodId ? { ...item, quantity: nextQty } : item
+        );
       }
 
-      showToast(`Added ${product.brand} ${product.title.split(' ')[1]} to Cart`);
-      return [...prev, { product, quantity }];
+      showToast(`Added ${product.title || 'item'} to Cart`);
+      return [...safePrev, { product, quantity }];
     });
   };
 
   const removeFromCart = (productId) => {
-    setCart((prev) => prev.filter((item) => item.product.id !== productId));
+    if (!productId) return;
+    setCart((prev) => sanitizeCart(prev).filter((item) => (item.product.id || item.product._id) !== productId));
     showToast('Removed item from Cart', 'info');
   };
 
   const updateCartQty = (productId, quantity) => {
-    const item = cart.find((entry) => entry.product.id === productId);
+    if (!productId) return;
+    const safeCart = sanitizeCart(cart);
+    const item = safeCart.find((entry) => (entry.product.id || entry.product._id) === productId);
     if (!item) return;
 
-    const maxStock = item.product.stock || 10;
+    const maxStock = item.product.stock !== undefined ? item.product.stock : 10;
     if (quantity > maxStock) {
       showToast(`Only ${maxStock} items left in stock!`, 'error');
       return;
@@ -262,7 +275,11 @@ export const AppProvider = ({ children }) => {
       return;
     }
 
-    setCart((prev) => prev.map((entry) => (entry.product.id === productId ? { ...entry, quantity } : entry)));
+    setCart((prev) =>
+      sanitizeCart(prev).map((entry) =>
+        (entry.product.id || entry.product._id) === productId ? { ...entry, quantity } : entry
+      )
+    );
   };
 
   const clearCart = () => {
@@ -271,26 +288,32 @@ export const AppProvider = ({ children }) => {
   };
 
   const toggleWishlist = (product) => {
+    if (!product) return;
+    const prodId = product.id || product._id;
     setWishlist((prev) => {
-      const exists = prev.some((item) => item.id === product.id);
+      const safePrev = (prev || []).filter((item) => item && (item.id || item._id));
+      const exists = safePrev.some((item) => (item.id || item._id) === prodId);
       if (exists) {
         showToast('Removed from Wishlist', 'info');
-        return prev.filter((item) => item.id !== product.id);
+        return safePrev.filter((item) => (item.id || item._id) !== prodId);
       }
 
       showToast('Added to Wishlist');
-      return [...prev, product];
+      return [...safePrev, product];
     });
   };
 
   const moveToSaveLater = (product) => {
-    setCart((prev) => prev.filter((item) => item.product.id !== product.id));
+    if (!product) return;
+    const prodId = product.id || product._id;
+    setCart((prev) => sanitizeCart(prev).filter((item) => (item.product.id || item.product._id) !== prodId));
     setSaveForLater((prev) => {
-      const exists = prev.some((item) => item.product.id === product.id);
-      if (exists) return prev;
-      return [...prev, { product }];
+      const safePrev = (prev || []).filter((item) => item && item.product);
+      const exists = safePrev.some((item) => (item.product.id || item.product._id) === prodId);
+      if (exists) return safePrev;
+      return [...safePrev, { product }];
     });
-    showToast(`Saved ${product.brand} ${product.title.split(' ')[1]} for later`, 'info');
+    showToast(`Saved ${product.title || 'item'} for later`, 'info');
   };
 
   const moveToCartFromSaveLater = (product) => {

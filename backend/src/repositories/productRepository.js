@@ -6,8 +6,48 @@
 // Populate calls are therefore omitted from all Product queries — they would
 // throw a StrictPopulateError. The brand/category string values are returned
 // as-is and are sufficient for the frontend's product card contract.
+//
+// ORDER MANAGEMENT ADDITIONS (from Manjusha):
+// findProductById(id, session) — session-aware lookup for transactions
+// decreaseProductStock(id, quantity, session) — atomic stock decrement
 
 import Product from '../models/Product.js';
+
+// ─── Order Management Helpers (Manjusha) ────────────────────────────────────
+
+/**
+ * Find a product by its MongoDB ID with optional transaction session.
+ * Used by orderService.placeOrder() for stock validation inside transactions.
+ */
+export const findProductById = async (id, session = null) => {
+  const query = Product.findById(id);
+  if (session) query.session(session);
+  return query;
+};
+
+/**
+ * Atomically decrease product stock — only decrements when stock >= quantity and isActive.
+ * Returns the updateOne write result (check .modifiedCount === 1 for success).
+ */
+export const decreaseProductStock = async (id, quantity, session = null) => {
+  return Product.updateOne(
+    { _id: id, stock: { $gte: quantity }, isActive: true },
+    { $inc: { stock: -quantity } },
+    { session }
+  );
+};
+
+/**
+ * Atomically restore product stock (e.g. on order cancellation).
+ */
+export const increaseProductStock = async (id, quantity, session = null) => {
+  return Product.updateOne(
+    { _id: id },
+    { $inc: { stock: quantity } },
+    { session }
+  );
+};
+
 
 /**
  * Find products matching a filter, with sorting and pagination.

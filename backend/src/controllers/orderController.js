@@ -1,77 +1,100 @@
+// src/controllers/orderController.js
+// HTTP handlers for Order Management.
+// All business logic delegated to orderService.
+// Preserves backward compat aliases for Main's existing route names.
+
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiError } from '../utils/ApiError.js';
-import Order from '../models/Order.js';
+import * as orderService from '../services/orderService.js';
+import { successResponse } from '../utils/ApiResponse.js';
+
+// ─── Customer Order Controllers ────────────────────────────────────────────────
 
 /**
- * Create a new order (buyer checkout)
+ * POST /orders
+ * Place a new order (customer only).
  */
-export const createOrder = asyncHandler(async (req, res) => {
-  const { items, seller, totalAmount, shippingAddress, paymentInfo } = req.body;
-
-  if (!items || items.length === 0) {
-    throw new ApiError(400, 'Order items are required');
-  }
-  if (!seller) {
-    throw new ApiError(400, 'Seller is required');
-  }
-
-  const itemCount = items.reduce((acc, item) => acc + (item.quantity || 1), 0);
-
-  const order = await Order.create({
-    customer: req.user._id,
-    seller,
-    items: items.map(item => ({
-      product: item.product,
-      name: item.name,
-      image: item.image || '',
-      price: item.price,
-      quantity: item.quantity,
-      sku: item.sku || '',
-      subtotal: item.price * item.quantity,
-    })),
-    totalAmount,
-    itemCount,
-    shippingAddress,
-    paymentInfo: {
-      method: paymentInfo?.method || 'UPI',
-      status: paymentInfo?.status || 'paid',
-      transactionId: paymentInfo?.transactionId || `TXN-${Date.now().toString().slice(-6)}`,
-      paidAt: paymentInfo?.status === 'paid' ? new Date() : null,
-    },
-    orderStatus: 'processing',
-    statusHistory: [
-      {
-        status: 'processing',
-        timestamp: new Date(),
-        note: 'Order placed and payment verified.',
-      }
-    ]
-  });
+export const placeOrder = asyncHandler(async (req, res) => {
+  const customerId = req.user._id;
+  const order = await orderService.placeOrder(customerId, req.body);
 
   res.status(201).json({
     success: true,
-    message: 'Order created successfully',
-    data: { order }
+    message: 'Order placed successfully',
+    data: { order },
   });
 });
 
 /**
- * Get orders placed by the current logged-in buyer
+ * GET /orders/my
+ * List orders for the authenticated customer.
  */
-export const getBuyerOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ customer: req.user._id, isDeleted: { $ne: true } })
-    .populate({ path: 'customer', select: 'firstName lastName email phone avatar' })
-    .populate({
-      path: 'seller',
-      select: 'business individual accountInfo sellerType slug',
-    })
-    .populate({ path: 'items.product', select: 'name slug images thumbnail sku price' })
-    .sort({ createdAt: -1 })
-    .lean();
-
-  res.status(200).json({
-    success: true,
-    message: 'Orders fetched successfully',
-    data: { orders }
-  });
+export const getCustomerOrders = asyncHandler(async (req, res) => {
+  const customerId = req.user._id;
+  const result = await orderService.getCustomerOrders(customerId, req.query);
+  return successResponse(res, 'Orders fetched successfully.', result);
 });
+
+/**
+ * GET /orders/:orderId
+ * Get full details of a specific order (customer-owned only).
+ */
+export const getOrderDetails = asyncHandler(async (req, res) => {
+  const { orderId }    = req.params;
+  const customerId     = req.user._id;
+  const order = await orderService.getCustomerOrderDetails(orderId, customerId);
+  return successResponse(res, 'Order details fetched successfully.', { order });
+});
+
+/**
+ * PATCH /orders/:orderId/cancel
+ * Cancel an eligible order (customer only).
+ */
+export const cancelOrder = asyncHandler(async (req, res) => {
+  const { orderId }          = req.params;
+  const { cancellationReason } = req.body;
+  const customerId           = req.user._id;
+  const updatedOrder = await orderService.cancelCustomerOrder(orderId, customerId, cancellationReason);
+  return successResponse(res, 'Order cancelled successfully.', { order: updatedOrder });
+});
+
+// ─── Seller Order Controllers ──────────────────────────────────────────────────
+
+/**
+ * GET /seller/orders
+ * List orders for the authenticated seller.
+ */
+export const getSellerOrders = asyncHandler(async (req, res) => {
+  const sellerUserId = req.user._id;
+  const result = await orderService.getSellerOrders(sellerUserId, req.query);
+  return successResponse(res, 'Seller orders fetched successfully.', result);
+});
+
+/**
+ * GET /seller/orders/:orderId
+ * Get details of a specific seller-owned order.
+ */
+export const getSellerOrderDetails = asyncHandler(async (req, res) => {
+  const { orderId }   = req.params;
+  const sellerUserId  = req.user._id;
+  const order = await orderService.getSellerOrderDetails(orderId, sellerUserId);
+  return successResponse(res, 'Seller order details fetched successfully.', { order });
+});
+
+/**
+ * PATCH /seller/orders/:orderId/status
+ * Update an order status (seller only, follows transition rules).
+ */
+export const updateSellerOrderStatus = asyncHandler(async (req, res) => {
+  const sellerUserId = req.user._id;
+  const { orderId }  = req.params;
+  const { status }   = req.body;
+  const updatedOrder = await orderService.updateSellerOrderStatus(orderId, sellerUserId, status);
+  return successResponse(res, 'Order status updated successfully.', { order: updatedOrder });
+});
+
+// ─── Backward Compatibility Aliases ───────────────────────────────────────────
+// Main's original route used createOrder/getBuyerOrders naming.
+// These aliases ensure any external references don't break.
+
+export const createOrder   = placeOrder;
+export const getBuyerOrders = getCustomerOrders;

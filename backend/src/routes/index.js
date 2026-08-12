@@ -7,6 +7,7 @@ import profileRoutes from './profileRoutes.js';
 import addressRoutes from './addressRoutes.js';
 import adminRoutes from './adminRoutes.js';
 import orderRoutes from './orderRoutes.js';
+import sellerOrderRoutes from './sellerOrderRoutes.js';
 
 import marketplaceRoutes from './marketplaceRoutes.js';
 import productRoutes from './productRoutes.js';
@@ -81,6 +82,7 @@ router.use('/profile', profileRoutes);
 router.use('/address', addressRoutes);
 router.use('/admin', adminRoutes);
 router.use('/orders', orderRoutes);
+router.use('/seller/orders', sellerOrderRoutes);
 
 // ─── Marketplace Routes ───────────────────────────────────────────────────────
 // NOTE: /search/history MUST be mounted before /search to avoid the /search
