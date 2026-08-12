@@ -11,6 +11,7 @@ import * as adminSellerService        from '../services/adminSellerService.js';
 import * as adminProductService       from '../services/adminProductService.js';
 import * as adminCategoryService      from '../services/adminCategoryService.js';
 import * as adminOrderService         from '../services/adminOrderService.js';
+import * as orderAnalyticsService     from '../services/orderAnalyticsService.js';
 import * as adminVerificationService  from '../services/adminVerificationService.js';
 import * as adminImportService        from '../services/adminImportService.js';
 import * as adminBulkService          from '../services/adminBulkService.js';
@@ -446,9 +447,15 @@ export const getOrders = asyncHandler(async (req, res) => {
   return successResponse(res, 'Orders fetched successfully.', result);
 });
 
+// GET /api/admin/orders/analytics
+export const getOrderAnalytics = asyncHandler(async (req, res) => {
+  const analytics = await orderAnalyticsService.getOrderAnalytics(req.query);
+  return successResponse(res, 'Order analytics fetched successfully.', analytics);
+});
+
 // GET /api/admin/orders/:id
 export const getOrder = asyncHandler(async (req, res) => {
-  const order = await adminOrderService.getOrder(req.params.id);
+  const order = await adminOrderService.getOrder(req.params.orderId);
   return successResponse(res, 'Order dossier fetched successfully.', { order });
 });
 
@@ -456,7 +463,7 @@ export const getOrder = asyncHandler(async (req, res) => {
 export const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status, note } = req.body;
   const order = await adminOrderService.updateOrderStatus(
-    req.params.id,
+    req.params.orderId,
     status,
     note,
     req.user,

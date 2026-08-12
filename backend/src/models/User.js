@@ -121,6 +121,21 @@ const userSchema = new mongoose.Schema(
       enum: ['customer', 'seller', 'marketplace_seller', 'admin', 'super_admin', 'moderator', 'support_staff'],
       default: 'customer',
     },
+    profileImage: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    shopName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    shopLogo: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     customPermissions: {
       type: Map,
       of: [String],
