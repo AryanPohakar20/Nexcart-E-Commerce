@@ -196,7 +196,13 @@ const Messages = () => {
     const paramProdId = searchParams.get('productId');
     const paramSellerId = searchParams.get('sellerId') || searchParams.get('seller');
 
-    if (paramSellerId && paramSellerId !== currentUserIdStr) {
+    if (
+      paramSellerId && 
+      paramSellerId !== 'undefined' && 
+      paramSellerId !== currentUserIdStr &&
+      paramProdId &&
+      paramProdId !== 'undefined'
+    ) {
       chatService.createConversation(paramSellerId, paramProdId).then(res => {
         if (res.success && res.data) {
           const newConv = formatConversation(res.data);

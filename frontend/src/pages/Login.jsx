@@ -25,7 +25,7 @@ import {
 
 const Login = () => {
   const { showToast, theme } = useContext(AppContext);
-  const { login, loginGoogle: authContextLoginGoogle, loginApple: authContextLoginApple } = useContext(AuthContext);
+  const { login, sellerLogin, loginGoogle: authContextLoginGoogle, loginApple: authContextLoginApple } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // Form states
@@ -33,6 +33,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [loginRole, setLoginRole] = useState('customer');
 
   // Validation & UI states
   const [errors, setErrors] = useState({});
@@ -101,7 +102,9 @@ const Login = () => {
     setErrors({});
 
     try {
-      const result = await login(email, password);
+      const result = loginRole === 'seller' 
+        ? await sellerLogin(email, password) 
+        : await login(email, password);
       
       if (result.success) {
         setIsSuccess(true);
@@ -436,9 +439,35 @@ const Login = () => {
             </div>
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-              
-              {/* Become Seller Prompt */}
+              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                
+                {/* Role Toggle */}
+                <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl mb-6">
+                  <button
+                    type="button"
+                    onClick={() => setLoginRole('customer')}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                      loginRole === 'customer'
+                        ? 'bg-white dark:bg-[#1a1f2e] text-primary shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    Customer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLoginRole('seller')}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                      loginRole === 'seller'
+                        ? 'bg-white dark:bg-[#1a1f2e] text-emerald-400 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    Seller
+                  </button>
+                </div>
+
+                {/* Become Seller Prompt */}
               <AnimatePresence>
                 {showBecomeSeller && (
                   <motion.div

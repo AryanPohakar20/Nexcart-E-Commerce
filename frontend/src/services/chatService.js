@@ -16,11 +16,12 @@ const chatService = {
   },
 
   createConversation: async (participantId, productId = null, listingId = null) => {
-    const response = await axiosInstance.post('/chat/createConversation', {
-      participantId,
-      productId,
-      listingId,
-    });
+    const payload = {};
+    if (participantId) payload.participantId = participantId;
+    if (productId) payload.productId = productId;
+    if (listingId) payload.listingId = listingId;
+
+    const response = await axiosInstance.post('/chat/createConversation', payload);
     return response.data;
   },
 

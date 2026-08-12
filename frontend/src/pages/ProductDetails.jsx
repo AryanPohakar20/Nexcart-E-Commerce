@@ -283,7 +283,12 @@ const ProductDetails = () => {
               <button
                 onClick={() => {
                   const sellerId = product.seller?._id || product.seller;
-                  navigate(`/messages?productId=${product.id}&sellerId=${sellerId}`);
+                  const productId = product._id || product.id;
+                  if (sellerId && sellerId !== 'undefined') {
+                    navigate(`/messages?productId=${productId}&sellerId=${sellerId}`);
+                  } else {
+                    showToast('Seller information is unavailable', 'error');
+                  }
                 }}
                 className="w-full mt-2 py-2.5 bg-primary/10 border border-primary/30 hover:bg-primary/20 hover:border-primary/50 text-primary rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
               >
