@@ -56,7 +56,6 @@ import AdminNotificationDetails from "../pages/admin/AdminNotificationDetails";
 // Authentication imports
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import OTPVerification from "../pages/OTPVerification";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 
@@ -191,7 +190,6 @@ const AppRoutes = () => {
         {/* Auth routes */}
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
-        <Route path="otp-verification" element={<OTPVerification />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
 

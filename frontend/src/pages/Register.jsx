@@ -296,10 +296,10 @@ const Register = () => {
 
       setIsSubmitting(false);
       setIsSuccess(true);
-      showToast('Account created successfully! Redirecting...', 'success');
+      showToast('Account created successfully! Please log in.', 'success');
 
       setTimeout(() => {
-        navigate(`/otp-verification?email=${encodeURIComponent(formData.email)}&purpose=emailVerification`);
+        navigate('/login');
       }, 800);
     } catch (error) {
       setIsSubmitting(false);
@@ -316,7 +316,7 @@ const Register = () => {
     setTimeout(() => {
       setIsSubmitting(false);
       showToast(`Connecting via ${provider}!`, 'success');
-      navigate('/otp-verification?email=' + encodeURIComponent(`user@${provider.toLowerCase()}.com`));
+      navigate('/login');
     }, 900);
   };
 

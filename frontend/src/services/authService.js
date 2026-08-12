@@ -49,27 +49,17 @@ const authService = {
     }
   },
 
-  forgotPassword: async (email) => {
+  /**
+   * resetPassword — Change password using current password for identity verification.
+   * OTP has been removed. Backend verifies identity via currentPassword.
+   */
+  resetPassword: async (email, currentPassword, newPassword) => {
     try {
-      const response = await axiosInstance.post('/auth/forgot-password', { email });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  verifyOtp: async (email, otp, purpose) => {
-    try {
-      const response = await axiosInstance.post('/auth/verify-otp', { email, otp, purpose });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  resetPassword: async (email, otp, newPassword) => {
-    try {
-      const response = await axiosInstance.post('/auth/reset-password', { email, otp, newPassword });
+      const response = await axiosInstance.post('/auth/reset-password', {
+        email,
+        currentPassword,
+        newPassword,
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

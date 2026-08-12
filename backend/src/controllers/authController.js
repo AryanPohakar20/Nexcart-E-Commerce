@@ -1,3 +1,7 @@
+// src/controllers/authController.js
+// Authentication controller — registration, login, OAuth, password management.
+// OTP / email-verification removed.
+
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as authService from '../services/authService.js';
 
@@ -9,7 +13,7 @@ const buildMockSeller = (email = 'srushtisalunke41@gmail.com') => ({
   email,
   phone: '1234567890',
   role: 'seller',
-  isVerified: false,
+  isVerified: true,
 });
 
 export const registerSeller = asyncHandler(async (req, res) => {
@@ -82,9 +86,7 @@ export const getCurrentSeller = asyncHandler(async (req, res) => {
       success: true,
       message: 'Seller details fetched successfully (Mock Mode)',
       user,
-      data: {
-        user,
-      },
+      data: { user },
     });
   }
 
@@ -92,9 +94,7 @@ export const getCurrentSeller = asyncHandler(async (req, res) => {
     success: true,
     message: 'Seller details fetched successfully',
     user: req.user,
-    data: {
-      user: req.user,
-    },
+    data: { user: req.user },
   });
 });
 
@@ -149,9 +149,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
     success: true,
     message: 'User details fetched successfully',
     user: req.user,
-    data: {
-      user: req.user,
-    },
+    data: { user: req.user },
   });
 });
 
@@ -197,33 +195,32 @@ export const loginWithApple = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * POST /auth/forgot-password
+ * Stub endpoint — no email is sent. Returns success silently.
+ * Password reset is handled via the in-app change-password flow (POST /auth/reset-password).
+ */
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { email, role } = req.body;
   await authService.forgotPassword(email, role);
 
   res.status(200).json({
     success: true,
-    message: 'If an account exists, a 6-digit OTP has been sent.',
+    message: 'If an account with this email exists, please use the Change Password option in your account profile. For further help, contact our support team.',
   });
 });
 
-export const verifyOtp = asyncHandler(async (req, res) => {
-  const { email, otp, purpose, role } = req.body;
-  const result = await authService.verifyOtp(email, otp, purpose, role);
-
-  res.status(200).json({
-    success: true,
-    message: 'OTP verified successfully.',
-    data: result,
-  });
-});
-
+/**
+ * POST /auth/reset-password
+ * Change password using current password for identity verification.
+ * Body: { email, currentPassword, newPassword, role? }
+ */
 export const resetPassword = asyncHandler(async (req, res) => {
-  const { email, otp, newPassword, role } = req.body;
-  await authService.resetPassword(email, otp, newPassword, role);
+  const { email, currentPassword, newPassword, role } = req.body;
+  await authService.resetPassword(email, currentPassword, newPassword, role);
 
   res.status(200).json({
     success: true,
-    message: 'Password reset successful. Please log in with your new password.',
+    message: 'Password changed successfully. Please log in with your new password.',
   });
 });

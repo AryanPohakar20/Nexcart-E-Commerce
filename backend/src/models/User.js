@@ -218,10 +218,6 @@ const userSchema = new mongoose.Schema(
       select: false,
       default: null,
     },
-    otp: {
-      code: { type: String, select: false, default: null },
-      expiresAt: { type: Date, select: false, default: null },
-    },
     isDeleted: {
       type: Boolean,
       default: false,

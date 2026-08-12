@@ -38,7 +38,7 @@ export const listUsers = async ({ filter = {}, page = 1, limit = 10, sort = { cr
  */
 export const findUserById = async (id) => {
   return User.findById(id)
-    .select('-password -refreshToken -otp.code -otp.expiresAt')
+    .select('-password -refreshToken')
     .lean();
 };
 
@@ -49,7 +49,7 @@ export const findUserById = async (id) => {
  */
 export const updateUserById = async (id, updates) => {
   return User.findByIdAndUpdate(id, { $set: updates }, { new: true })
-    .select('-password -refreshToken -otp.code -otp.expiresAt')
+    .select('-password -refreshToken')
     .lean();
 };
 
@@ -78,7 +78,7 @@ export const softDeleteUser = async (id, adminId) => {
     id,
     { $set: { isDeleted: true, deletedAt: new Date(), deletedBy: adminId, status: 'Deleted' } },
     { new: true }
-  ).select('-password -refreshToken -otp.code -otp.expiresAt').lean();
+  ).select('-password -refreshToken').lean();
 };
 
 // ─── Counts / Aggregations ────────────────────────────────────────────────────

@@ -30,7 +30,6 @@ import {
   loginSeller,
   logoutSeller,
   forgotPassword,
-  verifyOtp,
   resetPassword,
   loginWithGoogle,
   loginWithApple,
@@ -79,7 +78,6 @@ router.post('/auth/login/apple', loginWithApple);
 router.get('/auth/me', authenticate, getCurrentUser);
 router.post('/auth/logout', logoutUser);
 router.post('/auth/forgot-password', forgotPassword);
-router.post('/auth/verify-otp', verifyOtp);
 router.post('/auth/reset-password', resetPassword);
 
 router.use('/profile', profileRoutes);

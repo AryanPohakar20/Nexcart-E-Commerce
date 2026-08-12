@@ -1,34 +1,16 @@
+// src/services/authService.js
+// Authentication service — registration, login, OAuth, and password management.
+// OTP / email-verification removed. Accounts are immediately active after registration.
+
 import User from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
-import { sendOtpEmail, sendWelcomeEmail } from './emailService.js';
-import { generateOtp, hashOtp, verifyOtpHash, getOtpExpiry, isOtpExpired } from '../helpers/otpHelper.js';
 import logger from '../utils/logger.js';
 
 const normalizeEmail = (email) => (email ? email.toLowerCase().trim() : '');
 const SELLER_ROLES = ['seller', 'marketplace_seller'];
 const USER_ROLES = ['customer', 'admin', 'super_admin', 'moderator', 'support_staff'];
 
-const sendOtpSafely = async (email, otp, subject, failureMessage) => {
-  try {
-    await sendOtpEmail(email, otp, subject);
-    logger.info(`${subject} sent to: ${email}`);
-  } catch (err) {
-    logger.error(`${failureMessage} ${email}: ${err.message}`);
-    if (subject === 'Password Reset') {
-      throw new ApiError(500, 'Could not send reset email. Please try again later.');
-    }
-  }
-};
-
-const prepareOtp = async (user) => {
-  const otp = generateOtp();
-  user.otp = {
-    code: await hashOtp(otp),
-    expiresAt: getOtpExpiry(),
-  };
-  await user.save();
-  return otp;
-};
+// ─── Seller Registration ──────────────────────────────────────────────────────
 
 export const registerSellerService = async (userData) => {
   const { firstName, lastName, username, email, phone, password } = userData;
@@ -57,13 +39,14 @@ export const registerSellerService = async (userData) => {
     phone,
     password,
     role: 'seller',
+    isVerified: true,
   });
 
-  const otp = await prepareOtp(user);
-  await sendOtpSafely(normalizedEmail, otp, 'Seller Email Verification', 'Failed to send seller verification OTP to');
-
+  logger.info(`Seller registered: ${normalizedEmail}`);
   return { user, token: user.generateJWT() };
 };
+
+// ─── Seller Login ─────────────────────────────────────────────────────────────
 
 export const loginSellerService = async (email, password) => {
   const normalizedEmail = normalizeEmail(email);
@@ -90,6 +73,8 @@ export const loginSellerService = async (email, password) => {
 
   return { user, token: user.generateJWT() };
 };
+
+// ─── User Registration ────────────────────────────────────────────────────────
 
 export const registerUserService = async (userData) => {
   const { firstName, lastName, username, email, phone, password, role = 'customer' } = userData;
@@ -118,13 +103,14 @@ export const registerUserService = async (userData) => {
     phone,
     password,
     role: normalizedRole,
+    isVerified: true,
   });
 
-  const otp = await prepareOtp(user);
-  await sendOtpSafely(normalizedEmail, otp, 'Email Verification', 'Failed to send verification OTP to');
-
+  logger.info(`User registered: ${normalizedEmail}`);
   return { user, token: user.generateJWT() };
 };
+
+// ─── User Login ───────────────────────────────────────────────────────────────
 
 export const loginUserService = async (email, password) => {
   const normalizedEmail = normalizeEmail(email);
@@ -288,109 +274,46 @@ export const loginAppleService = async (identityToken, userObj) => {
   return { user, token };
 };
 
+// ─── Password Reset (change password using current password) ──────────────────
+// SMTP / OTP removed. Password reset now requires the user's current password
+// for identity verification — no email delivery needed.
+
 export const forgotPassword = async (email, role = null) => {
-  const normalizedEmail = normalizeEmail(email);
-  const query = { email: normalizedEmail };
-
-  if (role) {
-    query.role = Array.isArray(role) ? { $in: role.map((item) => String(item).toLowerCase()) } : String(role).toLowerCase();
-  }
-
-  const users = await User.find(query);
-  if (!users.length) {
-    logger.warn(`Forgot password attempted for non-existent email: ${normalizedEmail}`);
-    return;
-  }
-
-  for (const user of users) {
-    if (user.isBlocked) {
-      continue;
-    }
-
-    const otp = await prepareOtp(user);
-    await sendOtpSafely(normalizedEmail, otp, 'Password Reset', 'Failed to send password reset OTP to');
-  }
+  // Stub — no email delivery in this deployment.
+  // Returns silently so callers don't reveal whether an account exists.
+  logger.info(`Forgot-password stub called for: ${normalizeEmail(email)} (no email sent — SMTP removed)`);
 };
 
-export const verifyOtp = async (email, otpCode, purpose = 'passwordReset', role = null) => {
+export const resetPassword = async (email, currentPassword, newPassword, role = null) => {
   const normalizedEmail = normalizeEmail(email);
   const query = { email: normalizedEmail };
 
   if (role) {
-    query.role = Array.isArray(role) ? { $in: role.map((item) => String(item).toLowerCase()) } : String(role).toLowerCase();
-  } else if (purpose === 'sellerVerification') {
-    query.role = { $in: SELLER_ROLES };
-  } else if (purpose === 'emailVerification') {
-    query.role = { $in: USER_ROLES };
+    query.role = Array.isArray(role)
+      ? { $in: role.map((r) => String(r).toLowerCase()) }
+      : String(role).toLowerCase();
   }
 
-  const user = await User.findOne(query).select('+otp.code +otp.expiresAt');
+  const user = await User.findOne(query).select('+password');
   if (!user) {
     throw new ApiError(404, 'No account found with this email.');
   }
 
-  if (!user.otp?.code || !user.otp?.expiresAt) {
-    throw new ApiError(400, 'No OTP found. Please request a new one.');
+  if (user.isBlocked) {
+    throw new ApiError(403, 'Your account has been blocked.');
   }
 
-  if (isOtpExpired(user.otp.expiresAt)) {
-    throw new ApiError(400, 'OTP has expired. Please request a new one.');
+  const isMatch = await user.comparePassword(currentPassword);
+  if (!isMatch) {
+    throw new ApiError(400, 'Current password is incorrect.');
   }
 
-  const isValid = await verifyOtpHash(otpCode, user.otp.code);
-  if (!isValid) {
-    throw new ApiError(400, 'Invalid OTP. Please try again.');
+  if (newPassword.length < 6) {
+    throw new ApiError(400, 'New password must be at least 6 characters.');
   }
 
-  if (purpose === 'emailVerification' || purpose === 'sellerVerification') {
-    user.isVerified = true;
-  }
-
-  user.otp = { code: null, expiresAt: null };
+  user.password = newPassword;
   await user.save();
 
-  if (purpose === 'emailVerification' || purpose === 'sellerVerification') {
-    try {
-      await sendWelcomeEmail(user.email, user.firstName);
-    } catch (err) {
-      logger.error(`Welcome email failed for ${user.email}: ${err.message}`);
-    }
-  }
-
-  logger.info(`OTP verified for ${normalizedEmail} (purpose: ${purpose})`);
-  return { userId: user._id };
-};
-
-export const resetPassword = async (email, otpCode, newPassword, role = null) => {
-  const normalizedEmail = normalizeEmail(email);
-  const query = { email: normalizedEmail };
-
-  if (role) {
-    query.role = Array.isArray(role) ? { $in: role.map((item) => String(item).toLowerCase()) } : String(role).toLowerCase();
-  }
-
-  const user = await User.findOne(query).select('+otp.code +otp.expiresAt');
-  if (!user) {
-    throw new ApiError(404, 'No account found with this email.');
-  }
-
-  if (!user.otp?.code || !user.otp?.expiresAt) {
-    throw new ApiError(400, 'No OTP found. Please request a new one.');
-  }
-
-  if (isOtpExpired(user.otp.expiresAt)) {
-    throw new ApiError(400, 'OTP has expired. Please request a new one.');
-  }
-
-  const isValid = await verifyOtpHash(otpCode, user.otp.code);
-  if (!isValid) {
-    throw new ApiError(400, 'Invalid OTP.');
-  }
-
-  const fullUser = await User.findById(user._id).select('+password');
-  fullUser.password = newPassword;
-  fullUser.otp = { code: null, expiresAt: null };
-  await fullUser.save();
-
-  logger.info(`Password reset successful for: ${normalizedEmail}`);
+  logger.info(`Password changed for: ${normalizedEmail}`);
 };
