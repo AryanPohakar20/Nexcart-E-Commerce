@@ -31,7 +31,7 @@ export const findProductById = async (id, session = null) => {
  */
 export const decreaseProductStock = async (id, quantity, session = null) => {
   return Product.updateOne(
-    { _id: id, stock: { $gte: quantity }, isActive: true },
+    { _id: id, stock: { $gte: quantity }, status: 'Active' },
     { $inc: { stock: -quantity } },
     { session }
   );

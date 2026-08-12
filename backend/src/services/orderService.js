@@ -71,7 +71,7 @@ export const placeOrder = async (customerId, orderData) => {
       }
 
       // 2. Validate product is active
-      if (!product.isActive) {
+      if (product.status !== 'Active') {
         throw new ApiError(
           400,
           `Product "${product.title || product.name}" is currently inactive and cannot be ordered.`
@@ -89,7 +89,7 @@ export const placeOrder = async (customerId, orderData) => {
       // 4. Resolve seller — product.seller may be a User _id or Seller _id
       //    Try Seller model first (by userId), then fallback to User lookup
       let resolvedSellerId = null;
-      const sellerProfile = await Seller.findOne({ userId: product.seller })
+      const sellerProfile = await Seller.findOne({ userId: product.sellerId })
         .session(session || null)
         .lean();
 
@@ -97,13 +97,22 @@ export const placeOrder = async (customerId, orderData) => {
         resolvedSellerId = sellerProfile._id;
       } else {
         // Fallback: product.seller may already be a Seller ObjectId
-        const directSeller = await Seller.findById(product.seller)
+        const directSeller = await Seller.findById(product.sellerId)
           .session(session || null)
           .lean();
         if (directSeller) {
           resolvedSellerId = directSeller._id;
         } else {
-          throw new ApiError(400, `Seller for product "${product.title || product.name}" could not be resolved.`);
+          // Fallback 2: The seller might just be a User (e.g. Admin) without a dedicated Seller profile
+          const userSeller = await mongoose.model('User').findById(product.sellerId)
+            .session(session || null)
+            .lean();
+            
+          if (userSeller) {
+            resolvedSellerId = userSeller._id;
+          } else {
+            throw new ApiError(400, `Seller for product "${product.title || product.name}" could not be resolved.`);
+          }
         }
       }
 
