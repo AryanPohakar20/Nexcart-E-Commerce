@@ -482,6 +482,14 @@ export const AppProvider = ({ children }) => {
     setNotifications([]);
   };
 
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(price || 0);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -526,6 +534,7 @@ export const AppProvider = ({ children }) => {
         clearNotifications,
         unreadChatCount,
         setUnreadChatCount,
+        formatPrice,
       }}
     >
       {children}
