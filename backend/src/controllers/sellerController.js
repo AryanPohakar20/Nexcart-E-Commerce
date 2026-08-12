@@ -5,6 +5,7 @@ import { ApiError } from '../utils/ApiError.js';
 import * as sellerService from '../services/sellerService.js';
 import Seller from '../models/Seller.js';
 import Order from '../models/Order.js';
+import * as sellerReputationService from '../services/sellerReputationService.js';
 
 // ─── POST /api/seller/create ──────────────────────────────────────────────────
 
@@ -401,5 +402,17 @@ export const cancelSellerOrder = asyncHandler(async (req, res) => {
     success: true,
     message: 'Order cancelled successfully.',
     data: { order },
+  });
+});
+
+// ─── GET /api/sellers/:sellerId/reputation (no auth) ───────────────────────────
+export const getSellerReputation = asyncHandler(async (req, res) => {
+  const { sellerId } = req.params;
+  const reputation = await sellerReputationService.getSellerReputation(sellerId);
+
+  res.status(200).json({
+    success: true,
+    message: 'Seller reputation fetched successfully.',
+    data: { reputation },
   });
 });

@@ -121,3 +121,65 @@ export const listSellers = async ({ page = 1, limit = 20, filter = {} } = {}) =>
 
   return { sellers, total, page, limit, totalPages: Math.ceil(total / limit) };
 };
+
+/**
+ * Update the rating statistics for a seller by their User ID.
+ * @param {string} sellerUserId - Seller User ID
+ * @param {Object} stats - Statistics object
+ */
+export const updateSellerRatingStatistics = async (sellerUserId, stats) => {
+  return await Seller.findOneAndUpdate(
+    { userId: sellerUserId },
+    { $set: stats },
+    { new: true }
+  );
+};
+
+/**
+ * Update the performance statistics object on a Seller document by the Seller's _id.
+ * @param {string} sellerDocId - Seller document ID
+ * @param {Object} statsUpdates - Statistics updates using dot notation
+ */
+export const updateSellerStatistics = async (sellerDocId, statsUpdates) => {
+  return await Seller.findByIdAndUpdate(
+    sellerDocId,
+    { $set: statsUpdates },
+    { new: true }
+  );
+};
+
+/**
+ * Update the trust score and metadata for a seller by their document ID.
+ * @param {string} sellerDocId - Seller document ID
+ * @param {Object} trustData - { trustScore, lastTrustScoreUpdatedAt }
+ */
+export const updateSellerTrustScore = async (sellerDocId, trustData) => {
+  return await Seller.findByIdAndUpdate(
+    sellerDocId,
+    { $set: trustData },
+    { new: true }
+  );
+};
+
+/**
+ * Atomically replace the badges array for a seller by their document ID.
+ * @param {string} sellerDocId - Seller document ID
+ * @param {Array} badgesList - Array of badge states
+ */
+export const updateSellerBadges = async (sellerDocId, badgesList) => {
+  return await Seller.findByIdAndUpdate(
+    sellerDocId,
+    { $set: { badges: badgesList } },
+    { new: true }
+  );
+};
+
+/**
+ * Retrieve only the fields needed for badge evaluation from a Seller document.
+ * @param {string} sellerDocId - Seller document ID
+ */
+export const getSellerEvaluationFields = async (sellerDocId) => {
+  return await Seller.findById(sellerDocId)
+    .select('trustScore averageRating totalReviews statistics.completedOrders statistics.cancellationRate badges')
+    .lean();
+};

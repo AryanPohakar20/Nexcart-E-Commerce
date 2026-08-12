@@ -6,6 +6,12 @@ import { authenticate } from '../middlewares/authenticate.js';
 import { authorize }    from '../middlewares/authorize.js';
 import { requirePermission } from '../middlewares/requirePermission.js';
 import { ADMIN_ROLES }  from '../constants/roles.js';
+import { getAdminReviewReports, getAdminReviewReportDetails } from '../controllers/adminReviewReportController.js';
+import { validateAdminReviewReportsList, validateAdminReviewReportId } from '../validations/adminReviewReportValidation.js';
+import { moderateReviewReport } from '../controllers/adminReviewModerationController.js';
+import { validateAdminReviewModeration } from '../validations/adminReviewModerationValidation.js';
+import Review from '../models/Review.js';
+import SellerReview from '../models/SellerReview.js';
 import {
   // Dashboard
   getDashboardStats,
@@ -298,6 +304,43 @@ router.get('/export/:entity', requirePermission('export', 'export'), exportData)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get('/roles-permissions', getRolesAndPermissions);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REVIEW REPORTS QUEUE
+// ═══════════════════════════════════════════════════════════════════════════════
+router.get('/review-reports', requirePermission('reports', 'read'), validateAdminReviewReportsList, getAdminReviewReports);
+router.get('/review-reports/:reportId', requirePermission('reports', 'read'), validateAdminReviewReportId, getAdminReviewReportDetails);
+router.patch('/review-reports/:reportId/moderate', requirePermission('reports', 'update'), validateAdminReviewModeration, moderateReviewReport);
+
+router.get('/migrate-reviews-temp', async (req, res) => {
+  try {
+    const oldReviews = await Review.find().lean();
+    let migrated = 0;
+    for (const old of oldReviews) {
+      const existing = await SellerReview.findOne({
+        sellerId: old.seller,
+        customerId: old.buyer,
+        comment: old.comment,
+        createdAt: old.createdAt,
+      });
+      if (!existing) {
+        await SellerReview.create({
+          sellerId: old.seller,
+          customerId: old.buyer,
+          rating: old.rating,
+          comment: old.comment,
+          status: 'PUBLISHED',
+          createdAt: old.createdAt,
+          updatedAt: old.updatedAt,
+        });
+        migrated++;
+      }
+    }
+    res.json({ migrated });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // ════════════════════════════════════════════════════════════════════════════════
 // ADMIN PROFILE & CREDENTIALS

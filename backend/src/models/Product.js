@@ -143,6 +143,16 @@ const productSchema = new mongoose.Schema(
     // PRODUCT STATISTICS
     rating: { type: Number, default: 0, min: 0, max: 5 },
     reviewsCount: { type: Number, default: 0, min: 0 },
+    // Advanced Rating Fields (from Reviews Integration)
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
+    totalReviews: { type: Number, default: 0, min: 0 },
+    ratingDistribution: {
+      type: Map,
+      of: Number,
+      default: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+    },
+    lastRatingUpdatedAt: { type: Date, default: null },
+    
     views: { type: Number, default: 0 },
     wishlistCount: { type: Number, default: 0 },
     purchaseCount: { type: Number, default: 0 },

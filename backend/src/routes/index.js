@@ -13,6 +13,8 @@ import marketplaceRoutes from './marketplaceRoutes.js';
 import productRoutes from './productRoutes.js';
 import searchRoutes from './searchRoutes.js';
 import searchHistoryRoutes from './searchHistoryRoutes.js';
+import productReviewRoutes from './productReviewRoutes.js';
+import sellerReviewRoutes from './sellerReviewRoutes.js';
 import brandRoutes from './brandRoutes.js';
 import categoryRoutes from './categoryRoutes.js';
 import subcategoryRoutes from './subcategoryRoutes.js';
@@ -32,8 +34,9 @@ import {
   loginWithGoogle,
   loginWithApple,
 } from '../controllers/authController.js';
-import { getPublicProfile, updateStep3, updateStep4, updateStep5, getSellerStatus } from '../controllers/sellerController.js';
+import { getPublicProfile, updateStep3, updateStep4, updateStep5, getSellerStatus, getSellerReputation } from '../controllers/sellerController.js';
 import { validateRegistration, validateLogin } from '../validations/authValidation.js';
+import { validateGetSellerReputation } from '../validations/sellerValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { authorize } from '../middlewares/authorize.js';
 import { upload } from '../middlewares/upload.js';
@@ -95,5 +98,12 @@ router.use('/brands', brandRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/subcategories', subcategoryRoutes);
 router.use('/attributes', attributeRoutes);
+
+router.use('/product-reviews', productReviewRoutes);
+router.use('/reviews', productReviewRoutes);
+router.use('/seller-reviews', sellerReviewRoutes);
+router.use('/sellers', sellerReviewRoutes);
+
+router.get('/sellers/:sellerId/reputation', validateGetSellerReputation, getSellerReputation);
 
 export default router;
