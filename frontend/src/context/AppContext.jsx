@@ -114,13 +114,14 @@ export const AppProvider = ({ children }) => {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   const fetchUnreadChatCount = async () => {
+    if (!user || !localStorage.getItem('accessToken')) return;
     try {
       const res = await chatService.getUnreadCount();
-      if (res.success) {
+      if (res?.success) {
         setUnreadChatCount(res.count);
       }
     } catch (error) {
-      console.error('Error fetching unread chat count:', error);
+      // Silent catch for expected auth transitions
     }
   };
 
@@ -141,6 +142,8 @@ export const AppProvider = ({ children }) => {
     } else {
       socketService.disconnect();
       setUnreadChatCount(0);
+      setUnreadNotificationsCount(0);
+      setNotifications([]);
     }
   }, [user]);
 
