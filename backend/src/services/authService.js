@@ -75,15 +75,22 @@ export const loginSellerService = async (email, password) => {
 };
 
 // ─── User Registration ────────────────────────────────────────────────────────
+//
+// SECURITY: `role` is intentionally NOT read from `userData` (i.e. req.body).
+// Public registration always creates a `customer` account. Privileged roles
+// (admin, super_admin, moderator, support_staff) may only be assigned by an
+// authenticated admin via PUT /admin/users/:id — never through this endpoint.
 
 export const registerUserService = async (userData) => {
-  const { firstName, lastName, username, email, phone, password, role = 'customer' } = userData;
+  // Destructure only the fields the client is allowed to supply.
+  // `role` is explicitly excluded — any role sent by the client is ignored.
+  const { firstName, lastName, username, email, phone, password } = userData;
   const normalizedEmail = normalizeEmail(email);
-  const normalizedRole = String(role || 'customer').toLowerCase();
 
+  // Scope the duplicate-check to 'customer' — the only role this path creates.
   const emailExists = await User.findOne({
     email: normalizedEmail,
-    role: normalizedRole,
+    role: 'customer',
   });
   if (emailExists) {
     throw new ApiError(400, 'User with this email already exists');
@@ -95,6 +102,7 @@ export const registerUserService = async (userData) => {
     throw new ApiError(400, 'Username is already taken');
   }
 
+  // `role` is hard-coded — the client can never influence this value.
   const user = await User.create({
     firstName,
     lastName,
@@ -102,7 +110,7 @@ export const registerUserService = async (userData) => {
     email: normalizedEmail,
     phone,
     password,
-    role: normalizedRole,
+    role: 'customer',
     isVerified: true,
   });
 

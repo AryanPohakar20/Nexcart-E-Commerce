@@ -2,6 +2,13 @@ import { body, validationResult } from 'express-validator';
 import { ApiError } from '../utils/ApiError.js';
 
 export const validateRegistration = [
+  // SECURITY: `role` is a privileged field and must never be accepted from the
+  // client during public registration. Reject it explicitly so attackers get a
+  // clear 400 rather than a silent no-op.
+  body('role')
+    .not()
+    .exists()
+    .withMessage('role is not an accepted field for public registration'),
   body('firstName')
     .notEmpty()
     .withMessage('First name is required')
