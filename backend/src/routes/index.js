@@ -33,13 +33,15 @@ import {
   resetPassword,
   loginWithGoogle,
   loginWithApple,
+  refreshAccessToken,
 } from '../controllers/authController.js';
 import { getPublicProfile, updateStep3, updateStep4, updateStep5, getSellerStatus, getSellerReputation } from '../controllers/sellerController.js';
 import { validateRegistration, validateLogin } from '../validations/authValidation.js';
 import { validateGetSellerReputation } from '../validations/sellerValidation.js';
 import { authenticate } from '../middlewares/authenticate.js';
-import { authorize } from '../middlewares/authorize.js';
-import { upload } from '../middlewares/upload.js';
+import { authorize }    from '../middlewares/authorize.js';
+import { upload }       from '../middlewares/upload.js';
+import { authLimiter, publicApiLimiter } from '../middlewares/rateLimiter.js';
 
 const router = Router();
 
@@ -50,9 +52,10 @@ router.use('/upload', uploadRoutes);
 router.use('/seller/auth', authRoutes);
 router.use('/seller/upload-aadhaar', uploadRoutes);
 
-router.post('/seller/register', validateRegistration, registerSeller);
-router.post('/seller/login', validateLogin, loginSeller);
-router.post('/seller/logout', logoutSeller);
+// ─── Seller Auth Routes (rate limited) ────────────────────────────────────────
+router.post('/seller/register', authLimiter, validateRegistration, registerSeller);
+router.post('/seller/login',    authLimiter, validateLogin,        loginSeller);
+router.post('/seller/logout',   logoutSeller);
 
 router.post(
   '/seller/upload-document',
@@ -60,49 +63,50 @@ router.post(
   authorize('seller', 'marketplace_seller'),
   upload.fields([
     { name: 'frontImage', maxCount: 1 },
-    { name: 'backImage', maxCount: 1 },
+    { name: 'backImage',  maxCount: 1 },
   ]),
   updateStep3
 );
 router.post('/seller/payment-details', authenticate, authorize('seller', 'marketplace_seller'), updateStep4);
-router.post('/seller/agree-terms', authenticate, authorize('seller', 'marketplace_seller'), updateStep5);
-router.get('/seller/verification-status', authenticate, authorize('seller', 'marketplace_seller'), getSellerStatus);
+router.post('/seller/agree-terms',     authenticate, authorize('seller', 'marketplace_seller'), updateStep5);
+router.get( '/seller/verification-status', authenticate, authorize('seller', 'marketplace_seller'), getSellerStatus);
 
 router.use('/seller', sellerRoutes);
 router.get('/search/seller/:slug', getPublicProfile);
 
-router.post('/auth/register', validateRegistration, registerUser);
-router.post('/auth/login', validateLogin, loginUser);
-router.post('/auth/login/google', loginWithGoogle);
-router.post('/auth/login/apple', loginWithApple);
-router.get('/auth/me', authenticate, getCurrentUser);
-router.post('/auth/logout', logoutUser);
-router.post('/auth/forgot-password', forgotPassword);
-router.post('/auth/reset-password', resetPassword);
+// ─── Customer Auth Routes (rate limited) ──────────────────────────────────────
+router.post('/auth/register',       authLimiter, validateRegistration, registerUser);
+router.post('/auth/login',          authLimiter, validateLogin,        loginUser);
+router.post('/auth/login/google',   authLimiter, loginWithGoogle);
+router.post('/auth/login/apple',    authLimiter, loginWithApple);
+router.post('/auth/refresh',        authLimiter, refreshAccessToken);   // Token rotation endpoint
+router.get( '/auth/me',             authenticate, getCurrentUser);
+router.post('/auth/logout',         logoutUser);
+router.post('/auth/forgot-password', authLimiter, forgotPassword);
+router.post('/auth/reset-password',  authLimiter, resetPassword);
 
-router.use('/profile', profileRoutes);
-router.use('/address', addressRoutes);
-router.use('/admin', adminRoutes);
+router.use('/profile',  profileRoutes);
+router.use('/address',  addressRoutes);
+router.use('/admin',    adminRoutes);
 router.use('/notifications', notificationRoutes);
-router.use('/orders', orderRoutes);
+router.use('/orders',   orderRoutes);
 router.use('/seller/orders', sellerOrderRoutes);
 
-// ─── Marketplace Routes ───────────────────────────────────────────────────────
-// NOTE: /search/history MUST be mounted before /search to avoid the /search
-// prefix intercepting /search/history requests.
+// ─── Marketplace / Public Routes (general rate limiting from app.js) ──────────
+// NOTE: /search/history MUST be mounted before /search to avoid prefix interception.
 router.use('/search/history', searchHistoryRoutes);
-router.use('/search', searchRoutes);
-router.use('/marketplace', marketplaceRoutes);
-router.use('/products', productRoutes);
-router.use('/brands', brandRoutes);
-router.use('/categories', categoryRoutes);
-router.use('/subcategories', subcategoryRoutes);
-router.use('/attributes', attributeRoutes);
+router.use('/search',         publicApiLimiter, searchRoutes);
+router.use('/marketplace',    marketplaceRoutes);
+router.use('/products',       publicApiLimiter, productRoutes);
+router.use('/brands',         brandRoutes);
+router.use('/categories',     categoryRoutes);
+router.use('/subcategories',  subcategoryRoutes);
+router.use('/attributes',     attributeRoutes);
 
 router.use('/product-reviews', productReviewRoutes);
-router.use('/reviews', productReviewRoutes);
-router.use('/seller-reviews', sellerReviewRoutes);
-router.use('/sellers', sellerReviewRoutes);
+router.use('/reviews',         productReviewRoutes);
+router.use('/seller-reviews',  sellerReviewRoutes);
+router.use('/sellers',         sellerReviewRoutes);
 
 router.get('/sellers/:sellerId/reputation', validateGetSellerReputation, getSellerReputation);
 

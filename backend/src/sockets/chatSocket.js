@@ -18,11 +18,19 @@ export const initSocketServer = (httpServer, allowedOrigins) => {
   const io = new Server(httpServer, {
     cors: {
       origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-          callback(null, true);
-        } else {
-          callback(null, allowedOrigins);
+        if (!origin) return callback(null, true); // Allow server-to-server / no-origin requests
+
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+
+        // SECURITY: Only allow localhost in non-production environments
+        if (
+          process.env.NODE_ENV !== 'production' &&
+          (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))
+        ) {
+          return callback(null, true);
         }
+
+        callback(new Error(`Socket.IO origin ${origin} not allowed`));
       },
       credentials: true,
     },
@@ -43,13 +51,23 @@ export const initSocketServer = (httpServer, allowedOrigins) => {
       }
 
       const decoded = verifyAccessToken(token);
-      const user = await User.findById(decoded.id).select('_id name email role avatar').lean();
+      // BUGFIX: User model has firstName/lastName, NOT a 'name' field.
+      const user = await User.findById(decoded.id).select('_id firstName lastName email role avatar status isBlocked').lean();
 
       if (!user) {
         return next(new Error('User account associated with token not found.'));
       }
 
-      socket.user = user;
+      // Check account status before allowing socket connection
+      if (user.isBlocked || user.status === 'Blocked' || user.status === 'blocked') {
+        return next(new Error('Account is blocked.'));
+      }
+
+      // Derive a safe displayName for logging/payloads
+      socket.user = {
+        ...user,
+        displayName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      };
       socket.userId = user._id.toString();
       next();
     } catch (error) {
@@ -60,7 +78,7 @@ export const initSocketServer = (httpServer, allowedOrigins) => {
 
   io.on('connection', (socket) => {
     const userId = socket.userId;
-    logger.info(`⚡ Socket Connected: ${socket.id} (User: ${socket.user.name} - ${userId})`);
+    logger.info(`⚡ Socket Connected: ${socket.id} (User: ${socket.user.displayName} - ${userId})`);
 
     // Add user to online registry
     if (!onlineUsersMap.has(userId)) {
@@ -111,13 +129,13 @@ export const initSocketServer = (httpServer, allowedOrigins) => {
       socket.to(`conv:${conversationId}`).emit('typing', {
         conversationId,
         userId,
-        userName: socket.user.name,
+        userName: socket.user.displayName,
       });
       if (partnerId) {
         io.to(`user:${partnerId}`).emit('typing', {
           conversationId,
           userId,
-          userName: socket.user.name,
+          userName: socket.user.displayName,
         });
       }
     });
@@ -174,8 +192,8 @@ export const initSocketServer = (httpServer, allowedOrigins) => {
         });
 
         const populatedMsg = await Message.findById(newMsg._id)
-          .populate('senderId', '_id name avatar role')
-          .populate('receiverId', '_id name avatar role')
+          .populate('senderId', '_id firstName lastName avatar role')
+          .populate('receiverId', '_id firstName lastName avatar role')
           .lean();
 
         // Update conversation last message & unread count

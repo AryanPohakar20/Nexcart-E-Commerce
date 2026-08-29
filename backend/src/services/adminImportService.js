@@ -3,7 +3,7 @@
 
 import { Readable } from 'stream';
 import csv from 'csv-parser';
-import * as xlsx from 'xlsx';
+import ExcelJS from 'exceljs';
 import slugify from 'slugify';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
@@ -57,10 +57,25 @@ const parseBufferToRows = async (buffer, mimetype, originalName = '') => {
     originalName.endsWith('.xls');
 
   if (isExcel) {
-    const workbook = xlsx.read(buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    return xlsx.utils.sheet_to_json(sheet, { defval: '' });
+    // SECURITY: Using exceljs instead of vulnerable xlsx package
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) return [];
+
+    const rows = [];
+    let headers = [];
+    worksheet.eachRow((row, rowNumber) => {
+      const values = row.values.slice(1); // exceljs row.values[0] is always null
+      if (rowNumber === 1) {
+        headers = values.map((h) => (h ? String(h).trim().toLowerCase() : `col_${rowNumber}`));
+      } else {
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = values[i] !== undefined ? values[i] : ''; });
+        rows.push(obj);
+      }
+    });
+    return rows;
   }
 
   // Otherwise parse as CSV

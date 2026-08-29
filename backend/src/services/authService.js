@@ -1,14 +1,32 @@
 // src/services/authService.js
 // Authentication service — registration, login, OAuth, and password management.
-// OTP / email-verification removed. Accounts are immediately active after registration.
+// SECURITY: Apple Sign-In now verifies JWT signature using Apple's JWKS endpoint.
+// SECURITY: Login services check both isBlocked (legacy) and status (current) fields.
 
 import User from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 import logger from '../utils/logger.js';
+import appleSignin from 'apple-signin-auth';
+import { OAuth2Client } from 'google-auth-library';
 
 const normalizeEmail = (email) => (email ? email.toLowerCase().trim() : '');
 const SELLER_ROLES = ['seller', 'marketplace_seller'];
-const USER_ROLES = ['customer', 'admin', 'super_admin', 'moderator', 'support_staff'];
+const USER_ROLES   = ['customer', 'admin', 'super_admin', 'moderator', 'support_staff'];
+
+// ─── Account Status Check ─────────────────────────────────────────────────────
+// Checks both the legacy isBlocked flag and the newer status field for full consistency.
+
+const assertAccountActive = (user) => {
+  if (user.isBlocked || user.status === 'Blocked' || user.status === 'blocked') {
+    throw new ApiError(403, 'Your account has been blocked. Please contact support.');
+  }
+  if (user.status === 'Suspended' || user.status === 'suspended') {
+    throw new ApiError(403, 'Your account has been suspended. Please contact support.');
+  }
+  if (user.isDeleted || user.status === 'Deleted' || user.status === 'deleted') {
+    throw new ApiError(401, 'Account not found.');
+  }
+};
 
 // ─── Seller Registration ──────────────────────────────────────────────────────
 
@@ -38,12 +56,12 @@ export const registerSellerService = async (userData) => {
     email: normalizedEmail,
     phone,
     password,
-    role: 'seller',
+    role: 'seller',    // Always 'seller' — never from user input
     isVerified: true,
   });
 
   logger.info(`Seller registered: ${normalizedEmail}`);
-  return { user, token: user.generateJWT() };
+  return { user };
 };
 
 // ─── Seller Login ─────────────────────────────────────────────────────────────
@@ -64,14 +82,12 @@ export const loginSellerService = async (email, password) => {
     throw new ApiError(401, 'Invalid credentials');
   }
 
-  if (user.isBlocked) {
-    throw new ApiError(403, 'Your account has been blocked');
-  }
+  assertAccountActive(user);
 
   user.lastLogin = new Date();
   await user.save();
 
-  return { user, token: user.generateJWT() };
+  return { user };
 };
 
 // ─── User Registration ────────────────────────────────────────────────────────
@@ -110,12 +126,12 @@ export const registerUserService = async (userData) => {
     email: normalizedEmail,
     phone,
     password,
-    role: 'customer',
+    role: 'customer',   // Always 'customer' — never from user input
     isVerified: true,
   });
 
   logger.info(`User registered: ${normalizedEmail}`);
-  return { user, token: user.generateJWT() };
+  return { user };
 };
 
 // ─── User Login ───────────────────────────────────────────────────────────────
@@ -144,56 +160,69 @@ export const loginUserService = async (email, password) => {
     throw new ApiError(401, 'Invalid credentials');
   }
 
-  if (matchedUser.isBlocked) {
-    throw new ApiError(403, 'Your account has been blocked');
-  }
+  assertAccountActive(matchedUser);
 
   matchedUser.lastLogin = new Date();
   await matchedUser.save();
 
-  return { user: matchedUser, token: matchedUser.generateJWT() };
+  return { user: matchedUser };
 };
 
-// ─── OAuth Logins ──────────────────────────────────────────────────────────────
+// ─── Google OAuth ──────────────────────────────────────────────────────────────
+// Verifies the Google access token against Google's API.
+// Uses google-auth-library for proper audience/issuer validation when an ID token is provided.
 
 export const loginGoogleService = async (accessToken) => {
   let payload = null;
 
-  try {
-    const resHeader = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (resHeader.ok) {
-      payload = await resHeader.json();
-    }
-  } catch (err) {
-    logger.warn(`Google userinfo header fetch notice: ${err.message}`);
-  }
-
-  if (!payload) {
+  // Attempt 1: Use google-auth-library to verify ID token (preferred — validates audience)
+  if (process.env.GOOGLE_CLIENT_ID) {
     try {
-      const resQuery = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
-      if (resQuery.ok) {
-        payload = await resQuery.json();
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+      const ticket = await client.verifyIdToken({
+        idToken: accessToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const p = ticket.getPayload();
+      if (p) {
+        payload = {
+          sub: p.sub,
+          email: p.email,
+          given_name: p.given_name,
+          family_name: p.family_name,
+          picture: p.picture,
+          name: p.name,
+        };
       }
     } catch (err) {
-      logger.warn(`Google userinfo query fetch notice: ${err.message}`);
+      logger.warn(`Google ID token verification failed, trying userinfo: ${err.message}`);
     }
   }
 
+  // Attempt 2: Treat as an access token and call the userinfo endpoint
   if (!payload) {
     try {
-      const resTokenInfo = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${accessToken}`);
-      if (resTokenInfo.ok) {
-        payload = await resTokenInfo.json();
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        payload = {
+          sub: data.sub,
+          email: data.email,
+          given_name: data.given_name,
+          family_name: data.family_name,
+          picture: data.picture,
+          name: data.name,
+        };
       }
     } catch (err) {
-      logger.warn(`Google tokeninfo fetch notice: ${err.message}`);
+      logger.warn(`Google userinfo fetch failed: ${err.message}`);
     }
   }
 
   if (!payload) {
-    throw new ApiError(400, 'Invalid Google Access Token or unable to reach Google API');
+    throw new ApiError(400, 'Invalid Google token or unable to reach Google API');
   }
 
   const { sub, email, given_name, family_name, picture, name } = payload;
@@ -205,7 +234,9 @@ export const loginGoogleService = async (accessToken) => {
   let user = await User.findOne({ $or: [{ email }, { providerId: sub }] });
 
   if (!user) {
-    const finalUsername = (email.split('@')[0] + Math.floor(Math.random() * 1000)).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const finalUsername = (email.split('@')[0] + Math.floor(Math.random() * 1000))
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '');
     user = await User.create({
       firstName: given_name || name || 'Google User',
       lastName: family_name || '',
@@ -224,44 +255,59 @@ export const loginGoogleService = async (accessToken) => {
     if (modified) await user.save();
   }
 
-  const token = user.generateJWT();
-  return { user, token };
+  return { user };
 };
 
+// ─── Apple Sign-In ─────────────────────────────────────────────────────────────
+// SECURITY: Uses apple-signin-auth to cryptographically verify the identity token
+// against Apple's JWKS public keys. Validates issuer, audience, expiration, and subject.
+// Never trusts email/sub before the signature verification succeeds.
+
 export const loginAppleService = async (identityToken, userObj) => {
-  let appleIdTokenClaims = {};
-  try {
-    const parts = identityToken ? identityToken.split('.') : [];
-    if (parts.length === 3) {
-      const payloadBuf = Buffer.from(parts[1], 'base64').toString('utf-8');
-      appleIdTokenClaims = JSON.parse(payloadBuf);
-    } else {
-      throw new ApiError(400, 'Invalid Apple Identity Token');
-    }
-  } catch (err) {
-    throw new ApiError(400, 'Invalid Apple Identity Token');
+  if (!identityToken) {
+    throw new ApiError(400, 'Apple identityToken is required');
   }
 
-  const email = appleIdTokenClaims.email || userObj?.email;
+  const appleClientId = process.env.APPLE_CLIENT_ID;
+  if (!appleClientId) {
+    throw new ApiError(500, 'Apple Sign-In is not configured on this server (APPLE_CLIENT_ID missing).');
+  }
+
+  let appleIdTokenClaims;
+  try {
+    // verifyIdToken fetches Apple's JWKS, verifies the signature, iss, aud, and exp
+    appleIdTokenClaims = await appleSignin.verifyIdToken(identityToken, {
+      audience: appleClientId,
+      ignoreExpiration: false,
+    });
+  } catch (err) {
+    logger.warn(`Apple identity token verification failed: ${err.message}`);
+    throw new ApiError(401, 'Apple identity token is invalid, expired, or forged. Login rejected.');
+  }
+
+  // At this point the token has been cryptographically verified
+  const email     = appleIdTokenClaims.email || userObj?.email;
   const providerId = appleIdTokenClaims.sub;
 
-  if (!email && !providerId) {
-    throw new ApiError(400, 'Email or User ID not provided by Apple');
+  if (!providerId) {
+    throw new ApiError(400, 'Subject (sub) not present in verified Apple token');
   }
 
   let user = await User.findOne({
     $or: [
-      { email: email || 'nonexistent@apple.com' },
-      { providerId: providerId }
-    ]
+      ...(email ? [{ email }] : []),
+      { providerId },
+    ],
   });
 
   if (!user) {
     const userEmail = email || `apple_${providerId}@nexcart.com`;
     const nameParts = userObj?.name || {};
     const firstName = nameParts.firstName || 'Apple';
-    const lastName = nameParts.lastName || 'User';
-    const finalUsername = (userEmail.split('@')[0] + Math.floor(Math.random() * 1000)).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const lastName  = nameParts.lastName  || 'User';
+    const finalUsername = (userEmail.split('@')[0] + Math.floor(Math.random() * 1000))
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '');
 
     user = await User.create({
       firstName,
@@ -278,13 +324,10 @@ export const loginAppleService = async (identityToken, userObj) => {
     await user.save();
   }
 
-  const token = user.generateJWT();
-  return { user, token };
+  return { user };
 };
 
 // ─── Password Reset (change password using current password) ──────────────────
-// SMTP / OTP removed. Password reset now requires the user's current password
-// for identity verification — no email delivery needed.
 
 export const forgotPassword = async (email, role = null) => {
   // Stub — no email delivery in this deployment.
@@ -307,9 +350,7 @@ export const resetPassword = async (email, currentPassword, newPassword, role = 
     throw new ApiError(404, 'No account found with this email.');
   }
 
-  if (user.isBlocked) {
-    throw new ApiError(403, 'Your account has been blocked.');
-  }
+  assertAccountActive(user);
 
   const isMatch = await user.comparePassword(currentPassword);
   if (!isMatch) {

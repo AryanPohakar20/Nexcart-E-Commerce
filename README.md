@@ -943,7 +943,7 @@ Potential future improvements include:
 - 💳 Production payment gateway integration
 - 🧪 Comprehensive automated testing
 - 📦 Advanced shipping/carrier integrations
-- 🤖 AI-powered product recommendations
+- 🔢 Rule-based product recommendations (currently sorted by popularity/rating/recency — no ML model)
 - 📈 Advanced seller/business intelligence
 - 🔍 Advanced search and recommendation ranking
 - 🛡️ Fraud and risk detection

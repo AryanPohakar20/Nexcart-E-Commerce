@@ -247,7 +247,10 @@ router.post('/import/execute', requirePermission('imports', 'import'), executeIm
 // BULK OPERATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.post('/bulk', executeBulkAction);
+// SECURITY: requirePermission enforces that at minimum the 'update' action on 'users'
+// is needed. The service layer further validates entity/action against allow-lists.
+router.post('/bulk', requirePermission('users', 'update'), executeBulkAction);
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GLOBAL SEARCH

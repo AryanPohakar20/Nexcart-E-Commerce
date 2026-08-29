@@ -1,7 +1,8 @@
 // src/services/adminExportService.js
 // Universal data export engine supporting CSV, Excel (xlsx), and JSON.
+// SECURITY: Replaced vulnerable 'xlsx' package with 'exceljs' for Excel generation.
 
-import XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import User from '../models/User.js';
 import Seller from '../models/Seller.js';
 import Product from '../models/Product.js';
@@ -33,13 +34,20 @@ const jsonToCsv = (items) => {
 };
 
 /**
- * Generate binary Excel buffer using xlsx.
+ * Generate binary Excel buffer using exceljs (replaces vulnerable xlsx package).
  */
-const jsonToExcelBuffer = (items, sheetName = 'Export') => {
-  const ws = XLSX.utils.json_to_sheet(items || []);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+const jsonToExcelBuffer = async (items, sheetName = 'Export') => {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet(sheetName);
+
+  if (items && items.length > 0) {
+    // Set header row
+    sheet.columns = Object.keys(items[0]).map((key) => ({ header: key, key, width: 20 }));
+    // Add data rows
+    items.forEach((row) => sheet.addRow(row));
+  }
+
+  return workbook.xlsx.writeBuffer();
 };
 
 /**
@@ -204,7 +212,7 @@ export const exportEntityData = async (entity, format = 'csv', filters = {}, adm
   }
 
   if (normalizedFormat === 'excel' || normalizedFormat === 'xlsx') {
-    const buffer = jsonToExcelBuffer(rawData, entity);
+    const buffer = await jsonToExcelBuffer(rawData, entity);
     return {
       data: buffer,
       contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

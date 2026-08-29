@@ -263,7 +263,18 @@ export const getCustomerOrders = async (customerId, query = {}) => {
 
   const queryFilters = { customer: customerId, isDeleted: { $ne: true } };
 
-  if (orderStatus)   queryFilters.orderStatus = new RegExp(`^${orderStatus}$`, 'i');
+  // Use exact case-insensitive string comparison via $regex with escaped value
+  // to prevent ReDoS. Allowed values are validated before reaching here.
+  const ORDER_STATUS_ALLOW_LIST = new Set([
+    'pending', 'confirmed', 'processing', 'shipped', 'delivered',
+    'cancelled', 'returned', 'refunded', 'failed',
+  ]);
+  if (orderStatus) {
+    const normalized = orderStatus.toLowerCase();
+    if (ORDER_STATUS_ALLOW_LIST.has(normalized)) {
+      queryFilters.orderStatus = normalized;
+    }
+  }
   if (paymentStatus) queryFilters['paymentInfo.status'] = paymentStatus.toLowerCase();
   if (paymentMethod) queryFilters['paymentInfo.method'] = paymentMethod;
 
@@ -274,7 +285,9 @@ export const getCustomerOrders = async (customerId, query = {}) => {
   }
 
   if (search) {
-    const re = new RegExp(search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i');
+    // Escape user input before using in RegExp to prevent ReDoS
+    const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(escapeRegex(search.slice(0, 200)), 'i');
     queryFilters.$or = [
       { orderId:      re },
       { orderNumber:  re },

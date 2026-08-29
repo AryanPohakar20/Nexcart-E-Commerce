@@ -3,6 +3,7 @@ const REQUIRED_VARS = [
   'MONGO_URI',
   'JWT_SECRET',
   'JWT_EXPIRES_IN',
+  'JWT_REFRESH_SECRET',   // Required — separate secret for refresh tokens
   'CLIENT_URL',
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -22,6 +23,12 @@ const validateEnv = () => {
   if (!process.env.EMAIL || !process.env.EMAIL_PASSWORD) {
     console.warn(
       '\nEMAIL / EMAIL_PASSWORD not set in .env - transactional emails will log to console in dev mode.\n'
+    );
+  }
+
+  if (!process.env.APPLE_CLIENT_ID) {
+    console.warn(
+      '\nAPPLE_CLIENT_ID not set in .env - Apple Sign-In will be unavailable.\n'
     );
   }
 

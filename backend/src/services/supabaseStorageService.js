@@ -75,9 +75,21 @@ export const uploadImage = async (buffer, folder, originalFileName = 'upload.jpg
     throw new Error('No file buffer provided for upload.');
   }
 
-  const extension = path.extname(originalFileName) || '.jpg';
+  // SECURITY: Only allow a known-safe set of extensions for the storage path.
+  // The filename itself is a server-generated UUID — client cannot influence it.
+  // The extension is sanitized to prevent path traversal via crafted filenames.
+  const SAFE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.doc', '.docx', '.txt']);
+  const rawExt = path.extname(originalFileName).toLowerCase();
+  const extension = SAFE_EXTENSIONS.has(rawExt) ? rawExt : '.bin';
+
+  // Sanitize folder: strip any path traversal sequences and non-alphanumeric characters
+  const safeFolder = String(folder)
+    .replace(/\.\./g, '')       // Strip directory traversal
+    .replace(/[^a-zA-Z0-9/_-]/g, '')  // Keep only safe path chars
+    .replace(/\/+/g, '/');      // Collapse duplicate slashes
+
   const uniqueFileName = `${crypto.randomUUID()}${extension}`;
-  const filePath = `${folder}/${uniqueFileName}`.replace(/\/+/g, '/'); // ensure no double slashes
+  const filePath = `${safeFolder}/${uniqueFileName}`.replace(/^\//, ''); // Remove leading slash
 
   const mimeType = getMimeType(originalFileName);
 

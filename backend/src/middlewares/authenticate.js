@@ -3,21 +3,11 @@ import { ApiError } from '../utils/ApiError.js';
 import User from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
-export const authenticate = asyncHandler(async (req, res, next) => {
-  if (process.env.MOCK_DB === 'true') {
-    req.user = {
-      _id: 'mock_seller_123',
-      firstName: 'Srushti',
-      lastName: 'Salunke',
-      username: 'srushti',
-      email: 'srushtisalunke41@gmail.com',
-      phone: '1234567890',
-      role: 'seller',
-      isVerified: false,
-    };
-    return next();
-  }
+// ─── Primary Authentication Middleware ───────────────────────────────────────
+// Verifies the Bearer JWT, loads the user from DB, and checks account status.
+// SECURITY: MOCK_DB bypass has been removed. Production always requires a valid JWT.
 
+export const authenticate = asyncHandler(async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -32,19 +22,42 @@ export const authenticate = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, 'Not authorized to access this route');
   }
 
+  let decoded;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id);
-
-    if (!req.user) {
-      throw new ApiError(401, 'User associated with this token no longer exists');
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      throw new ApiError(401, 'Session expired. Please log in again.');
     }
-
-    next();
-  } catch {
     throw new ApiError(401, 'Not authorized to access this route');
   }
+
+  const user = await User.findById(decoded.id);
+
+  if (!user) {
+    throw new ApiError(401, 'User associated with this token no longer exists');
+  }
+
+  // Check account status — must match both legacy isBlocked flag and newer status field
+  if (user.isBlocked || user.status === 'Blocked' || user.status === 'blocked') {
+    throw new ApiError(403, 'Your account has been blocked. Please contact support.');
+  }
+
+  if (user.status === 'Suspended' || user.status === 'suspended') {
+    throw new ApiError(403, 'Your account has been suspended. Please contact support.');
+  }
+
+  if (user.isDeleted || user.status === 'Deleted' || user.status === 'deleted') {
+    throw new ApiError(401, 'Account not found.');
+  }
+
+  req.user = user;
+  next();
 });
+
+// ─── Optional Authentication Middleware ──────────────────────────────────────
+// Does NOT throw on missing/invalid token — attaches user if valid, null otherwise.
+// Use for public routes that optionally personalize for logged-in users.
 
 export const optionalAuthenticate = asyncHandler(async (req, res, next) => {
   let token;
@@ -64,7 +77,22 @@ export const optionalAuthenticate = asyncHandler(async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id);
+
+    // Treat blocked/deleted users as unauthenticated for optional routes
+    if (
+      user &&
+      !user.isBlocked &&
+      !user.isDeleted &&
+      user.status !== 'Blocked' &&
+      user.status !== 'blocked' &&
+      user.status !== 'Deleted' &&
+      user.status !== 'deleted'
+    ) {
+      req.user = user;
+    } else {
+      req.user = null;
+    }
   } catch {
     req.user = null;
   }

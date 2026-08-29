@@ -54,8 +54,10 @@ const connectDB = async (retryCount = 0) => {
       return connectDB(retryCount + 1);
     }
 
-    logger.error('Could not connect to MongoDB. Enabling MOCK DATABASE mode for development.');
-    process.env.MOCK_DB = 'true';
+    // SECURITY: Never automatically switch to mock/bypass mode on DB failure.
+    // Fail closed — the server will not start without a database connection.
+    logger.error('Could not connect to MongoDB after all retries. Exiting.');
+    throw new Error('MongoDB connection failed after maximum retries.');
   }
 };
 

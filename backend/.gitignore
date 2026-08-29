@@ -6,3 +6,4 @@ logs/
 dist/
 build/
 coverage/
+test_data_scripts/
