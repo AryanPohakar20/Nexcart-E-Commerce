@@ -2,6 +2,7 @@
 // Data access layer for Product entity in the admin panel.
 
 import Product from '../models/Product.js';
+import User from '../models/User.js'; // Ensures User schema is registered for populate
 import mongoose from 'mongoose';
 
 /**
@@ -17,12 +18,11 @@ export const listProducts = async ({
 
   const [products, total] = await Promise.all([
     Product.find(filter)
-      .populate({ path: 'category', select: 'name slug parent status' })
       .populate({
-        path: 'seller',
-        select: 'business individual accountInfo sellerType slug trustScore rating verificationStatus sellerStatus status isActive',
+        path: 'sellerId',
+        select: 'firstName lastName shopName shopLogo email phone role isVerified status',
       })
-      .populate({ path: 'moderation.reviewedBy', select: 'firstName lastName email' })
+      .populate({ path: 'approvedBy', select: 'firstName lastName email' })
       .sort(sort)
       .skip(skip)
       .limit(limit)
@@ -40,23 +40,21 @@ export const getProductById = async (id) => {
   let doc = null;
   if (mongoose.isValidObjectId(id)) {
     doc = await Product.findById(id)
-      .populate({ path: 'category', select: 'name slug parent status description' })
       .populate({
-        path: 'seller',
-        select: 'business individual accountInfo sellerType slug trustScore rating verificationStatus sellerStatus status isActive',
+        path: 'sellerId',
+        select: 'firstName lastName shopName shopLogo email phone role isVerified status',
       })
-      .populate({ path: 'moderation.reviewedBy', select: 'firstName lastName email avatar' })
+      .populate({ path: 'approvedBy', select: 'firstName lastName email avatar' })
       .lean();
   }
 
   if (!doc) {
     doc = await Product.findOne({ $or: [{ id }, { sku: id }, { slug: id }] })
-      .populate({ path: 'category', select: 'name slug parent status description' })
       .populate({
-        path: 'seller',
-        select: 'business individual accountInfo sellerType slug trustScore rating verificationStatus sellerStatus status isActive',
+        path: 'sellerId',
+        select: 'firstName lastName shopName shopLogo email phone role isVerified status',
       })
-      .populate({ path: 'moderation.reviewedBy', select: 'firstName lastName email avatar' })
+      .populate({ path: 'approvedBy', select: 'firstName lastName email avatar' })
       .lean();
   }
 
@@ -104,11 +102,11 @@ export const updateProduct = async (id, data) => {
   }
 
   return Product.findOneAndUpdate(filter, updatePayload, { new: true, runValidators: false })
-    .populate({ path: 'category', select: 'name slug parent status' })
     .populate({
-      path: 'seller',
-      select: 'business individual accountInfo sellerType slug trustScore rating verificationStatus sellerStatus status isActive',
+      path: 'sellerId',
+      select: 'firstName lastName shopName shopLogo email phone role isVerified status',
     })
+    .populate({ path: 'approvedBy', select: 'firstName lastName email' })
     .lean();
 };
 

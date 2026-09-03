@@ -70,7 +70,31 @@ export const getCategoryBySlug = async (slug) => {
 };
 
 export const getAllCategories = async (filter = {}) => {
-  return categoryRepository.findAll(filter);
+  const categories = await categoryRepository.findAll(filter);
+
+  // Build category name → count mapping from products
+  // Product model stores category as a String (e.g. "Beauty & Personal Care")
+  // Apply same visibility rules as elsewhere: exclude deleted, only active/visible
+  const pipeline = [
+    { $match: { isDeleted: { $ne: true } } },
+    { $group: { _id: '$category', count: { $sum: 1 } } },
+  ];
+  const productCounts = {};
+  const countResults = await Product.aggregate(pipeline);
+  countResults.forEach((r) => {
+    productCounts[r._id] = r.count;
+  });
+
+  // Attach productCount to each category
+  const mapped = categories.map((c) => {
+    const count = productCounts[c.name] || 0;
+    return {
+      ...c.toObject(),
+      productCount: count,
+    };
+  });
+
+  return mapped;
 };
 
 export const updateCategory = async (id, updates) => {

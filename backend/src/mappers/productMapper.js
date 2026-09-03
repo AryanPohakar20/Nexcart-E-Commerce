@@ -117,27 +117,40 @@ export const toProductDTO = (product) => {
   }
 
   // 4. Resolve Seller
-  let sellerData = product.seller;
-  let sellerDisplayName = 'NexCart Verified Store';
-  if (typeof product.seller === 'string') {
-    sellerDisplayName = product.seller;
+  const sellerObj = (product.seller && typeof product.seller === 'object') ? product.seller :
+                    (product.sellerId && typeof product.sellerId === 'object') ? product.sellerId : null;
+
+  let sellerData = null;
+  let sellerDisplayName = 'Seller unavailable';
+
+  if (typeof product.seller === 'string' && product.seller.trim()) {
+    sellerDisplayName = product.seller.trim();
     sellerData = {
       id: product.seller,
-      name: product.seller,
+      name: sellerDisplayName,
       verified: true,
     };
-  } else if (product.seller && typeof product.seller === 'object') {
+  } else if (sellerObj) {
     sellerDisplayName =
-      product.seller.business?.businessName ||
-      product.seller.accountInfo?.displayName ||
-      product.seller.name ||
-      product.seller.slug ||
-      'NexCart Verified Store';
+      sellerObj.shopName ||
+      sellerObj.businessName ||
+      sellerObj.business?.businessName ||
+      sellerObj.accountInfo?.displayName ||
+      sellerObj.storeName ||
+      sellerObj.name ||
+      (sellerObj.firstName ? `${sellerObj.firstName} ${sellerObj.lastName || ''}`.trim() : null) ||
+      sellerObj.email ||
+      'Seller unavailable';
+
     sellerData = {
-      id: product.seller._id || product.seller.id,
+      id: sellerObj._id || sellerObj.id,
       name: sellerDisplayName,
-      verified: product.seller.verificationStatus === 'Approved' || product.sellerVerified || false,
+      email: sellerObj.email,
+      phone: sellerObj.phone,
+      verified: Boolean(sellerObj.isVerified || sellerObj.verificationStatus === 'Approved' || sellerObj.sellerVerified),
     };
+  } else if (product.sellerType) {
+    sellerDisplayName = `${product.sellerType.charAt(0).toUpperCase() + product.sellerType.slice(1)} Seller`;
   }
 
   // 5. Calculate Pricing & Discounts

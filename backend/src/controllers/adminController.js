@@ -398,6 +398,16 @@ export const toggleFeaturedProduct = asyncHandler(async (req, res) => {
   return successResponse(res, 'Product featured status updated.', { product });
 });
 
+// PATCH /api/admin/products/:id/trending
+export const toggleTrendingProduct = asyncHandler(async (req, res) => {
+  const product = await adminProductService.toggleTrending(
+    req.params.id,
+    req.user,
+    getIp(req)
+  );
+  return successResponse(res, 'Product trending status updated.', { product });
+});
+
 // POST /api/admin/products/bulk
 export const bulkProductAction = asyncHandler(async (req, res) => {
   const { action, ids, extraData } = req.body;

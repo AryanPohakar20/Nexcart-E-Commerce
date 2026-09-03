@@ -150,34 +150,45 @@ export const buildAuditFilter = (query = {}) => {
 export const buildProductFilter = (query = {}) => {
   const filter = { isDeleted: { $ne: true } };
 
-  if (query.category) {
+  if (query.category && query.category !== 'All' && query.category !== 'All Categories') {
     if (mongoose.Types.ObjectId.isValid(query.category)) {
       filter.category = new mongoose.Types.ObjectId(query.category);
     } else {
-      filter.category = query.category;
+      filter.category = new RegExp(`^${escapeRegex(query.category.trim())}$`, 'i');
     }
   }
 
-  if (query.seller) {
-    if (mongoose.Types.ObjectId.isValid(query.seller)) {
-      filter.seller = new mongoose.Types.ObjectId(query.seller);
+  const sellerQuery = query.seller || query.sellerId;
+  if (sellerQuery) {
+    if (mongoose.Types.ObjectId.isValid(sellerQuery)) {
+      filter.sellerId = new mongoose.Types.ObjectId(sellerQuery);
     }
   }
 
-  if (query.status && query.status !== 'All Statuses') {
-    if (query.status.toLowerCase() === 'out_of_stock' || query.status.toLowerCase() === 'outofstock') {
+  if (query.status && query.status !== 'All' && query.status !== 'All Status' && query.status !== 'All Statuses') {
+    const st = query.status.toLowerCase();
+    if (st === 'out_of_stock' || st === 'outofstock') {
       filter.stock = { $lte: 0 };
-    } else if (query.status.toLowerCase() === 'active') {
-      filter.status = { $in: ['Approved', 'Active'] };
+    } else if (st === 'in_stock' || st === 'instock') {
+      filter.stock = { $gt: 0 };
+    } else if (st === 'active') {
+      filter.status = { $in: ['Approved', 'Active', 'active'] };
+    } else if (st === 'pending') {
+      filter.status = { $in: ['Pending', 'Pending Approval'] };
+    } else if (st === 'rejected') {
+      filter.status = 'Rejected';
+    } else if (st === 'draft') {
+      filter.status = 'Draft';
     } else if (VALID_PRODUCT_STATUSES.has(query.status)) {
-      // Use exact match from allow-list (no regex needed — avoids ReDoS)
       filter.status = query.status;
     }
-    // Unknown status values are ignored (no filter applied)
   }
 
-  if (query.featured === 'true') filter.featured = true;
-  if (query.featured === 'false') filter.featured = false;
+  if (query.featured === 'true' || query.isFeatured === 'true') {
+    filter.$or = [{ isFeatured: true }, { featured: true }];
+  } else if (query.featured === 'false' || query.isFeatured === 'false') {
+    filter.isFeatured = { $ne: true };
+  }
 
   if (query.minPrice || query.maxPrice) {
     filter.price = {};
@@ -194,10 +205,12 @@ export const buildProductFilter = (query = {}) => {
   const regex = safeSearch(query.search);
   if (regex) {
     filter.$or = [
-      { name: regex },
-      { sku:  regex },
-      { slug: regex },
-      { tags: regex },
+      { title: regex },
+      { brand: regex },
+      { category: regex },
+      { sku:   regex },
+      { slug:  regex },
+      { tags:  regex },
       { description: regex },
     ];
   }

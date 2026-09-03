@@ -146,11 +146,9 @@ export const restoreProduct = async (id, adminUser, ip) => {
  */
 export const approveProduct = async (id, adminUser, ip) => {
   const updated = await productRepo.updateProduct(id, {
-    status: 'Approved',
-    approvalStatus: 'Approved',
-    'moderation.reviewedBy': adminUser?._id,
-    'moderation.reviewedAt': new Date(),
-    'moderation.adminNotes': 'Approved by administrator',
+    status: 'Active',
+    approvedBy: adminUser?._id,
+    approvedAt: new Date(),
   });
 
   if (!updated) throw new ApiError(404, 'Product not found');
@@ -177,11 +175,7 @@ export const approveProduct = async (id, adminUser, ip) => {
 export const rejectProduct = async (id, reason = '', adminNotes = '', adminUser, ip) => {
   const updated = await productRepo.updateProduct(id, {
     status: 'Rejected',
-    approvalStatus: 'Rejected',
-    'moderation.reason': reason,
-    'moderation.adminNotes': adminNotes,
-    'moderation.reviewedBy': adminUser?._id,
-    'moderation.reviewedAt': new Date(),
+    rejectedReason: reason || adminNotes || 'Rejected by administrator',
   });
 
   if (!updated) throw new ApiError(404, 'Product not found');
@@ -221,6 +215,35 @@ export const toggleFeatured = async (id, adminUser, ip) => {
       adminId: adminUser._id,
       adminEmail: adminUser.email,
       action: newFeatured ? 'FEATURE_PRODUCT' : 'UNFEATURE_PRODUCT',
+      module: 'Products',
+      targetId: id,
+      targetModel: 'Product',
+      target: existing.name || existing.title || 'Product',
+      ip,
+    });
+  }
+
+  return toProductDTO(updated);
+};
+
+/**
+ * Toggle Trending status of a product.
+ */
+export const toggleTrending = async (id, adminUser, ip) => {
+  const existing = await productRepo.getProductById(id);
+  if (!existing) throw new ApiError(404, 'Product not found');
+
+  const newTrending = !(existing.trending || existing.isTrending);
+  const updated = await productRepo.updateProduct(id, {
+    trending: newTrending,
+    isTrending: newTrending,
+  });
+
+  if (adminUser) {
+    await auditLogRepo.log({
+      adminId: adminUser._id,
+      adminEmail: adminUser.email,
+      action: newTrending ? 'TRENDING_PRODUCT' : 'UNTRENDING_PRODUCT',
       module: 'Products',
       targetId: id,
       targetModel: 'Product',

@@ -143,6 +143,21 @@ const adminService = {
     const response = await axiosInstance.patch(`/admin/products/${id}/stock`, { stock });
     return response.data;
   },
+  updateProductStock: async (id, stock) => {
+    const response = await axiosInstance.patch(`/admin/products/${id}/stock`, { stock });
+    return response.data;
+  },
+  updateProductStatus: async (id, status, data = {}) => {
+    if (status?.toLowerCase() === 'approved' || status?.toLowerCase() === 'active') {
+      const response = await axiosInstance.patch(`/admin/products/${id}/approve`);
+      return response.data;
+    } else if (status?.toLowerCase() === 'rejected') {
+      const response = await axiosInstance.patch(`/admin/products/${id}/reject`, data);
+      return response.data;
+    }
+    const response = await axiosInstance.put(`/admin/products/${id}`, { status, ...data });
+    return response.data;
+  },
   deleteProduct: async (id) => {
     const response = await axiosInstance.delete(`/admin/products/${id}`);
     return response.data;
@@ -163,7 +178,17 @@ const adminService = {
     const response = await axiosInstance.patch(`/admin/products/${id}/featured`);
     return response.data;
   },
-  bulkProductAction: async (action, ids, extraData = {}) => {
+  toggleTrendingProduct: async (id) => {
+    const response = await axiosInstance.patch(`/admin/products/${id}/trending`);
+    return response.data;
+  },
+  toggleProductVisibility: async (id, visibility) => {
+    const response = await axiosInstance.put(`/admin/products/${id}`, { visibility });
+    return response.data;
+  },
+  bulkProductAction: async (arg1, arg2, extraData = {}) => {
+    const action = typeof arg1 === 'string' ? arg1 : arg2;
+    const ids = Array.isArray(arg1) ? arg1 : arg2;
     const response = await axiosInstance.post('/admin/products/bulk', {
       action,
       ids,

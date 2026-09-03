@@ -62,6 +62,7 @@ import {
   approveProduct,
   rejectProduct,
   toggleFeaturedProduct,
+  toggleTrendingProduct,
   bulkProductAction,
 
   // Categories
@@ -206,6 +207,7 @@ router.patch( '/products/:id/restore',     requirePermission('products', 'update
 router.patch( '/products/:id/approve',     requirePermission('products', 'approve'), approveProduct);
 router.patch( '/products/:id/reject',      requirePermission('products', 'reject'),  rejectProduct);
 router.patch( '/products/:id/featured',    requirePermission('products', 'update'),  toggleFeaturedProduct);
+router.patch( '/products/:id/trending',    requirePermission('products', 'update'),  toggleTrendingProduct);
 router.post(  '/products/bulk',            requirePermission('products', 'update'),  bulkProductAction);
 
 // ═══════════════════════════════════════════════════════════════════════════════
