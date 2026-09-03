@@ -142,17 +142,16 @@ export const getMarketplaceAnalytics = async (range = '12 Months') => {
 
   // 4. Bestselling Products
   const bestProductsAgg = await Product.find({ isDeleted: false })
-    .populate('category', 'name')
-    .populate('seller', 'businessName storeName')
+    .populate('sellerId', 'firstName lastName shopName')
     .sort({ rating: -1, ratingsCount: -1, createdAt: -1 })
     .limit(5)
     .lean();
 
   const bestProducts = bestProductsAgg.map((p) => ({
     id: p._id,
-    name: p.name,
-    category: p.category?.name || 'General',
-    seller: p.seller?.businessName || p.seller?.storeName || 'NexCart Official',
+    name: p.title || p.name,
+    category: typeof p.category === 'object' ? p.category?.name : (p.category || 'General'),
+    seller: p.sellerId?.shopName || `${p.sellerId?.firstName || ''} ${p.sellerId?.lastName || ''}`.trim() || 'NexCart Official',
     price: p.price,
     rating: p.rating || 4.8,
     image: (p.images && p.images[0]) ? (p.images[0].url || p.images[0]) : (p.thumbnail || null),

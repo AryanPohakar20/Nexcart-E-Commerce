@@ -21,10 +21,12 @@ import {
   getPendingVerifications,
 
   // User Management
+  createUser,
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  resetUserPassword,
   suspendUser,
   activateUser,
   blockUser,
@@ -159,6 +161,7 @@ router.get('/dashboard/pending-verifications', getPendingVerifications);
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(   '/users',              requirePermission('users', 'read'),    getUsers);
+router.post(  '/users',              requirePermission('users', 'create'),  createUser);
 router.patch( '/users/bulk/suspend',  requirePermission('users', 'suspend'), bulkSuspendUsers);
 router.post(  '/users/bulk/suspend',  requirePermission('users', 'suspend'), bulkSuspendUsers);
 router.patch( '/users/bulk/activate', requirePermission('users', 'update'),  bulkActivateUsers);
@@ -167,10 +170,9 @@ router.delete('/users/bulk/delete',   requirePermission('users', 'delete'),  bul
 router.post(  '/users/bulk/delete',   requirePermission('users', 'delete'),  bulkDeleteUsers);
 
 router.get(   '/users/:id',          requirePermission('users', 'read'),    getUser);
-
-
 router.put(   '/users/:id',          requirePermission('users', 'update'),  updateUser);
 router.delete('/users/:id',          requirePermission('users', 'delete'),  deleteUser);
+router.patch( '/users/:id/reset-password', requirePermission('users', 'update'), resetUserPassword);
 
 router.patch('/users/:id/status',    requirePermission('users', 'update'),  updateUserStatus);
 router.patch('/users/:id/suspend',   requirePermission('users', 'suspend'), suspendUser);

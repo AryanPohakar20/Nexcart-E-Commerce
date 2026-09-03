@@ -42,6 +42,26 @@ export const findUserById = async (id) => {
     .lean();
 };
 
+/**
+ * Find active/non-deleted user by email.
+ */
+export const findUserByEmail = async (email) => {
+  return User.findOne({ email: email.toLowerCase().trim(), isDeleted: { $ne: true } })
+    .select('-password -refreshToken')
+    .lean();
+};
+
+// ─── Create ───────────────────────────────────────────────────────────────────
+
+/**
+ * Create a new user document.
+ */
+export const createUser = async (userData) => {
+  const user = new User(userData);
+  await user.save();
+  return User.findById(user._id).select('-password -refreshToken').lean();
+};
+
 // ─── Update ───────────────────────────────────────────────────────────────────
 
 /**

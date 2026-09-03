@@ -24,6 +24,10 @@ const adminService = {
   },
 
   // ─── User Management ────────────────────────────────────────────────────
+  createUser: async (userData) => {
+    const response = await axiosInstance.post('/admin/users', userData);
+    return response.data;
+  },
   getUsers: async (params = {}) => {
     const response = await axiosInstance.get('/admin/users', { params });
     return response.data;
@@ -34,6 +38,10 @@ const adminService = {
   },
   updateUser: async (id, data) => {
     const response = await axiosInstance.put(`/admin/users/${id}`, data);
+    return response.data;
+  },
+  resetUserPassword: async (id, password) => {
+    const response = await axiosInstance.patch(`/admin/users/${id}/reset-password`, { password });
     return response.data;
   },
   deleteUser: async (id) => {

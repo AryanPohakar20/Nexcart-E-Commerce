@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiUsers, FiEye, FiEdit2, FiPauseCircle, FiSlash, FiCheckCircle,
@@ -13,10 +14,11 @@ import ConfirmDialog from '../../components/admin/shared/ConfirmDialog';
 import adminService from '../../services/adminService';
 import { AppContext } from '../../context/AppContext';
 
-const ROLE_OPTIONS = ['All Roles', 'customer', 'seller', 'marketplace_seller'];
+const ROLE_OPTIONS = ['All Roles', 'customer', 'seller', 'marketplace_seller', 'moderator', 'support_staff', 'admin'];
 const STATUS_OPTIONS = ['All Status', 'active', 'suspended', 'blocked'];
 
 const AdminUsers = () => {
+  const navigate = useNavigate();
   const { showToast } = useContext(AppContext) || {};
   const [users, setUsers] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -31,6 +33,33 @@ const AdminUsers = () => {
   const [drawerUser, setDrawerUser] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false });
   const [actionLoading, setActionLoading] = useState(false);
+
+  // User Create / Edit Modal State
+  const [userModal, setUserModal] = useState({
+    open: false,
+    mode: 'create', // 'create' | 'edit'
+    userId: null,
+  });
+  const [userForm, setUserForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'customer',
+    status: 'Active',
+    isVerified: false,
+  });
+  const [formSubmitting, setFormSubmitting] = useState(false);
+
+  // Password Reset Modal State
+  const [passwordModal, setPasswordModal] = useState({
+    open: false,
+    user: null,
+    newPassword: '',
+    submitting: false,
+  });
+
   const perPage = 10;
 
   const fetchUsers = async () => {
@@ -276,9 +305,96 @@ const AdminUsers = () => {
     }
   };
 
+  const handleOpenCreate = () => {
+    setUserForm({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      password: '',
+      role: 'customer',
+      status: 'Active',
+      isVerified: false,
+    });
+    setUserModal({ open: true, mode: 'create', userId: null });
+  };
+
+  const handleOpenEdit = (user) => {
+    if (!user) return;
+    setUserForm({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      password: '',
+      role: user.role || 'customer',
+      status: user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1).toLowerCase() : 'Active',
+      isVerified: Boolean(user.isVerified || user.profileCompleted),
+    });
+    setUserModal({ open: true, mode: 'edit', userId: user._id });
+  };
+
+  const handleSaveUser = async (e) => {
+    e.preventDefault();
+    try {
+      setFormSubmitting(true);
+      if (userModal.mode === 'create') {
+        if (!userForm.password || userForm.password.length < 6) {
+          if (showToast) showToast('Password must be at least 6 characters long.', 'error');
+          setFormSubmitting(false);
+          return;
+        }
+        await adminService.createUser(userForm);
+        if (showToast) showToast('User created successfully.', 'success');
+      } else {
+        const payload = { ...userForm };
+        if (!payload.password) delete payload.password;
+        await adminService.updateUser(userModal.userId, payload);
+        if (showToast) showToast('User updated successfully.', 'success');
+        if (drawerUser && drawerUser._id === userModal.userId) {
+          setDrawerUser((prev) => ({ ...prev, ...payload }));
+        }
+      }
+      setUserModal({ open: false, mode: 'create', userId: null });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error saving user:', error);
+      if (showToast) showToast(error.response?.data?.message || 'Failed to save user.', 'error');
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const handleOpenResetPassword = (user) => {
+    setPasswordModal({
+      open: true,
+      user,
+      newPassword: '',
+      submitting: false,
+    });
+  };
+
+  const handleSavePassword = async (e) => {
+    e.preventDefault();
+    if (!passwordModal.newPassword || passwordModal.newPassword.length < 6) {
+      if (showToast) showToast('Password must be at least 6 characters long.', 'error');
+      return;
+    }
+    try {
+      setPasswordModal((prev) => ({ ...prev, submitting: true }));
+      await adminService.resetUserPassword(passwordModal.user._id, passwordModal.newPassword);
+      if (showToast) showToast(`Password for ${passwordModal.user.firstName} reset successfully.`, 'success');
+      setPasswordModal({ open: false, user: null, newPassword: '', submitting: false });
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      if (showToast) showToast(error.response?.data?.message || 'Failed to reset password.', 'error');
+      setPasswordModal((prev) => ({ ...prev, submitting: false }));
+    }
+  };
+
   const getActions = (user) => [
     { label: 'View Details', icon: FiEye, onClick: () => handleAction('view', user) },
-    { label: 'Edit User', icon: FiEdit2, onClick: () => {} },
+    { label: 'Edit User', icon: FiEdit2, onClick: () => handleOpenEdit(user) },
     { type: 'divider' },
     ...(user.status?.toLowerCase() === 'active' ? [
       { label: 'Suspend Account', icon: FiPauseCircle, onClick: () => handleAction('suspend', user), warning: true },
@@ -287,9 +403,8 @@ const AdminUsers = () => {
       { label: 'Reactivate Account', icon: FiCheckCircle, onClick: () => handleAction('activate', user), success: true },
     ]),
     { type: 'divider' },
-    { label: 'Reset Password', icon: FiKey, onClick: () => {} },
-    { label: 'View Activity', icon: FiActivity, onClick: () => {} },
-    { label: 'View Audit History', icon: FiClock, onClick: () => {} },
+    { label: 'Reset Password', icon: FiKey, onClick: () => handleOpenResetPassword(user) },
+    { label: 'View Orders', icon: FiShoppingCart, onClick: () => navigate(`/admin/orders?search=${encodeURIComponent(user.email)}`) },
     { type: 'divider' },
     { label: 'Delete Account', icon: FiTrash2, onClick: () => handleAction('delete', user), danger: true },
   ];
@@ -311,7 +426,7 @@ const AdminUsers = () => {
           searchPlaceholder="Search users..."
           selectedCount={selected.length}
           onExport={handleExport}
-          onCreate={() => {}}
+          onCreate={handleOpenCreate}
           createLabel="Add User"
           filters={
             <>
@@ -479,16 +594,277 @@ const AdminUsers = () => {
 
                 {/* Action Buttons */}
                 <div className="grid grid-cols-2 gap-3">
-                  <button className="h-10 px-4 bg-yellow-500 text-black text-xs font-bold rounded-xl hover:bg-yellow-400 transition-all shadow-[0_0_12px_rgba(255,193,7,0.3)]">
-                    <FiEdit2 className="inline mr-1.5" size={13} /> Edit User
+                  <button
+                    onClick={() => handleOpenEdit(drawerUser)}
+                    className="h-10 px-4 bg-yellow-500 text-black text-xs font-bold rounded-xl hover:bg-yellow-400 transition-all shadow-[0_0_12px_rgba(255,193,7,0.3)] flex items-center justify-center gap-1.5"
+                  >
+                    <FiEdit2 size={13} /> Edit User
                   </button>
-                  <button className="h-10 px-4 bg-white/5 border border-white/10 text-gray-300 text-xs font-bold rounded-xl hover:bg-white/10 transition-all">
-                    <FiShoppingCart className="inline mr-1.5" size={13} /> View Orders
+                  <button
+                    onClick={() => navigate(`/admin/orders?search=${encodeURIComponent(drawerUser.email)}`)}
+                    className="h-10 px-4 bg-white/5 border border-white/10 text-gray-300 text-xs font-bold rounded-xl hover:bg-white/10 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <FiShoppingCart size={13} /> View Orders
                   </button>
                 </div>
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Create / Edit User Modal */}
+      <AnimatePresence>
+        {userModal.open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => !formSubmitting && setUserModal({ open: false, mode: 'create', userId: null })}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-lg bg-[#1C1C1C] border border-white/10 rounded-2xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-500">
+                    {userModal.mode === 'create' ? <FiPlus size={18} /> : <FiEdit2 size={16} />}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">
+                      {userModal.mode === 'create' ? 'Create New User' : 'Edit User Profile'}
+                    </h3>
+                    <p className="text-[11px] text-gray-400">
+                      {userModal.mode === 'create' ? 'Add a new member to the NexCart platform' : 'Update account privileges, status, and profile info'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => !formSubmitting && setUserModal({ open: false, mode: 'create', userId: null })}
+                  className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveUser} className="mt-4 space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-gray-400 font-bold mb-1.5">First Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={userForm.firstName}
+                      onChange={(e) => setUserForm({ ...userForm, firstName: e.target.value })}
+                      placeholder="e.g. John"
+                      className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-400 font-bold mb-1.5">Last Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={userForm.lastName}
+                      onChange={(e) => setUserForm({ ...userForm, lastName: e.target.value })}
+                      placeholder="e.g. Doe"
+                      className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-gray-400 font-bold mb-1.5">Email Address *</label>
+                    <input
+                      type="email"
+                      required
+                      value={userForm.email}
+                      onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                      placeholder="john.doe@example.com"
+                      className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-400 font-bold mb-1.5">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={userForm.phone}
+                      onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                      placeholder="+91 9876543210"
+                      className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-gray-400 font-bold mb-1.5">Account Role</label>
+                    <select
+                      value={userForm.role}
+                      onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                      className="w-full h-10 px-3 bg-[#242424] border border-white/10 rounded-xl text-gray-200 outline-none focus:border-yellow-500/50"
+                    >
+                      <option value="customer">Customer</option>
+                      <option value="seller">Seller</option>
+                      <option value="marketplace_seller">Marketplace Seller</option>
+                      <option value="moderator">Moderator</option>
+                      <option value="support_staff">Support Staff</option>
+                      <option value="admin">Administrator</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-gray-400 font-bold mb-1.5">Status</label>
+                    <select
+                      value={userForm.status}
+                      onChange={(e) => setUserForm({ ...userForm, status: e.target.value })}
+                      className="w-full h-10 px-3 bg-[#242424] border border-white/10 rounded-xl text-gray-200 outline-none focus:border-yellow-500/50"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Suspended">Suspended</option>
+                      <option value="Blocked">Blocked</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 font-bold mb-1.5">
+                    {userModal.mode === 'create' ? 'Password *' : 'New Password (optional)'}
+                  </label>
+                  <input
+                    type="password"
+                    required={userModal.mode === 'create'}
+                    value={userForm.password}
+                    onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                    placeholder={userModal.mode === 'create' ? 'Min 6 characters' : 'Leave blank to keep current password'}
+                    minLength={6}
+                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50 font-mono"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="verifiedUserToggle"
+                    checked={userForm.isVerified}
+                    onChange={(e) => setUserForm({ ...userForm, isVerified: e.target.checked })}
+                    className="w-4 h-4 rounded accent-yellow-500 cursor-pointer"
+                  />
+                  <label htmlFor="verifiedUserToggle" className="text-gray-300 font-medium cursor-pointer">
+                    Verified Account Badge
+                  </label>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-white/5">
+                  <button
+                    type="button"
+                    disabled={formSubmitting}
+                    onClick={() => setUserModal({ open: false, mode: 'create', userId: null })}
+                    className="flex-1 h-10 rounded-xl font-bold text-gray-300 bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={formSubmitting}
+                    className="flex-1 h-10 rounded-xl font-bold text-black bg-yellow-500 hover:bg-yellow-400 transition-colors shadow-[0_0_12px_rgba(255,193,7,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {formSubmitting ? (
+                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    ) : userModal.mode === 'create' ? (
+                      'Create User'
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Reset Password Modal */}
+      <AnimatePresence>
+        {passwordModal.open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => !passwordModal.submitting && setPasswordModal({ open: false, user: null, newPassword: '', submitting: false })}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-sm bg-[#1C1C1C] border border-white/10 rounded-2xl p-6 shadow-2xl z-10"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-500">
+                    <FiKey size={16} />
+                  </div>
+                  <h3 className="text-base font-bold text-white">Reset Password</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => !passwordModal.submitting && setPasswordModal({ open: false, user: null, newPassword: '', submitting: false })}
+                  className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSavePassword} className="mt-4 space-y-4 text-xs">
+                <p className="text-gray-400">
+                  Set a new password for <span className="text-white font-bold">{passwordModal.user?.firstName} {passwordModal.user?.lastName}</span> ({passwordModal.user?.email}).
+                </p>
+
+                <div>
+                  <label className="block text-gray-400 font-bold mb-1.5">New Password *</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={passwordModal.newPassword}
+                    onChange={(e) => setPasswordModal({ ...passwordModal, newPassword: e.target.value })}
+                    placeholder="Min 6 characters"
+                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-yellow-500/50 font-mono"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    disabled={passwordModal.submitting}
+                    onClick={() => setPasswordModal({ open: false, user: null, newPassword: '', submitting: false })}
+                    className="flex-1 h-10 rounded-xl font-bold text-gray-300 bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={passwordModal.submitting}
+                    className="flex-1 h-10 rounded-xl font-bold text-black bg-yellow-500 hover:bg-yellow-400 transition-colors shadow-[0_0_12px_rgba(255,193,7,0.3)] disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {passwordModal.submitting ? (
+                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      'Update Password'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

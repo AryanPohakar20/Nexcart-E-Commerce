@@ -77,6 +77,17 @@ export const getPendingVerifications = asyncHandler(async (req, res) => {
 // USER MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// POST /api/admin/users
+export const createUser = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to create users.');
+  }
+
+  const user = await adminUserService.createUser(req.body, req.user, getIp(req));
+  return successResponse(res, 'User created successfully.', { user }, 201);
+});
+
 // GET /api/admin/users?page=1&limit=10&role=customer&status=Active&search=arjun
 export const getUsers = asyncHandler(async (req, res) => {
   const { page, limit } = parsePagination(req.query);
@@ -109,6 +120,22 @@ export const deleteUser = asyncHandler(async (req, res) => {
   return successResponse(res, 'User deleted successfully.', { user });
 });
 
+// PATCH /api/admin/users/:id/reset-password
+export const resetUserPassword = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to reset passwords.');
+  }
+
+  const { password } = req.body;
+  if (!password || password.length < 6) {
+    throw new ApiError(400, 'Password must be at least 6 characters long.');
+  }
+
+  await adminUserService.resetUserPassword(req.params.id, password, req.user, getIp(req));
+  return successResponse(res, 'User password reset successfully.');
+});
+
 // PATCH /api/admin/users/:id/status
 export const updateUserStatus = asyncHandler(async (req, res) => {
   const userRole = String(req.user.role).toLowerCase();
@@ -119,8 +146,8 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  if (!status || !['suspended', 'active'].includes(status.toLowerCase())) {
-    throw new ApiError(400, 'Invalid status value. Allowed values: suspended, active');
+  if (!status || !['suspended', 'active', 'blocked'].includes(status.toLowerCase())) {
+    throw new ApiError(400, 'Invalid status value. Allowed values: active, suspended, blocked');
   }
 
   const user = await adminUserService.updateUserStatus(id, status, req.user, getIp(req));

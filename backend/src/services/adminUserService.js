@@ -4,6 +4,7 @@
 // Also emits an AuditLog entry for every mutating action.
 
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import * as adminUserRepo  from '../repositories/adminUserRepository.js';
 import * as auditLogRepo   from '../repositories/auditLogRepository.js';
@@ -47,23 +48,172 @@ export const getUserById = async (id) => {
   return user;
 };
 
+// ─── Create ───────────────────────────────────────────────────────────────────
+
+export const createUser = async (data, admin, ipAddress) => {
+  const { firstName, lastName, email, phone, password, role = 'customer', status = 'Active', isVerified = false } = data;
+
+  if (!firstName || !firstName.trim() || !lastName || !lastName.trim()) {
+    throw new ApiError(400, 'First name and last name are required.');
+  }
+
+  if (!email || !email.trim()) {
+    throw new ApiError(400, 'Email is required.');
+  }
+
+  const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+  if (!emailRegex.test(email.trim())) {
+    throw new ApiError(400, 'Please provide a valid email address.');
+  }
+
+  if (!password || password.length < 6) {
+    throw new ApiError(400, 'Password must be at least 6 characters long.');
+  }
+
+  const existingUser = await User.findOne({ email: email.toLowerCase().trim(), isDeleted: { $ne: true } });
+  if (existingUser) {
+    throw new ApiError(409, 'A user with this email address already exists.');
+  }
+
+  const allowedRoles = ['customer', 'seller', 'marketplace_seller', 'admin', 'moderator', 'support_staff'];
+  const formattedRole = (role || 'customer').toLowerCase();
+  if (!allowedRoles.includes(formattedRole)) {
+    throw new ApiError(400, `Invalid role. Allowed roles: ${allowedRoles.join(', ')}`);
+  }
+
+  const formattedStatus = status && ['suspended', 'blocked'].includes(status.toLowerCase())
+    ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
+    : 'Active';
+
+  const isBlocked = formattedStatus === 'Blocked';
+
+  const userData = {
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+    email: email.toLowerCase().trim(),
+    phone: phone ? phone.trim() : undefined,
+    password,
+    role: formattedRole,
+    status: formattedStatus,
+    isBlocked,
+    isVerified: Boolean(isVerified),
+  };
+
+  const user = await adminUserRepo.createUser(userData);
+  const name = `${user.firstName} ${user.lastName}`.trim();
+  audit(admin, 'CREATE_USER', `${name} (${user._id})`, user._id, `Created user with role '${formattedRole}'`, ipAddress);
+  return user;
+};
+
 // ─── Update ───────────────────────────────────────────────────────────────────
 
 export const updateUser = async (id, data, admin, ipAddress) => {
   const user = await adminUserRepo.findUserById(id);
   if (!user) throw new ApiError(404, 'User not found.');
 
-  // Whitelist updatable fields — admin cannot change password or tokens here
-  const allowed = ['firstName', 'lastName', 'phone', 'role', 'status', 'isVerified', 'bio', 'gender'];
+  const adminRole = String(admin?.role || '').toLowerCase();
+  if (data.role && data.role !== user.role) {
+    if (adminRole !== 'super_admin' && (user.role === 'admin' || user.role === 'super_admin')) {
+      throw new ApiError(403, 'Cannot change the role of an administrator account.');
+    }
+  }
+
+  const allowed = ['firstName', 'lastName', 'email', 'phone', 'role', 'status', 'isVerified', 'isBlocked', 'bio', 'gender'];
   const updates = {};
   for (const key of allowed) {
     if (data[key] !== undefined) updates[key] = data[key];
+  }
+
+  // Validate email uniqueness if changed
+  if (updates.email) {
+    const normalizedEmail = updates.email.toLowerCase().trim();
+    if (normalizedEmail !== user.email?.toLowerCase()) {
+      const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+      if (!emailRegex.test(normalizedEmail)) {
+        throw new ApiError(400, 'Please provide a valid email address.');
+      }
+      const existing = await User.findOne({ email: normalizedEmail, _id: { $ne: id }, isDeleted: { $ne: true } });
+      if (existing) {
+        throw new ApiError(409, 'A user with this email address already exists.');
+      }
+      updates.email = normalizedEmail;
+    }
+  }
+
+  // Synchronize status and isBlocked
+  if (updates.status) {
+    const s = String(updates.status).toLowerCase();
+    if (s === 'active') {
+      updates.status = 'Active';
+      updates.isBlocked = false;
+    } else if (s === 'suspended') {
+      updates.status = 'Suspended';
+    } else if (s === 'blocked') {
+      updates.status = 'Blocked';
+      updates.isBlocked = true;
+    }
+  }
+
+  if (updates.isBlocked !== undefined) {
+    updates.isBlocked = Boolean(updates.isBlocked);
+    if (updates.isBlocked) {
+      updates.status = 'Blocked';
+    }
+  }
+
+  // Optional password update
+  if (data.password && typeof data.password === 'string' && data.password.trim().length > 0) {
+    if (data.password.trim().length < 6) {
+      throw new ApiError(400, 'Password must be at least 6 characters long.');
+    }
+    const salt = await bcrypt.genSalt(10);
+    updates.password = await bcrypt.hash(data.password.trim(), salt);
   }
 
   const updated = await adminUserRepo.updateUserById(id, updates);
   const name = `${user.firstName} ${user.lastName}`.trim();
   audit(admin, 'UPDATE_USER', `${name} (${user._id})`, user._id, JSON.stringify(updates), ipAddress);
   return updated;
+};
+
+// ─── Delete ───────────────────────────────────────────────────────────────────
+
+export const deleteUser = async (id, admin, ipAddress) => {
+  const user = await adminUserRepo.findUserById(id);
+  if (!user) throw new ApiError(404, 'User not found.');
+
+  const adminId = admin?._id || admin?.id;
+  if (adminId && user._id.toString() === adminId.toString()) {
+    throw new ApiError(400, 'You cannot delete your own admin account.');
+  }
+
+  if (['admin', 'super_admin'].includes(user.role)) {
+    throw new ApiError(403, 'Cannot delete an administrator account.');
+  }
+
+  const deleted = await adminUserRepo.softDeleteUser(id, adminId);
+  const name = `${user.firstName} ${user.lastName}`.trim();
+  audit(admin, 'DELETE_USER', `${name} (${user._id})`, user._id, 'User account soft deleted by admin', ipAddress);
+  return deleted;
+};
+
+// ─── Reset Password ───────────────────────────────────────────────────────────
+
+export const resetUserPassword = async (id, newPassword, admin, ipAddress) => {
+  const user = await adminUserRepo.findUserById(id);
+  if (!user) throw new ApiError(404, 'User not found.');
+
+  if (!newPassword || newPassword.length < 6) {
+    throw new ApiError(400, 'Password must be at least 6 characters long.');
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+  await User.findByIdAndUpdate(id, { $set: { password: hashedPassword } });
+  const name = `${user.firstName} ${user.lastName}`.trim();
+  audit(admin, 'RESET_PASSWORD', `${name} (${user._id})`, user._id, 'Admin password reset', ipAddress);
+  return { success: true };
 };
 
 // ─── Status Actions ───────────────────────────────────────────────────────────
@@ -114,17 +264,23 @@ export const updateUserStatus = async (id, status, admin, ipAddress) => {
   const user = await adminUserRepo.findUserById(id);
   if (!user) throw new ApiError(404, 'User not found.');
 
-  const targetStatus = status.toLowerCase() === 'active' ? 'Active' : 'Suspended';
-
+  const lower = String(status).toLowerCase();
   let updated;
-  if (targetStatus === 'Active') {
+  let targetStatus;
+
+  if (lower === 'active') {
+    targetStatus = 'Active';
     updated = await adminUserRepo.activateUser(id);
+  } else if (lower === 'blocked') {
+    targetStatus = 'Blocked';
+    updated = await adminUserRepo.blockUser(id);
   } else {
+    targetStatus = 'Suspended';
     updated = await adminUserRepo.suspendUser(id, 'Suspended by admin');
   }
 
   const name = `${user.firstName} ${user.lastName}`.trim();
-  audit(admin, targetStatus === 'Active' ? 'ACTIVATE_USER' : 'SUSPEND_USER', `${name} (${user._id})`, user._id, `Status set to ${targetStatus}`, ipAddress);
+  audit(admin, targetStatus === 'Active' ? 'ACTIVATE_USER' : targetStatus === 'Blocked' ? 'BLOCK_USER' : 'SUSPEND_USER', `${name} (${user._id})`, user._id, `Status set to ${targetStatus}`, ipAddress);
   return updated;
 };
 
