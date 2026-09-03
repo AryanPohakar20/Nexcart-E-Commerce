@@ -967,9 +967,8 @@ export const getDashboardSummary = async (userId, timeframe = '7D') => {
   const lowStockItems = lowStockItemsFull.slice(0, 3).map(prod => ({
     id: prod._id || prod.id,
     title: prod.title,
-    category: prod.category,
     stock: prod.stock,
-    image: (prod.images && prod.images.length > 0) ? prod.images[0].url : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80',
+    image: (prod.images && prod.images.length > 0) ? (prod.images[0].url || prod.images[0]) : (prod.thumbnail || null),
   }));
 
   const trustScore = calculateTrustScore(seller);

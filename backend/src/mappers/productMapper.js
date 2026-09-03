@@ -79,10 +79,10 @@ export const toProductDTO = (product) => {
 
   if (!primaryImage && product.thumbnail) primaryImage = product.thumbnail;
   if (!primaryImage && product.image) primaryImage = product.image;
-  if (!primaryImage) {
-    primaryImage = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80';
+  if (!primaryImage && normalizedImages.length > 0) {
+    primaryImage = normalizedImages[0];
   }
-  if (normalizedImages.length === 0) {
+  if (primaryImage && normalizedImages.length === 0) {
     normalizedImages = [primaryImage];
   }
 

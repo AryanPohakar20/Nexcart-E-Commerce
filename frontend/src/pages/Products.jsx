@@ -34,7 +34,7 @@ const Products = () => {
       setLoading(true);
       try {
         const [prodRes, catRes] = await Promise.all([
-          productService.getProducts({ limit: 200 }).catch(() => null),
+          productService.getProducts({ limit: 600 }).catch(() => null),
           productService.getCategories().catch(() => null),
         ]);
 
@@ -112,15 +112,32 @@ const Products = () => {
 
     // Categories filter
     if (selectedCategories.length > 0) {
+      const CATEGORY_ALIASES = {
+        'mobiles': 'mobile-phones',
+        'mobile': 'mobile-phones',
+        'laptops': 'laptops-computers',
+        'laptop': 'laptops-computers',
+        'fashion': 'fashion-apparel',
+        'beauty': 'beauty-personal-care',
+        'home': 'home-living',
+        'appliances': 'home-appliances',
+        'kitchen': 'home-kitchen',
+      };
       result = result.filter((p) => {
         const prodCat = (p.category || '').toLowerCase();
-        const prodCatSlug = (p.categorySlug || '').toLowerCase();
-        return selectedCategories.some(
-          (sc) =>
-            prodCat.includes(sc.toLowerCase()) ||
-            prodCatSlug.includes(sc.toLowerCase()) ||
-            sc.toLowerCase().includes(prodCat)
-        );
+        const prodCatSlug = (p.categorySlug || p.category || '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        return selectedCategories.some((rawSc) => {
+          const sc = rawSc.toLowerCase();
+          const mappedSc = CATEGORY_ALIASES[sc] || sc;
+          return (
+            prodCat.includes(sc) ||
+            prodCat.includes(mappedSc) ||
+            prodCatSlug.includes(sc) ||
+            prodCatSlug.includes(mappedSc) ||
+            sc.includes(prodCat) ||
+            mappedSc.includes(prodCat)
+          );
+        });
       });
     }
 

@@ -155,7 +155,7 @@ export const getMarketplaceAnalytics = async (range = '12 Months') => {
     seller: p.seller?.businessName || p.seller?.storeName || 'NexCart Official',
     price: p.price,
     rating: p.rating || 4.8,
-    image: (p.images && p.images[0]) || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150&auto=format&fit=crop&q=80',
+    image: (p.images && p.images[0]) ? (p.images[0].url || p.images[0]) : (p.thumbnail || null),
   }));
 
   // 5. Total GMV, Platform Commission, and AOV

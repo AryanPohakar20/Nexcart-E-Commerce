@@ -79,14 +79,35 @@ export const searchProducts = async (filters = {}) => {
 
   // 1. Resolve Category Slug/Name/ID to ObjectId or regex
   if (category && category !== 'all' && category !== 'All') {
-    if (mongoose.isValidObjectId(category)) {
-      categoryDoc = await Category.findById(category);
+    const CATEGORY_ALIASES = {
+      'mobiles': 'mobile-phones',
+      'mobile': 'mobile-phones',
+      'laptops': 'laptops-computers',
+      'laptop': 'laptops-computers',
+      'computers': 'laptops-computers',
+      'fashion': 'fashion-apparel',
+      'apparel': 'fashion-apparel',
+      'clothing': 'fashion-apparel',
+      'beauty': 'beauty-personal-care',
+      'personal-care': 'beauty-personal-care',
+      'home': 'home-living',
+      'appliances': 'home-appliances',
+      'kitchen': 'home-kitchen',
+    };
+
+    const trimmedCat = category.trim();
+    const resolvedCat = CATEGORY_ALIASES[trimmedCat.toLowerCase()] || trimmedCat;
+
+    if (mongoose.isValidObjectId(resolvedCat)) {
+      categoryDoc = await Category.findById(resolvedCat);
     }
     if (!categoryDoc) {
       categoryDoc = await Category.findOne({
         $or: [
-          { slug: category.toLowerCase().trim() },
-          { name: { $regex: new RegExp(`^${escapeRegex(category.trim())}$`, 'i') } },
+          { slug: resolvedCat.toLowerCase() },
+          { name: { $regex: new RegExp(`^${escapeRegex(resolvedCat)}$`, 'i') } },
+          { slug: trimmedCat.toLowerCase() },
+          { name: { $regex: new RegExp(`^${escapeRegex(trimmedCat)}$`, 'i') } },
         ],
       });
     }
@@ -105,7 +126,8 @@ export const searchProducts = async (filters = {}) => {
       query.$and = query.$and || [];
       query.$and.push({
         $or: [
-          { category: { $regex: new RegExp(escapeRegex(category.trim()), 'i') } },
+          { category: { $regex: new RegExp(escapeRegex(resolvedCat), 'i') } },
+          { category: { $regex: new RegExp(escapeRegex(trimmedCat), 'i') } },
         ],
       });
     }
@@ -244,7 +266,7 @@ export const searchProducts = async (filters = {}) => {
 
   // 10. Handle Pagination
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+  const limitNum = Math.min(1000, Math.max(1, parseInt(limit, 10) || 20));
   const skip = (pageNum - 1) * limitNum;
 
   // 11. Execute DB queries

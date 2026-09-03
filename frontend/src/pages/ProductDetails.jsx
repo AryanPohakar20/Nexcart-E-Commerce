@@ -44,8 +44,8 @@ const ProductDetails = () => {
         const res = await productService.getProductById(id);
         if (res?.data?.product && isMounted) {
           const p = res.data.product;
-          setProduct(p);
-          setSelectedImage(p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80');
+          const primary = p.image || p.images?.[0]?.url || (typeof p.images?.[0] === 'string' ? p.images[0] : p.thumbnail) || '';
+          setSelectedImage(primary);
           setReviewsList(p.reviews || []);
           setQuantity(1);
 
@@ -106,6 +106,21 @@ const ProductDetails = () => {
     setZoomStyle({ transformOrigin: 'center', scale: 1 });
   };
 
+  const allImages = useMemo(() => {
+    if (!product) return [];
+    const imgs = [];
+    if (product.image) imgs.push(product.image);
+    if (Array.isArray(product.images)) {
+      product.images.forEach(img => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url && !imgs.includes(url)) imgs.push(url);
+      });
+    }
+    return imgs.length > 0
+      ? imgs
+      : ["data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600' fill='%23111827'%3E%3Crect width='600' height='600' fill='%23111827'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='20'%3EProduct Image%3C/text%3E%3C/svg%3E"];
+  }, [product]);
+
   const isWishlisted = product ? wishlist.some(item => item.id === product.id) : false;
   const isCompared = product ? comparedProducts.some(item => item.id === product.id) : false;
   const hasStock = product ? (product.stock > 0) : false;
@@ -161,11 +176,6 @@ const ProductDetails = () => {
       </div>
     );
   }
-
-  // Build images array
-  const allImages = (product.images && product.images.length > 0)
-    ? product.images
-    : [product.image].filter(Boolean);
 
   return (
     <div className="space-y-12">

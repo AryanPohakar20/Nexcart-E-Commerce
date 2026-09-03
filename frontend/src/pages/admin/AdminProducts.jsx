@@ -81,7 +81,7 @@ const AdminProducts = () => {
             status: stockNum <= 0 ? 'out_of_stock' : (p.status?.toLowerCase() === 'approved' || p.status?.toLowerCase() === 'active') ? 'active' : p.status?.toLowerCase(),
             rawStatus: p.rawStatus || p.status,
             featured: Boolean(p.isFeatured || p.featured),
-            image: p.image || p.thumbnail || p.images?.[0]?.url || p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+            image: p.image || p.thumbnail || p.images?.[0]?.url || p.images?.[0] || '',
             createdAt: p.createdAt,
           };
         });
