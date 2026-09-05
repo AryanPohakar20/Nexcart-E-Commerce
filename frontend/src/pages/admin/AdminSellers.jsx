@@ -39,12 +39,60 @@ const AdminSellers = () => {
         page,
         limit: perPage,
         ...(search && { search }),
-        ...(verificationFilter !== 'All Verifications' && { verificationStatus: verificationFilter === 'verified' ? 'Verified' : verificationFilter === 'pending' ? 'Pending' : 'Rejected' }),
+        ...(verificationFilter !== 'All Verifications' && {
+          verificationStatus:
+            verificationFilter === 'verified'
+              ? 'Verified'
+              : verificationFilter === 'pending'
+              ? 'In Progress'
+              : 'Rejected',
+        }),
         ...(sellerTypeFilter !== 'All Seller Types' && { sellerType: sellerTypeFilter }),
-        ...(statusFilter !== 'All Status' && { status: statusFilter === 'active' ? 'Active' : 'Suspended' }),
+        ...(statusFilter !== 'All Status' && {
+          status: statusFilter === 'active' ? 'Active' : 'Suspended',
+          isActive: statusFilter === 'active' ? 'true' : undefined,
+          isSuspended: statusFilter === 'suspended' ? 'true' : undefined,
+        }),
       };
       const res = await adminService.getSellers(params);
-      setSellers(res.data.sellers);
+      const rawSellers = res.data.sellers || [];
+      const mappedSellers = rawSellers.map((seller) => {
+        const storeName =
+          seller.business?.businessName ||
+          seller.individual?.fullName ||
+          seller.accountInfo?.displayName ||
+          seller.sellerId ||
+          'Merchant Store';
+        const logo =
+          seller.profile?.logo?.url ||
+          seller.business?.businessLogo?.url ||
+          seller.individual?.profilePhoto?.url ||
+          seller.userId?.avatar?.url ||
+          null;
+        const city = seller.address?.city || seller.profile?.city || 'N/A';
+        const status = seller.isBlocked
+          ? 'blocked'
+          : seller.isSuspended
+          ? 'suspended'
+          : seller.isActive
+          ? 'active'
+          : 'inactive';
+        const gstNumber = seller.identity?.gst || seller.business?.gst || 'N/A';
+        const user = seller.userId || {};
+
+        return {
+          ...seller,
+          storeName,
+          logo,
+          city,
+          status,
+          user,
+          businessAddress: { city },
+          businessDetails: { gstNumber },
+        };
+      });
+
+      setSellers(mappedSellers);
       setTotalItems(res.data.pagination.totalItems);
       setTotalPages(res.data.pagination.totalPages);
     } catch (error) {
@@ -71,9 +119,11 @@ const AdminSellers = () => {
     if (action === 'view') {
       setDrawerSeller(seller);
     } else if (action === 'approve') {
-      // In a real implementation this would call an approve endpoint
-      // We didn't build a specific KYC approve endpoint yet, but we have updateSeller
-      await adminService.updateSeller(seller._id, { verificationStatus: 'Verified', status: 'Active' });
+      await adminService.updateSeller(seller._id, {
+        verificationStatus: 'Verified',
+        sellerStatus: 'Approved',
+        isActive: true,
+      });
       fetchSellers();
     } else if (action === 'reject') {
       setConfirmDialog({
@@ -127,10 +177,10 @@ const AdminSellers = () => {
     ...(seller.verificationStatus?.toLowerCase() !== 'verified'
       ? [{ label: 'Approve KYC', icon: FiCheckCircle, onClick: () => handleAction('approve', seller), success: true }]
       : []),
-    ...(seller.verificationStatus?.toLowerCase() === 'pending'
+    ...(seller.verificationStatus?.toLowerCase() === 'pending' || seller.verificationStatus?.toLowerCase() === 'in progress'
       ? [{ label: 'Reject KYC', icon: FiXCircle, onClick: () => handleAction('reject', seller), warning: true }]
       : []),
-    ...(seller.status?.toLowerCase() === 'active'
+    ...(seller.status?.toLowerCase() === 'active' || (seller.isActive && !seller.isSuspended)
       ? [{ label: 'Suspend Store', icon: FiPauseCircle, onClick: () => handleAction('suspend', seller), warning: true }]
       : [{ label: 'Activate Store', icon: FiCheckCircle, onClick: () => handleAction('activate', seller), success: true }]),
     { type: 'divider' },
@@ -263,7 +313,7 @@ const AdminSellers = () => {
                           />
                         ) : (
                           <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-xs font-bold text-white border border-white/10">
-                            {seller.storeName?.[0] || seller.user?.firstName?.[0]}
+                            {seller.storeName?.[0] || seller.userId?.firstName?.[0] || seller.user?.firstName?.[0] || 'S'}
                           </div>
                         )}
                         <div>
@@ -271,7 +321,7 @@ const AdminSellers = () => {
                             {seller.storeName}
                           </p>
                           <p className="text-[10px] text-gray-500">
-                            {seller.user?.firstName} {seller.user?.lastName} • {seller.businessAddress?.city || 'N/A'}
+                            {(seller.userId?.firstName || seller.user?.firstName || '')} {(seller.userId?.lastName || seller.user?.lastName || '')} • {seller.address?.city || seller.businessAddress?.city || 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -302,7 +352,7 @@ const AdminSellers = () => {
                     <td className="p-4">
                       <div className="flex items-center gap-1 font-bold text-white">
                         <FiStar className="text-yellow-400 fill-yellow-400" size={13} />
-                        <span>{seller.averageRating || 0}</span>
+                        <span>{seller.averageRating || seller.rating || 0}</span>
                       </div>
                     </td>
                     <td className="p-4">
@@ -368,11 +418,13 @@ const AdminSellers = () => {
                   />
                 ) : (
                   <div className="w-20 h-20 mx-auto rounded-2xl bg-white/10 flex items-center justify-center text-3xl font-bold text-white border-2 border-yellow-500/30 mb-3 shadow-lg">
-                    {drawerSeller.storeName?.[0]}
+                    {drawerSeller.storeName?.[0] || 'S'}
                   </div>
                 )}
                 <h4 className="text-lg font-bold text-white">{drawerSeller.storeName}</h4>
-                <p className="text-xs text-gray-400 mt-0.5">Operated by {drawerSeller.user?.firstName} {drawerSeller.user?.lastName}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Operated by {drawerSeller.userId?.firstName || drawerSeller.user?.firstName || ''} {drawerSeller.userId?.lastName || drawerSeller.user?.lastName || ''}
+                </p>
                 <div className="flex items-center justify-center gap-2 mt-3">
                   <StatusBadge status={drawerSeller.sellerType} size="md" />
                   <StatusBadge status={drawerSeller.verificationStatus} size="md" />
@@ -383,27 +435,27 @@ const AdminSellers = () => {
               {/* Quick Metrics */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-center">
-                  <p className="text-xl font-black text-white">-</p>
+                  <p className="text-xl font-black text-white">{drawerSeller.statistics?.totalProducts ?? 0}</p>
                   <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">
                     Products
                   </p>
                 </div>
                 <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-center">
-                  <p className="text-xl font-black text-white">-</p>
+                  <p className="text-xl font-black text-white">{drawerSeller.statistics?.totalOrders ?? 0}</p>
                   <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">
                     Orders
                   </p>
                 </div>
                 <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-center">
                   <p className="text-xl font-black text-yellow-400">
-                    ₹0
+                    ₹{(drawerSeller.statistics?.revenue || 0).toLocaleString('en-IN')}
                   </p>
                   <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">
                     Revenue
                   </p>
                 </div>
                 <div className="bg-white/3 border border-white/5 rounded-xl p-4 text-center">
-                  <p className="text-xl font-black text-white">{drawerSeller.trustScore}%</p>
+                  <p className="text-xl font-black text-white">{drawerSeller.trustScore || 0}%</p>
                   <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">
                     Trust Score
                   </p>
@@ -417,19 +469,27 @@ const AdminSellers = () => {
                 </h5>
                 <div className="flex justify-between items-center py-1 border-b border-white/5">
                   <span className="text-gray-500">Email</span>
-                  <span className="text-white font-medium">{drawerSeller.user?.email}</span>
+                  <span className="text-white font-medium">
+                    {drawerSeller.userId?.email || drawerSeller.user?.email || drawerSeller.accountInfo?.email || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center py-1 border-b border-white/5">
                   <span className="text-gray-500">GST Registration</span>
-                  <span className="text-yellow-400 font-mono font-bold">{drawerSeller.businessDetails?.gstNumber || 'N/A'}</span>
+                  <span className="text-yellow-400 font-mono font-bold">
+                    {drawerSeller.identity?.gst || drawerSeller.business?.gst || drawerSeller.businessDetails?.gstNumber || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center py-1 border-b border-white/5">
                   <span className="text-gray-500">Location</span>
-                  <span className="text-white font-medium">{drawerSeller.businessAddress?.city || 'N/A'}</span>
+                  <span className="text-white font-medium">
+                    {drawerSeller.address?.city || drawerSeller.businessAddress?.city || drawerSeller.profile?.city || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center py-1">
                   <span className="text-gray-500">Joined Date</span>
-                  <span className="text-white font-medium">{new Date(drawerSeller.createdAt).toLocaleDateString()}</span>
+                  <span className="text-white font-medium">
+                    {drawerSeller.createdAt ? new Date(drawerSeller.createdAt).toLocaleDateString() : 'N/A'}
+                  </span>
                 </div>
               </div>
 

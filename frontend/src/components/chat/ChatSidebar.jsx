@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { FiSearch, FiX, FiFilter, FiMessageSquare, FiUser, FiShoppingBag, FiShield } from 'react-icons/fi';
+import { FiSearch, FiX, FiFilter, FiMessageSquare, FiUser, FiShoppingBag, FiShield, FiRefreshCw } from 'react-icons/fi';
 import NexCartLogo from '../NexCartLogo';
 import ConversationCard from './ConversationCard';
 
@@ -11,7 +11,9 @@ const ChatSidebar = ({
   searchQuery,
   setSearchQuery,
   activeFilter,
-  setActiveFilter
+  setActiveFilter,
+  onReload,
+  isRefreshing = false
 }) => {
   const filterTabs = [
     { id: 'all', label: 'All', count: conversations.length },
@@ -69,11 +71,20 @@ const ChatSidebar = ({
             </span>
           </div>
         </div>
-        <div className="flex items-center flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-500 bg-emerald-500/10 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border border-emerald-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping flex-shrink-0" />
             Live Marketplace
           </span>
+          <button
+            onClick={onReload}
+            disabled={isRefreshing}
+            title="Reload conversations"
+            className="p-1.5 sm:p-2 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 transition-all border border-gray-200/50 dark:border-white/5 active:scale-95 disabled:opacity-50"
+            aria-label="Reload conversations"
+          >
+            <FiRefreshCw className={`text-xs sm:text-sm ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+          </button>
         </div>
       </div>
 

@@ -89,16 +89,40 @@ export const buildUserFilter = (query = {}) => {
 export const buildSellerFilter = (query = {}) => {
   const filter = { isDeleted: { $ne: true } };
 
-  if (query.sellerType)         filter.sellerType         = query.sellerType;
-  if (query.verificationStatus) filter.verificationStatus = query.verificationStatus;
-  if (query.sellerStatus)       filter.sellerStatus       = query.sellerStatus;
+  if (query.sellerType) filter.sellerType = query.sellerType;
 
-  if (query.isActive    === 'true')  filter.isActive    = true;
-  if (query.isActive    === 'false') filter.isActive    = false;
-  if (query.isSuspended === 'true')  filter.isSuspended = true;
-  if (query.isSuspended === 'false') filter.isSuspended = false;
-  if (query.isBlocked   === 'true')  filter.isBlocked   = true;
-  if (query.isBlocked   === 'false') filter.isBlocked   = false;
+  if (query.verificationStatus) {
+    const vs = typeof query.verificationStatus === 'string' ? query.verificationStatus.toLowerCase() : '';
+    if (vs === 'pending') {
+      filter.verificationStatus = { $in: ['In Progress', 'Pending'] };
+    } else {
+      filter.verificationStatus = query.verificationStatus;
+    }
+  }
+
+  if (query.sellerStatus) filter.sellerStatus = query.sellerStatus;
+
+  // Handle status query param for frontend compatibility
+  if (query.status) {
+    const s = query.status.toLowerCase();
+    if (s === 'active') {
+      filter.isActive = true;
+      filter.isSuspended = { $ne: true };
+    } else if (s === 'suspended') {
+      filter.isSuspended = true;
+    } else if (s === 'blocked') {
+      filter.isBlocked = true;
+    } else if (s === 'inactive') {
+      filter.isActive = false;
+    }
+  }
+
+  if (query.isActive    === 'true' || query.isActive === true)   filter.isActive    = true;
+  if (query.isActive    === 'false' || query.isActive === false) filter.isActive    = false;
+  if (query.isSuspended === 'true' || query.isSuspended === true)  filter.isSuspended = true;
+  if (query.isSuspended === 'false' || query.isSuspended === false) filter.isSuspended = false;
+  if (query.isBlocked   === 'true' || query.isBlocked === true)  filter.isBlocked   = true;
+  if (query.isBlocked   === 'false' || query.isBlocked === false) filter.isBlocked   = false;
 
   if (query.fromDate || query.toDate) {
     filter.createdAt = {};

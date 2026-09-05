@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiShield, FiInfo, FiX, FiMessageSquare, FiLock, 
   FiCheckCircle, FiDollarSign, FiCalendar, FiMapPin, FiZap,
-  FiArrowDown
+  FiArrowDown, FiRefreshCw
 } from 'react-icons/fi';
 import ChatHeader from './ChatHeader';
 import MessageBubble from './MessageBubble';
@@ -27,7 +27,9 @@ const ChatWindow = ({
   onOpenBlockModal,
   onOpenProductModal,
   onClearChat,
-  isBlocked
+  isBlocked,
+  onReload,
+  isRefreshing = false
 }) => {
   const [showSafetyBanner, setShowSafetyBanner] = useState(true);
   const [showNewMessageButton, setShowNewMessageButton] = useState(false);
@@ -180,6 +182,19 @@ const ChatWindow = ({
               <p className="text-[11px] text-gray-400">Arrange meetings at verified safe public exchange zones.</p>
             </div>
           </div>
+
+          {onReload && (
+            <div className="pt-2">
+              <button
+                onClick={onReload}
+                disabled={isRefreshing}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 text-xs font-semibold transition-all shadow-sm active:scale-95 disabled:opacity-50"
+              >
+                <FiRefreshCw className={`text-xs ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+                <span>{isRefreshing ? 'Reloading Chats...' : 'Reload Conversations'}</span>
+              </button>
+            </div>
+          )}
         </motion.div>
       </div>
     );
@@ -203,6 +218,8 @@ const ChatWindow = ({
         onOpenProductModal={onOpenProductModal}
         onClearChat={onClearChat}
         isBlocked={isBlocked}
+        onReload={onReload}
+        isRefreshing={isRefreshing}
       />
 
       {/* 2. Safety Tips Banner */}

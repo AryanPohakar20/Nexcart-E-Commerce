@@ -8,6 +8,8 @@ const statusConfig = {
   blocked: { label: 'Blocked', bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20', dot: 'bg-red-400' },
   // Verification statuses
   pending: { label: 'Pending', bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20', dot: 'bg-amber-400' },
+  'in progress': { label: 'In Progress', bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20', dot: 'bg-amber-400' },
+  in_progress: { label: 'In Progress', bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20', dot: 'bg-amber-400' },
   approved: { label: 'Approved', bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', dot: 'bg-emerald-400' },
   rejected: { label: 'Rejected', bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20', dot: 'bg-red-400' },
   verified: { label: 'Verified', bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/20', dot: 'bg-cyan-400' },
@@ -33,7 +35,8 @@ const statusConfig = {
 };
 
 const StatusBadge = ({ status, showDot = true, size = 'sm' }) => {
-  const config = statusConfig[status] || statusConfig.inactive;
+  const normalizedStatus = typeof status === 'string' ? status.toLowerCase() : status;
+  const config = statusConfig[status] || statusConfig[normalizedStatus] || statusConfig.inactive;
   const sizeClasses = size === 'sm'
     ? 'text-[10px] px-2 py-0.5'
     : size === 'md'

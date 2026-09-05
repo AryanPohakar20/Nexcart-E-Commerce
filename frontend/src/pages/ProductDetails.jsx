@@ -44,6 +44,7 @@ const ProductDetails = () => {
         const res = await productService.getProductById(id);
         if (res?.data?.product && isMounted) {
           const p = res.data.product;
+          setProduct(p);
           const primary = p.image || p.images?.[0]?.url || (typeof p.images?.[0] === 'string' ? p.images[0] : p.thumbnail) || '';
           setSelectedImage(primary);
           setReviewsList(p.reviews || []);

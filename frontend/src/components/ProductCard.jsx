@@ -47,13 +47,16 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  const isWishlisted = wishlist.some(item => item.id === product.id);
-  const isCompared = comparedProducts.some(item => item.id === product.id);
-  const hasStock = product.stock > 0;
+  const isWishlisted = Boolean(wishlist?.some(item => (item.id || item._id) === (product.id || product._id)));
+  const isCompared = Boolean(comparedProducts?.some(item => (item.id || item._id) === (product.id || product._id)));
+  const hasStock = (product?.stock ?? product?.stockQuantity ?? 0) > 0;
 
   const handleCardClick = (e) => {
     if (e.target.closest('.card-action-btn')) return;
-    navigate(`/product/${product.id}`);
+    const prodId = product.id || product._id || product.slug;
+    if (prodId) {
+      navigate(`/product/${prodId}`);
+    }
   };
 
   const handleBuyNow = () => {
@@ -62,6 +65,10 @@ const ProductCard = ({ product }) => {
       navigate('/cart');
     }
   };
+
+  const formattedPrice = (product?.price ?? 0).toLocaleString('en-IN');
+  const formattedMrp = (product?.mrp ?? 0).toLocaleString('en-IN');
+  const hasMrpDiscount = (product?.mrp ?? 0) > (product?.price ?? 0);
 
   return (
     <>
@@ -171,9 +178,9 @@ const ProductCard = ({ product }) => {
           {/* Pricing area */}
           <div className="pt-2 border-t border-borderColor space-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-extrabold text-textPrimary group-hover:text-primary transition-colors duration-300">₹{product.price.toLocaleString('en-IN')}</span>
-              {product.mrp > product.price && (
-                <span className="text-xs text-textSecondary line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+              <span className="text-lg font-extrabold text-textPrimary group-hover:text-primary transition-colors duration-300">₹{formattedPrice}</span>
+              {hasMrpDiscount && (
+                <span className="text-xs text-textSecondary line-through">₹{formattedMrp}</span>
               )}
             </div>
 
@@ -244,9 +251,9 @@ const ProductCard = ({ product }) => {
                     <p className="text-xs text-textSecondary mt-2 line-clamp-3 leading-relaxed">{product.description}</p>
                     
                     <div className="flex items-center gap-2 mt-3">
-                      <span className="text-xl font-black text-textPrimary">₹{product.price.toLocaleString('en-IN')}</span>
-                      {product.mrp > product.price && (
-                        <span className="text-xs text-textSecondary line-through">₹{product.mrp.toLocaleString('en-IN')}</span>
+                      <span className="text-xl font-black text-textPrimary">₹{formattedPrice}</span>
+                      {hasMrpDiscount && (
+                        <span className="text-xs text-textSecondary line-through">₹{formattedMrp}</span>
                       )}
                     </div>
                   </div>

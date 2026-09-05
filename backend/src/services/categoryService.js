@@ -4,6 +4,7 @@
 import * as categoryRepository from '../repositories/categoryRepository.js';
 import { ApiError } from '../utils/ApiError.js';
 import Category from '../models/Category.js';
+import Product from '../models/Product.js';
 
 const slugify = (text) => {
   return text

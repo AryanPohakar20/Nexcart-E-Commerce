@@ -317,6 +317,26 @@ const adminService = {
     const response = await axiosInstance.get('/admin/notifications', { params });
     return response.data;
   },
+  getNotificationById: async (id) => {
+    const response = await axiosInstance.get(`/admin/notifications/${id}`);
+    return response.data;
+  },
+  createNotification: async (data) => {
+    const response = await axiosInstance.post('/admin/notifications', data);
+    return response.data;
+  },
+  updateNotification: async (id, data) => {
+    const response = await axiosInstance.put(`/admin/notifications/${id}`, data);
+    return response.data;
+  },
+  publishNotification: async (id) => {
+    const response = await axiosInstance.patch(`/admin/notifications/${id}/publish`);
+    return response.data;
+  },
+  unpublishNotification: async (id) => {
+    const response = await axiosInstance.patch(`/admin/notifications/${id}/unpublish`);
+    return response.data;
+  },
   getUnreadNotificationsCount: async () => {
     const response = await axiosInstance.get('/admin/notifications/unread-count');
     return response.data;

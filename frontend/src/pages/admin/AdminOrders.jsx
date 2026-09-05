@@ -64,8 +64,8 @@ const AdminOrders = () => {
         }));
 
         setOrders(mapped);
-        setTotalPages(res.data.pagination?.pages || 1);
-        setTotalItems(res.data.pagination?.total || 0);
+        setTotalPages(res.data.pagination?.totalPages || res.data.pagination?.pages || 1);
+        setTotalItems(res.data.pagination?.totalOrders ?? res.data.pagination?.total ?? 0);
       }
     } catch (err) {
       console.error('Failed to fetch orders:', err);

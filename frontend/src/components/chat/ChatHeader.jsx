@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiArrowLeft, FiMoreVertical, FiExternalLink, FiDollarSign, 
-  FiCalendar, FiMapPin, FiFlag, FiSlash, FiUserCheck, FiTrash2, FiEye, FiShield
+  FiCalendar, FiMapPin, FiFlag, FiSlash, FiUserCheck, FiTrash2, FiEye, FiShield,
+  FiRefreshCw
 } from 'react-icons/fi';
 
 const ChatHeader = ({
@@ -16,7 +17,9 @@ const ChatHeader = ({
   onOpenBlockModal,
   onOpenProductModal,
   onClearChat,
-  isBlocked
+  isBlocked,
+  onReload,
+  isRefreshing = false
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -82,6 +85,18 @@ const ChatHeader = ({
 
         {/* Right Header Actions & Dropdown */}
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          {/* Reload Chat Button */}
+          <button
+            onClick={onReload}
+            disabled={isRefreshing}
+            title="Reload this chat to load latest messages"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 text-xs font-semibold transition-all border border-gray-200/50 dark:border-white/5 active:scale-95 disabled:opacity-50"
+            aria-label="Reload conversation"
+          >
+            <FiRefreshCw className={`text-xs sm:text-sm ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+            <span className="hidden sm:inline">{isRefreshing ? 'Reloading...' : 'Reload'}</span>
+          </button>
+
           {/* Offer Button */}
           <button
             onClick={onOpenOfferModal}
@@ -108,6 +123,15 @@ const ChatHeader = ({
                   transition={{ duration: 0.15 }}
                   className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 p-1.5 overflow-hidden"
                 >
+                  <button
+                    onClick={() => { setIsMenuOpen(false); onReload?.(); }}
+                    disabled={isRefreshing}
+                    className="w-full text-left px-3 py-2 text-xs rounded-xl font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2 transition-all"
+                  >
+                    <FiRefreshCw className={`text-primary text-sm ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span>Reload Chat</span>
+                  </button>
+
                   <button
                     onClick={() => { setIsMenuOpen(false); onOpenProductModal(); }}
                     className="w-full text-left px-3 py-2 text-xs rounded-xl font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2 transition-all"

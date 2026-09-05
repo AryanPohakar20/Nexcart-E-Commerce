@@ -492,7 +492,7 @@ export const getOrderAnalytics = asyncHandler(async (req, res) => {
 
 // GET /api/admin/orders/:id
 export const getOrder = asyncHandler(async (req, res) => {
-  const order = await adminOrderService.getOrder(req.params.orderId);
+  const order = await adminOrderService.getOrder(req.params.id);
   return successResponse(res, 'Order dossier fetched successfully.', { order });
 });
 
@@ -500,7 +500,7 @@ export const getOrder = asyncHandler(async (req, res) => {
 export const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status, note } = req.body;
   const order = await adminOrderService.updateOrderStatus(
-    req.params.orderId,
+    req.params.id,
     status,
     note,
     req.user,

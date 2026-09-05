@@ -288,7 +288,7 @@ router.get('/analytics', requirePermission('analytics', 'read'), getMarketplaceA
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(   '/notifications',              requirePermission('notifications', 'read'),   getNotifications);
-router.post(  '/notifications',              requirePermission('notifications', 'write'),  validateNotificationCreate, createNotification);
+router.post(  '/notifications',              requirePermission('notifications', 'create'), validateNotificationCreate, createNotification);
 router.get(   '/notifications/unread-count', requirePermission('notifications', 'read'),   getUnreadNotificationsCount);
 router.get(   '/notifications/:id',          requirePermission('notifications', 'read'),   getNotificationById);
 router.put(   '/notifications/:id',          requirePermission('notifications', 'update'), validateNotificationUpdate, updateNotification);

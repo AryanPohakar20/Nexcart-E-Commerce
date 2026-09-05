@@ -31,6 +31,7 @@ const Messages = () => {
   // Loading States
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Mobile View State ('list' | 'chat')
   const [mobileView, setMobileView] = useState('list');
@@ -160,10 +161,10 @@ const Messages = () => {
   }, [fetchConversations]);
 
   // Load messages when active conversation changes
-  const fetchMessagesForConv = useCallback(async (convId) => {
+  const fetchMessagesForConv = useCallback(async (convId, silent = false) => {
     if (!convId) return;
     try {
-      setLoadingMsgs(true);
+      if (!silent) setLoadingMsgs(true);
       const res = await chatService.getMessages(convId, 1, 100);
       if (res.success && Array.isArray(res.data)) {
         const formattedMsgs = res.data.map(formatMessage);
@@ -175,9 +176,43 @@ const Messages = () => {
     } catch (err) {
       console.error('Error fetching messages:', err);
     } finally {
-      setLoadingMsgs(false);
+      if (!silent) setLoadingMsgs(false);
     }
   }, [formatMessage]);
+
+  // Load messages whenever activeConversationId changes
+  useEffect(() => {
+    if (activeConversationId) {
+      fetchMessagesForConv(activeConversationId);
+    }
+  }, [activeConversationId, fetchMessagesForConv]);
+
+  // Manual Reload Handler: loads latest conversations and active chat messages without full page reload
+  const handleReload = useCallback(async () => {
+    try {
+      setIsRefreshing(true);
+      const res = await chatService.getConversations(activeFilter, searchQuery);
+      let freshConvs = [];
+      if (res.success && Array.isArray(res.data)) {
+        freshConvs = res.data.map(formatConversation);
+        setConversations(freshConvs);
+      }
+
+      const targetConvId = activeConversationId || (freshConvs.length > 0 ? freshConvs[0].id : null);
+      if (targetConvId) {
+        if (!activeConversationId) {
+          setActiveConversationId(targetConvId);
+        }
+        await fetchMessagesForConv(targetConvId, true);
+      }
+      showToast('Chat refreshed with latest messages', 'success');
+    } catch (err) {
+      console.error('Error reloading chat:', err);
+      showToast('Failed to refresh chat', 'error');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [activeFilter, searchQuery, formatConversation, activeConversationId, fetchMessagesForConv, showToast]);
 
   // Handle URL Query Params (e.g. /messages?productId=prod123&seller=sellerId)
   useEffect(() => {
@@ -649,6 +684,8 @@ const Messages = () => {
           setSearchQuery={setSearchQuery}
           activeFilter={activeFilter}
           setActiveFilter={setActiveFilter}
+          onReload={handleReload}
+          isRefreshing={isRefreshing}
         />
       </div>
 
@@ -675,6 +712,8 @@ const Messages = () => {
           onOpenProductModal={() => setIsProductModalOpen(true)}
           onClearChat={handleClearChat}
           isBlocked={isCurrentBlocked}
+          onReload={handleReload}
+          isRefreshing={isRefreshing}
         />
       </div>
 

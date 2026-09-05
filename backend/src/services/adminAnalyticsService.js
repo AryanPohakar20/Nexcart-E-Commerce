@@ -63,15 +63,6 @@ export const getMarketplaceAnalytics = async (range = '12 Months') => {
     orders: r.orders,
   }));
 
-  // Fallback defaults if database has sparse dates
-  if (formattedRevenueMonthly.length === 0) {
-    formattedRevenueMonthly = monthNames.map((m) => ({
-      month: m,
-      revenue: Math.floor(Math.random() * 400000) + 300000,
-      orders: Math.floor(Math.random() * 4000) + 2000,
-    }));
-  }
-
   // 2. User & Seller Registration cohorts
   const usersByMonth = await User.aggregate([
     {
@@ -128,34 +119,41 @@ export const getMarketplaceAnalytics = async (range = '12 Months') => {
 
   // 3. Top Performing Merchants
   const topSellersAgg = await Seller.find()
-    .sort({ totalRevenue: -1, totalOrders: -1 })
+    .sort({ 'statistics.revenue': -1, 'statistics.totalOrders': -1 })
     .limit(5)
     .lean();
 
   const topSellers = topSellersAgg.map((s) => ({
     id: s._id,
-    businessName: s.businessName || s.storeName || 'Merchant Store',
-    logo: s.logo || s.avatar || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
-    totalOrders: s.totalOrders || 0,
-    totalRevenue: s.totalRevenue || 0,
+    businessName: s.business?.businessName || s.individual?.fullName || s.accountInfo?.displayName || s.sellerId || 'Merchant Store',
+    logo: s.profile?.logo?.url || s.business?.businessLogo?.url || s.individual?.profilePhoto?.url || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+    totalOrders: s.statistics?.totalOrders || 0,
+    totalRevenue: s.statistics?.revenue || 0,
   }));
 
   // 4. Bestselling Products
   const bestProductsAgg = await Product.find({ isDeleted: false })
-    .populate('sellerId', 'firstName lastName shopName')
+    .populate('sellerId', 'firstName lastName email')
     .sort({ rating: -1, ratingsCount: -1, createdAt: -1 })
     .limit(5)
     .lean();
 
-  const bestProducts = bestProductsAgg.map((p) => ({
-    id: p._id,
-    name: p.title || p.name,
-    category: typeof p.category === 'object' ? p.category?.name : (p.category || 'General'),
-    seller: p.sellerId?.shopName || `${p.sellerId?.firstName || ''} ${p.sellerId?.lastName || ''}`.trim() || 'NexCart Official',
-    price: p.price,
-    rating: p.rating || 4.8,
-    image: (p.images && p.images[0]) ? (p.images[0].url || p.images[0]) : (p.thumbnail || null),
-  }));
+  const bestProducts = bestProductsAgg.map((p) => {
+    const sellerUser = p.sellerId;
+    const sellerDisplayName = sellerUser
+      ? `${sellerUser.firstName || ''} ${sellerUser.lastName || ''}`.trim() || sellerUser.email
+      : 'NexCart Official';
+
+    return {
+      id: p._id,
+      name: p.title || p.name,
+      category: typeof p.category === 'object' ? p.category?.name : (p.category || 'General'),
+      seller: sellerDisplayName || 'NexCart Official',
+      price: p.price,
+      rating: p.rating || 4.8,
+      image: (p.images && p.images[0]) ? (p.images[0].url || p.images[0]) : (p.thumbnail || null),
+    };
+  });
 
   // 5. Total GMV, Platform Commission, and AOV
   const allOrders = await Order.find().lean();

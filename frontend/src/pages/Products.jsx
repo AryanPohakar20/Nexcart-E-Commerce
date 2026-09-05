@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductGrid from '../components/ProductGrid';
 import { FiSliders, FiX, FiCheck, FiChevronDown, FiStar, FiRefreshCw } from 'react-icons/fi';
@@ -15,6 +15,7 @@ const Products = () => {
   const [allProducts, setAllProducts] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Filter States
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -28,43 +29,41 @@ const Products = () => {
   const [isFilterMobileOpen, setIsFilterMobileOpen] = useState(false);
 
   // Fetch real data from MongoDB
-  useEffect(() => {
-    let isMounted = true;
-    const fetchCatalog = async () => {
-      setLoading(true);
-      try {
-        const [prodRes, catRes] = await Promise.all([
-          productService.getProducts({ limit: 600 }).catch(() => null),
-          productService.getCategories().catch(() => null),
-        ]);
+  const fetchCatalog = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [prodRes, catRes] = await Promise.all([
+        productService.getProducts({ limit: 600 }),
+        productService.getCategories().catch(() => null),
+      ]);
 
-        if (isMounted) {
-          if (prodRes?.data?.products) {
-            setAllProducts(prodRes.data.products);
-          }
-          if (catRes?.data?.categories && catRes.data.categories.length > 0) {
-            const formatted = catRes.data.categories.map((c) => {
-              return {
-                id: c.slug || c._id,
-                name: c.name,
-                image: c.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&q=80',
-              };
-            });
-            setCategoriesList(formatted);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load products:', err);
-      } finally {
-        if (isMounted) setLoading(false);
+      const products = prodRes?.data?.products || prodRes?.products || [];
+      setAllProducts(products);
+
+      const rawCategories = catRes?.data?.categories || catRes?.categories || [];
+      if (rawCategories.length > 0) {
+        const formatted = rawCategories.map((c) => {
+          const imgUrl = typeof c.image === 'object' ? c.image?.url : c.image;
+          return {
+            id: c.slug || c._id,
+            name: c.name,
+            image: imgUrl || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&q=80',
+          };
+        });
+        setCategoriesList(formatted);
       }
-    };
-
-    fetchCatalog();
-    return () => {
-      isMounted = false;
-    };
+    } catch (err) {
+      console.error('Failed to load products:', err);
+      setError(err?.response?.data?.message || 'Unable to load products. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchCatalog();
+  }, [fetchCatalog]);
 
   // Sync state with URL params
   useEffect(() => {
@@ -361,6 +360,16 @@ const Products = () => {
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <FiRefreshCw className="animate-spin text-3xl text-primary mb-3" />
               <p className="text-gray-400 font-semibold">Loading marketplace products...</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center bg-cardBg border border-red-500/20 rounded-2xl p-8 space-y-4">
+              <p className="text-red-400 font-semibold text-sm">{error}</p>
+              <button
+                onClick={fetchCatalog}
+                className="px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-xs font-bold transition-all"
+              >
+                Retry Loading
+              </button>
             </div>
           ) : (
             <ProductGrid products={filteredProducts} />

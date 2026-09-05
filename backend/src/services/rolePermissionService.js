@@ -50,7 +50,7 @@ export const ROLE_PERMISSIONS = {
     export: ['read', 'export'],
     audit: ['read', 'export'],
     system: ['read'],
-    notifications: ['read', 'update', 'delete'],
+    notifications: ['read', 'create', 'update', 'delete'],
     analytics: ['read', 'export'],
   },
   [ROLES.MODERATOR]: {
@@ -102,15 +102,23 @@ export const checkUserPermission = (user, module, action) => {
   // Super Admin has unrestricted access to everything
   if (role === ROLES.SUPER_ADMIN) return true;
 
+  const hasAction = (list, act) => {
+    if (!list) return false;
+    if (list.includes('*') || list.includes(act)) return true;
+    if (act === 'create' && list.includes('write')) return true;
+    if (act === 'write' && list.includes('create')) return true;
+    return false;
+  };
+
   // Check Custom Permissions override if defined on the user model
   if (user.customPermissions && user.customPermissions instanceof Map) {
     const customModPerms = user.customPermissions.get(module);
-    if (customModPerms && (customModPerms.includes('*') || customModPerms.includes(action))) {
+    if (hasAction(customModPerms, action)) {
       return true;
     }
   } else if (user.customPermissions && typeof user.customPermissions === 'object') {
     const customModPerms = user.customPermissions[module];
-    if (Array.isArray(customModPerms) && (customModPerms.includes('*') || customModPerms.includes(action))) {
+    if (Array.isArray(customModPerms) && hasAction(customModPerms, action)) {
       return true;
     }
   }
@@ -122,7 +130,7 @@ export const checkUserPermission = (user, module, action) => {
     if (role === 'admin') {
       const adminRules = ROLE_PERMISSIONS[ROLES.ADMIN];
       const modPerms = adminRules[module];
-      return Boolean(modPerms && (modPerms.includes('*') || modPerms.includes(action)));
+      return hasAction(modPerms, action);
     }
     return false;
   }
@@ -132,9 +140,7 @@ export const checkUserPermission = (user, module, action) => {
   }
 
   const allowedActions = roleRules[module];
-  if (!allowedActions) return false;
-
-  return allowedActions.includes('*') || allowedActions.includes(action);
+  return hasAction(allowedActions, action);
 };
 
 /**
