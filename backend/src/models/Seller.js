@@ -305,15 +305,28 @@ const sellerSchema = new mongoose.Schema(
 
     // ── New: Trust & Reputation ────────────────────────────────────────────────
     trustScore: { type: Number, default: 0, min: 0, max: 100 },
+    lastTrustScoreUpdatedAt: { type: Date, default: null },
     sellerLevel: {
       type: String,
       enum: ['bronze', 'silver', 'gold', 'platinum'],
       default: 'bronze',
     },
+    badges: {
+      type: [{ type: String }],
+      default: [],
+    },
 
     // ── New: Public Metrics ────────────────────────────────────────────────────
     rating: { type: Number, default: 0, min: 0, max: 5 },
+    averageRating: { type: Number, default: 0, min: 0, max: 5 },
     totalReviews: { type: Number, default: 0, min: 0 },
+    ratingDistribution: {
+      type: Map,
+      of: Number,
+      default: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+    },
+    cancellationRate: { type: Number, default: 0, min: 0, max: 100 },
+    responseRate: { type: Number, default: 0, min: 0, max: 100 },
     followers: { type: Number, default: 0, min: 0 },
     profileViews: { type: Number, default: 0, min: 0 },
 

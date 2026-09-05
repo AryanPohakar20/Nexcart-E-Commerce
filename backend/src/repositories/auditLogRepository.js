@@ -8,9 +8,16 @@ import AuditLog from '../models/AuditLog.js';
  * This is the only write operation — audit logs are never updated or deleted.
  */
 export const createLog = async (data) => {
-  const log = new AuditLog(data);
+  const normalizedData = {
+    ...data,
+    admin: data.admin || data.adminId,
+    ipAddress: data.ipAddress || data.ip,
+  };
+  const log = new AuditLog(normalizedData);
   return log.save();
 };
+
+export const log = createLog;
 
 /**
  * Paginated list of audit logs with optional filtering.

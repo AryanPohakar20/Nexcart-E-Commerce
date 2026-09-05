@@ -22,7 +22,7 @@ const settingsSchema = new mongoose.Schema(
       showPhone: { type: Boolean, default: false },
     },
     language: { type: String, default: 'en' },
-    theme: { type: String, enum: ['light', 'dark'], default: 'light' },
+    theme: { type: String, enum: ['light', 'dark', 'system'], default: 'light' },
   },
   { _id: false }
 );
@@ -94,19 +94,47 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
+      required: function() {
+        return this.provider === 'email';
+      },
       trim: true,
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: function() {
+        return this.provider === 'email';
+      },
       minlength: 6,
       select: false,
+    },
+    provider: {
+      type: String,
+      enum: ['email', 'google', 'apple'],
+      default: 'email',
+    },
+    providerId: {
+      type: String,
+      default: null,
     },
     role: {
       type: String,
       enum: ['customer', 'seller', 'marketplace_seller', 'admin', 'super_admin', 'moderator', 'support_staff'],
       default: 'customer',
+    },
+    profileImage: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    shopName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    shopLogo: {
+      type: String,
+      trim: true,
+      default: null,
     },
     customPermissions: {
       type: Map,
@@ -152,7 +180,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Active', 'Suspended', 'Deleted'],
+      enum: ['Active', 'Suspended', 'Deleted', 'Blocked', 'active', 'suspended', 'deleted', 'blocked'],
       default: 'Active',
     },
     lastLogin: {
@@ -190,10 +218,6 @@ const userSchema = new mongoose.Schema(
       select: false,
       default: null,
     },
-    otp: {
-      code: { type: String, select: false, default: null },
-      expiresAt: { type: Date, select: false, default: null },
-    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -226,6 +250,18 @@ userSchema.pre('validate', function (next) {
     this.role = this.role.toLowerCase();
   }
 
+  if (this.status && typeof this.status === 'string') {
+    const lower = this.status.toLowerCase();
+    if (lower === 'active') this.status = 'Active';
+    else if (lower === 'suspended') this.status = 'Suspended';
+    else if (lower === 'deleted') this.status = 'Deleted';
+    else if (lower === 'blocked') this.status = 'Blocked';
+  }
+
+  if (this.settings && this.settings.theme && typeof this.settings.theme === 'string') {
+    this.settings.theme = this.settings.theme.toLowerCase();
+  }
+
   if ((!this.username || !this.username.trim()) && this.email) {
     this.username = `${this.email.split('@')[0]}${Math.floor(Math.random() * 1000)}`;
   }
@@ -234,7 +270,7 @@ userSchema.pre('validate', function (next) {
 });
 
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
 

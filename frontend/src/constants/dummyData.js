@@ -2,108 +2,100 @@
 
 export const CATEGORIES = [
   {
-    id: "electronics",
-    name: "Electronics",
-    icon: "MdOutlineElectricalServices",
-    image:
-      "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&q=80",
-    count: 1240,
-  },
-  {
-    id: "mobiles",
-    name: "Mobiles",
-    icon: "FiSmartphone",
-    image:
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80",
-    count: 850,
-  },
-  {
-    id: "laptops",
-    name: "Laptops",
-    icon: "FiLaptop",
-    image:
-      "https://images.unsplash.com/photo-1496181130204-7552cc14ac1b?w=400&q=80",
-    count: 620,
-  },
-  {
-    id: "fashion",
-    name: "Fashion",
-    icon: "FiTrendingUp",
-    image:
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80",
-    count: 3400,
-  },
-  {
-    id: "beauty",
-    name: "Beauty",
+    id: "beauty-personal-care",
+    slug: "beauty-personal-care",
+    name: "Beauty & Personal Care",
     icon: "MdOutlineBrush",
-    image:
-      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&q=80",
-    count: 1100,
+    image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80",
+    count: 50,
   },
   {
-    id: "sports",
-    name: "Sports",
-    icon: "MdSportsBasketball",
-    image:
-      "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&q=80",
-    count: 980,
-  },
-  {
-    id: "home",
-    name: "Home Decor",
+    id: "home-living",
+    slug: "home-living",
+    name: "Home & Living",
     icon: "FiHome",
-    image:
-      "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&q=80",
-    count: 1540,
-  },
-  {
-    id: "furniture",
-    name: "Furniture",
-    icon: "MdOutlineChair",
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80",
-    count: 480,
-  },
-  {
-    id: "books",
-    name: "Books",
-    icon: "FiBookOpen",
-    image:
-      "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&q=80",
-    count: 2100,
-  },
-  {
-    id: "grocery",
-    name: "Grocery",
-    icon: "MdLocalGroceryStore",
-    image:
-      "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80",
-    count: 3200,
-  },
-  {
-    id: "accessories",
-    name: "Accessories",
-    icon: "FiWatch",
-    image:
-      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80",
-    count: 1890,
-  },
-  {
-    id: "vehicles",
-    name: "Vehicles",
-    icon: "FiActivity",
-    image:
-      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&q=80",
-    count: 150,
+    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&auto=format&fit=crop&q=80",
+    count: 50,
   },
   {
     id: "gaming",
+    slug: "gaming",
     name: "Gaming",
     icon: "FiTv",
-    image:
-      "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400&q=80",
-    count: 940,
+    image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600&auto=format&fit=crop&q=80",
+    count: 50,
+  },
+  {
+    id: "fashion-apparel",
+    slug: "fashion-apparel",
+    name: "Fashion & Apparel",
+    icon: "FiTrendingUp",
+    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&auto=format&fit=crop&q=80",
+    count: 50,
+  },
+  {
+    id: "home-appliances",
+    slug: "home-appliances",
+    name: "Home Appliances",
+    icon: "MdOutlineElectricalServices",
+    image: "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=600&auto=format&fit=crop&q=80",
+    count: 50,
+  },
+  {
+    id: "electronics-audio",
+    slug: "electronics-audio",
+    name: "Electronics & Audio",
+    icon: "MdOutlineElectricalServices",
+    image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600&auto=format&fit=crop&q=80",
+    count: 50,
+  },
+  {
+    id: "laptops-computers",
+    slug: "laptops-computers",
+    name: "Laptops & Computers",
+    icon: "FiLaptop",
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&auto=format&fit=crop&q=80",
+    count: 50,
+  },
+  {
+    id: "mobile-phones",
+    slug: "mobile-phones",
+    name: "Mobile Phones",
+    icon: "FiSmartphone",
+    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80",
+    count: 50,
+  },
+  {
+    id: "electronics",
+    slug: "electronics",
+    name: "Electronics",
+    icon: "MdOutlineElectricalServices",
+    image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&auto=format&fit=crop&q=80",
+    count: 50,
+  },
+  {
+    id: "audio",
+    slug: "audio",
+    name: "Audio",
+    icon: "FiSmartphone",
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80",
+    count: 50,
+  },
+  {
+    id: "wearables",
+    slug: "wearables",
+    name: "Wearables",
+    icon: "FiWatch",
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80",
+    count: 50,
+  },
+  {
+    id: "home-kitchen",
+    slug: "home-kitchen",
+    name: "Home & Kitchen",
+    icon: "MdOutlineChair",
+    image: "https://images.unsplash.com/photo-1583778176476-4a8b02a64c01?w=600&auto=format&fit=crop&q=80",
+    count: 50,
   },
 ];
 

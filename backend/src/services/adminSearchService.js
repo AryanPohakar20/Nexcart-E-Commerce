@@ -15,12 +15,19 @@ import Order    from '../models/Order.js';
  * @param {string} type    - 'users' | 'sellers' | 'products' | 'categories' | 'orders' | 'all' (default: 'all')
  * @param {number} limit   - max results per collection (default: 10)
  */
+// ─── ReDoS Prevention ──────────────────────────────────────────────────────────
+// Escapes regex metacharacters in user-supplied strings to prevent ReDoS attacks.
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const MAX_QUERY_LEN = 200;
+
 export const globalSearch = async (query, type = 'all', limit = 10) => {
   if (!query || !query.trim()) {
     return { users: [], sellers: [], products: [], categories: [], orders: [], total: 0 };
   }
 
-  const regex = new RegExp(query.trim(), 'i');
+  // Cap query length and escape before using in RegExp
+  const safeQuery = escapeRegex(query.trim().slice(0, MAX_QUERY_LEN));
+  const regex = new RegExp(safeQuery, 'i');
   const result = {
     users: [],
     sellers: [],
@@ -29,6 +36,7 @@ export const globalSearch = async (query, type = 'all', limit = 10) => {
     orders: [],
     total: 0,
   };
+
 
   const searchPromises = [];
 

@@ -54,6 +54,11 @@ const NexCartLogo = ({ size = 'md', animated = true, showText = true, className 
           />
         </motion.div>
       </AnimatePresence>
+      {showText && (
+        <span className={`${currentSize.font} font-bold tracking-wider text-primary`}>
+          Nex<span className="text-textPrimary">Cart</span>
+        </span>
+      )}
     </div>
   );
 };

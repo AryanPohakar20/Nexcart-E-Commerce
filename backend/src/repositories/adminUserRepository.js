@@ -38,8 +38,28 @@ export const listUsers = async ({ filter = {}, page = 1, limit = 10, sort = { cr
  */
 export const findUserById = async (id) => {
   return User.findById(id)
-    .select('-password -refreshToken -otp.code -otp.expiresAt')
+    .select('-password -refreshToken')
     .lean();
+};
+
+/**
+ * Find active/non-deleted user by email.
+ */
+export const findUserByEmail = async (email) => {
+  return User.findOne({ email: email.toLowerCase().trim(), isDeleted: { $ne: true } })
+    .select('-password -refreshToken')
+    .lean();
+};
+
+// ─── Create ───────────────────────────────────────────────────────────────────
+
+/**
+ * Create a new user document.
+ */
+export const createUser = async (userData) => {
+  const user = new User(userData);
+  await user.save();
+  return User.findById(user._id).select('-password -refreshToken').lean();
 };
 
 // ─── Update ───────────────────────────────────────────────────────────────────
@@ -49,7 +69,7 @@ export const findUserById = async (id) => {
  */
 export const updateUserById = async (id, updates) => {
   return User.findByIdAndUpdate(id, { $set: updates }, { new: true })
-    .select('-password -refreshToken -otp.code -otp.expiresAt')
+    .select('-password -refreshToken')
     .lean();
 };
 
@@ -78,7 +98,7 @@ export const softDeleteUser = async (id, adminId) => {
     id,
     { $set: { isDeleted: true, deletedAt: new Date(), deletedBy: adminId, status: 'Deleted' } },
     { new: true }
-  ).select('-password -refreshToken -otp').lean();
+  ).select('-password -refreshToken').lean();
 };
 
 // ─── Counts / Aggregations ────────────────────────────────────────────────────
@@ -122,3 +142,27 @@ export const getRecentUsers = async (limit = 5) => {
     .limit(limit)
     .lean();
 };
+
+// ─── Bulk Operations ──────────────────────────────────────────────────────────
+
+export const bulkSuspendUsers = async (validUserIds) => {
+  return User.updateMany(
+    { _id: { $in: validUserIds }, role: { $nin: ['admin', 'super_admin'] }, isDeleted: { $ne: true } },
+    { $set: { status: 'Suspended' } }
+  );
+};
+
+export const bulkActivateUsers = async (validUserIds) => {
+  return User.updateMany(
+    { _id: { $in: validUserIds }, role: { $nin: ['admin', 'super_admin'] }, isDeleted: { $ne: true } },
+    { $set: { status: 'Active', isBlocked: false } }
+  );
+};
+
+export const bulkDeleteUsers = async (validUserIds, adminId) => {
+  return User.updateMany(
+    { _id: { $in: validUserIds }, role: { $nin: ['admin', 'super_admin'] }, isDeleted: { $ne: true } },
+    { $set: { isDeleted: true, deletedAt: new Date(), deletedBy: adminId, status: 'Deleted' } }
+  );
+};
+

@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { FiChevronRight, FiFileText, FiMapPin, FiCreditCard, FiTruck } from 'react-icons/fi';
@@ -6,21 +6,43 @@ import { FiChevronRight, FiFileText, FiMapPin, FiCreditCard, FiTruck } from 'rea
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { orders } = useContext(AppContext);
+  const { getOrderById, formatPrice } = useContext(AppContext);
 
-  const order = useMemo(() => {
-    return orders.find(o => o.id === id) || orders[0];
-  }, [id, orders]);
+  const [order, setOrder] = useState(null);
+  const [notFound, setNotFound] = useState(false);
 
-  if (!order) {
+  useEffect(() => {
+    let mounted = true;
+    setOrder(null);
+    setNotFound(false);
+
+    getOrderById(id).then((result) => {
+      if (!mounted) return;
+      if (result) setOrder(result);
+      else setNotFound(true);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, getOrderById]);
+
+  if (notFound) {
     return <div className="py-12 text-center text-gray-500">Order not found.</div>;
   }
 
-  // Calculations for display purposes
-  const subtotal = order.items.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
-  const gst = Math.round(subtotal * 0.12);
-  const shipping = subtotal > 20000 ? 0 : 150;
-  const discount = subtotal + gst + shipping - order.amount;
+  if (!order) {
+    return <div className="py-12 text-center text-gray-500">Loading order details...</div>;
+  }
+
+  // Prefer backend pricing — frontend calculations are only a display fallback.
+  const subtotal = order.pricing?.subtotal ??
+    order.items.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+  const gst = order.pricing?.tax ?? Math.round(subtotal * 0.12);
+  const shipping = order.pricing?.shippingCharges ??
+    (subtotal > 20000 ? 0 : 150);
+  const discount = order.pricing?.discount ??
+    (subtotal + gst + shipping - order.amount);
 
   return (
     <div className="space-y-8">
@@ -46,16 +68,24 @@ const OrderDetails = () => {
           <div className="bg-cardBg border border-white/5 p-6 rounded-3xl space-y-4">
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">Ordered Items</h3>
             <div className="divide-y divide-white/5 space-y-4">
-              {order.items.map((item) => (
-                <div key={item.product.id} className="flex items-center gap-4 pt-4 first:pt-0">
-                  <img src={item.product.image} alt={item.product.title} className="w-16 h-16 rounded-xl object-cover bg-black/20" />
-                  <div className="flex-grow">
-                    <h4 className="text-xs font-bold text-white line-clamp-1">{item.product.title}</h4>
-                    <p className="text-[10px] text-gray-500 font-semibold mt-0.5">Brand: {item.product.brand} | Qty: {item.quantity}</p>
-                    <p className="text-xs font-extrabold text-white mt-1">₹{item.product.price.toLocaleString('en-IN')}</p>
+              {order.items.map((item) => {
+                const productImage =
+                  item.product?.image ||
+                  item.product?.images?.find(img => img.isPrimary)?.url ||
+                  item.product?.images?.[0]?.url ||
+                  item.image ||
+                  '';
+                return (
+                  <div key={item.product.id || item.product._id} className="flex items-center gap-4 pt-4 first:pt-0">
+                    <img src={productImage} alt={item.product.title} className="w-16 h-16 rounded-xl object-cover bg-black/20" />
+                    <div className="flex-grow">
+                      <h4 className="text-xs font-bold text-white line-clamp-1">{item.product.title}</h4>
+                      <p className="text-[10px] text-gray-500 font-semibold mt-0.5">Brand: {item.product.brand} | Qty: {item.quantity}</p>
+                      <p className="text-xs font-extrabold text-white mt-1">{formatPrice(item.product.price)}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -68,7 +98,29 @@ const OrderDetails = () => {
                 <FiMapPin className="text-primary" />
                 <span>Shipping Address</span>
               </h4>
-              <p className="text-xs text-gray-400 leading-relaxed font-medium">{order.shippingAddress}</p>
+              <div className="text-xs text-gray-400 leading-relaxed font-medium space-y-0.5">
+                {order.shippingAddress && typeof order.shippingAddress === 'object' ? (
+                  <>
+                    <p className="text-white font-bold mb-1">
+                      {order.shippingAddress.fullName || `${order.shippingAddress.firstName || ''} ${order.shippingAddress.lastName || ''}`.trim()}
+                    </p>
+                    {(order.shippingAddress.addressLine1 || order.shippingAddress.street) && (
+                      <p>{order.shippingAddress.addressLine1 || order.shippingAddress.street}</p>
+                    )}
+                    {order.shippingAddress.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
+                    <p>
+                      {[order.shippingAddress.city, order.shippingAddress.state].filter(Boolean).join(', ')}
+                      {(order.shippingAddress.pincode || order.shippingAddress.zipCode) ? ` - ${order.shippingAddress.pincode || order.shippingAddress.zipCode}` : ''}
+                    </p>
+                    {order.shippingAddress.country && <p>{order.shippingAddress.country}</p>}
+                    {order.shippingAddress.phone && <p className="mt-2 pt-2 border-t border-white/5">Phone: {order.shippingAddress.phone}</p>}
+                  </>
+                ) : order.shippingAddressText || order.shippingAddress ? (
+                  <p>{order.shippingAddressText || order.shippingAddress}</p>
+                ) : (
+                  <p className="italic opacity-50">Address unavailable</p>
+                )}
+              </div>
             </div>
 
             {/* Billing Method */}
@@ -93,25 +145,25 @@ const OrderDetails = () => {
             <div className="space-y-2 text-xs divide-y divide-white/5">
               <div className="flex justify-between py-1.5 text-gray-400">
                 <span>Subtotal</span>
-                <span className="text-white">₹{subtotal.toLocaleString('en-IN')}</span>
+                <span className="text-white">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between py-1.5 text-gray-400">
                 <span>GST (12%)</span>
-                <span className="text-white">₹{gst.toLocaleString('en-IN')}</span>
+                <span className="text-white">{formatPrice(gst)}</span>
               </div>
               <div className="flex justify-between py-1.5 text-gray-400">
                 <span>Shipping fee</span>
-                <span>{shipping === 0 ? 'FREE' : `₹${shipping}`}</span>
+                <span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between py-1.5 text-green-500 font-semibold">
                   <span>Discount Applied</span>
-                  <span>-₹{discount.toLocaleString('en-IN')}</span>
+                  <span>-{formatPrice(discount)}</span>
                 </div>
               )}
               <div className="flex justify-between py-3 text-sm font-bold text-white">
                 <span>Grand Total Paid</span>
-                <span className="text-primary text-base">₹{order.amount.toLocaleString('en-IN')}</span>
+                <span className="text-primary text-base">{formatPrice(order.amount)}</span>
               </div>
             </div>
 

@@ -2,6 +2,8 @@
 // Data access layer for Product entity in the admin panel.
 
 import Product from '../models/Product.js';
+import User from '../models/User.js'; // Ensures User schema is registered for populate
+import mongoose from 'mongoose';
 
 /**
  * List products with filtering, sorting, pagination, and population.
@@ -16,12 +18,11 @@ export const listProducts = async ({
 
   const [products, total] = await Promise.all([
     Product.find(filter)
-      .populate({ path: 'category', select: 'name slug parent status' })
       .populate({
-        path: 'seller',
-        select: 'business individual accountInfo sellerType slug trustScore rating verificationStatus sellerStatus status isActive',
+        path: 'sellerId',
+        select: 'firstName lastName shopName shopLogo email phone role isVerified status',
       })
-      .populate({ path: 'moderation.reviewedBy', select: 'firstName lastName email' })
+      .populate({ path: 'approvedBy', select: 'firstName lastName email' })
       .sort(sort)
       .skip(skip)
       .limit(limit)
@@ -33,24 +34,42 @@ export const listProducts = async ({
 };
 
 /**
- * Get product by ID with full populated associations.
+ * Get product by ID (supports MongoDB _id or custom id like PROD-MOB-0001).
  */
 export const getProductById = async (id) => {
-  return Product.findById(id)
-    .populate({ path: 'category', select: 'name slug parent status description' })
-    .populate({
-      path: 'seller',
-      select: 'business individual accountInfo sellerType slug trustScore rating verificationStatus sellerStatus status isActive',
-    })
-    .populate({ path: 'moderation.reviewedBy', select: 'firstName lastName email avatar' })
-    .lean();
+  let doc = null;
+  if (mongoose.isValidObjectId(id)) {
+    doc = await Product.findById(id)
+      .populate({
+        path: 'sellerId',
+        select: 'firstName lastName shopName shopLogo email phone role isVerified status',
+      })
+      .populate({ path: 'approvedBy', select: 'firstName lastName email avatar' })
+      .lean();
+  }
+
+  if (!doc) {
+    doc = await Product.findOne({ $or: [{ id }, { sku: id }, { slug: id }] })
+      .populate({
+        path: 'sellerId',
+        select: 'firstName lastName shopName shopLogo email phone role isVerified status',
+      })
+      .populate({ path: 'approvedBy', select: 'firstName lastName email avatar' })
+      .lean();
+  }
+
+  return doc;
 };
 
 /**
  * Find raw Mongoose document for mutation.
  */
 export const findProductDocument = async (id) => {
-  return Product.findById(id);
+  if (mongoose.isValidObjectId(id)) {
+    const doc = await Product.findById(id);
+    if (doc) return doc;
+  }
+  return Product.findOne({ $or: [{ id }, { sku: id }, { slug: id }] });
 };
 
 /**
@@ -65,12 +84,29 @@ export const createProduct = async (data) => {
  * Update product by ID.
  */
 export const updateProduct = async (id, data) => {
-  return Product.findByIdAndUpdate(id, data, { new: true, runValidators: true })
-    .populate({ path: 'category', select: 'name slug parent status' })
+  const updatePayload = { ...data };
+
+  // Synchronize stock and inStock fields across schemas
+  if (updatePayload.stock !== undefined || updatePayload.stockQuantity !== undefined) {
+    const stockVal = Number(
+      updatePayload.stock !== undefined ? updatePayload.stock : updatePayload.stockQuantity
+    ) || 0;
+    updatePayload.stock = stockVal;
+    updatePayload.stockQuantity = stockVal;
+    updatePayload.inStock = stockVal > 0;
+  }
+
+  let filter = { _id: id };
+  if (!mongoose.isValidObjectId(id)) {
+    filter = { $or: [{ id }, { sku: id }] };
+  }
+
+  return Product.findOneAndUpdate(filter, updatePayload, { new: true, runValidators: false })
     .populate({
-      path: 'seller',
-      select: 'business individual accountInfo sellerType slug trustScore rating verificationStatus sellerStatus status isActive',
+      path: 'sellerId',
+      select: 'firstName lastName shopName shopLogo email phone role isVerified status',
     })
+    .populate({ path: 'approvedBy', select: 'firstName lastName email' })
     .lean();
 };
 
@@ -90,7 +126,13 @@ export const getProductStats = async () => {
       $facet: {
         total: [{ $match: { isDeleted: { $ne: true } } }, { $count: 'count' }],
         active: [
-          { $match: { isDeleted: { $ne: true }, status: { $in: ['Approved', 'Active'] }, stock: { $gt: 0 } } },
+          {
+            $match: {
+              isDeleted: { $ne: true },
+              status: { $in: ['Approved', 'Active', 'active'] },
+              $or: [{ stock: { $gt: 0 } }, { stockQuantity: { $gt: 0 } }, { inStock: true }],
+            },
+          },
           { $count: 'count' },
         ],
         pending: [
@@ -102,7 +144,12 @@ export const getProductStats = async () => {
           { $count: 'count' },
         ],
         outOfStock: [
-          { $match: { isDeleted: { $ne: true }, stock: { $lte: 0 } } },
+          {
+            $match: {
+              isDeleted: { $ne: true },
+              $or: [{ stock: { $lte: 0 } }, { stockQuantity: { $lte: 0 } }, { inStock: false }],
+            },
+          },
           { $count: 'count' },
         ],
         deleted: [{ $match: { isDeleted: true } }, { $count: 'count' }],

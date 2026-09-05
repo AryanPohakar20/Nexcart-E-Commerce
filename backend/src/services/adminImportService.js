@@ -3,7 +3,7 @@
 
 import { Readable } from 'stream';
 import csv from 'csv-parser';
-import * as xlsx from 'xlsx';
+import ExcelJS from 'exceljs';
 import slugify from 'slugify';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
@@ -13,9 +13,43 @@ import * as auditLogRepo from '../repositories/auditLogRepository.js';
 import { ApiError } from '../utils/ApiError.js';
 
 /**
- * Parse buffer to array of row objects (supports CSV and Excel).
+ * Parse buffer to array of row objects (supports CSV, Excel, and JSON).
  */
 const parseBufferToRows = async (buffer, mimetype, originalName = '') => {
+  const isJSON =
+    mimetype === 'application/json' ||
+    originalName.toLowerCase().endsWith('.json');
+
+  if (isJSON) {
+    try {
+      const content = JSON.parse(buffer.toString('utf-8'));
+      let rawArray = [];
+      if (Array.isArray(content)) {
+        rawArray = content;
+      } else if (content && typeof content === 'object') {
+        const firstArrayKey = Object.keys(content).find((k) => Array.isArray(content[k]));
+        if (firstArrayKey) {
+          rawArray = content[firstArrayKey];
+        } else {
+          rawArray = [content];
+        }
+      }
+
+      // Normalize keys to lowercase for uniform handling
+      return rawArray.map((item) => {
+        if (!item || typeof item !== 'object') return {};
+        const normalized = {};
+        Object.keys(item).forEach((k) => {
+          normalized[k.trim().toLowerCase()] = item[k];
+          normalized[k] = item[k]; // Keep original key as well
+        });
+        return normalized;
+      });
+    } catch (err) {
+      throw new ApiError(400, `Failed to parse JSON file: ${err.message}`);
+    }
+  }
+
   const isExcel =
     mimetype === 'application/vnd.ms-excel' ||
     mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
@@ -23,10 +57,25 @@ const parseBufferToRows = async (buffer, mimetype, originalName = '') => {
     originalName.endsWith('.xls');
 
   if (isExcel) {
-    const workbook = xlsx.read(buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    return xlsx.utils.sheet_to_json(sheet, { defval: '' });
+    // SECURITY: Using exceljs instead of vulnerable xlsx package
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) return [];
+
+    const rows = [];
+    let headers = [];
+    worksheet.eachRow((row, rowNumber) => {
+      const values = row.values.slice(1); // exceljs row.values[0] is always null
+      if (rowNumber === 1) {
+        headers = values.map((h) => (h ? String(h).trim().toLowerCase() : `col_${rowNumber}`));
+      } else {
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = values[i] !== undefined ? values[i] : ''; });
+        rows.push(obj);
+      }
+    });
+    return rows;
   }
 
   // Otherwise parse as CSV
@@ -194,30 +243,15 @@ export const executeImport = async (type, rows = [], adminUser, ip) => {
 
     for (const item of validItems) {
       const raw = item.raw || item;
-      const name = item.name || raw.name;
-      const slug = slugify(`${name}-${Date.now()}-${Math.floor(Math.random() * 1000)}`, {
-        lower: true,
-        strict: true,
+      const productDoc = Product.importData({
+        ...raw,
+        sellerId: defaultSeller?._id || adminUser._id,
+        category: raw.category || defaultCategory.name || 'General'
       });
-      const price = Number(item.price || raw.price || 0);
-      const stock = Number(item.stock || raw.stock || 0);
-      const sku = item.sku || raw.sku || `SKU-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
 
       operations.push({
         insertOne: {
-          document: {
-            name,
-            slug,
-            sku,
-            price,
-            stock,
-            category: defaultCategory._id,
-            seller: defaultSeller?._id || adminUser._id,
-            status: 'Approved',
-            approvalStatus: 'Approved',
-            images: [{ url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80' }],
-            thumbnail: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
-          },
+          document: productDoc,
         },
       });
     }

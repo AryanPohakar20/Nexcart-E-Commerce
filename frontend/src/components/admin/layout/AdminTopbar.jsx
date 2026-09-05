@@ -32,8 +32,8 @@ const Breadcrumb = ({ location }) => {
     <nav className="flex items-center gap-1.5 text-xs">
       {parts.map((part, i) => (
         <React.Fragment key={part}>
-          {i > 0 && <FiChevronRight size={11} className="text-gray-600" />}
-          <span className={i === parts.length - 1 ? 'text-yellow-400 font-bold' : 'text-gray-500'}>
+          {i > 0 && <FiChevronRight size={11} className="text-textSecondary" />}
+          <span className={i === parts.length - 1 ? 'text-yellow-400 font-bold' : 'text-textSecondary'}>
             {labels[part] || part}
           </span>
         </React.Fragment>
@@ -70,11 +70,11 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
   ];
 
   return (
-    <header className="h-16 bg-[#111111]/95 backdrop-blur-xl border-b border-white/5 flex items-center gap-3 px-4 sticky top-0 z-30">
+    <header className="h-16 bg-secondaryBg/95 backdrop-blur-xl border-b border-borderColor flex items-center gap-3 px-4 sticky top-0 z-30">
       {/* Mobile menu button */}
       <button
         onClick={onMobileMenuOpen}
-        className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+        className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl text-textSecondary hover:text-textPrimary hover:bg-surface transition-all"
       >
         <FiMenu size={20} />
       </button>
@@ -82,7 +82,7 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
       {/* Breadcrumb + Date */}
       <div className="hidden md:flex flex-col">
         <Breadcrumb location={location} />
-        <p className="text-[10px] text-gray-600 mt-0.5">{dateStr} · {timeStr}</p>
+        <p className="text-[10px] text-textSecondary mt-0.5">{dateStr} · {timeStr}</p>
       </div>
 
       {/* Spacer */}
@@ -96,7 +96,7 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
               initial={{ width: 40, opacity: 0 }}
               animate={{ width: 260, opacity: 1 }}
               exit={{ width: 40, opacity: 0 }}
-              className="flex items-center bg-white/5 border border-yellow-500/40 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,193,7,0.1)]"
+              className="flex items-center bg-surface border border-yellow-500/40 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,193,7,0.1)]"
             >
               <FiSearch size={15} className="ml-3 text-yellow-400 flex-shrink-0" />
               <input
@@ -104,10 +104,10 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search users, orders, products..."
-                className="flex-1 h-9 px-3 bg-transparent text-sm text-white placeholder:text-gray-500 outline-none"
+                className="flex-1 h-9 px-3 bg-transparent text-sm text-textPrimary placeholder:text-textSecondary outline-none"
                 onKeyDown={(e) => e.key === 'Escape' && setSearchOpen(false)}
               />
-              <button onClick={() => { setSearchOpen(false); setSearchQuery(''); }} className="mr-2 text-gray-500 hover:text-white">
+              <button onClick={() => { setSearchOpen(false); setSearchQuery(''); }} className="mr-2 text-textSecondary hover:text-textPrimary">
                 <FiX size={14} />
               </button>
             </motion.div>
@@ -117,7 +117,7 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSearchOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-white hover:bg-white/5 border border-white/8 transition-all"
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-textSecondary hover:text-textPrimary hover:bg-surface border border-borderColor transition-all"
             >
               <FiSearch size={16} />
             </motion.button>
@@ -127,7 +127,7 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
 
       {/* Quick Actions */}
       <div className="relative hidden md:block">
-        <button className="flex items-center gap-1.5 h-9 px-3 bg-white/5 border border-white/8 hover:border-yellow-500/30 rounded-xl text-xs font-semibold text-gray-400 hover:text-white transition-all">
+        <button className="flex items-center gap-1.5 h-9 px-3 bg-surface border border-borderColor hover:border-yellow-500/30 rounded-xl text-xs font-semibold text-textSecondary hover:text-textPrimary transition-all">
           <FiZap size={13} className="text-yellow-400" />
           Quick
         </button>
@@ -137,15 +137,15 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
       <div className="relative" ref={profileRef}>
         <button
           onClick={() => { setProfileOpen((v) => !v); }}
-          className="flex items-center gap-2 h-9 pl-2 pr-3 bg-white/5 border border-white/8 hover:border-yellow-500/30 rounded-xl transition-all"
+          className="flex items-center gap-2 h-9 pl-2 pr-3 bg-surface border border-borderColor hover:border-yellow-500/30 rounded-xl transition-all"
         >
           <img
             src={user?.avatar || `https://i.pravatar.cc/150?img=60`}
             alt="Admin"
             className="w-6 h-6 rounded-lg object-cover"
           />
-          <span className="hidden sm:block text-xs font-bold text-white max-w-[80px] truncate">{user?.name?.split(' ')[0] || 'Admin'}</span>
-          <FiChevronDown size={12} className={`text-gray-500 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+          <span className="hidden sm:block text-xs font-bold text-textPrimary max-w-[80px] truncate">{user?.name?.split(' ')[0] || 'Admin'}</span>
+          <FiChevronDown size={12} className={`text-textSecondary transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
         </button>
 
         <AnimatePresence>
@@ -154,30 +154,30 @@ const AdminTopbar = ({ onMobileMenuOpen }) => {
               initial={{ opacity: 0, y: -8, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.95 }}
-              className="absolute right-0 top-12 w-56 bg-[#1A1A1A] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+              className="absolute right-0 top-12 w-56 bg-cardBg border border-borderColor rounded-2xl shadow-2xl overflow-hidden"
             >
               {/* User info */}
-              <div className="px-4 py-3 border-b border-white/5">
-                <p className="text-xs font-bold text-white">{user?.name || 'Administrator'}</p>
-                <p className="text-[10px] text-gray-500">{user?.email || 'admin@nexcart.in'}</p>
+              <div className="px-4 py-3 border-b border-borderColor">
+                <p className="text-xs font-bold text-textPrimary">{user?.name || 'Administrator'}</p>
+                <p className="text-[10px] text-textSecondary">{user?.email || 'admin@nexcart.in'}</p>
                 <span className="text-[9px] uppercase font-black text-yellow-400 tracking-widest">System Root</span>
               </div>
               <div className="py-1">
                 <button onClick={() => { navigate('/admin/profile'); setProfileOpen(false); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/5 transition-colors">
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-textSecondary hover:text-textPrimary hover:bg-surface transition-colors">
                   <FiUser size={13} /> Profile Settings
                 </button>
                 <button onClick={() => { navigate('/admin/settings'); setProfileOpen(false); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/5 transition-colors">
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-textSecondary hover:text-textPrimary hover:bg-surface transition-colors">
                   <FiSettings size={13} /> Platform Settings
                 </button>
                 <button onClick={toggleTheme}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/5 transition-colors">
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-textSecondary hover:text-textPrimary hover:bg-surface transition-colors">
                   {theme === 'dark' ? <FiSun size={13} /> : <FiMoon size={13} />}
                   {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                 </button>
               </div>
-              <div className="border-t border-white/5 py-1">
+              <div className="border-t border-borderColor py-1">
                 <button
                   onClick={() => { logoutUser(); navigate('/login'); }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors"

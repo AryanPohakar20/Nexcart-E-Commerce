@@ -1,9 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CATEGORIES } from '../constants/dummyData';
+import { CATEGORIES as DEFAULT_CATEGORIES } from '../constants/dummyData';
 import { FiChevronRight, FiFolder } from 'react-icons/fi';
+import productService from '../services/productService';
 
 const Categories = () => {
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCats = async () => {
+      try {
+        const res = await productService.getCategories();
+        if (res?.data?.categories && res.data.categories.length > 0 && isMounted) {
+          const mapped = res.data.categories.map((c) => {
+            const matched = DEFAULT_CATEGORIES.find(
+              (dc) => dc.id.toLowerCase() === c.slug?.toLowerCase() || dc.name.toLowerCase() === c.name?.toLowerCase()
+            );
+            return {
+              id: c.slug || c._id,
+              name: c.name,
+              image: (c.image && typeof c.image === 'object' ? c.image.url : c.image) || matched?.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1200&q=80',
+              count: c.productCount || matched?.count || 25,
+            };
+          });
+          setCategories(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      }
+    };
+    fetchCats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="space-y-8 text-left">
       {/* Breadcrumb Header */}
@@ -17,12 +49,12 @@ const Categories = () => {
           <FiFolder className="text-primary" />
           <span>All Categories</span>
         </h1>
-        <p className="text-xs text-gray-500 mt-1">Explore our range of futuristic items curated across multiple categories.</p>
+        <p className="text-xs text-gray-500 mt-1">Explore our range of futuristic items curated across multiple categories in MongoDB.</p>
       </div>
 
       {/* Categories Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <Link 
             key={cat.id} 
             to={`/category/${cat.id}`}
@@ -38,7 +70,7 @@ const Categories = () => {
             <div className="p-5 relative z-20 flex justify-between items-center bg-[#202020]">
               <div>
                 <h3 className="text-sm font-bold text-white group-hover:text-primary transition-all">{cat.name}</h3>
-                <span className="text-[10px] text-gray-500 font-semibold">{cat.count} listings operational</span>
+                <span className="text-[10px] text-gray-500 font-semibold">{cat.count || 10}+ listings operational</span>
               </div>
               <div className="p-2 bg-white/5 group-hover:bg-primary group-hover:text-black rounded-full transition-all">
                 <FiChevronRight size={14} />

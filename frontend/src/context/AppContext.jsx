@@ -1,11 +1,80 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { PRODUCTS, COUPONS } from '../constants/dummyData';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import { COUPONS } from '../constants/dummyData';
 import profileService from '../services/profileService';
 import addressService from '../services/addressService';
 import authService from '../services/authService';
+import chatService from '../services/chatService';
+import socketService from '../services/socketService';
+import notificationService from '../services/notificationService';
 import { AuthContext } from './AuthContext';
+import orderService from '../services/orderService';
 
 export const AppContext = createContext();
+
+const ORDER_STATUS_MAP = {
+  pending: 'Pending',
+  confirmed: 'Processing',
+  processing: 'Processing',
+  packed: 'Processing',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+  returned: 'Returned',
+};
+
+const toDateString = (value) => {
+  try {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
+};
+
+const formatAddressText = (address) => {
+  if (!address) return '';
+  if (typeof address === 'string') return address;
+  return [
+    address.fullName || `${address.firstName || ''} ${address.lastName || ''}`.trim(),
+    address.addressLine1 || address.street,
+    address.addressLine2,
+    [address.city, address.state].filter(Boolean).join(', '),
+    address.pincode || address.zipCode,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(', ');
+};
+
+const normalizeBuyerOrder = (ord) => ({
+  id: ord.orderId || ord.orderNumber || ord._id,
+  date: toDateString(ord.createdAt || ord.orderDate) || new Date().toISOString().split('T')[0],
+  amount: ord.totalAmount ?? ord.grandTotal ?? ord.pricing?.total ?? 0,
+  status: ORDER_STATUS_MAP[ord.orderStatus] || 'Pending',
+  deliveryEstimate: ord.orderStatus === 'delivered' ? 'Delivered' : 'Delivery expected within 2 days',
+  paymentMethod: ord.paymentMethod || ord.paymentInfo?.method || 'COD',
+  paymentStatus: ord.paymentStatus || ord.paymentInfo?.status || 'pending',
+  pricing: ord.pricing || null,
+  shippingAddress: ord.shippingAddress,
+  shippingAddressText: formatAddressText(ord.shippingAddress),
+  items: (ord.items || []).map(item => {
+    const productId = item.product?._id || item.product || item.productId;
+    return {
+      product: {
+        id: productId,
+        title: item.title || item.name || item.product?.title || item.product?.name || 'Product',
+        brand: item.product?.brand || 'NexCart',
+        price: item.price || 0,
+        image: item.image || item.thumbnail || item.product?.image || item.product?.thumbnail ||
+          item.product?.images?.find(img => img.isPrimary)?.url ||
+          item.product?.images?.[0]?.url || '',
+      },
+      quantity: item.quantity || 1,
+      price: item.price || 0,
+      subtotal: item.subtotal || ((item.price || 0) * (item.quantity || 1)),
+    };
+  }),
+});
 
 export const AppProvider = ({ children }) => {
   const { user: authUser } = useContext(AuthContext) || {};
@@ -31,25 +100,52 @@ export const AppProvider = ({ children }) => {
   const [saveForLater, setSaveForLater] = useState(() => JSON.parse(localStorage.getItem('nexcart-guest-save-later') || '[]'));
   const [comparedProducts, setComparedProducts] = useState([]);
   const [addresses, setAddresses] = useState([]);
-  const [orders, setOrders] = useState([
-    {
-      id: 'ORD-98431',
-      date: '2026-07-10',
-      items: [{ product: PRODUCTS[1], quantity: 1 }],
-      shippingAddress: 'Penthouse B, Skyview Heights, Hitec City, Hyderabad - 500081',
-      paymentMethod: 'UPI (GPay)',
-      amount: 24999,
-      status: 'Delivered',
-      deliveryEstimate: 'Delivered on 12th July 2026',
-    },
-  ]);
+  const [orders, setOrders] = useState([]);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [notifications, setNotifications] = useState([
-    { id: 'n-1', title: 'Order Delivered!', message: 'Your order ORD-98431 has been successfully delivered.', read: false, time: '2 days ago' },
-    { id: 'n-2', title: 'Welcome to NexCart', message: 'Shop limits-free! Explore premium dark layout and customized deals.', read: true, time: '5 days ago' },
-  ]);
+
+  // New notification states
+  const [notifications, setNotifications] = useState([]);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+
   const [toasts, setToasts] = useState([]);
   const [prevUser, setPrevUser] = useState(null);
+
+  // Chat Unread Count State
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  const fetchUnreadChatCount = async () => {
+    if (!user || !localStorage.getItem('accessToken')) return;
+    try {
+      const res = await chatService.getUnreadCount();
+      if (res?.success) {
+        setUnreadChatCount(res.count);
+      }
+    } catch (error) {
+      // Silent catch for expected auth transitions
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      socketService.connect();
+      fetchUnreadChatCount();
+
+      const handleUnreadCountUpdate = (totalUnread) => {
+        setUnreadChatCount(totalUnread);
+      };
+
+      socketService.on('updateTotalUnreadCount', handleUnreadCountUpdate);
+
+      return () => {
+        socketService.off('updateTotalUnreadCount', handleUnreadCountUpdate);
+      };
+    } else {
+      socketService.disconnect();
+      setUnreadChatCount(0);
+      setUnreadNotificationsCount(0);
+      setNotifications([]);
+    }
+  }, [user]);
 
   const showToast = (message, type = 'success') => {
     const id = Date.now();
@@ -106,13 +202,9 @@ export const AppProvider = ({ children }) => {
     if (theme === 'dark') {
       root.classList.add('dark');
       root.classList.remove('light');
-      body.classList.add('dark');
-      body.classList.remove('light');
     } else {
       root.classList.remove('dark');
       root.classList.add('light');
-      body.classList.remove('dark');
-      body.classList.add('light');
     }
     body.style.backgroundColor = 'var(--bg-primary)';
     body.style.color = 'var(--text-primary)';
@@ -196,40 +288,53 @@ export const AppProvider = ({ children }) => {
     setPrevUser(user);
   }, [cart, wishlist, saveForLater, user, prevUser]);
 
+  const sanitizeCart = (cartArray) => {
+    if (!Array.isArray(cartArray)) return [];
+    return cartArray.filter((item) => item && item.product && typeof item.product === 'object' && (item.product.id || item.product._id));
+  };
+
   const addToCart = (product, quantity = 1) => {
-    if (product.stock <= 0) {
-      showToast(`${product.title} is out of stock!`, 'error');
+    if (!product) return;
+    const prodId = product.id || product._id;
+    const maxStock = product.stock !== undefined ? product.stock : 10;
+    if (maxStock <= 0) {
+      showToast(`${product.title || 'Item'} is out of stock!`, 'error');
       return;
     }
 
     setCart((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
+      const safePrev = sanitizeCart(prev);
+      const existing = safePrev.find((item) => (item.product.id || item.product._id) === prodId);
       if (existing) {
         const nextQty = existing.quantity + quantity;
-        const maxStock = product.stock || 10;
         if (nextQty > maxStock) {
           showToast(`Cannot add more. Only ${maxStock} items in stock!`, 'error');
-          return prev;
+          return safePrev;
         }
-        showToast(`Increased quantity of ${product.brand} ${product.title.split(' ')[1]} in Cart`);
-        return prev.map((item) => (item.product.id === product.id ? { ...item, quantity: nextQty } : item));
+        showToast(`Increased quantity of ${product.title || 'item'} in Cart`);
+        return safePrev.map((item) =>
+          (item.product.id || item.product._id) === prodId ? { ...item, quantity: nextQty } : item
+        );
       }
 
-      showToast(`Added ${product.brand} ${product.title.split(' ')[1]} to Cart`);
-      return [...prev, { product, quantity }];
+      showToast(`Added ${product.title || 'item'} to Cart`);
+      return [...safePrev, { product, quantity }];
     });
   };
 
   const removeFromCart = (productId) => {
-    setCart((prev) => prev.filter((item) => item.product.id !== productId));
+    if (!productId) return;
+    setCart((prev) => sanitizeCart(prev).filter((item) => (item.product.id || item.product._id) !== productId));
     showToast('Removed item from Cart', 'info');
   };
 
   const updateCartQty = (productId, quantity) => {
-    const item = cart.find((entry) => entry.product.id === productId);
+    if (!productId) return;
+    const safeCart = sanitizeCart(cart);
+    const item = safeCart.find((entry) => (entry.product.id || entry.product._id) === productId);
     if (!item) return;
 
-    const maxStock = item.product.stock || 10;
+    const maxStock = item.product.stock !== undefined ? item.product.stock : 10;
     if (quantity > maxStock) {
       showToast(`Only ${maxStock} items left in stock!`, 'error');
       return;
@@ -240,7 +345,11 @@ export const AppProvider = ({ children }) => {
       return;
     }
 
-    setCart((prev) => prev.map((entry) => (entry.product.id === productId ? { ...entry, quantity } : entry)));
+    setCart((prev) =>
+      sanitizeCart(prev).map((entry) =>
+        (entry.product.id || entry.product._id) === productId ? { ...entry, quantity } : entry
+      )
+    );
   };
 
   const clearCart = () => {
@@ -249,26 +358,32 @@ export const AppProvider = ({ children }) => {
   };
 
   const toggleWishlist = (product) => {
+    if (!product) return;
+    const prodId = product.id || product._id;
     setWishlist((prev) => {
-      const exists = prev.some((item) => item.id === product.id);
+      const safePrev = (prev || []).filter((item) => item && (item.id || item._id));
+      const exists = safePrev.some((item) => (item.id || item._id) === prodId);
       if (exists) {
         showToast('Removed from Wishlist', 'info');
-        return prev.filter((item) => item.id !== product.id);
+        return safePrev.filter((item) => (item.id || item._id) !== prodId);
       }
 
       showToast('Added to Wishlist');
-      return [...prev, product];
+      return [...safePrev, product];
     });
   };
 
   const moveToSaveLater = (product) => {
-    setCart((prev) => prev.filter((item) => item.product.id !== product.id));
+    if (!product) return;
+    const prodId = product.id || product._id;
+    setCart((prev) => sanitizeCart(prev).filter((item) => (item.product.id || item.product._id) !== prodId));
     setSaveForLater((prev) => {
-      const exists = prev.some((item) => item.product.id === product.id);
-      if (exists) return prev;
-      return [...prev, { product }];
+      const safePrev = (prev || []).filter((item) => item && item.product);
+      const exists = safePrev.some((item) => (item.product.id || item.product._id) === prodId);
+      if (exists) return safePrev;
+      return [...safePrev, { product }];
     });
-    showToast(`Saved ${product.brand} ${product.title.split(' ')[1]} for later`, 'info');
+    showToast(`Saved ${product.title || 'item'} for later`, 'info');
   };
 
   const moveToCartFromSaveLater = (product) => {
@@ -316,8 +431,98 @@ export const AppProvider = ({ children }) => {
     } catch {}
   };
 
+  const loadBuyerOrders = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const res = await orderService.getBuyerOrders();
+      const rawOrders = res?.data?.orders || res?.orders || [];
+      const formatted = rawOrders.map(normalizeBuyerOrder);
+
+      setOrders(formatted);
+      return formatted;
+    } catch (err) {
+      console.error('Failed to load buyer orders:', err);
+    }
+  };
+
+  const getOrderById = useCallback(async (orderId) => {
+    const local = orders.find(o => o.id === orderId);
+    if (local && local.shippingAddress) return local;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return null;
+
+    try {
+      const res = await orderService.getOrderDetails(orderId);
+      const raw = res?.data?.order || res?.order;
+      if (!raw) return null;
+
+      const normalized = normalizeBuyerOrder(raw);
+      setOrders(prev => {
+        if (prev.some(o => o.id === normalized.id)) {
+          return prev.map(o => o.id === normalized.id ? normalized : o);
+        }
+        return [normalized, ...prev];
+      });
+      return normalized;
+    } catch (err) {
+      console.error('Failed to fetch order details:', err);
+      return null;
+    }
+  }, [orders]);
+
+  const relativeTime = (dateValue) => {
+    if (!dateValue) return '';
+    const diff = Date.now() - new Date(dateValue).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(dateValue).toLocaleDateString();
+  };
+
+  const mapNotification = (item) => ({
+    id: item._id,
+    _id: item._id,
+    title: item.title,
+    message: item.message,
+    read: Boolean(item.isRead ?? item.read),
+    time: relativeTime(item.createdAt),
+    actionUrl: item.actionUrl || item.link || '',
+    notificationType: item.notificationType || item.type || 'Information',
+  });
+
+  const loadNotifications = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    try {
+      const [listRes, countRes] = await Promise.all([
+        notificationService.getNotifications({ page: 1, limit: 10, sort: 'createdAt:desc' }),
+        notificationService.getUnreadCount(),
+      ]);
+      if (listRes?.success) {
+        setNotifications((listRes.data?.notifications || []).map(mapNotification));
+      }
+      if (countRes?.success) {
+        setUnreadNotificationsCount(countRes.data?.unreadCount ?? 0);
+      }
+    } catch {
+      // Silent — the notifications page surfaces API errors.
+    }
+  };
+
   useEffect(() => {
-    if (user) loadAddresses();
+    if (user) {
+      loadAddresses();
+      loadBuyerOrders();
+      loadNotifications();
+    }
   }, [user?._id]);
 
   const addAddress = async (addressData) => {
@@ -384,12 +589,34 @@ export const AppProvider = ({ children }) => {
     showToast('Coupon Removed', 'info');
   };
 
-  const markNotificationRead = (id) => {
+  const markNotificationRead = async (id) => {
+    const target = notifications.find((notification) => notification.id === id);
+    if (target && !target.read) {
+      setUnreadNotificationsCount((count) => Math.max(0, count - 1));
+    }
     setNotifications((prev) => prev.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)));
+    try {
+      await notificationService.markAsRead(id);
+    } catch {
+      // Non-critical; state is already updated optimistically.
+    }
   };
 
-  const clearNotifications = () => {
-    setNotifications([]);
+  const clearNotifications = async () => {
+    try {
+      await notificationService.deleteReadNotifications();
+      setNotifications((prev) => prev.filter((notification) => !notification.read));
+    } catch {
+      // Non-critical.
+    }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(price || 0);
   };
 
   return (
@@ -416,8 +643,11 @@ export const AppProvider = ({ children }) => {
         updateAddress,
         orders,
         setOrders,
+        loadBuyerOrders,
+        getOrderById,
         appliedCoupon,
         notifications,
+        unreadNotificationsCount,
         toasts,
         showToast,
         addToCart,
@@ -434,6 +664,9 @@ export const AppProvider = ({ children }) => {
         removeCouponCode,
         markNotificationRead,
         clearNotifications,
+        unreadChatCount,
+        setUnreadChatCount,
+        formatPrice,
       }}
     >
       {children}

@@ -1,15 +1,42 @@
 // src/utils/buildFilter.js
 // Reusable filter builder for admin list endpoints.
 // Returns a MongoDB filter object based on query params — no duplication across controllers.
+//
+// SECURITY: All user-provided search strings are regex-escaped before being passed
+// to new RegExp(). This prevents ReDoS (Regular Expression Denial of Service) attacks.
+// Search length is also capped at 200 characters.
 
 import mongoose from 'mongoose';
+
+// ─── Regex Escape Utility ─────────────────────────────────────────────────────
+// Escapes all regex metacharacters in a user-supplied string.
+// Prevents ReDoS via malicious patterns like (a+)+$, .*.*  etc.
+const escapeRegex = (str) => {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+// ─── Max search string length ─────────────────────────────────────────────────
+const MAX_SEARCH_LEN = 200;
+
+const safeSearch = (raw) => {
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim().slice(0, MAX_SEARCH_LEN);
+  if (!trimmed) return null;
+  return new RegExp(escapeRegex(trimmed), 'i');
+};
+
+// ─── Status Allow-lists (prevent arbitrary regex injection via status param) ───
+const VALID_USER_STATUSES = new Set(['Active', 'Suspended', 'Deleted', 'Blocked']);
+const VALID_PRODUCT_STATUSES = new Set(['Active', 'Approved', 'Pending', 'Rejected', 'Deleted', 'Draft', 'Inactive']);
+const VALID_CATEGORY_STATUSES = new Set(['Active', 'Inactive', 'Draft', 'Archived']);
 
 /**
  * Build a MongoDB filter for User queries.
  *
  * Supported query params:
  *   role         - 'customer' | 'seller' | 'marketplace_seller' | 'admin'
- *   status       - 'Active' | 'Suspended' | 'Deleted'
+ *   status       - 'Active' | 'Suspended' | 'Deleted' | 'Blocked'
  *   isBlocked    - 'true' | 'false'
  *   isVerified   - 'true' | 'false'
  *   fromDate     - ISO date string (joined after)
@@ -23,7 +50,10 @@ export const buildUserFilter = (query = {}) => {
 
   if (query.role) filter.role = query.role;
 
-  if (query.status) filter.status = query.status;
+  // Use allow-list for status to prevent regex injection
+  if (query.status && VALID_USER_STATUSES.has(query.status)) {
+    filter.status = query.status;
+  }
 
   if (query.isBlocked === 'true')  filter.isBlocked = true;
   if (query.isBlocked === 'false') filter.isBlocked = false;
@@ -38,9 +68,9 @@ export const buildUserFilter = (query = {}) => {
     if (query.toDate)   filter.createdAt.$lte = new Date(query.toDate);
   }
 
-  // Full-text search via regex — partial match across key fields
-  if (query.search) {
-    const regex = new RegExp(query.search.trim(), 'i');
+  // Full-text search via ESCAPED regex — safe against ReDoS
+  const regex = safeSearch(query.search);
+  if (regex) {
     filter.$or = [
       { firstName: regex },
       { lastName:  regex },
@@ -55,16 +85,6 @@ export const buildUserFilter = (query = {}) => {
 
 /**
  * Build a MongoDB filter for Seller queries.
- *
- * Supported query params:
- *   sellerType         - 'individual' | 'business'
- *   verificationStatus - 'Not Started' | 'In Progress' | 'Verified' | 'Rejected'
- *   sellerStatus       - 'Draft' | 'Pending' | 'Approved' | 'Rejected' | 'Suspended'
- *   isActive           - 'true' | 'false'
- *   isSuspended        - 'true' | 'false'
- *   isBlocked          - 'true' | 'false'
- *   fromDate / toDate  - ISO date strings for createdAt range
- *   search             - partial match on businessName, ownerName, email, slug, sellerId
  */
 export const buildSellerFilter = (query = {}) => {
   const filter = { isDeleted: { $ne: true } };
@@ -86,14 +106,14 @@ export const buildSellerFilter = (query = {}) => {
     if (query.toDate)   filter.createdAt.$lte = new Date(query.toDate);
   }
 
-  if (query.search) {
-    const regex = new RegExp(query.search.trim(), 'i');
+  const regex = safeSearch(query.search);
+  if (regex) {
     filter.$or = [
       { slug:     regex },
       { sellerId: regex },
-      { 'business.businessName': regex },
-      { 'individual.fullName':   regex },
-      { 'accountInfo.email':     regex },
+      { 'business.businessName':   regex },
+      { 'individual.fullName':     regex },
+      { 'accountInfo.email':       regex },
       { 'accountInfo.displayName': regex },
     ];
   }
@@ -103,13 +123,6 @@ export const buildSellerFilter = (query = {}) => {
 
 /**
  * Build a MongoDB filter for AuditLog queries.
- *
- * Supported query params:
- *   module     - 'Users' | 'Sellers' | ...
- *   action     - e.g. 'SUSPEND_USER'
- *   adminId    - ObjectId string
- *   status     - 'success' | 'failed'
- *   fromDate / toDate
  */
 export const buildAuditFilter = (query = {}) => {
   const filter = {};
@@ -137,30 +150,45 @@ export const buildAuditFilter = (query = {}) => {
 export const buildProductFilter = (query = {}) => {
   const filter = { isDeleted: { $ne: true } };
 
-  if (query.category) {
+  if (query.category && query.category !== 'All' && query.category !== 'All Categories') {
     if (mongoose.Types.ObjectId.isValid(query.category)) {
       filter.category = new mongoose.Types.ObjectId(query.category);
-    }
-  }
-
-  if (query.seller) {
-    if (mongoose.Types.ObjectId.isValid(query.seller)) {
-      filter.seller = new mongoose.Types.ObjectId(query.seller);
-    }
-  }
-
-  if (query.status && query.status !== 'All Statuses') {
-    if (query.status.toLowerCase() === 'out_of_stock' || query.status.toLowerCase() === 'outofstock') {
-      filter.stock = { $lte: 0 };
-    } else if (query.status.toLowerCase() === 'active') {
-      filter.status = { $in: ['Approved', 'Active'] };
     } else {
-      filter.status = new RegExp(`^${query.status}$`, 'i');
+      filter.category = new RegExp(`^${escapeRegex(query.category.trim())}$`, 'i');
     }
   }
 
-  if (query.featured === 'true') filter.featured = true;
-  if (query.featured === 'false') filter.featured = false;
+  const sellerQuery = query.seller || query.sellerId;
+  if (sellerQuery) {
+    if (mongoose.Types.ObjectId.isValid(sellerQuery)) {
+      filter.sellerId = new mongoose.Types.ObjectId(sellerQuery);
+    }
+  }
+
+  if (query.status && query.status !== 'All' && query.status !== 'All Status' && query.status !== 'All Statuses') {
+    const st = query.status.toLowerCase();
+    if (st === 'out_of_stock' || st === 'outofstock') {
+      filter.stock = { $lte: 0 };
+    } else if (st === 'in_stock' || st === 'instock') {
+      filter.stock = { $gt: 0 };
+    } else if (st === 'active') {
+      filter.status = { $in: ['Approved', 'Active', 'active'] };
+    } else if (st === 'pending') {
+      filter.status = { $in: ['Pending', 'Pending Approval'] };
+    } else if (st === 'rejected') {
+      filter.status = 'Rejected';
+    } else if (st === 'draft') {
+      filter.status = 'Draft';
+    } else if (VALID_PRODUCT_STATUSES.has(query.status)) {
+      filter.status = query.status;
+    }
+  }
+
+  if (query.featured === 'true' || query.isFeatured === 'true') {
+    filter.$or = [{ isFeatured: true }, { featured: true }];
+  } else if (query.featured === 'false' || query.isFeatured === 'false') {
+    filter.isFeatured = { $ne: true };
+  }
 
   if (query.minPrice || query.maxPrice) {
     filter.price = {};
@@ -171,16 +199,18 @@ export const buildProductFilter = (query = {}) => {
   if (query.fromDate || query.toDate) {
     filter.createdAt = {};
     if (query.fromDate) filter.createdAt.$gte = new Date(query.fromDate);
-    if (query.toDate) filter.createdAt.$lte = new Date(query.toDate);
+    if (query.toDate)   filter.createdAt.$lte = new Date(query.toDate);
   }
 
-  if (query.search) {
-    const regex = new RegExp(query.search.trim(), 'i');
+  const regex = safeSearch(query.search);
+  if (regex) {
     filter.$or = [
-      { name: regex },
-      { sku: regex },
-      { slug: regex },
-      { tags: regex },
+      { title: regex },
+      { brand: regex },
+      { category: regex },
+      { sku:   regex },
+      { slug:  regex },
+      { tags:  regex },
       { description: regex },
     ];
   }
@@ -194,8 +224,9 @@ export const buildProductFilter = (query = {}) => {
 export const buildCategoryFilter = (query = {}) => {
   const filter = { isDeleted: { $ne: true } };
 
-  if (query.status && query.status !== 'all') {
-    filter.status = new RegExp(`^${query.status}$`, 'i');
+  // Use allow-list for status (prevents raw status injection into RegExp)
+  if (query.status && query.status !== 'all' && VALID_CATEGORY_STATUSES.has(query.status)) {
+    filter.status = query.status;
   }
 
   if (query.parent !== undefined) {
@@ -206,8 +237,8 @@ export const buildCategoryFilter = (query = {}) => {
     }
   }
 
-  if (query.search) {
-    const regex = new RegExp(query.search.trim(), 'i');
+  const regex = safeSearch(query.search);
+  if (regex) {
     filter.$or = [{ name: regex }, { slug: regex }, { description: regex }];
   }
 
@@ -220,6 +251,7 @@ export const buildCategoryFilter = (query = {}) => {
 export const buildOrderFilter = (query = {}) => {
   const filter = { isDeleted: { $ne: true } };
 
+  // Use exact string match for status instead of regex (allow-list enforced in controller)
   if (query.status && query.status !== 'All Statuses') {
     filter.orderStatus = query.status.toLowerCase();
   }
@@ -243,17 +275,17 @@ export const buildOrderFilter = (query = {}) => {
   if (query.fromDate || query.toDate) {
     filter.createdAt = {};
     if (query.fromDate) filter.createdAt.$gte = new Date(query.fromDate);
-    if (query.toDate) filter.createdAt.$lte = new Date(query.toDate);
+    if (query.toDate)   filter.createdAt.$lte = new Date(query.toDate);
   }
 
-  if (query.search) {
-    const regex = new RegExp(query.search.trim(), 'i');
+  const regex = safeSearch(query.search);
+  if (regex) {
     filter.$or = [
       { orderId: regex },
       { 'shippingAddress.fullName': regex },
-      { 'shippingAddress.phone': regex },
-      { 'shippingAddress.city': regex },
-      { 'items.name': regex },
+      { 'shippingAddress.phone':    regex },
+      { 'shippingAddress.city':     regex },
+      { 'items.name':               regex },
     ];
   }
 
@@ -268,7 +300,7 @@ export const buildVerificationFilter = (query = {}) => {
 
   if (query.status && query.status !== 'all') {
     const map = {
-      pending: ['In Progress', 'Pending'],
+      pending:  ['In Progress', 'Pending'],
       approved: ['Verified'],
       rejected: ['Rejected'],
     };
@@ -276,18 +308,17 @@ export const buildVerificationFilter = (query = {}) => {
     filter.verificationStatus = { $in: statuses };
   }
 
-  if (query.search) {
-    const regex = new RegExp(query.search.trim(), 'i');
+  const regex = safeSearch(query.search);
+  if (regex) {
     filter.$or = [
-      { slug: regex },
+      { slug:     regex },
       { sellerId: regex },
-      { 'business.businessName': regex },
-      { 'individual.fullName': regex },
-      { 'accountInfo.email': regex },
+      { 'business.businessName':   regex },
+      { 'individual.fullName':     regex },
+      { 'accountInfo.email':       regex },
       { 'accountInfo.displayName': regex },
     ];
   }
 
   return filter;
 };
-

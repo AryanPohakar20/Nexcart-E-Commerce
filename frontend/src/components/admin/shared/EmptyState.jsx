@@ -23,12 +23,12 @@ const EmptyState = ({
       className={`flex flex-col items-center justify-center ${s.py} text-center`}
     >
       {Icon && (
-        <div className={`${s.iconBox} bg-white/3 border border-white/5 rounded-2xl flex items-center justify-center mb-4`}>
-          <Icon size={s.iconSize} className="text-gray-600" />
+        <div className={`${s.iconBox} bg-surface border border-borderColor rounded-2xl flex items-center justify-center mb-4`}>
+          <Icon size={s.iconSize} className="text-textSecondary" />
         </div>
       )}
-      <h4 className={`${s.titleClass} font-bold text-white mb-1.5`}>{title}</h4>
-      <p className={`${s.descClass} text-gray-500 max-w-xs`}>{description}</p>
+      <h4 className={`${s.titleClass} font-bold text-textPrimary mb-1.5`}>{title}</h4>
+      <p className={`${s.descClass} text-textSecondary max-w-xs`}>{description}</p>
       {action && actionLabel && (
         <button
           onClick={action}

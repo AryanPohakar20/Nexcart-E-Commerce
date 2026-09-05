@@ -82,8 +82,9 @@ const DashboardChart = ({
                 y2={g.y}
                 stroke="rgba(255,255,255,0.05)"
                 strokeWidth="1"
+                className="chart-grid-line"
               />
-              <text x={PADDING.left - 8} y={g.y + 4} textAnchor="end" fontSize="11" fill="rgba(255,255,255,0.3)" fontFamily="Poppins, sans-serif">
+              <text x={PADDING.left - 8} y={g.y + 4} textAnchor="end" fontSize="11" fill="rgba(255,255,255,0.3)" fontFamily="Poppins, sans-serif" className="chart-axis-label">
                 {g.label}
               </text>
             </g>
@@ -106,13 +107,14 @@ const DashboardChart = ({
                     stroke="#1A1A1A"
                     strokeWidth="2"
                     style={{ cursor: 'pointer', transition: 'r 0.2s' }}
+                    className="chart-point-stroke"
                     onMouseEnter={() => setHoveredIndex(i)}
                     onMouseLeave={() => setHoveredIndex(null)}
                   />
                   {hoveredIndex === i && (
                     <>
-                      <rect x={p.x - 40} y={p.y - 38} width="80" height="28" rx="6" fill="#2A2A2A" stroke={color} strokeWidth="1" />
-                      <text x={p.x} y={p.y - 20} textAnchor="middle" fontSize="12" fill={color} fontFamily="Poppins, sans-serif" fontWeight="700">
+                      <rect x={p.x - 40} y={p.y - 38} width="80" height="28" rx="6" fill="#2A2A2A" stroke={color} strokeWidth="1" className="chart-tooltip-bg" />
+                      <text x={p.x} y={p.y - 20} textAnchor="middle" fontSize="12" fill={color} fontFamily="Poppins, sans-serif" fontWeight="700" className="chart-tooltip-text">
                         {formatVal(p[dataKey])}
                       </text>
                     </>
@@ -141,8 +143,8 @@ const DashboardChart = ({
                 />
                 {hoveredIndex === i && (
                   <>
-                    <rect x={p.x - 40} y={by - 32} width="80" height="26" rx="6" fill="#2A2A2A" stroke={color} strokeWidth="1" />
-                    <text x={p.x} y={by - 14} textAnchor="middle" fontSize="12" fill={color} fontFamily="Poppins, sans-serif" fontWeight="700">
+                    <rect x={p.x - 40} y={by - 32} width="80" height="26" rx="6" fill="#2A2A2A" stroke={color} strokeWidth="1" className="chart-tooltip-bg" />
+                    <text x={p.x} y={by - 14} textAnchor="middle" fontSize="12" fill={color} fontFamily="Poppins, sans-serif" fontWeight="700" className="chart-tooltip-text">
                       {formatVal(p[dataKey])}
                     </text>
                   </>
@@ -153,7 +155,7 @@ const DashboardChart = ({
 
           {/* X-axis labels */}
           {points.map((p, i) => (
-            <text key={i} x={p.x} y={HEIGHT - 8} textAnchor="middle" fontSize="11" fill="rgba(255,255,255,0.3)" fontFamily="Poppins, sans-serif">
+            <text key={i} x={p.x} y={HEIGHT - 8} textAnchor="middle" fontSize="11" fill="rgba(255,255,255,0.3)" fontFamily="Poppins, sans-serif" className="chart-axis-label">
               {p.month || p.label || i + 1}
             </text>
           ))}
@@ -165,11 +167,11 @@ const DashboardChart = ({
 
 // Chart Card wrapper
 export const ChartCard = ({ title, subtitle, children, actions }) => (
-  <div className="bg-[#1A1A1A] border border-white/5 rounded-2xl p-5 h-full">
+  <div className="bg-cardBg border border-borderColor rounded-2xl p-5 h-full">
     <div className="flex items-start justify-between mb-4">
       <div>
-        <h3 className="text-sm font-bold text-white">{title}</h3>
-        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+        <h3 className="text-sm font-bold text-textPrimary">{title}</h3>
+        {subtitle && <p className="text-xs text-textSecondary mt-0.5">{subtitle}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>

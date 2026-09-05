@@ -1,8 +1,8 @@
 import { ApiError } from '../utils/ApiError.js';
 
 export const errorHandler = (err, req, res, next) => {
-  let error = { ...err };
-  error.message = err.message;
+  let statusCode = err.statusCode || 500;
+  let message = err.message || 'Server Error';
 
   // Log error for dev
   if (process.env.NODE_ENV === 'development') {
@@ -11,36 +11,36 @@ export const errorHandler = (err, req, res, next) => {
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
-    const message = 'Resource not found';
-    error = new ApiError(404, message);
+    message = 'Resource not found';
+    statusCode = 404;
   }
 
   // Mongoose duplicate key
   if (err.code === 11000) {
-    const message = 'Duplicate field value entered';
-    error = new ApiError(400, message);
+    message = 'Duplicate field value entered';
+    statusCode = 400;
   }
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors).map((val) => val.message).join(', ');
-    error = new ApiError(400, message);
+    message = Object.values(err.errors).map((val) => val.message).join(', ');
+    statusCode = 400;
   }
 
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
-    error = new ApiError(401, 'Invalid token, please login again');
+    message = 'Invalid token, please login again';
+    statusCode = 401;
   }
   if (err.name === 'TokenExpiredError') {
-    error = new ApiError(401, 'Token expired, please login again');
+    message = 'Token expired, please login again';
+    statusCode = 401;
   }
 
-  const statusCode = error.statusCode || 500;
-  
   res.status(statusCode).json({
     success: false,
-    message: error.message || 'Server Error',
-    errors: error.errors || [],
+    message,
+    errors: err.errors || [],
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 };

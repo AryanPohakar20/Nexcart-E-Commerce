@@ -29,15 +29,15 @@ const Pagination = ({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-white/5">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-borderColor">
       {/* Info */}
-      <div className="flex items-center gap-3 text-xs text-gray-500">
-        <span>Showing <span className="text-white font-semibold">{totalItems > 0 ? from : 0}–{to}</span> of <span className="text-white font-semibold">{totalItems.toLocaleString()}</span></span>
+      <div className="flex items-center gap-3 text-xs text-textSecondary">
+        <span>Showing <span className="text-textPrimary font-semibold">{totalItems > 0 ? from : 0}–{to}</span> of <span className="text-textPrimary font-semibold">{totalItems.toLocaleString()}</span></span>
         {onItemsPerPageChange && (
           <select
             value={itemsPerPage}
             onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-            className="bg-white/5 border border-white/10 rounded-lg text-xs text-gray-300 px-2 py-1 outline-none"
+            className="bg-surface border border-borderColor rounded-lg text-xs text-textSecondary px-2 py-1 outline-none"
           >
             {[10, 25, 50, 100].map((n) => <option key={n} value={n}>{n} / page</option>)}
           </select>
@@ -49,14 +49,14 @@ const Pagination = ({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/8 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-textSecondary hover:text-textPrimary hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           <FiChevronLeft size={16} />
         </button>
 
         {getPageNumbers().map((page, i) =>
           page === '...' ? (
-            <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-xs text-gray-500">...</span>
+            <span key={`dots-${i}`} className="w-8 h-8 flex items-center justify-center text-xs text-textSecondary">...</span>
           ) : (
             <button
               key={page}
@@ -64,7 +64,7 @@ const Pagination = ({
               className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all
                 ${page === currentPage
                   ? 'bg-yellow-500 text-black shadow-[0_0_12px_rgba(255,193,7,0.4)]'
-                  : 'text-gray-400 hover:text-white hover:bg-white/8'
+                  : 'text-textSecondary hover:text-textPrimary hover:bg-surface'
                 }`}
             >
               {page}
@@ -75,7 +75,7 @@ const Pagination = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/8 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-textSecondary hover:text-textPrimary hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           <FiChevronRight size={16} />
         </button>

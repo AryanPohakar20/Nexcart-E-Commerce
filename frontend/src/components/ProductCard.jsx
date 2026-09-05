@@ -4,10 +4,48 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
 import { FiHeart, FiEye, FiActivity, FiShoppingCart, FiStar, FiX } from 'react-icons/fi';
 
+const NEUTRAL_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300' fill='%23111827'%3E%3Crect width='400' height='300' fill='%23111827'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='16'%3EProduct Image%3C/text%3E%3C/svg%3E";
+
 const ProductCard = ({ product }) => {
   const { addToCart, wishlist, toggleWishlist, toggleCompare, comparedProducts } = useContext(AppContext);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Candidate images sequence: product.images[0].url -> alternates -> thumbnail -> image
+  const candidateImages = React.useMemo(() => {
+    const list = [];
+    if (Array.isArray(product?.images)) {
+      product.images.forEach(img => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url && !list.includes(url)) list.push(url);
+      });
+    }
+    if (product?.thumbnail && !list.includes(product.thumbnail)) {
+      list.push(product.thumbnail);
+    }
+    if (product?.image && !list.includes(product.image)) {
+      list.push(product.image);
+    }
+    return list;
+  }, [product]);
+
+  const [imgIndex, setImgIndex] = useState(0);
+  const [allFailed, setAllFailed] = useState(false);
+
+  React.useEffect(() => {
+    setImgIndex(0);
+    setAllFailed(false);
+  }, [product]);
+
+  const currentImg = candidateImages[imgIndex] || null;
+
+  const handleImgError = () => {
+    if (imgIndex + 1 < candidateImages.length) {
+      setImgIndex(prev => prev + 1);
+    } else {
+      setAllFailed(true);
+    }
+  };
 
   const isWishlisted = wishlist.some(item => item.id === product.id);
   const isCompared = comparedProducts.some(item => item.id === product.id);
@@ -44,8 +82,9 @@ const ProductCard = ({ product }) => {
         {/* Upper Image Section */}
         <div className="relative h-48 w-full bg-surface overflow-hidden">
           <img 
-            src={product.image} 
+            src={(!allFailed && currentImg) ? currentImg : NEUTRAL_PLACEHOLDER} 
             alt={product.title} 
+            onError={handleImgError}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
           />
 
@@ -191,7 +230,12 @@ const ProductCard = ({ product }) => {
               </button>
 
               <div className="grid grid-cols-1 md:grid-cols-2">
-                <img src={product.image} alt={product.title} className="w-full h-64 md:h-full object-cover bg-surface" />
+                <img 
+                  src={(!allFailed && currentImg) ? currentImg : NEUTRAL_PLACEHOLDER} 
+                  alt={product.title} 
+                  onError={handleImgError}
+                  className="w-full h-64 md:h-full object-cover bg-surface" 
+                />
                 
                 <div className="p-6 flex flex-col justify-between space-y-4">
                   <div>
@@ -208,7 +252,9 @@ const ProductCard = ({ product }) => {
                   </div>
 
                   <div className="space-y-2 pt-4 border-t border-borderColor">
-                    <p className="text-[10px] text-textSecondary font-semibold">{product.delivery}</p>
+                    <p className="text-[10px] text-textSecondary font-semibold">
+                      {typeof product.delivery === 'string' ? product.delivery : (product.delivery?.shippingType || 'Standard Delivery')}
+                    </p>
                     <div className="grid grid-cols-2 gap-2">
                       <motion.button 
                         whileHover={{ scale: 1.03 }}

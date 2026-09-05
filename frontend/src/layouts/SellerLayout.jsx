@@ -7,7 +7,7 @@ import logo from '../assets/logo.jpg';
 import { 
   FiGrid, FiPackage, FiShoppingBag, FiBarChart2, FiDollarSign, 
   FiArchive, FiSettings, FiUser, FiArrowLeft, FiLogOut, FiMenu, FiX,
-  FiShield, FiTag, FiLayers, FiCheckCircle
+  FiShield, FiTag, FiLayers, FiCheckCircle, FiMessageSquare
 } from 'react-icons/fi';
 
 import { getSellerDisplayName, getSellerAvatar } from '../utils/sellerHelpers';
@@ -83,6 +83,7 @@ const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) =>
     { name: 'Orders Pipeline', path: '/seller/orders', icon: FiShoppingBag, badge: stats.processingOrdersCount, badgeColor: 'bg-primary text-black' },
     { name: 'Intelligence & Sales', path: '/seller/analytics', icon: FiBarChart2 },
     { name: 'Stock Inventory', path: '/seller/inventory', icon: FiArchive, badge: stats.lowStockCount > 0 ? `${stats.lowStockCount} low` : null, badgeColor: 'bg-amber-500 text-black' },
+    { name: 'Customer Messages', path: '/messages', icon: FiMessageSquare },
     { name: 'Studio Settings', path: '/seller/settings', icon: FiSettings },
     { name: 'Public Profile', path: '/seller/profile', icon: FiUser },
   ];
@@ -98,7 +99,7 @@ const SellerNavigationSidebar = ({ isSidebarOpen, onCloseSidebar, onLogout }) =>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
             <img src={logo} alt="Logo" className="w-8 h-8 rounded object-cover border border-primary/20" />
-            <span className="text-xl font-bold tracking-wider text-primary">NEX<span className="text-textPrimary">CART</span></span>
+            <span className="text-xl font-bold tracking-wider text-primary">Nex<span className="text-textPrimary">Cart</span></span>
             <span className="bg-primary/10 border border-primary/20 text-primary text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">Studio</span>
           </div>
           <button className="md:hidden text-textPrimary hover:text-primary" onClick={onCloseSidebar}>

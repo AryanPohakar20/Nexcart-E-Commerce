@@ -2,27 +2,23 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../context/AppContext';
-import { PRODUCTS } from '../constants/dummyData';
-import { FiStar, FiHeart, FiActivity, FiShoppingCart, FiTruck, FiShield, FiRefreshCw, FiChevronDown } from 'react-icons/fi';
+import { FiStar, FiHeart, FiActivity, FiShoppingCart, FiTruck, FiShield, FiRefreshCw, FiChevronDown, FiMessageSquare } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
+import productService from '../services/productService';
 
 const ProductDetails = () => {
-  const id = useParams().id;
+  const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart, wishlist, toggleWishlist, toggleCompare, comparedProducts, showToast } = useContext(AppContext);
 
-  // Retrieve current product
-  const product = useMemo(() => {
-    return PRODUCTS.find(p => p.id === id) || PRODUCTS[0];
-  }, [id]);
+  // Dynamic Product State from MongoDB
+  const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Gallery view State
-  const [selectedImage, setSelectedImage] = useState(product.image);
-  
-  // Sync image when product changes
-  useEffect(() => {
-    setSelectedImage(product.image);
-  }, [product]);
+  const [selectedImage, setSelectedImage] = useState('');
 
   // Quantity Selector state
   const [quantity, setQuantity] = useState(1);
@@ -30,13 +26,61 @@ const ProductDetails = () => {
   // Custom Accordions state
   const [activeTab, setActiveTab] = useState('specs'); // specs, shipping, reviews
   
-  // Localized Reviews addition state (Mock adding reviews)
-  const [reviewsList, setReviewsList] = useState(product.reviews || []);
+  // Reviews addition state
+  const [reviewsList, setReviewsList] = useState([]);
   const [newReview, setNewReview] = useState({ user: '', rating: 5, comment: '' });
 
   // 3D image tilt & magnifier states
   const [imgRotate, setImgRotate] = useState({ x: 0, y: 0 });
   const [zoomStyle, setZoomStyle] = useState({ transformOrigin: 'center', scale: 1 });
+
+  // Fetch product from MongoDB by ID / Slug
+  useEffect(() => {
+    let isMounted = true;
+    const fetchProduct = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await productService.getProductById(id);
+        if (res?.data?.product && isMounted) {
+          const p = res.data.product;
+          const primary = p.image || p.images?.[0]?.url || (typeof p.images?.[0] === 'string' ? p.images[0] : p.thumbnail) || '';
+          setSelectedImage(primary);
+          setReviewsList(p.reviews || []);
+          setQuantity(1);
+
+          // Fetch related products in the same category or recommendations
+          try {
+            const relRes = await productService.getProducts({ 
+              category: p.category, 
+              limit: 5 
+            });
+            if (relRes?.data?.products && isMounted) {
+              setRelatedProducts(
+                relRes.data.products.filter(item => item.id !== p.id && item.id !== id).slice(0, 4)
+              );
+            }
+          } catch (relErr) {
+            console.error('Failed to load related products:', relErr);
+          }
+        } else if (isMounted) {
+          setError('Product not found in catalogue.');
+        }
+      } catch (err) {
+        console.error('Failed to fetch product details:', err);
+        if (isMounted) {
+          setError('Unable to load product information.');
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchProduct();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   const handleImgMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -62,22 +106,33 @@ const ProductDetails = () => {
     setZoomStyle({ transformOrigin: 'center', scale: 1 });
   };
 
-  useEffect(() => {
-    setReviewsList(product.reviews || []);
+  const allImages = useMemo(() => {
+    if (!product) return [];
+    const imgs = [];
+    if (product.image) imgs.push(product.image);
+    if (Array.isArray(product.images)) {
+      product.images.forEach(img => {
+        const url = typeof img === 'string' ? img : img?.url;
+        if (url && !imgs.includes(url)) imgs.push(url);
+      });
+    }
+    return imgs.length > 0
+      ? imgs
+      : ["data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600' fill='%23111827'%3E%3Crect width='600' height='600' fill='%23111827'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2364748b' font-family='sans-serif' font-size='20'%3EProduct Image%3C/text%3E%3C/svg%3E"];
   }, [product]);
 
-  const isWishlisted = wishlist.some(item => item.id === product.id);
-  const isCompared = comparedProducts.some(item => item.id === product.id);
-  const hasStock = product.stock > 0;
+  const isWishlisted = product ? wishlist.some(item => item.id === product.id) : false;
+  const isCompared = product ? comparedProducts.some(item => item.id === product.id) : false;
+  const hasStock = product ? (product.stock > 0) : false;
 
   const handleAddToCart = () => {
-    if (hasStock) {
+    if (product && hasStock) {
       addToCart(product, quantity);
     }
   };
 
   const handleBuyNow = () => {
-    if (hasStock) {
+    if (product && hasStock) {
       addToCart(product, quantity);
       navigate('/cart');
     }
@@ -99,10 +154,28 @@ const ProductDetails = () => {
     }
   };
 
-  // Get Related Products
-  const relatedProducts = useMemo(() => {
-    return PRODUCTS.filter(p => p.category === product.category && p.id !== product.id);
-  }, [product]);
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-28 text-center">
+        <FiRefreshCw className="animate-spin text-4xl text-primary mb-4" />
+        <p className="text-gray-400 font-semibold">Loading product specifications from database...</p>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="flex flex-col items-center justify-center py-28 text-center space-y-4">
+        <p className="text-xl font-bold text-red-400">{error || 'Product Not Found'}</p>
+        <button 
+          onClick={() => navigate('/products')}
+          className="btn-glow-yellow px-6 py-2.5 text-xs text-black font-bold rounded-xl"
+        >
+          Return to Marketplace
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12">
@@ -120,7 +193,7 @@ const ProductDetails = () => {
             style={{ perspective: 1000 }}
           >
             <motion.img 
-              src={selectedImage} 
+              src={selectedImage || product.image} 
               alt={product.title} 
               className="w-full h-full object-cover select-none"
               style={{ ...zoomStyle }}
@@ -129,25 +202,21 @@ const ProductDetails = () => {
           </motion.div>
 
           {/* Thumbnails list */}
-          <div className="flex gap-3">
-            <button 
-              onClick={() => setSelectedImage(product.image)}
-              className={`w-20 h-20 bg-black/40 rounded-xl overflow-hidden border-2 transition-all ${
-                selectedImage === product.image ? 'border-primary' : 'border-white/5 hover:border-white/20'
-              }`}
-            >
-              <img src={product.image} alt="main" className="w-full h-full object-cover" />
-            </button>
-            {/* Added secondary dummy thumbnail to make it premium */}
-            <button 
-              onClick={() => setSelectedImage('https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80')}
-              className={`w-20 h-20 bg-black/40 rounded-xl overflow-hidden border-2 transition-all ${
-                selectedImage === 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80' ? 'border-primary' : 'border-white/5 hover:border-white/20'
-              }`}
-            >
-              <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80" alt="spec" className="w-full h-full object-cover" />
-            </button>
-          </div>
+          {allImages.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+              {allImages.map((imgUrl, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => setSelectedImage(imgUrl)}
+                  className={`w-20 h-20 bg-black/40 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all ${
+                    selectedImage === imgUrl ? 'border-primary' : 'border-white/5 hover:border-white/20'
+                  }`}
+                >
+                  <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Column: Details Info Panel */}
@@ -171,7 +240,7 @@ const ProductDetails = () => {
                 <span className="font-bold ml-1 text-sm">{product.rating}</span>
               </div>
               <span className="text-xs text-gray-500 font-semibold">|</span>
-              <span className="text-xs text-gray-400 font-semibold">{reviewsList.length} Global Reviews</span>
+              <span className="text-xs text-gray-400 font-semibold">{product.reviewsCount || reviewsList.length} Global Reviews</span>
             </div>
 
             <p className="text-sm text-gray-400 leading-relaxed font-medium">
@@ -195,17 +264,17 @@ const ProductDetails = () => {
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img 
-                  src={product.seller?.sellerType === 'business' ? product.seller.profile?.logo?.url || 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100&q=80' : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80'}
+                  src={product.sellerAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80'}
                   alt="Seller"
                   className="w-12 h-12 rounded-full object-cover border border-primary/20"
                 />
                 <div>
                   <h4 className="font-bold text-white text-sm">
-                    {product.seller?.sellerType === 'business' ? (product.seller.profile?.shopName || 'Aryan Fashion Store') : (product.seller?.accountInfo?.displayName || 'Aryan Pohakar')}
+                    {product.sellerDisplayName || 'NexCart Official Merchant'}
                   </h4>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold uppercase tracking-wider">
-                      {product.seller?.sellerType === 'business' ? 'Small Business' : 'Individual Seller'}
+                      {product.seller?.sellerType === 'business' ? 'Small Business' : 'Verified Merchant'}
                     </span>
                     <span className="text-xs text-gray-500 font-bold flex items-center gap-1">
                       <FiStar className="text-primary fill-current" /> 4.9
@@ -218,6 +287,25 @@ const ProductDetails = () => {
                 <p className="text-sm font-black text-emerald-400">98%</p>
               </div>
             </div>
+
+            {/* Chat with Seller Button */}
+            {product.seller && (
+              <button
+                onClick={() => {
+                  const sellerId = product.seller?._id || product.seller;
+                  const productId = product._id || product.id;
+                  if (sellerId && sellerId !== 'undefined') {
+                    navigate(`/messages?productId=${productId}&sellerId=${sellerId}`);
+                  } else {
+                    showToast('Seller information is unavailable', 'error');
+                  }
+                }}
+                className="w-full mt-2 py-2.5 bg-primary/10 border border-primary/30 hover:bg-primary/20 hover:border-primary/50 text-primary rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
+              >
+                <FiMessageSquare className="text-lg" />
+                Chat with Seller
+              </button>
+            )}
 
             {/* Delivery estimates details */}
             <div className="bg-white/5 border border-white/5 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -356,18 +444,24 @@ const ProductDetails = () => {
             >
               {activeTab === 'specs' && (
                 <div className="max-w-2xl divide-y divide-white/5">
-                  {product.specs?.map((spec) => (
-                    <div key={spec.key} className="grid grid-cols-3 py-3 text-xs">
-                      <span className="font-bold text-gray-500 col-span-1">{spec.key}</span>
-                      <span className="text-gray-300 col-span-2 font-medium">{spec.val}</span>
+                  {product.specs && product.specs.length > 0 ? (
+                    product.specs.map((spec, i) => (
+                      <div key={spec.key || spec.name || i} className="grid grid-cols-3 py-3 text-xs">
+                        <span className="font-bold text-gray-500 col-span-1">{spec.key || spec.name}</span>
+                        <span className="text-gray-300 col-span-2 font-medium">{spec.val || spec.value}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-4 text-xs text-gray-500">
+                      Standard manufacturer specifications and user guides included with packaging.
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
 
               {activeTab === 'shipping' && (
                 <div className="text-xs text-gray-400 space-y-3 leading-relaxed">
-                  <p><strong className="text-white">Delivery Estimate:</strong> Standard shipping delivers within 3 business days. Elite member express delivery available within 24 hours.</p>
+                  <p><strong className="text-white">Delivery Estimate:</strong> {typeof product.delivery === 'string' ? product.delivery : 'Standard shipping delivers within 3 business days. Elite member express delivery available within 24 hours.'}</p>
                   <p><strong className="text-white">Return Policy:</strong> Returns are accepted within 7 days of delivery. Product packaging must remain intact with original security seal.</p>
                   <p><strong className="text-white">Transit Damage:</strong> In case of damage during transition, report to custom helpline within 2 hours of delivery for immediate refunds.</p>
                 </div>
@@ -383,18 +477,18 @@ const ProductDetails = () => {
                     ) : (
                       reviewsList.map((rev, idx) => (
                         <motion.div 
-                          key={rev.id} 
+                          key={rev.id || idx} 
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: idx * 0.05 }}
                           className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-2"
                         >
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-white">{rev.user}</span>
-                            <span className="text-gray-500">{rev.date}</span>
+                            <span className="font-bold text-white">{rev.user || 'Verified Buyer'}</span>
+                            <span className="text-gray-500">{rev.date || 'Recently'}</span>
                           </div>
                           <div className="flex text-primary text-xs">
-                            {[...Array(rev.rating)].map((_, i) => (
+                            {[...Array(rev.rating || 5)].map((_, i) => (
                               <FiStar key={i} className="fill-current" />
                             ))}
                           </div>
@@ -466,7 +560,7 @@ const ProductDetails = () => {
         <section className="space-y-6">
           <div>
             <h2 className="text-xl md:text-2xl font-extrabold text-white">Related Products</h2>
-            <p className="text-xs text-gray-500 mt-1">Explore similar items you may like.</p>
+            <p className="text-xs text-gray-500 mt-1">Explore similar items you may like from MongoDB.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {relatedProducts.map(p => (

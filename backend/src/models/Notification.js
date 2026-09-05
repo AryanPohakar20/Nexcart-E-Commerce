@@ -22,10 +22,93 @@ const notificationSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    notificationType: {
+      type: String,
+      enum: [
+        'Success',
+        'Warning',
+        'Error',
+        'Information',
+        'Announcement',
+        'Promotion',
+        'Offer',
+        'Discount',
+        'Recommendation',
+        'Order Update',
+        'Seller Update',
+        'Product Update',
+        'Account Alert',
+        'Security Alert',
+        'Maintenance',
+        'System Alert',
+        'System Update',
+        'Custom',
+      ],
+      default: 'Announcement',
+      index: true,
+    },
+    category: {
+      type: String,
+      trim: true,
+      default: 'general',
+    },
+    actionText: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    icon: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    targetAudience: {
+      type: String,
+      trim: true,
+      default: 'all',
+      index: true,
+    },
     priority: {
       type: String,
       enum: ['low', 'normal', 'high', 'critical'],
       default: 'normal',
+      index: true,
+    },
+    publishStatus: {
+      type: String,
+      enum: ['draft', 'scheduled', 'published', 'unpublished'],
+      default: 'published',
+      index: true,
+    },
+    scheduledAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    expiresAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    publishedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    image: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    actionUrl: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
       index: true,
     },
     read: {
@@ -47,6 +130,7 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null,
+      index: true,
     },
     link: {
       type: String,
@@ -64,6 +148,10 @@ const notificationSchema = new mongoose.Schema(
 );
 
 notificationSchema.index({ recipientRole: 1, read: 1, createdAt: -1 });
+notificationSchema.index({ recipientUser: 1, read: 1, createdAt: -1 });
+notificationSchema.index({ publishStatus: 1, createdAt: -1 });
+notificationSchema.index({ notificationType: 1, createdAt: -1 });
+notificationSchema.index({ createdBy: 1, createdAt: -1 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
 export default Notification;

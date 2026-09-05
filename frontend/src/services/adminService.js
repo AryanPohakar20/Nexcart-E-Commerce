@@ -24,6 +24,10 @@ const adminService = {
   },
 
   // ─── User Management ────────────────────────────────────────────────────
+  createUser: async (userData) => {
+    const response = await axiosInstance.post('/admin/users', userData);
+    return response.data;
+  },
   getUsers: async (params = {}) => {
     const response = await axiosInstance.get('/admin/users', { params });
     return response.data;
@@ -36,8 +40,16 @@ const adminService = {
     const response = await axiosInstance.put(`/admin/users/${id}`, data);
     return response.data;
   },
+  resetUserPassword: async (id, password) => {
+    const response = await axiosInstance.patch(`/admin/users/${id}/reset-password`, { password });
+    return response.data;
+  },
   deleteUser: async (id) => {
     const response = await axiosInstance.delete(`/admin/users/${id}`);
+    return response.data;
+  },
+  updateUserStatus: async (id, status) => {
+    const response = await axiosInstance.patch(`/admin/users/${id}/status`, { status });
     return response.data;
   },
   suspendUser: async (id, reason) => {
@@ -56,6 +68,19 @@ const adminService = {
     const response = await axiosInstance.patch(`/admin/users/${id}/unblock`);
     return response.data;
   },
+  bulkSuspendUsers: async (userIds) => {
+    const response = await axiosInstance.patch('/admin/users/bulk/suspend', { userIds });
+    return response.data;
+  },
+  bulkActivateUsers: async (userIds) => {
+    const response = await axiosInstance.patch('/admin/users/bulk/activate', { userIds });
+    return response.data;
+  },
+  bulkDeleteUsers: async (userIds) => {
+    const response = await axiosInstance.delete('/admin/users/bulk/delete', { data: { userIds } });
+    return response.data;
+  },
+
 
   // ─── Seller Management ──────────────────────────────────────────────────
   getSellers: async (params = {}) => {
@@ -114,6 +139,25 @@ const adminService = {
     const response = await axiosInstance.put(`/admin/products/${id}`, data);
     return response.data;
   },
+  updateStock: async (id, stock) => {
+    const response = await axiosInstance.patch(`/admin/products/${id}/stock`, { stock });
+    return response.data;
+  },
+  updateProductStock: async (id, stock) => {
+    const response = await axiosInstance.patch(`/admin/products/${id}/stock`, { stock });
+    return response.data;
+  },
+  updateProductStatus: async (id, status, data = {}) => {
+    if (status?.toLowerCase() === 'approved' || status?.toLowerCase() === 'active') {
+      const response = await axiosInstance.patch(`/admin/products/${id}/approve`);
+      return response.data;
+    } else if (status?.toLowerCase() === 'rejected') {
+      const response = await axiosInstance.patch(`/admin/products/${id}/reject`, data);
+      return response.data;
+    }
+    const response = await axiosInstance.put(`/admin/products/${id}`, { status, ...data });
+    return response.data;
+  },
   deleteProduct: async (id) => {
     const response = await axiosInstance.delete(`/admin/products/${id}`);
     return response.data;
@@ -134,7 +178,17 @@ const adminService = {
     const response = await axiosInstance.patch(`/admin/products/${id}/featured`);
     return response.data;
   },
-  bulkProductAction: async (action, ids, extraData = {}) => {
+  toggleTrendingProduct: async (id) => {
+    const response = await axiosInstance.patch(`/admin/products/${id}/trending`);
+    return response.data;
+  },
+  toggleProductVisibility: async (id, visibility) => {
+    const response = await axiosInstance.put(`/admin/products/${id}`, { visibility });
+    return response.data;
+  },
+  bulkProductAction: async (arg1, arg2, extraData = {}) => {
+    const action = typeof arg1 === 'string' ? arg1 : arg2;
+    const ids = Array.isArray(arg1) ? arg1 : arg2;
     const response = await axiosInstance.post('/admin/products/bulk', {
       action,
       ids,

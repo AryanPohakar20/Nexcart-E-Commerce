@@ -10,6 +10,8 @@ import AdminLayout from "../layouts/AdminLayout";
 import Home from "../pages/Home";
 import Products from "../pages/Products";
 import ProductDetails from "../pages/ProductDetails";
+import Marketplace from "../pages/Marketplace";
+import MarketplaceProduct from "../pages/MarketplaceProduct";
 import Category from "../pages/Category";
 import Categories from "../pages/Categories";
 import OrderSuccess from "../pages/OrderSuccess";
@@ -23,6 +25,7 @@ import TrackOrder from "../pages/TrackOrder";
 import UserProfile from "../pages/UserProfile";
 import Addresses from "../pages/Addresses";
 import Notifications from "../pages/Notifications";
+import Messages from "../pages/Messages";
 
 // Dashboards & Seller Studio imports
 import SellerDashboard from "../pages/SellerDashboard";
@@ -45,11 +48,14 @@ import AdminAuditLogs from "../pages/admin/AdminAuditLogs";
 import AdminAnalytics from "../pages/admin/AdminAnalytics";
 import AdminSettings from "../pages/admin/AdminSettings";
 import AdminProfile from "../pages/admin/AdminProfile";
+import AdminNotifications from "../pages/admin/AdminNotifications";
+import AdminNotificationCreate from "../pages/admin/AdminNotificationCreate";
+import AdminNotificationEdit from "../pages/admin/AdminNotificationEdit";
+import AdminNotificationDetails from "../pages/admin/AdminNotificationDetails";
 
 // Authentication imports
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import OTPVerification from "../pages/OTPVerification";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 
@@ -92,6 +98,8 @@ const AppRoutes = () => {
         <Route index element={<Home />} />
         <Route path="products" element={<Products />} />
         <Route path="product/:id" element={<ProductDetails />} />
+        <Route path="marketplace" element={<Marketplace />} />
+        <Route path="marketplace/product/:id" element={<MarketplaceProduct />} />
         <Route path="category/:id" element={<Category />} />
         <Route path="categories" element={<Categories />} />
         <Route path="search" element={<Search />} />
@@ -145,6 +153,10 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        {/* Public Profile View Routes */}
+        <Route path="profile/:userId" element={<SellerProfile />} />
+        <Route path="seller/:id" element={<SellerProfile />} />
+        <Route path="store/:slug" element={<SellerProfile />} />
         <Route
           path="addresses"
           element={
@@ -161,6 +173,14 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="messages"
+          element={
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          }
+        />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
         <Route path="faq" element={<FAQ />} />
@@ -170,7 +190,6 @@ const AppRoutes = () => {
         {/* Auth routes */}
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
-        <Route path="otp-verification" element={<OTPVerification />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
 
@@ -208,6 +227,10 @@ const AppRoutes = () => {
       >
         <Route index element={<AdminOverview />} />
         <Route path="dashboard" element={<AdminOverview />} />
+        <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="notifications/new" element={<AdminNotificationCreate />} />
+        <Route path="notifications/:id" element={<AdminNotificationDetails />} />
+        <Route path="notifications/:id/edit" element={<AdminNotificationEdit />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="sellers" element={<AdminSellers />} />
         <Route path="products" element={<AdminProducts />} />

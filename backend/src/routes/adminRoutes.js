@@ -6,6 +6,12 @@ import { authenticate } from '../middlewares/authenticate.js';
 import { authorize }    from '../middlewares/authorize.js';
 import { requirePermission } from '../middlewares/requirePermission.js';
 import { ADMIN_ROLES }  from '../constants/roles.js';
+import { getAdminReviewReports, getAdminReviewReportDetails } from '../controllers/adminReviewReportController.js';
+import { validateAdminReviewReportsList, validateAdminReviewReportId } from '../validations/adminReviewReportValidation.js';
+import { moderateReviewReport } from '../controllers/adminReviewModerationController.js';
+import { validateAdminReviewModeration } from '../validations/adminReviewModerationValidation.js';
+import Review from '../models/Review.js';
+import SellerReview from '../models/SellerReview.js';
 import {
   // Dashboard
   getDashboardStats,
@@ -15,14 +21,21 @@ import {
   getPendingVerifications,
 
   // User Management
+  createUser,
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  resetUserPassword,
   suspendUser,
   activateUser,
   blockUser,
   unblockUser,
+  updateUserStatus,
+  bulkSuspendUsers,
+  bulkActivateUsers,
+  bulkDeleteUsers,
+
 
   // Seller Management
   getSellers,
@@ -43,11 +56,13 @@ import {
   getProducts,
   getProduct,
   updateProduct,
+  updateProductStock,
   deleteProduct,
   restoreProduct,
   approveProduct,
   rejectProduct,
   toggleFeaturedProduct,
+  toggleTrendingProduct,
   bulkProductAction,
 
   // Categories
@@ -89,6 +104,11 @@ import {
 
   // Notifications
   getNotifications,
+  getNotificationById,
+  createNotification,
+  updateNotification,
+  publishNotification,
+  unpublishNotification,
   getUnreadNotificationsCount,
   markNotificationRead,
   markAllNotificationsRead,
@@ -112,6 +132,13 @@ import {
   updateAdminProfile,
   updateAdminPassword,
 } from '../controllers/adminController.js';
+import { listReturns, getReturnDetails, reviewReturn } from '../controllers/returnController.js';
+import { getOrderAnalytics } from '../services/orderAnalyticsService.js';
+import { validateAdminReturnListing, validateReturnId, validateReturnReview } from '../validations/returnValidation.js';
+import { validateOrderAnalytics } from '../validations/orderValidation.js';
+import { validateNotificationCreate, validateNotificationUpdate } from '../validations/notificationValidation.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { successResponse } from '../utils/ApiResponse.js';
 import { importUpload } from '../middlewares/importUpload.js';
 
 const router = Router();
@@ -135,10 +162,20 @@ router.get('/dashboard/pending-verifications', getPendingVerifications);
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(   '/users',              requirePermission('users', 'read'),    getUsers);
+router.post(  '/users',              requirePermission('users', 'create'),  createUser);
+router.patch( '/users/bulk/suspend',  requirePermission('users', 'suspend'), bulkSuspendUsers);
+router.post(  '/users/bulk/suspend',  requirePermission('users', 'suspend'), bulkSuspendUsers);
+router.patch( '/users/bulk/activate', requirePermission('users', 'update'),  bulkActivateUsers);
+router.post(  '/users/bulk/activate', requirePermission('users', 'update'),  bulkActivateUsers);
+router.delete('/users/bulk/delete',   requirePermission('users', 'delete'),  bulkDeleteUsers);
+router.post(  '/users/bulk/delete',   requirePermission('users', 'delete'),  bulkDeleteUsers);
+
 router.get(   '/users/:id',          requirePermission('users', 'read'),    getUser);
 router.put(   '/users/:id',          requirePermission('users', 'update'),  updateUser);
 router.delete('/users/:id',          requirePermission('users', 'delete'),  deleteUser);
+router.patch( '/users/:id/reset-password', requirePermission('users', 'update'), resetUserPassword);
 
+router.patch('/users/:id/status',    requirePermission('users', 'update'),  updateUserStatus);
 router.patch('/users/:id/suspend',   requirePermission('users', 'suspend'), suspendUser);
 router.patch('/users/:id/activate',  requirePermission('users', 'update'),  activateUser);
 router.patch('/users/:id/block',     requirePermission('users', 'suspend'), blockUser);
@@ -164,11 +201,13 @@ router.patch('/sellers/:id/block',   requirePermission('sellers', 'suspend'), bl
 router.get(   '/products',                 requirePermission('products', 'read'),    getProducts);
 router.get(   '/products/:id',             requirePermission('products', 'read'),    getProduct);
 router.put(   '/products/:id',             requirePermission('products', 'update'),  updateProduct);
+router.patch( '/products/:id/stock',       requirePermission('products', 'update'),  updateProductStock);
 router.delete('/products/:id',             requirePermission('products', 'delete'),  deleteProduct);
 router.patch( '/products/:id/restore',     requirePermission('products', 'update'),  restoreProduct);
 router.patch( '/products/:id/approve',     requirePermission('products', 'approve'), approveProduct);
 router.patch( '/products/:id/reject',      requirePermission('products', 'reject'),  rejectProduct);
 router.patch( '/products/:id/featured',    requirePermission('products', 'update'),  toggleFeaturedProduct);
+router.patch( '/products/:id/trending',    requirePermission('products', 'update'),  toggleTrendingProduct);
 router.post(  '/products/bulk',            requirePermission('products', 'update'),  bulkProductAction);
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -212,7 +251,10 @@ router.post('/import/execute', requirePermission('imports', 'import'), executeIm
 // BULK OPERATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.post('/bulk', executeBulkAction);
+// SECURITY: requirePermission enforces that at minimum the 'update' action on 'users'
+// is needed. The service layer further validates entity/action against allow-lists.
+router.post('/bulk', requirePermission('users', 'update'), executeBulkAction);
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GLOBAL SEARCH
@@ -246,7 +288,12 @@ router.get('/analytics', requirePermission('analytics', 'read'), getMarketplaceA
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get(   '/notifications',              requirePermission('notifications', 'read'),   getNotifications);
+router.post(  '/notifications',              requirePermission('notifications', 'write'),  validateNotificationCreate, createNotification);
 router.get(   '/notifications/unread-count', requirePermission('notifications', 'read'),   getUnreadNotificationsCount);
+router.get(   '/notifications/:id',          requirePermission('notifications', 'read'),   getNotificationById);
+router.put(   '/notifications/:id',          requirePermission('notifications', 'update'), validateNotificationUpdate, updateNotification);
+router.patch( '/notifications/:id/publish',  requirePermission('notifications', 'update'), publishNotification);
+router.patch( '/notifications/:id/unpublish',requirePermission('notifications', 'update'), unpublishNotification);
 router.patch( '/notifications/:id/read',     requirePermission('notifications', 'update'), markNotificationRead);
 router.patch( '/notifications/read-all',     requirePermission('notifications', 'update'), markAllNotificationsRead);
 router.delete('/notifications/:id',          requirePermission('notifications', 'delete'), deleteNotification);
@@ -277,11 +324,70 @@ router.get('/export/:entity', requirePermission('export', 'export'), exportData)
 router.get('/roles-permissions', getRolesAndPermissions);
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ADMIN PROFILE & CREDENTIALS
+// REVIEW REPORTS QUEUE
 // ═══════════════════════════════════════════════════════════════════════════════
+router.get('/review-reports', requirePermission('reports', 'read'), validateAdminReviewReportsList, getAdminReviewReports);
+router.get('/review-reports/:reportId', requirePermission('reports', 'read'), validateAdminReviewReportId, getAdminReviewReportDetails);
+router.patch('/review-reports/:reportId/moderate', requirePermission('reports', 'update'), validateAdminReviewModeration, moderateReviewReport);
+
+router.get('/migrate-reviews-temp', async (req, res) => {
+  try {
+    const oldReviews = await Review.find().lean();
+    let migrated = 0;
+    for (const old of oldReviews) {
+      const existing = await SellerReview.findOne({
+        sellerId: old.seller,
+        customerId: old.buyer,
+        comment: old.comment,
+        createdAt: old.createdAt,
+      });
+      if (!existing) {
+        await SellerReview.create({
+          sellerId: old.seller,
+          customerId: old.buyer,
+          rating: old.rating,
+          comment: old.comment,
+          status: 'PUBLISHED',
+          createdAt: old.createdAt,
+          updatedAt: old.updatedAt,
+        });
+        migrated++;
+      }
+    }
+    res.json({ migrated });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════════
+// ADMIN PROFILE & CREDENTIALS
+// ════════════════════════════════════════════════════════════════════════════════
 
 router.get('/profile',          getAdminProfile);
 router.put('/profile',          updateAdminProfile);
 router.put('/profile/password', updateAdminPassword);
+
+// ════════════════════════════════════════════════════════════════════════════════
+// RETURNS & REFUNDS MANAGEMENT
+// ════════════════════════════════════════════════════════════════════════════════
+
+router.get(   '/returns',             requirePermission('orders', 'read'),   validateAdminReturnListing, listReturns);
+router.get(   '/returns/:returnId',   requirePermission('orders', 'read'),   validateReturnId,           getReturnDetails);
+router.patch( '/returns/:returnId',   requirePermission('orders', 'update'), validateReturnReview,       reviewReturn);
+
+// ════════════════════════════════════════════════════════════════════════════════
+// ORDER ANALYTICS
+// ════════════════════════════════════════════════════════════════════════════════
+
+router.get(
+  '/orders/analytics',
+  requirePermission('orders', 'read'),
+  validateOrderAnalytics,
+  asyncHandler(async (req, res) => {
+    const result = await getOrderAnalytics(req.query);
+    return successResponse(res, 'Order analytics fetched successfully.', result);
+  })
+);
 
 export default router;

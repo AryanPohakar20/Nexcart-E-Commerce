@@ -30,11 +30,11 @@ const SearchBar = ({
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
           className={`
-            w-full h-9 pl-9 pr-8 bg-white/5 border rounded-xl text-sm text-white 
-            placeholder:text-gray-500 outline-none transition-all
+            w-full h-9 pl-9 pr-8 bg-surface border rounded-xl text-sm text-textPrimary 
+            placeholder:text-textSecondary outline-none transition-all
             ${focused
-              ? 'border-yellow-500/50 bg-white/8 shadow-[0_0_0_3px_rgba(255,193,7,0.1)]'
-              : 'border-white/8 hover:border-white/15'
+              ? 'border-yellow-500/50 bg-surface shadow-[0_0_0_3px_rgba(255,193,7,0.1)]'
+              : 'border-borderColor hover:border-borderColor'
             }
           `}
         />
@@ -45,7 +45,7 @@ const SearchBar = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               onClick={onClear}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-textSecondary hover:text-textPrimary transition-colors"
             >
               <FiX size={14} />
             </motion.button>

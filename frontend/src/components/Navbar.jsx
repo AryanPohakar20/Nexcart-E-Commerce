@@ -8,12 +8,13 @@ import { CATEGORIES } from '../constants/dummyData';
 import { getRoleConfig } from '../constants/navigationMenu';
 import { 
   FiSearch, FiHeart, FiShoppingCart, FiBell, FiUser, 
-  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid, FiSliders
+  FiMapPin, FiGlobe, FiChevronDown, FiMenu, FiX, FiBriefcase, FiLogOut, FiCheckCircle, FiZap, FiGrid, FiSliders,
+  FiMessageSquare
 } from 'react-icons/fi';
 
 const Navbar = () => {
   const { 
-    user, cart, wishlist, notifications, markNotificationRead, clearNotifications, logoutUser 
+    user, cart, wishlist, notifications, unreadNotificationsCount, markNotificationRead, clearNotifications, logoutUser, unreadChatCount 
   } = useContext(AppContext);
   
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ const Navbar = () => {
   // Stats
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const wishlistCount = wishlist.length;
-  const unreadNotifications = notifications.filter(n => !n.read).length;
+  const unreadNotifications = unreadNotificationsCount ?? notifications.filter(n => !n.read).length;
 
   const userName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user?.username || user?.email?.split('@')[0] || 'User');
   const userInitial = (userName.trim()[0] || 'U').toUpperCase();
@@ -306,6 +307,32 @@ const Navbar = () => {
               </motion.div>
             )}
 
+            {/* Messages Chat Icon */}
+            {user && (
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Link
+                  to="/messages"
+                  className="relative p-2 sm:p-2.5 rounded-full text-gray-700 dark:text-gray-300 hover:text-primary hover:bg-primary/10 transition-all group block"
+                  aria-label="Messages"
+                  title="Messages"
+                >
+                  <FiMessageSquare className="text-lg sm:text-xl transition-transform" />
+                  {unreadChatCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-0.5 -right-0.5 w-4 sm:w-5 h-4 sm:h-5 bg-primary text-black text-[10px] font-black rounded-full flex items-center justify-center shadow-yellow-glow"
+                    >
+                      {unreadChatCount}
+                    </motion.span>
+                  )}
+                </Link>
+              </motion.div>
+            )}
+
             {/* Notifications Icon */}
             <div className="relative">
               <motion.button
@@ -503,6 +530,10 @@ const Navbar = () => {
                 <FiZap className="text-xs animate-pulse" />
                 <span>AI Tech</span>
               </Link>
+              <Link to="/marketplace" className="hover:text-primary transition-colors flex items-center gap-1 link-underline font-bold text-amber-500">
+                <FiBriefcase className="text-xs" />
+                <span>Marketplace</span>
+              </Link>
               <Link to="/products" className="hover:text-primary transition-colors flex items-center gap-1 link-underline">
                 <FiGrid className="text-xs" />
                 <span>Browse All</span>
@@ -583,6 +614,9 @@ const Navbar = () => {
               </Link>
               <Link to="/categories" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200">
                 Categories
+              </Link>
+              <Link to="/marketplace" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 font-bold col-span-2 text-center">
+                C2C Marketplace
               </Link>
 
               {isCustomerOrGuest && (

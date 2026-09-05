@@ -34,9 +34,13 @@ export const buildPaginationMeta = (total, page, limit) => {
   const totalPages = Math.ceil(total / limit) || 1;
   return {
     currentPage:  page,
+    page,
     totalPages,
+    pages:        totalPages,
     totalItems:   total,
+    total,
     itemsPerPage: limit,
+    limit,
     hasNext:      page < totalPages,
     hasPrevious:  page > 1,
   };

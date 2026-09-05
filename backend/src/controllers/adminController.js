@@ -11,6 +11,7 @@ import * as adminSellerService        from '../services/adminSellerService.js';
 import * as adminProductService       from '../services/adminProductService.js';
 import * as adminCategoryService      from '../services/adminCategoryService.js';
 import * as adminOrderService         from '../services/adminOrderService.js';
+import * as orderAnalyticsService     from '../services/orderAnalyticsService.js';
 import * as adminVerificationService  from '../services/adminVerificationService.js';
 import * as adminImportService        from '../services/adminImportService.js';
 import * as adminBulkService          from '../services/adminBulkService.js';
@@ -76,6 +77,17 @@ export const getPendingVerifications = asyncHandler(async (req, res) => {
 // USER MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// POST /api/admin/users
+export const createUser = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to create users.');
+  }
+
+  const user = await adminUserService.createUser(req.body, req.user, getIp(req));
+  return successResponse(res, 'User created successfully.', { user }, 201);
+});
+
 // GET /api/admin/users?page=1&limit=10&role=customer&status=Active&search=arjun
 export const getUsers = asyncHandler(async (req, res) => {
   const { page, limit } = parsePagination(req.query);
@@ -99,8 +111,47 @@ export const updateUser = asyncHandler(async (req, res) => {
 
 // DELETE /api/admin/users/:id  (soft delete)
 export const deleteUser = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to delete users.');
+  }
+
   const user = await adminUserService.deleteUser(req.params.id, req.user, getIp(req));
   return successResponse(res, 'User deleted successfully.', { user });
+});
+
+// PATCH /api/admin/users/:id/reset-password
+export const resetUserPassword = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to reset passwords.');
+  }
+
+  const { password } = req.body;
+  if (!password || password.length < 6) {
+    throw new ApiError(400, 'Password must be at least 6 characters long.');
+  }
+
+  await adminUserService.resetUserPassword(req.params.id, password, req.user, getIp(req));
+  return successResponse(res, 'User password reset successfully.');
+});
+
+// PATCH /api/admin/users/:id/status
+export const updateUserStatus = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to change user status.');
+  }
+
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status || !['suspended', 'active', 'blocked'].includes(status.toLowerCase())) {
+    throw new ApiError(400, 'Invalid status value. Allowed values: active, suspended, blocked');
+  }
+
+  const user = await adminUserService.updateUserStatus(id, status, req.user, getIp(req));
+  return successResponse(res, 'User status updated successfully.', { user });
 });
 
 // PATCH /api/admin/users/:id/suspend
@@ -126,6 +177,55 @@ export const unblockUser = asyncHandler(async (req, res) => {
   const user = await adminUserService.unblockUser(req.params.id, req.user, getIp(req));
   return successResponse(res, 'User unblocked successfully.', { user });
 });
+
+// PATCH /api/admin/users/bulk/suspend
+export const bulkSuspendUsers = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to suspend users.');
+  }
+
+  const { userIds } = req.body;
+  const { count, skippedAdminsCount } = await adminUserService.bulkSuspendUsers(userIds, req.user, getIp(req));
+  let message = `${count} user${count !== 1 ? 's' : ''} suspended successfully.`;
+  if (skippedAdminsCount > 0) {
+    message += ` (${skippedAdminsCount} admin account${skippedAdminsCount !== 1 ? 's' : ''} skipped)`;
+  }
+  return successResponse(res, message, { count, skippedAdminsCount });
+});
+
+// PATCH /api/admin/users/bulk/activate
+export const bulkActivateUsers = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to activate users.');
+  }
+
+  const { userIds } = req.body;
+  const { count, skippedAdminsCount } = await adminUserService.bulkActivateUsers(userIds, req.user, getIp(req));
+  let message = `${count} user${count !== 1 ? 's' : ''} activated successfully.`;
+  if (skippedAdminsCount > 0) {
+    message += ` (${skippedAdminsCount} admin account${skippedAdminsCount !== 1 ? 's' : ''} skipped)`;
+  }
+  return successResponse(res, message, { count, skippedAdminsCount });
+});
+
+// DELETE /api/admin/users/bulk/delete
+export const bulkDeleteUsers = asyncHandler(async (req, res) => {
+  const userRole = String(req.user.role).toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
+    throw new ApiError(403, 'Forbidden: Only administrators are authorized to delete users.');
+  }
+
+  const { userIds } = req.body;
+  const { count, skippedAdminsCount } = await adminUserService.bulkDeleteUsers(userIds, req.user, getIp(req));
+  let message = `${count} user${count !== 1 ? 's' : ''} deleted successfully.`;
+  if (skippedAdminsCount > 0) {
+    message += ` (${skippedAdminsCount} admin account${skippedAdminsCount !== 1 ? 's' : ''} skipped)`;
+  }
+  return successResponse(res, message, { count, skippedAdminsCount });
+});
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SELLER MANAGEMENT
@@ -233,6 +333,18 @@ export const updateProduct = asyncHandler(async (req, res) => {
   return successResponse(res, 'Product updated successfully.', { product });
 });
 
+// PATCH /api/admin/products/:id/stock
+export const updateProductStock = asyncHandler(async (req, res) => {
+  const { stock } = req.body;
+  const product = await adminProductService.updateStock(
+    req.params.id,
+    stock,
+    req.user,
+    getIp(req)
+  );
+  return successResponse(res, 'Product stock updated successfully.', { product });
+});
+
 // DELETE /api/admin/products/:id
 export const deleteProduct = asyncHandler(async (req, res) => {
   const product = await adminProductService.deleteProduct(
@@ -284,6 +396,16 @@ export const toggleFeaturedProduct = asyncHandler(async (req, res) => {
     getIp(req)
   );
   return successResponse(res, 'Product featured status updated.', { product });
+});
+
+// PATCH /api/admin/products/:id/trending
+export const toggleTrendingProduct = asyncHandler(async (req, res) => {
+  const product = await adminProductService.toggleTrending(
+    req.params.id,
+    req.user,
+    getIp(req)
+  );
+  return successResponse(res, 'Product trending status updated.', { product });
 });
 
 // POST /api/admin/products/bulk
@@ -362,9 +484,15 @@ export const getOrders = asyncHandler(async (req, res) => {
   return successResponse(res, 'Orders fetched successfully.', result);
 });
 
+// GET /api/admin/orders/analytics
+export const getOrderAnalytics = asyncHandler(async (req, res) => {
+  const analytics = await orderAnalyticsService.getOrderAnalytics(req.query);
+  return successResponse(res, 'Order analytics fetched successfully.', analytics);
+});
+
 // GET /api/admin/orders/:id
 export const getOrder = asyncHandler(async (req, res) => {
-  const order = await adminOrderService.getOrder(req.params.id);
+  const order = await adminOrderService.getOrder(req.params.orderId);
   return successResponse(res, 'Order dossier fetched successfully.', { order });
 });
 
@@ -372,7 +500,7 @@ export const getOrder = asyncHandler(async (req, res) => {
 export const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status, note } = req.body;
   const order = await adminOrderService.updateOrderStatus(
-    req.params.id,
+    req.params.orderId,
     status,
     note,
     req.user,
@@ -553,6 +681,36 @@ export const getUnreadNotificationsCount = asyncHandler(async (req, res) => {
   return successResponse(res, 'Unread notification count fetched.', { unreadCount });
 });
 
+// GET /api/admin/notifications/:id
+export const getNotificationById = asyncHandler(async (req, res) => {
+  const notification = await notificationService.getNotificationById(req.params.id);
+  return successResponse(res, 'Notification fetched successfully.', { notification });
+});
+
+// POST /api/admin/notifications
+export const createNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.createNotification(req.body, req.user, getIp(req));
+  return successResponse(res, 'Notification created successfully.', { notification }, 201);
+});
+
+// PUT /api/admin/notifications/:id
+export const updateNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.updateNotification(req.params.id, req.body, req.user, getIp(req));
+  return successResponse(res, 'Notification updated successfully.', { notification });
+});
+
+// PATCH /api/admin/notifications/:id/publish
+export const publishNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.publishNotification(req.params.id, req.user, getIp(req));
+  return successResponse(res, 'Notification published successfully.', { notification });
+});
+
+// PATCH /api/admin/notifications/:id/unpublish
+export const unpublishNotification = asyncHandler(async (req, res) => {
+  const notification = await notificationService.unpublishNotification(req.params.id, req.user, getIp(req));
+  return successResponse(res, 'Notification unpublished successfully.', { notification });
+});
+
 // PATCH /api/admin/notifications/:id/read
 export const markNotificationRead = asyncHandler(async (req, res) => {
   const notification = await notificationService.markNotificationRead(req.params.id);
@@ -567,8 +725,8 @@ export const markAllNotificationsRead = asyncHandler(async (req, res) => {
 
 // DELETE /api/admin/notifications/:id
 export const deleteNotification = asyncHandler(async (req, res) => {
-  const notification = await notificationService.deleteNotification(req.params.id);
-  return successResponse(res, 'Notification dismissed.', { notification });
+  const notification = await notificationService.deleteNotification(req.params.id, req.user, getIp(req));
+  return successResponse(res, 'Notification deleted successfully.', { notification });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

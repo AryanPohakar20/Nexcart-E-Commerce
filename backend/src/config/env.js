@@ -3,10 +3,10 @@ const REQUIRED_VARS = [
   'MONGO_URI',
   'JWT_SECRET',
   'JWT_EXPIRES_IN',
+  'JWT_REFRESH_SECRET',   // Required — separate secret for refresh tokens
   'CLIENT_URL',
-  'CLOUDINARY_CLOUD_NAME',
-  'CLOUDINARY_API_KEY',
-  'CLOUDINARY_API_SECRET',
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
 ];
 
 const validateEnv = () => {
@@ -26,13 +26,18 @@ const validateEnv = () => {
     );
   }
 
+  if (!process.env.APPLE_CLIENT_ID) {
+    console.warn(
+      '\nAPPLE_CLIENT_ID not set in .env - Apple Sign-In will be unavailable.\n'
+    );
+  }
+
   if (
-    !process.env.CLOUDINARY_CLOUD_NAME ||
-    !process.env.CLOUDINARY_API_KEY ||
-    !process.env.CLOUDINARY_API_SECRET
+    !process.env.SUPABASE_URL ||
+    !process.env.SUPABASE_SERVICE_ROLE_KEY
   ) {
     console.warn(
-      '\nCLOUDINARY credentials not fully set in .env - document uploads will return mock URLs in dev mode.\n'
+      '\nSUPABASE credentials not fully set in .env - document uploads will return mock URLs in dev mode.\n'
     );
   }
 };

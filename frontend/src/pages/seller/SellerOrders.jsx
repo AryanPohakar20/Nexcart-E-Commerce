@@ -17,7 +17,7 @@ const TAB_STATUSES = [
 ];
 
 const SellerOrders = () => {
-  const { orders, updateOrderStatus } = useContext(SellerContext);
+  const { orders, updateOrderStatus, ordersLoading, ordersError, fetchSellerOrders } = useContext(SellerContext);
 
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -122,7 +122,36 @@ const SellerOrders = () => {
       </div>
 
       {/* ── 4. Orders Table List ────────────────────────────────────────────── */}
-      {filteredOrders.length === 0 ? (
+      {ordersLoading ? (
+        <div className="flex flex-col items-center justify-center p-12 space-y-4">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs text-textSecondary">Loading orders pipeline...</p>
+        </div>
+      ) : ordersError ? (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-12 text-center space-y-4 max-w-md mx-auto">
+          <div className="w-16 h-16 rounded-3xl bg-red-500/10 text-red-500 mx-auto flex items-center justify-center border border-red-500/20">
+            <FiXCircle size={32} />
+          </div>
+          <h3 className="text-base font-bold text-textPrimary">Failed to load orders</h3>
+          <p className="text-xs text-textSecondary">{ordersError}</p>
+          <button
+            onClick={fetchSellerOrders}
+            className="px-5 py-2.5 rounded-xl bg-primary text-black font-bold hover:bg-primary-light shadow-yellow-glow text-xs"
+          >
+            Retry Fetching
+          </button>
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="bg-cardBg border border-borderColor rounded-3xl p-12 text-center space-y-4">
+          <div className="w-16 h-16 rounded-3xl bg-primary/10 text-primary mx-auto flex items-center justify-center border border-primary/20">
+            <FiShoppingBag size={32} />
+          </div>
+          <h3 className="text-base font-bold text-textPrimary">No Orders Yet</h3>
+          <p className="text-xs text-textSecondary max-w-sm mx-auto">
+            Your orders will appear here once customers purchase your products.
+          </p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
         <div className="bg-cardBg border border-borderColor rounded-3xl p-12 text-center space-y-4">
           <div className="w-16 h-16 rounded-3xl bg-primary/10 text-primary mx-auto flex items-center justify-center border border-primary/20">
             <FiShoppingBag size={32} />

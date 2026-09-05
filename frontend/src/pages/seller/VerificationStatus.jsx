@@ -19,8 +19,12 @@ const VerificationStatus = () => {
       try {
         const response = await sellerAuthService.getVerificationStatus();
         if (response.success) {
-          setStatus(response.data.status);
-          setTrustScore(response.data.trustScore);
+          const rawStatus = response.data?.status || response.data?.sellerStatus;
+          const mappedStatus = (rawStatus === 'Approved' || rawStatus === 'Marketplace Seller')
+            ? 'Marketplace Seller'
+            : (rawStatus === 'Pending' ? 'Verification Pending' : rawStatus);
+          setStatus(mappedStatus);
+          setTrustScore(response.data?.trustScore || 100);
         }
       } catch (error) {
         console.error('Failed to fetch status', error);

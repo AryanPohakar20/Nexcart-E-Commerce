@@ -1,18 +1,67 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { PRODUCTS, CATEGORIES } from '../constants/dummyData';
+import { CATEGORIES as DEFAULT_CATEGORIES } from '../constants/dummyData';
 import ProductGrid from '../components/ProductGrid';
-import { FiChevronRight, FiFolder } from 'react-icons/fi';
+import { FiChevronRight, FiFolder, FiRefreshCw } from 'react-icons/fi';
+import productService from '../services/productService';
 
 const Category = () => {
   const { id } = useParams();
+  const [products, setProducts] = useState([]);
+  const [categoryInfo, setCategoryInfo] = useState({
+    name: id ? id.replace(/-/g, ' ').toUpperCase() : 'Category Catalog',
+    image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1200&q=80',
+    description: 'Browse premium collections.',
+  });
+  const [loading, setLoading] = useState(true);
 
-  const categoryInfo = useMemo(() => {
-    return CATEGORIES.find(c => c.id === id) || { name: 'Category Catalog', image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1200&q=80', description: 'Browse premium collections.' };
-  }, [id]);
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCategoryData = async () => {
+      setLoading(true);
+      try {
+        const [prodRes, catRes] = await Promise.all([
+          productService.getProducts({ category: id, limit: 100 }).catch(() => null),
+          productService.getCategories().catch(() => null),
+        ]);
 
-  const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter(p => p.category === id);
+        if (isMounted) {
+          if (prodRes?.data?.products) {
+            setProducts(prodRes.data.products);
+          }
+
+          const matchedDefault = DEFAULT_CATEGORIES.find(
+            (c) => c.id.toLowerCase() === id?.toLowerCase() || c.name.toLowerCase() === id?.toLowerCase()
+          );
+
+          if (catRes?.data?.categories) {
+            const matchedDb = catRes.data.categories.find(
+              (c) => c.slug === id || c._id === id || c.name.toLowerCase() === id?.toLowerCase()
+            );
+            if (matchedDb) {
+              setCategoryInfo({
+                name: matchedDb.name,
+                image: matchedDb.image || matchedDefault?.image || 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1200&q=80',
+                description: matchedDb.description || 'Browse premium collections.',
+              });
+            } else if (matchedDefault) {
+              setCategoryInfo(matchedDefault);
+            }
+          } else if (matchedDefault) {
+            setCategoryInfo(matchedDefault);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load category products:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchCategoryData();
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   return (
@@ -38,11 +87,18 @@ const Category = () => {
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
             <FiFolder className="text-primary" />
-            <span>Items Grid ({filteredProducts.length})</span>
+            <span>Items Grid ({products.length})</span>
           </h3>
         </div>
 
-        <ProductGrid products={filteredProducts} />
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <FiRefreshCw className="animate-spin text-3xl text-primary mb-3" />
+            <p className="text-gray-400 font-semibold">Loading category products...</p>
+          </div>
+        ) : (
+          <ProductGrid products={products} />
+        )}
       </div>
 
     </div>

@@ -6,6 +6,7 @@ import * as auditLogRepo from '../repositories/auditLogRepository.js';
 import { ApiError } from '../utils/ApiError.js';
 import { parsePagination, buildPaginationMeta } from '../utils/pagination.js';
 import { buildProductFilter } from '../utils/buildFilter.js';
+import { toProductDTO, toProductDTOList } from '../mappers/productMapper.js';
 
 /**
  * List products with filtering, pagination, and sorting.
@@ -28,7 +29,7 @@ export const listProducts = async (query = {}) => {
   });
 
   const pagination = buildPaginationMeta(total, page, limit);
-  return { products, pagination };
+  return { products: toProductDTOList(products), pagination, rawTotal: total };
 };
 
 /**
@@ -39,7 +40,7 @@ export const getProduct = async (id) => {
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
-  return product;
+  return toProductDTO(product);
 };
 
 /**
@@ -53,19 +54,28 @@ export const updateProduct = async (id, data, adminUser, ip) => {
 
   const updated = await productRepo.updateProduct(id, data);
 
-  await auditLogRepo.log({
-    adminId: adminUser._id,
-    adminEmail: adminUser.email,
-    action: 'UPDATE_PRODUCT',
-    module: 'Products',
-    targetId: id,
-    targetModel: 'Product',
-    target: updated.name,
-    details: { updatedFields: Object.keys(data) },
-    ip,
-  });
+  if (adminUser) {
+    await auditLogRepo.log({
+      adminId: adminUser._id,
+      adminEmail: adminUser.email,
+      action: 'UPDATE_PRODUCT',
+      module: 'Products',
+      targetId: id,
+      targetModel: 'Product',
+      target: updated?.name || updated?.title || 'Product',
+      details: { updatedFields: Object.keys(data) },
+      ip,
+    });
+  }
 
-  return updated;
+  return toProductDTO(updated);
+};
+
+/**
+ * Update stock specifically.
+ */
+export const updateStock = async (id, stock, adminUser, ip) => {
+  return updateProduct(id, { stock: Number(stock) }, adminUser, ip);
 };
 
 /**
@@ -83,19 +93,21 @@ export const deleteProduct = async (id, adminUser, ip) => {
     status: 'Deleted',
   });
 
-  await auditLogRepo.log({
-    adminId: adminUser._id,
-    adminEmail: adminUser.email,
-    action: 'DELETE_PRODUCT',
-    module: 'Products',
-    targetId: id,
-    targetModel: 'Product',
-    target: existing.name,
-    details: { reason: 'Soft deleted by admin' },
-    ip,
-  });
+  if (adminUser) {
+    await auditLogRepo.log({
+      adminId: adminUser._id,
+      adminEmail: adminUser.email,
+      action: 'DELETE_PRODUCT',
+      module: 'Products',
+      targetId: id,
+      targetModel: 'Product',
+      target: existing.name || existing.title || 'Product',
+      details: { reason: 'Soft deleted by admin' },
+      ip,
+    });
+  }
 
-  return updated;
+  return toProductDTO(updated);
 };
 
 /**
@@ -113,18 +125,20 @@ export const restoreProduct = async (id, adminUser, ip) => {
     status: 'Approved',
   });
 
-  await auditLogRepo.log({
-    adminId: adminUser._id,
-    adminEmail: adminUser.email,
-    action: 'RESTORE_PRODUCT',
-    module: 'Products',
-    targetId: id,
-    targetModel: 'Product',
-    target: existing.name,
-    ip,
-  });
+  if (adminUser) {
+    await auditLogRepo.log({
+      adminId: adminUser._id,
+      adminEmail: adminUser.email,
+      action: 'RESTORE_PRODUCT',
+      module: 'Products',
+      targetId: id,
+      targetModel: 'Product',
+      target: existing.name || existing.title || 'Product',
+      ip,
+    });
+  }
 
-  return updated;
+  return toProductDTO(updated);
 };
 
 /**
@@ -132,27 +146,27 @@ export const restoreProduct = async (id, adminUser, ip) => {
  */
 export const approveProduct = async (id, adminUser, ip) => {
   const updated = await productRepo.updateProduct(id, {
-    status: 'Approved',
-    approvalStatus: 'Approved',
-    'moderation.reviewedBy': adminUser._id,
-    'moderation.reviewedAt': new Date(),
-    'moderation.adminNotes': 'Approved by administrator',
+    status: 'Active',
+    approvedBy: adminUser?._id,
+    approvedAt: new Date(),
   });
 
   if (!updated) throw new ApiError(404, 'Product not found');
 
-  await auditLogRepo.log({
-    adminId: adminUser._id,
-    adminEmail: adminUser.email,
-    action: 'APPROVE_PRODUCT',
-    module: 'Products',
-    targetId: id,
-    targetModel: 'Product',
-    target: updated.name,
-    ip,
-  });
+  if (adminUser) {
+    await auditLogRepo.log({
+      adminId: adminUser._id,
+      adminEmail: adminUser.email,
+      action: 'APPROVE_PRODUCT',
+      module: 'Products',
+      targetId: id,
+      targetModel: 'Product',
+      target: updated.name || updated.title || 'Product',
+      ip,
+    });
+  }
 
-  return updated;
+  return toProductDTO(updated);
 };
 
 /**
@@ -161,28 +175,26 @@ export const approveProduct = async (id, adminUser, ip) => {
 export const rejectProduct = async (id, reason = '', adminNotes = '', adminUser, ip) => {
   const updated = await productRepo.updateProduct(id, {
     status: 'Rejected',
-    approvalStatus: 'Rejected',
-    'moderation.reason': reason,
-    'moderation.adminNotes': adminNotes,
-    'moderation.reviewedBy': adminUser._id,
-    'moderation.reviewedAt': new Date(),
+    rejectedReason: reason || adminNotes || 'Rejected by administrator',
   });
 
   if (!updated) throw new ApiError(404, 'Product not found');
 
-  await auditLogRepo.log({
-    adminId: adminUser._id,
-    adminEmail: adminUser.email,
-    action: 'REJECT_PRODUCT',
-    module: 'Products',
-    targetId: id,
-    targetModel: 'Product',
-    target: updated.name,
-    details: { reason, adminNotes },
-    ip,
-  });
+  if (adminUser) {
+    await auditLogRepo.log({
+      adminId: adminUser._id,
+      adminEmail: adminUser.email,
+      action: 'REJECT_PRODUCT',
+      module: 'Products',
+      targetId: id,
+      targetModel: 'Product',
+      target: updated.name || updated.title || 'Product',
+      details: { reason, adminNotes },
+      ip,
+    });
+  }
 
-  return updated;
+  return toProductDTO(updated);
 };
 
 /**
@@ -192,21 +204,55 @@ export const toggleFeatured = async (id, adminUser, ip) => {
   const existing = await productRepo.getProductById(id);
   if (!existing) throw new ApiError(404, 'Product not found');
 
-  const newFeatured = !existing.featured;
-  const updated = await productRepo.updateProduct(id, { featured: newFeatured });
-
-  await auditLogRepo.log({
-    adminId: adminUser._id,
-    adminEmail: adminUser.email,
-    action: newFeatured ? 'FEATURE_PRODUCT' : 'UNFEATURE_PRODUCT',
-    module: 'Products',
-    targetId: id,
-    targetModel: 'Product',
-    target: existing.name,
-    ip,
+  const newFeatured = !(existing.featured || existing.isFeatured);
+  const updated = await productRepo.updateProduct(id, {
+    featured: newFeatured,
+    isFeatured: newFeatured,
   });
 
-  return updated;
+  if (adminUser) {
+    await auditLogRepo.log({
+      adminId: adminUser._id,
+      adminEmail: adminUser.email,
+      action: newFeatured ? 'FEATURE_PRODUCT' : 'UNFEATURE_PRODUCT',
+      module: 'Products',
+      targetId: id,
+      targetModel: 'Product',
+      target: existing.name || existing.title || 'Product',
+      ip,
+    });
+  }
+
+  return toProductDTO(updated);
+};
+
+/**
+ * Toggle Trending status of a product.
+ */
+export const toggleTrending = async (id, adminUser, ip) => {
+  const existing = await productRepo.getProductById(id);
+  if (!existing) throw new ApiError(404, 'Product not found');
+
+  const newTrending = !(existing.trending || existing.isTrending);
+  const updated = await productRepo.updateProduct(id, {
+    trending: newTrending,
+    isTrending: newTrending,
+  });
+
+  if (adminUser) {
+    await auditLogRepo.log({
+      adminId: adminUser._id,
+      adminEmail: adminUser.email,
+      action: newTrending ? 'TRENDING_PRODUCT' : 'UNTRENDING_PRODUCT',
+      module: 'Products',
+      targetId: id,
+      targetModel: 'Product',
+      target: existing.name || existing.title || 'Product',
+      ip,
+    });
+  }
+
+  return toProductDTO(updated);
 };
 
 /**
@@ -228,7 +274,7 @@ export const bulkProductAction = async (action, ids = [], extraData = {}, adminU
             $set: {
               status: 'Approved',
               approvalStatus: 'Approved',
-              'moderation.reviewedBy': adminUser._id,
+              'moderation.reviewedBy': adminUser?._id,
               'moderation.reviewedAt': new Date(),
             },
           },
@@ -245,7 +291,7 @@ export const bulkProductAction = async (action, ids = [], extraData = {}, adminU
               status: 'Rejected',
               approvalStatus: 'Rejected',
               'moderation.reason': extraData.reason || 'Bulk rejected by admin',
-              'moderation.reviewedBy': adminUser._id,
+              'moderation.reviewedBy': adminUser?._id,
               'moderation.reviewedAt': new Date(),
             },
           },
@@ -272,7 +318,7 @@ export const bulkProductAction = async (action, ids = [], extraData = {}, adminU
       operations.push({
         updateMany: {
           filter: { _id: { $in: ids } },
-          update: { $set: { featured: true } },
+          update: { $set: { featured: true, isFeatured: true } },
         },
       });
       break;
@@ -281,7 +327,7 @@ export const bulkProductAction = async (action, ids = [], extraData = {}, adminU
       operations.push({
         updateMany: {
           filter: { _id: { $in: ids } },
-          update: { $set: { featured: false } },
+          update: { $set: { featured: false, isFeatured: false } },
         },
       });
       break;
@@ -292,15 +338,17 @@ export const bulkProductAction = async (action, ids = [], extraData = {}, adminU
 
   const result = await productRepo.bulkWriteProducts(operations);
 
-  await auditLogRepo.log({
-    adminId: adminUser._id,
-    adminEmail: adminUser.email,
-    action: `BULK_${action.toUpperCase()}_PRODUCTS`,
-    module: 'Products',
-    target: `${ids.length} products`,
-    details: { ids, result },
-    ip,
-  });
+  if (adminUser) {
+    await auditLogRepo.log({
+      adminId: adminUser._id,
+      adminEmail: adminUser.email,
+      action: `BULK_${action.toUpperCase()}_PRODUCTS`,
+      module: 'Products',
+      target: `${ids.length} products`,
+      details: { ids, result },
+      ip,
+    });
+  }
 
   return { success: true, count: ids.length, result };
 };

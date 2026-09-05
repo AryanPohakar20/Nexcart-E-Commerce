@@ -49,27 +49,40 @@ const authService = {
     }
   },
 
-  forgotPassword: async (email) => {
+  /**
+   * resetPassword — Change password using current password for identity verification.
+   * OTP has been removed. Backend verifies identity via currentPassword.
+   */
+  resetPassword: async (email, currentPassword, newPassword) => {
     try {
-      const response = await axiosInstance.post('/auth/forgot-password', { email });
+      const response = await axiosInstance.post('/auth/reset-password', {
+        email,
+        currentPassword,
+        newPassword,
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  verifyOtp: async (email, otp, purpose) => {
+  loginGoogle: async (googleAccessToken) => {
     try {
-      const response = await axiosInstance.post('/auth/verify-otp', { email, otp, purpose });
+      const response = await axiosInstance.post('/auth/login/google', {
+        accessToken: googleAccessToken,
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  resetPassword: async (email, otp, newPassword) => {
+  loginApple: async (identityToken, userObj) => {
     try {
-      const response = await axiosInstance.post('/auth/reset-password', { email, otp, newPassword });
+      const response = await axiosInstance.post('/auth/login/apple', {
+        identityToken,
+        user: userObj,
+      });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

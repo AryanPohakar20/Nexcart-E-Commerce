@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppContext } from '../../context/AppContext';
 import { AuthContext } from '../../context/AuthContext';
+import authService from '../../services/authService';
 import sellerAuthService from '../../services/sellerAuthService';
 import NexCartLogo from '../../components/NexCartLogo';
 
@@ -156,11 +157,21 @@ const SellerOnboarding = () => {
         setIsSubmitting(true);
         try {
           await sellerAuthService.agreeTerms();
+          try {
+            const userRes = await authService.getCurrentUser();
+            if (userRes?.success && userRes?.data?.user) {
+              localStorage.setItem('nexcart-user', JSON.stringify(userRes.data.user));
+            }
+          } catch (e) {
+            console.error('Failed to refresh user profile:', e);
+          }
         } finally {
           setIsSubmitting(false);
         }
-        showToast('Registration complete! Verification pending.', 'success');
-        navigate('/seller/verification-status');
+        showToast('Onboarding completed successfully! Redirecting to seller dashboard...', 'success');
+        setTimeout(() => {
+          window.location.href = '/seller/dashboard';
+        }, 600);
       }
     } catch (error) {
       setIsSubmitting(false);
